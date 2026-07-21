@@ -8,14 +8,13 @@ on:
     branches:
       - master
 
-permissions:
-  contents: read
-
 jobs:
   quality-check:
     name: Quality check
     runs-on: ubuntu-latest
     container: maven:3.9.16-eclipse-temurin-25
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v6
