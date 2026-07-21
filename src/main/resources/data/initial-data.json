@@ -1,0 +1,50 @@
+{
+  "states": [
+    {
+      "name": "Goiás",
+      "abbreviation": "GO"
+    },
+    {
+      "name": "São Paulo",
+      "abbreviation": "SP"
+    }
+  ],
+  "addresses": [
+    {
+      "reference": "goiania-clinic",
+      "street": "Avenida T-10",
+      "district": "Setor Bueno",
+      "additionalInfo": "Dental clinic",
+      "block": "A",
+      "postalCode": "74223060",
+      "stateAbbreviation": "GO"
+    },
+    {
+      "reference": "sao-paulo-clinic",
+      "street": "Avenida Paulista",
+      "district": "Bela Vista",
+      "additionalInfo": "Suite 1204",
+      "block": "B",
+      "postalCode": "01310100",
+      "stateAbbreviation": "SP"
+    }
+  ],
+  "patients": [
+    {
+      "name": "Ana Souza",
+      "birthDate": "1992-04-18",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "12345678901",
+      "addressReference": "goiania-clinic"
+    },
+    {
+      "name": "Daniel Costa",
+      "birthDate": "1985-11-03",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10987654321",
+      "addressReference": "sao-paulo-clinic"
+    }
+  ]
+}
