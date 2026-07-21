@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: sisdent
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: master
+    autoDeployTrigger: checksPass
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: H2_CONSOLE_ENABLED
+        value: "false"
