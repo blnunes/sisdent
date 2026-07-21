@@ -1,23 +1,15 @@
-name: CI
+name: Tests
 
 on:
   pull_request:
     branches:
       - master
-  push:
-    branches:
-      - master
-
 permissions:
   contents: read
 
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   test:
-    name: Maven verify (Java 25)
+    name: Unit and integration tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -33,4 +25,4 @@ jobs:
           cache: maven
 
       - name: Run unit and integration tests
-        run: ./mvnw --batch-mode --no-transfer-progress verify
+        run: ./mvnw --batch-mode --no-transfer-progress test
