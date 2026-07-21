@@ -1,6 +1,9 @@
 name: Tests
 
 on:
+  push:
+    branches:
+      - master
   pull_request:
     branches:
       - master
@@ -12,5 +15,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - run: mvn --batch-mode --no-transfer-progress test
+      - name: Test and analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >-
+          mvn --batch-mode --no-transfer-progress verify
+          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.organization=blnunes
+          -Dsonar.projectKey=blnunes_sisdent
+          -Dsonar.qualitygate.wait=true
