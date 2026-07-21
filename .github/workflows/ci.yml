@@ -9,24 +9,8 @@ on:
       - master
 
 jobs:
-  unit-tests:
-    name: Unit tests
-    runs-on: ubuntu-latest
-    container: maven:3.9.16-eclipse-temurin-25
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - run: mvn --batch-mode --no-transfer-progress verify
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: target
-
-  sonarcloud:
-    name: SonarCloud
-    needs: unit-tests
+  quality-check:
+    name: Quality check
     runs-on: ubuntu-latest
     container: maven:3.9.16-eclipse-temurin-25
 
@@ -35,12 +19,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: test-results
-          path: target
+      - name: Unit tests
+        run: mvn --batch-mode --no-transfer-progress verify
 
-      - name: Analyze code and coverage
+      - name: SonarCloud
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >-

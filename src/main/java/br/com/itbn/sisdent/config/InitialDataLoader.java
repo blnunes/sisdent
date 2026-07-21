@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.List;
@@ -46,8 +47,8 @@ public class InitialDataLoader implements ApplicationRunner {
     }
 
     @Override
-    @Transactional
-    public void run(ApplicationArguments arguments) throws Exception {
+    @Transactional(rollbackFor = IOException.class)
+    public void run(ApplicationArguments arguments) throws IOException {
         if (hasExistingData()) {
             LOGGER.info("Initial data loading skipped because the database is not empty");
             return;
@@ -73,7 +74,7 @@ public class InitialDataLoader implements ApplicationRunner {
                 || patientRepository.count() > 0;
     }
 
-    private InitialData readInitialData() throws Exception {
+    private InitialData readInitialData() throws IOException {
         ClassPathResource resource = new ClassPathResource(INITIAL_DATA_PATH);
         try (InputStream inputStream = resource.getInputStream()) {
             return jsonMapper.readValue(inputStream, InitialData.class);

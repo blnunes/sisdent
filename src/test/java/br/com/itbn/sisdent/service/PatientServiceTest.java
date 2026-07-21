@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 import java.util.Optional;
 
@@ -103,7 +104,7 @@ class PatientServiceTest {
     private PatientRequest patientRequest() {
         return new PatientRequest(
                 "Ana Souza",
-                LocalDate.of(1992, 4, 18),
+                LocalDate.of(1992, Month.APRIL, 18),
                 true,
                 Gender.FEMALE,
                 "12345678901",
@@ -119,7 +120,7 @@ class PatientServiceTest {
     private Patient patient(Address address) {
         return new Patient(
                 "Ana Souza",
-                LocalDate.of(1992, 4, 18),
+                LocalDate.of(1992, Month.APRIL, 18),
                 true,
                 Gender.FEMALE,
                 "12345678901",

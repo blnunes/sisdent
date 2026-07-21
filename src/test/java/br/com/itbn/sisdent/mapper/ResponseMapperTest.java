@@ -10,6 +10,7 @@ import br.com.itbn.sisdent.model.State;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.Month;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,7 +54,7 @@ class ResponseMapperTest {
                 state);
         Patient patient = new Patient(
                 "Ana Souza",
-                LocalDate.of(1992, 4, 18),
+                LocalDate.of(1992, Month.APRIL, 18),
                 true,
                 Gender.FEMALE,
                 "12345678901",
@@ -62,7 +63,7 @@ class ResponseMapperTest {
         PatientResponse response = ResponseMapper.toResponse(patient);
 
         assertThat(response.name()).isEqualTo("Ana Souza");
-        assertThat(response.birthDate()).isEqualTo(LocalDate.of(1992, 4, 18));
+        assertThat(response.birthDate()).isEqualTo(LocalDate.of(1992, Month.APRIL, 18));
         assertThat(response.active()).isTrue();
         assertThat(response.gender()).isEqualTo(Gender.FEMALE);
         assertThat(response.address().state().abbreviation()).isEqualTo("GO");
