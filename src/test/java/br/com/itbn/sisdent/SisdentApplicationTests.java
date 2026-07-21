@@ -24,6 +24,14 @@ class SisdentApplicationTests {
     private MockMvc mockMvc;
 
     @Test
+    void exposesOpenApiDocumentation() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.info.title").value("Sisdent API"))
+                .andExpect(jsonPath("$.paths['/api/patients']").exists());
+    }
+
+    @Test
     void loadsStaticJsonDataAndReturnsPatients() throws Exception {
         mockMvc.perform(get("/api/patients"))
                 .andExpect(status().isOk())
