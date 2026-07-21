@@ -1,23 +1,16 @@
-name: Unit tests
+name: Tests
 
 on:
   pull_request:
     branches:
       - master
 
-permissions:
-  contents: read
-
 jobs:
-  unit-tests:
-    name: Unit tests
+  test:
     runs-on: ubuntu-latest
     container: maven:3.9.16-eclipse-temurin-25
-    timeout-minutes: 10
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-      - name: Run unit tests
-        run: mvn --batch-mode --no-transfer-progress -DexcludedGroups=integration test
+      - run: mvn --batch-mode --no-transfer-progress test
