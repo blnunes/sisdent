@@ -1,6 +1,0 @@
-@baseUrl = http://localhost:8080
-
-### Get Hello World from the H2 database
-GET {{baseUrl}}/api/messages/hello
-Accept: application/json
-
