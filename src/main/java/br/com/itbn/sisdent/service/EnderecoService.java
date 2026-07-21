@@ -6,7 +6,7 @@ import br.com.itbn.sisdent.mapper.EnderecoMapper;
 import br.com.itbn.sisdent.model.Endereco;
 import br.com.itbn.sisdent.model.Estado;
 import br.com.itbn.sisdent.repository.EnderecoRepository;
-import javassist.NotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,14 +31,14 @@ public class EnderecoService implements ServiceSisdent<EnderecoDTO> {
     public EnderecoDTO getOne(String id) throws Exception {
         return new EnderecoMapper().entityToDTO(
                 enderecoRepository.findById(
-                        Long.parseLong(id)).orElseThrow(() -> new NotFoundException("Not found")));
+                        Long.parseLong(id)).orElseThrow(() -> new EntityNotFoundException("Not found")));
     }
 
     @Override
     public EnderecoDTO update(String id, EnderecoDTO dto) throws Exception {
         Endereco e = enderecoRepository.findById(Long.parseLong(id)).map(
                 endereco -> getEndereco(dto, endereco)
-        ).orElseThrow(() -> new NotFoundException("Not found"));
+        ).orElseThrow(() -> new EntityNotFoundException("Not found"));
         return new EnderecoMapper().entityToDTO(enderecoRepository.saveAndFlush(e));
     }
 

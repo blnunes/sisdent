@@ -2,9 +2,7 @@ package br.com.itbn.sisdent.model;
 
 import br.com.itbn.sisdent.comum.EntitySisdent;
 import lombok.*;
-import org.hibernate.annotations.Type;
-
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Date;
 
 @Setter
@@ -23,7 +21,7 @@ public class Paciente extends EntitySisdent {
     @Column(name = "nme_pcnte")
     private String nome;
 
-    @Type(type = "date")
+    @Temporal(TemporalType.DATE)
     @Column(name="dt_nscmto")
     private Date dataNascimento;
 

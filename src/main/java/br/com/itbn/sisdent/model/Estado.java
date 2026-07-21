@@ -3,7 +3,7 @@ package br.com.itbn.sisdent.model;
 import br.com.itbn.sisdent.comum.EntitySisdent;
 import lombok.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Setter
 @Getter

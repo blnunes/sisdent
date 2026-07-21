@@ -4,7 +4,6 @@ import br.com.itbn.sisdent.comum.SisdentDTO;
 import br.com.itbn.sisdent.model.Estado;
 import lombok.*;
 
-import javax.persistence.*;
 import java.util.Date;
 
 

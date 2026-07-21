@@ -15,12 +15,10 @@ import br.com.itbn.sisdent.repository.EnderecoRepository;
 import br.com.itbn.sisdent.repository.EstadoRepository;
 import br.com.itbn.sisdent.repository.PacienteRepository;
 import br.com.itbn.sisdent.service.PacienteService;
-import com.sun.istack.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,7 +37,7 @@ public class PacienteController {
     }
 
     @PostMapping
-    public PacienteDTO cadastrar(@RequestBody @NotNull PacienteForm body) {
+    public PacienteDTO cadastrar(@RequestBody PacienteForm body) {
         return pacienteService.create(new PacienteMapper().formToDTO(body));
     }
 

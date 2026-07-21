@@ -6,7 +6,7 @@ import br.com.itbn.sisdent.mapper.EnderecoMapper;
 import br.com.itbn.sisdent.mapper.PacienteMapper;
 import br.com.itbn.sisdent.model.Paciente;
 import br.com.itbn.sisdent.repository.PacienteRepository;
-import javassist.NotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +32,7 @@ public class PacienteService implements ServiceSisdent<PacienteDTO> {
     @Override
     public PacienteDTO getOne(String id) throws Exception {
         return new PacienteMapper().entityToDTO(
-                pacienteRepository.findById(Long.parseLong(id)).orElseThrow(() -> new NotFoundException("Not found")));
+                pacienteRepository.findById(Long.parseLong(id)).orElseThrow(() -> new EntityNotFoundException("Not found")));
     }
 
 
@@ -40,7 +40,7 @@ public class PacienteService implements ServiceSisdent<PacienteDTO> {
     public PacienteDTO update(String id, PacienteDTO dto) throws Exception {
         Paciente p = pacienteRepository.findById(Long.parseLong(id)).map(
                 paciente -> getPaciente(dto, paciente)
-        ).orElseThrow(() -> new NotFoundException("Not found"));
+        ).orElseThrow(() -> new EntityNotFoundException("Not found"));
         pacienteRepository.saveAndFlush(p);
         return null;
     }

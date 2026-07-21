@@ -2,10 +2,7 @@ package br.com.itbn.sisdent.model;
 
 import br.com.itbn.sisdent.comum.EntitySisdent;
 import lombok.*;
-import org.hibernate.annotations.Type;
-
-import javax.persistence.*;
-import java.util.Date;
+import jakarta.persistence.*;
 
 @Setter
 @Getter
