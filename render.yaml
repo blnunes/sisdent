@@ -5,7 +5,7 @@ services:
     plan: free
     region: frankfurt
     branch: master
-    autoDeployTrigger: checksPass
+    autoDeployTrigger: off
     healthCheckPath: /actuator/health
     envVars:
       - key: H2_CONSOLE_ENABLED
