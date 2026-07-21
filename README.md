@@ -1,23 +1,32 @@
 # Sisdent
 
-Spring Boot REST API using an in-memory H2 database.
+REST API built with Java 25, Spring Boot 4 and an in-memory H2 database.
 
 ## Run
 
 ```bash
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
-Then request the database-backed greeting:
+Static development data is loaded from
+`src/main/resources/data/initial-data.json` whenever the application starts with
+an empty database.
+
+## Endpoints
+
+```text
+GET /api/states
+GET /api/addresses
+GET /api/addresses/postal-code/{postalCode}
+GET /api/patients
+GET /api/patients/{id}
+POST /api/patients
+```
+
+Example:
 
 ```bash
-curl http://localhost:8080/api/messages/hello
-```
-
-Response:
-
-```json
-{"message":"Hello World"}
+curl http://localhost:8080/api/patients
 ```
 
 The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
@@ -26,5 +35,5 @@ The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
 ## Test
 
 ```bash
-./mvnw test
+mvn test
 ```
