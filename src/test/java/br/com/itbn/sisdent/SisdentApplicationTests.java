@@ -37,52 +37,51 @@ class SisdentApplicationTests {
     void loadsStaticJsonDataAndReturnsPatients() throws Exception {
         mockMvc.perform(get("/api/patients"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].name").value("Ana Souza"))
-                .andExpect(jsonPath("$[0].address.state.abbreviation").value("GO"))
+                .andExpect(jsonPath("$.length()").value(40))
+                .andExpect(jsonPath("$[0].name").value("Abigail Scott"))
+                .andExpect(jsonPath("$[0].address.state.abbreviation").value("IL"))
                 .andExpect(jsonPath("$[0].specialities.length()").value(2))
-                .andExpect(jsonPath("$[0].specialities[0].name").value("Ortodontia"));
+                .andExpect(jsonPath("$[0].specialities[0].name").value("Endodontics"));
     }
 
     @Test
     void returnsAddressByPostalCode() throws Exception {
-        mockMvc.perform(get("/api/addresses/postal-code/01310100"))
+        mockMvc.perform(get("/api/addresses/postal-code/10000001"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.street").value("Avenida Paulista"))
-                .andExpect(jsonPath("$.state.abbreviation").value("SP"));
+                .andExpect(jsonPath("$.street").value("152 Hudson Square Avenue"))
+                .andExpect(jsonPath("$.state.abbreviation").value("NY"));
     }
 
     @Test
     void returnsAllSeededSpecialities() throws Exception {
         mockMvc.perform(get("/api/specialities"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(3))
-                .andExpect(jsonPath("$[0].name").value("Endontia"))
-                .andExpect(jsonPath("$[1].name").value("Ortodontia"))
-                .andExpect(jsonPath("$[2].name").value("Pediatric"));
+                .andExpect(jsonPath("$.length()").value(12))
+                .andExpect(jsonPath("$[0].name").value("Dental Anesthesiology"))
+                .andExpect(jsonPath("$[11].name").value("Prosthodontics"));
     }
 
     @Test
     void returnsAllSeededStates() throws Exception {
         mockMvc.perform(get("/api/states"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].abbreviation").value("GO"))
-                .andExpect(jsonPath("$[1].abbreviation").value("SP"));
+                .andExpect(jsonPath("$.length()").value(8))
+                .andExpect(jsonPath("$[0].abbreviation").value("CA"))
+                .andExpect(jsonPath("$[7].abbreviation").value("WA"));
     }
 
     @Test
     void returnsAllSeededAddresses() throws Exception {
         mockMvc.perform(get("/api/addresses"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.length()").value(20));
     }
 
     @Test
     void returnsPatientById() throws Exception {
         mockMvc.perform(get("/api/patients/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Ana Souza"))
+                .andExpect(jsonPath("$.name").value("Olivia Bennett"))
                 .andExpect(jsonPath("$.birthDate").value("1992-04-18"));
     }
 
@@ -109,12 +108,12 @@ class SisdentApplicationTests {
                   "taxId": "98765432100",
                   "specialityIds": [1, 3],
                   "address": {
-                    "street": "Avenida Paulista",
-                    "district": "Bela Vista",
-                    "additionalInfo": "Suite 1204",
-                    "block": "A",
-                    "postalCode": "01310100",
-                    "state": {"name": "São Paulo", "abbreviation": "SP"}
+                    "street": "152 Hudson Square Avenue",
+                    "district": "Chelsea",
+                    "additionalInfo": "Apartment 11D",
+                    "block": "North Tower",
+                    "postalCode": "10000001",
+                    "state": {"name": "New York", "abbreviation": "NY"}
                   }
                 }
                 """;
@@ -124,7 +123,7 @@ class SisdentApplicationTests {
                         .content(request))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Maria Oliveira"))
-                .andExpect(jsonPath("$.address.postalCode").value("01310100"));
+                .andExpect(jsonPath("$.address.postalCode").value("10000001"));
     }
 
     @Test

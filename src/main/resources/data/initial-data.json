@@ -1,63 +1,570 @@
 {
   "specialities": [
-    {
-      "name": "Pediatric"
-    },
-    {
-      "name": "Endontia"
-    },
-    {
-      "name": "Ortodontia"
-    }
+    { "name": "Dental Anesthesiology" },
+    { "name": "Dental Public Health" },
+    { "name": "Endodontics" },
+    { "name": "Oral and Maxillofacial Pathology" },
+    { "name": "Oral and Maxillofacial Radiology" },
+    { "name": "Oral and Maxillofacial Surgery" },
+    { "name": "Oral Medicine" },
+    { "name": "Orofacial Pain" },
+    { "name": "Orthodontics and Dentofacial Orthopedics" },
+    { "name": "Pediatric Dentistry" },
+    { "name": "Periodontics" },
+    { "name": "Prosthodontics" }
   ],
   "states": [
-    {
-      "name": "Goiás",
-      "abbreviation": "GO"
-    },
-    {
-      "name": "São Paulo",
-      "abbreviation": "SP"
-    }
+    { "name": "California", "abbreviation": "CA" },
+    { "name": "Florida", "abbreviation": "FL" },
+    { "name": "Illinois", "abbreviation": "IL" },
+    { "name": "Massachusetts", "abbreviation": "MA" },
+    { "name": "New York", "abbreviation": "NY" },
+    { "name": "Texas", "abbreviation": "TX" },
+    { "name": "Virginia", "abbreviation": "VA" },
+    { "name": "Washington", "abbreviation": "WA" }
   ],
   "addresses": [
     {
-      "reference": "goiania-clinic",
-      "street": "Avenida T-10",
-      "district": "Setor Bueno",
-      "additionalInfo": "Dental clinic",
-      "block": "A",
-      "postalCode": "74223060",
-      "stateAbbreviation": "GO"
+      "reference": "maple-grove-austin",
+      "street": "1842 Maple Grove Avenue",
+      "district": "North Loop",
+      "additionalInfo": "Apartment 3B",
+      "block": "Building A",
+      "postalCode": "73000001",
+      "stateAbbreviation": "TX"
     },
     {
-      "reference": "sao-paulo-clinic",
-      "street": "Avenida Paulista",
-      "district": "Bela Vista",
-      "additionalInfo": "Suite 1204",
-      "block": "B",
-      "postalCode": "01310100",
-      "stateAbbreviation": "SP"
+      "reference": "cedar-park-dallas",
+      "street": "907 Cedar Park Road",
+      "district": "Lakewood",
+      "additionalInfo": "Unit 12",
+      "block": "Building C",
+      "postalCode": "73000002",
+      "stateAbbreviation": "TX"
+    },
+    {
+      "reference": "sunset-ridge-miami",
+      "street": "2516 Sunset Ridge Drive",
+      "district": "Coral Way",
+      "additionalInfo": "Apartment 8A",
+      "block": "Tower South",
+      "postalCode": "33000001",
+      "stateAbbreviation": "FL"
+    },
+    {
+      "reference": "palm-harbor-orlando",
+      "street": "433 Palm Harbor Lane",
+      "district": "Lake Eola Heights",
+      "additionalInfo": "Suite 204",
+      "block": "Building B",
+      "postalCode": "33000002",
+      "stateAbbreviation": "FL"
+    },
+    {
+      "reference": "pacific-view-seattle",
+      "street": "1187 Pacific View Boulevard",
+      "district": "Fremont",
+      "additionalInfo": "Apartment 14",
+      "block": "West Wing",
+      "postalCode": "98000001",
+      "stateAbbreviation": "WA"
+    },
+    {
+      "reference": "rainier-court-tacoma",
+      "street": "672 Rainier Court",
+      "district": "North End",
+      "additionalInfo": "Unit 5",
+      "block": "Building D",
+      "postalCode": "98000002",
+      "stateAbbreviation": "WA"
+    },
+    {
+      "reference": "harbor-point-boston",
+      "street": "305 Harbor Point Street",
+      "district": "Back Bay",
+      "additionalInfo": "Apartment 6C",
+      "block": "East Building",
+      "postalCode": "02000001",
+      "stateAbbreviation": "MA"
+    },
+    {
+      "reference": "willow-brook-cambridge",
+      "street": "744 Willow Brook Way",
+      "district": "Riverside",
+      "additionalInfo": "Unit 9",
+      "block": "Building A",
+      "postalCode": "02000002",
+      "stateAbbreviation": "MA"
+    },
+    {
+      "reference": "hudson-square-new-york",
+      "street": "152 Hudson Square Avenue",
+      "district": "Chelsea",
+      "additionalInfo": "Apartment 11D",
+      "block": "North Tower",
+      "postalCode": "10000001",
+      "stateAbbreviation": "NY"
+    },
+    {
+      "reference": "oak-terrace-brooklyn",
+      "street": "889 Oak Terrace Road",
+      "district": "Park Slope",
+      "additionalInfo": "Apartment 4F",
+      "block": "Building 2",
+      "postalCode": "10000002",
+      "stateAbbreviation": "NY"
+    },
+    {
+      "reference": "lake-shore-chicago",
+      "street": "2214 Lake Shore Crescent",
+      "district": "Lincoln Park",
+      "additionalInfo": "Unit 17B",
+      "block": "Tower One",
+      "postalCode": "60000001",
+      "stateAbbreviation": "IL"
+    },
+    {
+      "reference": "prairie-stone-evanston",
+      "street": "536 Prairie Stone Lane",
+      "district": "Central Street",
+      "additionalInfo": "Apartment 2A",
+      "block": "Building F",
+      "postalCode": "60000002",
+      "stateAbbreviation": "IL"
+    },
+    {
+      "reference": "golden-gate-san-francisco",
+      "street": "1645 Golden Gate Terrace",
+      "district": "Richmond District",
+      "additionalInfo": "Apartment 7",
+      "block": "West Court",
+      "postalCode": "90000001",
+      "stateAbbreviation": "CA"
+    },
+    {
+      "reference": "mission-garden-san-diego",
+      "street": "782 Mission Garden Drive",
+      "district": "North Park",
+      "additionalInfo": "Unit 10C",
+      "block": "Building E",
+      "postalCode": "90000002",
+      "stateAbbreviation": "CA"
+    },
+    {
+      "reference": "capitol-oaks-sacramento",
+      "street": "419 Capitol Oaks Boulevard",
+      "district": "Midtown",
+      "additionalInfo": "Apartment 15A",
+      "block": "South Tower",
+      "postalCode": "90000003",
+      "stateAbbreviation": "CA"
+    },
+    {
+      "reference": "bluebonnet-hill-houston",
+      "street": "1268 Bluebonnet Hill Road",
+      "district": "Heights",
+      "additionalInfo": "Unit 4",
+      "block": "Building B",
+      "postalCode": "73000003",
+      "stateAbbreviation": "TX"
+    },
+    {
+      "reference": "potomac-view-arlington",
+      "street": "603 Potomac View Avenue",
+      "district": "Clarendon",
+      "additionalInfo": "Apartment 9C",
+      "block": "East Tower",
+      "postalCode": "22000001",
+      "stateAbbreviation": "VA"
+    },
+    {
+      "reference": "magnolia-crossing-richmond",
+      "street": "945 Magnolia Crossing Street",
+      "district": "The Fan",
+      "additionalInfo": "Unit 6",
+      "block": "Building H",
+      "postalCode": "22000002",
+      "stateAbbreviation": "VA"
+    },
+    {
+      "reference": "atlantic-meadow-buffalo",
+      "street": "337 Atlantic Meadow Way",
+      "district": "Elmwood Village",
+      "additionalInfo": "Apartment 3D",
+      "block": "North Building",
+      "postalCode": "10000003",
+      "stateAbbreviation": "NY"
+    },
+    {
+      "reference": "cypress-bend-tampa",
+      "street": "1084 Cypress Bend Avenue",
+      "district": "Hyde Park",
+      "additionalInfo": "Unit 21",
+      "block": "Building G",
+      "postalCode": "33000003",
+      "stateAbbreviation": "FL"
     }
   ],
   "patients": [
     {
-      "name": "Ana Souza",
+      "name": "Olivia Bennett",
       "birthDate": "1992-04-18",
       "active": true,
       "gender": "FEMALE",
-      "taxId": "12345678901",
-      "addressReference": "goiania-clinic",
-      "specialityNames": ["Pediatric", "Ortodontia"]
+      "taxId": "10000000001",
+      "addressReference": "maple-grove-austin",
+      "specialityNames": ["Pediatric Dentistry", "Orthodontics and Dentofacial Orthopedics"]
     },
     {
-      "name": "Daniel Costa",
+      "name": "Liam Carter",
       "birthDate": "1985-11-03",
       "active": true,
       "gender": "MALE",
-      "taxId": "10987654321",
-      "addressReference": "sao-paulo-clinic",
-      "specialityNames": ["Endontia"]
+      "taxId": "10000000002",
+      "addressReference": "maple-grove-austin",
+      "specialityNames": ["Endodontics", "Oral and Maxillofacial Pathology"]
+    },
+    {
+      "name": "Emma Rodriguez",
+      "birthDate": "1978-02-27",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000003",
+      "addressReference": "cedar-park-dallas",
+      "specialityNames": ["Periodontics", "Prosthodontics"]
+    },
+    {
+      "name": "Noah Thompson",
+      "birthDate": "2001-09-14",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000004",
+      "addressReference": "cedar-park-dallas",
+      "specialityNames": ["Oral Medicine"]
+    },
+    {
+      "name": "Ava Mitchell",
+      "birthDate": "1996-06-22",
+      "active": false,
+      "gender": "FEMALE",
+      "taxId": "10000000005",
+      "addressReference": "sunset-ridge-miami",
+      "specialityNames": ["Orofacial Pain", "Oral and Maxillofacial Radiology"]
+    },
+    {
+      "name": "Ethan Brooks",
+      "birthDate": "1989-12-09",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000006",
+      "addressReference": "sunset-ridge-miami",
+      "specialityNames": ["Oral and Maxillofacial Surgery"]
+    },
+    {
+      "name": "Sophia Nguyen",
+      "birthDate": "1994-03-31",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000007",
+      "addressReference": "palm-harbor-orlando",
+      "specialityNames": ["Dental Anesthesiology", "Endodontics"]
+    },
+    {
+      "name": "Mason Rivera",
+      "birthDate": "1971-08-16",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000008",
+      "addressReference": "palm-harbor-orlando",
+      "specialityNames": ["Prosthodontics"]
+    },
+    {
+      "name": "Isabella Foster",
+      "birthDate": "2004-01-25",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000009",
+      "addressReference": "pacific-view-seattle",
+      "specialityNames": ["Orthodontics and Dentofacial Orthopedics"]
+    },
+    {
+      "name": "Lucas Green",
+      "birthDate": "1982-10-11",
+      "active": false,
+      "gender": "MALE",
+      "taxId": "10000000010",
+      "addressReference": "pacific-view-seattle",
+      "specialityNames": ["Oral and Maxillofacial Pathology"]
+    },
+    {
+      "name": "Mia Patel",
+      "birthDate": "1999-07-07",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000011",
+      "addressReference": "rainier-court-tacoma",
+      "specialityNames": ["Dental Public Health", "Pediatric Dentistry"]
+    },
+    {
+      "name": "James Anderson",
+      "birthDate": "1968-05-19",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000012",
+      "addressReference": "rainier-court-tacoma",
+      "specialityNames": ["Periodontics"]
+    },
+    {
+      "name": "Charlotte Kim",
+      "birthDate": "1987-11-28",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000013",
+      "addressReference": "harbor-point-boston",
+      "specialityNames": ["Endodontics", "Oral Medicine"]
+    },
+    {
+      "name": "Benjamin Clark",
+      "birthDate": "1990-04-02",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000014",
+      "addressReference": "harbor-point-boston",
+      "specialityNames": ["Orofacial Pain"]
+    },
+    {
+      "name": "Amelia Turner",
+      "birthDate": "1976-09-23",
+      "active": false,
+      "gender": "FEMALE",
+      "taxId": "10000000015",
+      "addressReference": "willow-brook-cambridge",
+      "specialityNames": ["Prosthodontics", "Periodontics"]
+    },
+    {
+      "name": "Henry Walker",
+      "birthDate": "2002-12-15",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000016",
+      "addressReference": "willow-brook-cambridge",
+      "specialityNames": ["Pediatric Dentistry"]
+    },
+    {
+      "name": "Harper Lewis",
+      "birthDate": "1993-02-08",
+      "active": true,
+      "gender": "OTHER",
+      "taxId": "10000000017",
+      "addressReference": "hudson-square-new-york",
+      "specialityNames": ["Oral and Maxillofacial Radiology"]
+    },
+    {
+      "name": "Alexander Young",
+      "birthDate": "1980-06-30",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000018",
+      "addressReference": "hudson-square-new-york",
+      "specialityNames": ["Oral and Maxillofacial Surgery", "Dental Anesthesiology"]
+    },
+    {
+      "name": "Evelyn Martinez",
+      "birthDate": "1998-10-04",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000019",
+      "addressReference": "oak-terrace-brooklyn",
+      "specialityNames": ["Orthodontics and Dentofacial Orthopedics"]
+    },
+    {
+      "name": "Daniel Harris",
+      "birthDate": "1965-01-17",
+      "active": false,
+      "gender": "MALE",
+      "taxId": "10000000020",
+      "addressReference": "oak-terrace-brooklyn",
+      "specialityNames": ["Oral Medicine", "Orofacial Pain"]
+    },
+    {
+      "name": "Abigail Scott",
+      "birthDate": "1988-08-26",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000021",
+      "addressReference": "lake-shore-chicago",
+      "specialityNames": ["Endodontics", "Oral and Maxillofacial Pathology"]
+    },
+    {
+      "name": "Michael White",
+      "birthDate": "1973-03-12",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000022",
+      "addressReference": "lake-shore-chicago",
+      "specialityNames": ["Periodontics", "Oral and Maxillofacial Pathology"]
+    },
+    {
+      "name": "Ella Robinson",
+      "birthDate": "2000-05-21",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000023",
+      "addressReference": "prairie-stone-evanston",
+      "specialityNames": ["Dental Public Health"]
+    },
+    {
+      "name": "Sebastian Hall",
+      "birthDate": "1991-11-06",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000024",
+      "addressReference": "prairie-stone-evanston",
+      "specialityNames": ["Prosthodontics"]
+    },
+    {
+      "name": "Scarlett Adams",
+      "birthDate": "1984-07-29",
+      "active": false,
+      "gender": "FEMALE",
+      "taxId": "10000000025",
+      "addressReference": "golden-gate-san-francisco",
+      "specialityNames": ["Orofacial Pain", "Endodontics"]
+    },
+    {
+      "name": "Jack Wilson",
+      "birthDate": "1979-09-10",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000026",
+      "addressReference": "golden-gate-san-francisco",
+      "specialityNames": ["Oral and Maxillofacial Surgery"]
+    },
+    {
+      "name": "Grace Chen",
+      "birthDate": "1997-12-19",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000027",
+      "addressReference": "mission-garden-san-diego",
+      "specialityNames": ["Orthodontics and Dentofacial Orthopedics", "Pediatric Dentistry"]
+    },
+    {
+      "name": "Samuel Wright",
+      "birthDate": "1986-04-24",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000028",
+      "addressReference": "mission-garden-san-diego",
+      "specialityNames": ["Dental Anesthesiology"]
+    },
+    {
+      "name": "Chloe Davis",
+      "birthDate": "2003-06-13",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000029",
+      "addressReference": "capitol-oaks-sacramento",
+      "specialityNames": ["Oral and Maxillofacial Radiology"]
+    },
+    {
+      "name": "David Moore",
+      "birthDate": "1969-10-30",
+      "active": false,
+      "gender": "MALE",
+      "taxId": "10000000030",
+      "addressReference": "capitol-oaks-sacramento",
+      "specialityNames": ["Periodontics", "Prosthodontics"]
+    },
+    {
+      "name": "Victoria Garcia",
+      "birthDate": "1995-01-09",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000031",
+      "addressReference": "bluebonnet-hill-houston",
+      "specialityNames": ["Oral Medicine"]
+    },
+    {
+      "name": "Joseph Martin",
+      "birthDate": "1983-08-01",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000032",
+      "addressReference": "bluebonnet-hill-houston",
+      "specialityNames": ["Endodontics", "Oral and Maxillofacial Pathology"]
+    },
+    {
+      "name": "Lily Johnson",
+      "birthDate": "2005-03-17",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000033",
+      "addressReference": "potomac-view-arlington",
+      "specialityNames": ["Pediatric Dentistry"]
+    },
+    {
+      "name": "Matthew Lee",
+      "birthDate": "1975-05-08",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000034",
+      "addressReference": "potomac-view-arlington",
+      "specialityNames": ["Dental Public Health", "Periodontics"]
+    },
+    {
+      "name": "Zoey Campbell",
+      "birthDate": "1990-12-03",
+      "active": false,
+      "gender": "OTHER",
+      "taxId": "10000000035",
+      "addressReference": "magnolia-crossing-richmond",
+      "specialityNames": ["Orofacial Pain"]
+    },
+    {
+      "name": "Andrew Perez",
+      "birthDate": "1981-02-20",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000036",
+      "addressReference": "magnolia-crossing-richmond",
+      "specialityNames": ["Oral and Maxillofacial Surgery", "Prosthodontics"]
+    },
+    {
+      "name": "Hannah Roberts",
+      "birthDate": "1996-09-27",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000037",
+      "addressReference": "atlantic-meadow-buffalo",
+      "specialityNames": ["Orthodontics and Dentofacial Orthopedics"]
+    },
+    {
+      "name": "Christopher Baker",
+      "birthDate": "1977-07-14",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000038",
+      "addressReference": "atlantic-meadow-buffalo",
+      "specialityNames": ["Oral and Maxillofacial Radiology", "Oral Medicine"]
+    },
+    {
+      "name": "Natalie King",
+      "birthDate": "2000-11-22",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000039",
+      "addressReference": "cypress-bend-tampa",
+      "specialityNames": ["Dental Anesthesiology", "Endodontics"]
+    },
+    {
+      "name": "Ryan Collins",
+      "birthDate": "1988-04-05",
+      "active": false,
+      "gender": "MALE",
+      "taxId": "10000000040",
+      "addressReference": "cypress-bend-tampa",
+      "specialityNames": ["Periodontics"]
     }
   ]
 }
