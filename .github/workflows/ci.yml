@@ -224,4 +224,4 @@ jobs:
           lan_health_url="http://${lan_ip}/actuator/health" # NOSONAR
           curl --fail --silent --show-error --max-time 10 "${lan_health_url}" # NOSONAR
           swagger_url="http://${lan_ip}/swagger-ui/index.html" # NOSONAR
-          echo "Swagger UI: ${swagger_url}"
+          echo "Swagger UI: ${swagger_url}" # NOSONAR
