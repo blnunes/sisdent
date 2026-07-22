@@ -14,13 +14,19 @@ Related files:
 
 ## Current workflow
 
-The pipeline contains two separate jobs:
+The pipeline contains four separate jobs:
 
 1. `Quality check` runs tests, produces coverage, submits the SonarCloud
    analysis, and waits for the Quality Gate.
-2. `Deploy to Render` runs only for a push to `master` and only after the
+2. `Build pre-production image` runs only for a trusted push to `master`. It
+   builds the exact approved commit, publishes immutable and convenience tags
+   to GHCR, and uploads the deployment bundle.
+3. `Deploy to Render` runs only for a push to `master` and only after the
    quality job succeeds. It deploys the exact approved commit, waits for Render,
    and verifies application health.
+4. `Deploy to local pre-production` runs on the dedicated self-hosted runner
+   after the image build. It downloads no source checkout, pulls the immutable
+   image, starts Compose, verifies health, and rolls back when possible.
 
 Triggers:
 
@@ -37,12 +43,22 @@ flowchart LR
     S -->|PR| E[Finish]
     S -->|approved push| D[Call Render API]
     D --> W[Wait for live deploy]
-    W --> H[GET actuator/health]
-    H --> G[Green workflow]
+    W --> H[Verify Render health]
+    S -->|approved push| B[Build and push GHCR image]
+    B --> P[Deploy immutable SHA on self-hosted runner]
+    P --> L[Verify local health or roll back]
+    H --> G[Render job succeeds]
+    L --> G2[Pre-production job succeeds]
     S -->|rejected| F[Red workflow; no deploy]
     W -->|failure or timeout| F
     H -->|non-2xx response| F
+    B -->|build or publish failure| F
+    L -->|health failure| F
 ```
+
+The Render and local pre-production jobs are independent after the Quality
+Gate. An offline self-hosted runner does not prevent the Render job from
+starting or completing.
 
 ## `Quality check` job
 
@@ -90,6 +106,28 @@ Flow:
 `render.yaml` deliberately uses `autoDeployTrigger: off`. Enabling Render auto
 deploy as well would allow a push to create two deployments. GitHub Actions is
 the single deployment orchestrator.
+
+## Local pre-production jobs
+
+The build job uses a GitHub-hosted runner and publishes two GHCR tags:
+
+- `ghcr.io/blnunes/sisdent:<commit SHA>` is immutable and is the deployment
+  input;
+- `ghcr.io/blnunes/sisdent:preprod` is a convenience pointer and is never used
+  as the authoritative rollback record.
+
+The build job packages only `compose.preprod.yml`, the Caddy configuration, and
+`deploy/preprod/deploy.sh`. The self-hosted job downloads that artifact directly
+to `/srv/sisdent`; it does not run `actions/checkout` and keeps no source tree.
+
+The self-hosted runner must have the standard `self-hosted`, `linux`, and `x64`
+labels plus the custom `sisdent-preprod` label. Host bootstrap, network policy,
+runtime files, rollback behavior, and registration steps are documented in
+`docs/PREPROD.md`.
+
+The workflow authenticates to GHCR with its short-lived `GITHUB_TOKEN`. No
+long-lived registry token belongs on the Ubuntu host. The build job receives
+`packages: write`; the deployment job receives `packages: read`.
 
 ## Required secrets
 
@@ -143,4 +181,3 @@ and enabled Actions notifications.
   secrets, and separate Render service IDs.
 - Before PostgreSQL deployment, introduce migrations and never use
   `ddl-auto=create-drop` in production.
-
