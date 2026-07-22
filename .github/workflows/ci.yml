@@ -36,6 +36,7 @@ jobs:
   build-preprod-image:
     name: Build pre-production image
     if: >-
+      github.event_name == 'push' &&
       github.repository == 'blnunes/sisdent' &&
       github.ref == 'refs/heads/feat/preprod-deployment'
     needs: quality-check
@@ -157,6 +158,7 @@ jobs:
   deploy-preprod:
     name: Deploy to local pre-production
     if: >-
+      github.event_name == 'push' &&
       github.repository == 'blnunes/sisdent' &&
       github.ref == 'refs/heads/feat/preprod-deployment'
     needs: build-preprod-image
