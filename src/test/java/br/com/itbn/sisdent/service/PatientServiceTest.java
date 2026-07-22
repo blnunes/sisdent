@@ -8,9 +8,7 @@ import br.com.itbn.sisdent.model.Address;
 import br.com.itbn.sisdent.model.Gender;
 import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.model.State;
-import br.com.itbn.sisdent.repository.AddressRepository;
 import br.com.itbn.sisdent.repository.PatientRepository;
-import br.com.itbn.sisdent.repository.StateRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,9 +23,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,10 +33,7 @@ class PatientServiceTest {
     private PatientRepository patientRepository;
 
     @Mock
-    private AddressRepository addressRepository;
-
-    @Mock
-    private StateRepository stateRepository;
+    private AddressService addressService;
 
     @InjectMocks
     private PatientService patientService;
@@ -70,7 +63,7 @@ class PatientServiceTest {
     @Test
     void createsPatientReusingExistingAddress() {
         Address address = existingAddress();
-        when(addressRepository.findByPostalCode("01310100")).thenReturn(Optional.of(address));
+        when(addressService.findOrCreate(patientRequest().address())).thenReturn(address);
         when(patientRepository.save(any(Patient.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -78,26 +71,20 @@ class PatientServiceTest {
 
         assertThat(response.name()).isEqualTo("Ana Souza");
         assertThat(response.address().postalCode()).isEqualTo("01310100");
-        verify(addressRepository, never()).save(any(Address.class));
-        verifyNoInteractions(stateRepository);
+        verify(addressService).findOrCreate(patientRequest().address());
     }
 
     @Test
-    void createsMissingStateAndAddressBeforePatient() {
-        when(addressRepository.findByPostalCode("01310100")).thenReturn(Optional.empty());
-        when(stateRepository.findByAbbreviation("SP")).thenReturn(Optional.empty());
-        when(stateRepository.save(any(State.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-        when(addressRepository.save(any(Address.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+    void createsPatientWithResolvedAddress() {
+        Address address = existingAddress();
+        when(addressService.findOrCreate(patientRequest().address())).thenReturn(address);
         when(patientRepository.save(any(Patient.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         PatientResponse response = patientService.create(patientRequest());
 
         assertThat(response.address().state().abbreviation()).isEqualTo("SP");
-        verify(stateRepository).save(any(State.class));
-        verify(addressRepository).save(any(Address.class));
+        verify(addressService).findOrCreate(patientRequest().address());
         verify(patientRepository).save(any(Patient.class));
     }
 
