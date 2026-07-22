@@ -96,8 +96,8 @@ The job uses `ubuntu-latest` with the
 
 Steps:
 
-1. `actions/checkout@v6` checks out the full history with `fetch-depth: 0`,
-   which Sonar needs for accurate SCM analysis.
+1. `actions/checkout` pinned to the reviewed v6 commit checks out the full
+   history with `fetch-depth: 0`, which Sonar needs for accurate SCM analysis.
 2. `mvn --batch-mode --no-transfer-progress verify` compiles the application,
    runs all tests, and generates `target/site/jacoco/jacoco.xml`.
 3. Maven Sonar Scanner submits the analysis to project `blnunes_sisdent` in
@@ -205,6 +205,8 @@ and enabled Actions notifications.
 
 ## Evolution guidelines
 
+- Pin every third-party GitHub Action to a reviewed full commit SHA and retain
+  the major version only as an explanatory comment.
 - Do not add checkout to the deployment job without a concrete need.
 - Do not re-run the full Maven build during Sonar analysis when the existing
   JaCoCo output can be reused.
