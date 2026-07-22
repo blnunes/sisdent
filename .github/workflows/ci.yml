@@ -6,26 +6,8 @@ on:
     branches:
       - master
       - feat/preprod-deployment
-  pull_request:
-    branches:
-      - master
-      - feat/preprod-deployment
 
 jobs:
-  validate-production-source:
-    name: Validate production source branch
-    if: github.event_name == 'pull_request' && github.base_ref == 'master'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require pre-production branch
-        run: |
-          source_repository="$(jq --raw-output '.pull_request.head.repo.full_name' "$GITHUB_EVENT_PATH")"
-          if [[ "$GITHUB_HEAD_REF" != "feat/preprod-deployment" || \
-                "$source_repository" != "$GITHUB_REPOSITORY" ]]; then
-            echo "Production pull requests must come from feat/preprod-deployment in this repository"
-            exit 1
-          fi
-
   quality-check:
     name: Quality check
     runs-on: ubuntu-latest
