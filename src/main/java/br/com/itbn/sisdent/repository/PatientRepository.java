@@ -19,4 +19,6 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
     @Override
     @EntityGraph(attributePaths = {"address", "address.state", "specialities"})
     Optional<Patient> findById(Long id);
+
+    Optional<Patient> findByTaxId(String taxId);
 }

@@ -57,16 +57,6 @@ public class InitialDataLoader implements ApplicationRunner {
     @Transactional(rollbackFor = IOException.class)
     public void run(ApplicationArguments arguments) throws IOException {
         InitialData initialData = readInitialData();
-
-        if (hasExistingData()) {
-            long insertedSpecialities = saveMissingSpecialities(initialData.specialities());
-            LOGGER.info(
-                    "Initial data loading skipped because the database is not empty; "
-                            + "{} missing specialities were loaded",
-                    insertedSpecialities);
-            return;
-        }
-
         Map<String, State> statesByAbbreviation = saveStates(initialData.states());
         Map<String, Speciality> specialitiesByName = saveSpecialities(initialData.specialities());
         Map<String, Address> addressesByReference = saveAddresses(
@@ -74,19 +64,12 @@ public class InitialDataLoader implements ApplicationRunner {
         savePatients(initialData.patients(), addressesByReference, specialitiesByName);
 
         LOGGER.info(
-                "Initial data loaded from {}: {} states, {} specialities, {} addresses and {} patients",
+                "Initial data synchronized from {}: {} states, {} specialities, {} addresses and {} patients",
                 INITIAL_DATA_PATH,
                 initialData.states().size(),
                 initialData.specialities().size(),
                 initialData.addresses().size(),
                 initialData.patients().size());
-    }
-
-    private boolean hasExistingData() {
-        return stateRepository.count() > 0
-                || specialityRepository.count() > 0
-                || addressRepository.count() > 0
-                || patientRepository.count() > 0;
     }
 
     private InitialData readInitialData() throws IOException {
@@ -98,8 +81,9 @@ public class InitialDataLoader implements ApplicationRunner {
 
     private Map<String, State> saveStates(List<StateData> states) {
         List<State> savedStates = states.stream()
-                .map(state -> new State(state.name(), state.abbreviation()))
-                .map(stateRepository::save)
+                .map(state -> stateRepository.findByAbbreviation(state.abbreviation())
+                        .orElseGet(() -> stateRepository.save(
+                                new State(state.name(), state.abbreviation()))))
                 .toList();
 
         return savedStates.stream()
@@ -108,15 +92,10 @@ public class InitialDataLoader implements ApplicationRunner {
 
     private Map<String, Speciality> saveSpecialities(List<SpecialityData> specialities) {
         return specialities.stream()
-                .map(speciality -> specialityRepository.save(new Speciality(speciality.name())))
+                .map(speciality -> specialityRepository.findByName(speciality.name())
+                        .orElseGet(() -> specialityRepository.save(
+                                new Speciality(speciality.name()))))
                 .collect(Collectors.toMap(Speciality::getName, Function.identity()));
-    }
-
-    private long saveMissingSpecialities(List<SpecialityData> specialities) {
-        return specialities.stream()
-                .filter(speciality -> specialityRepository.findByName(speciality.name()).isEmpty())
-                .map(speciality -> specialityRepository.save(new Speciality(speciality.name())))
-                .count();
     }
 
     private Map<String, Address> saveAddresses(
@@ -125,16 +104,17 @@ public class InitialDataLoader implements ApplicationRunner {
         return addresses.stream()
                 .collect(Collectors.toMap(
                         AddressData::reference,
-                        address -> addressRepository.save(new Address(
-                                address.street(),
-                                address.district(),
-                                address.additionalInfo(),
-                                address.block(),
-                                address.postalCode(),
-                                requireReference(
-                                        statesByAbbreviation,
-                                        address.stateAbbreviation(),
-                                        "state abbreviation")))));
+                        address -> addressRepository.findByPostalCode(address.postalCode())
+                                .orElseGet(() -> addressRepository.save(new Address(
+                                        address.street(),
+                                        address.district(),
+                                        address.additionalInfo(),
+                                        address.block(),
+                                        address.postalCode(),
+                                        requireReference(
+                                                statesByAbbreviation,
+                                                address.stateAbbreviation(),
+                                                "state abbreviation"))))));
     }
 
     private void savePatients(
@@ -142,6 +122,7 @@ public class InitialDataLoader implements ApplicationRunner {
             Map<String, Address> addressesByReference,
             Map<String, Speciality> specialitiesByName) {
         patients.stream()
+                .filter(patient -> patientRepository.findByTaxId(patient.taxId()).isEmpty())
                 .map(patient -> new Patient(
                         patient.name(),
                         patient.birthDate(),

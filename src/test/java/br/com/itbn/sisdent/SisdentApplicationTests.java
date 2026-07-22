@@ -1,9 +1,13 @@
 package br.com.itbn.sisdent;
 
+import br.com.itbn.sisdent.config.InitialDataLoader;
+import br.com.itbn.sisdent.model.Patient;
+import br.com.itbn.sisdent.repository.PatientRepository;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,6 +26,12 @@ class SisdentApplicationTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private InitialDataLoader initialDataLoader;
+
+    @Autowired
+    private PatientRepository patientRepository;
 
     @Test
     void exposesOpenApiDocumentation() throws Exception {
@@ -42,6 +52,19 @@ class SisdentApplicationTests {
                 .andExpect(jsonPath("$[0].address.state.abbreviation").value("IL"))
                 .andExpect(jsonPath("$[0].specialities.length()").value(2))
                 .andExpect(jsonPath("$[0].specialities[0].name").value("Endodontics"));
+    }
+
+    @Test
+    void restoresMissingInitialDataWithoutDuplicatingExistingData() throws Exception {
+        Patient patient = patientRepository.findByTaxId("10000000001").orElseThrow();
+        patientRepository.delete(patient);
+        patientRepository.flush();
+
+        initialDataLoader.run(new DefaultApplicationArguments(new String[0]));
+
+        mockMvc.perform(get("/api/patients"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(40));
     }
 
     @Test
