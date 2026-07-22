@@ -1,5 +1,8 @@
 # Local pre-production environment
 
+For a complete, reproducible setup procedure for a new Ubuntu host, see
+[`PREPROD_MACHINE_SETUP.md`](PREPROD_MACHINE_SETUP.md).
+
 ## Purpose
 
 The local pre-production environment runs Sisdent on a dedicated Ubuntu
@@ -10,7 +13,7 @@ A self-hosted runner on the Ubuntu machine downloads only the deployment
 bundle and starts the approved image.
 
 ```text
-push to master
+push or merge to feat/preprod-deployment
   -> tests and SonarCloud Quality Gate
   -> build image on a GitHub-hosted runner
   -> push ghcr.io/blnunes/sisdent:<commit SHA>
@@ -18,10 +21,14 @@ push to master
   -> self-hosted Ubuntu runner pulls the image and runs Compose
   -> verify /actuator/health
   -> keep the new image, or roll back to the last healthy image
+  -> validate pre-production manually
+  -> open a pull request from feat/preprod-deployment to master
+  -> merge to master and deploy the approved commit to Render
 ```
 
-Render remains a separate deployment target. A failure or unavailable local
-runner does not block the Render deployment job.
+The local host is the pre-production target and Render is the production target.
+There is no automatic promotion: the tested pre-production branch must be
+reviewed and merged into `master` before the Render deployment runs.
 
 ## Host responsibilities
 

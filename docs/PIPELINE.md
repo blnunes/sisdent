@@ -14,51 +14,80 @@ Related files:
 
 ## Current workflow
 
-The pipeline contains four separate jobs:
+The pipeline contains five jobs:
 
-1. `Quality check` runs tests, produces coverage, submits the SonarCloud
+1. `Validate production source branch` runs on pull requests targeting `master`
+   and accepts only `feat/preprod-deployment` as the source branch.
+2. `Quality check` runs tests, produces coverage, submits the SonarCloud
    analysis, and waits for the Quality Gate.
-2. `Build pre-production image` runs only for a trusted push to `master`. It
-   builds the exact approved commit, publishes immutable and convenience tags
-   to GHCR, and uploads the deployment bundle.
-3. `Deploy to Render` runs only for a push to `master` and only after the
-   quality job succeeds. It deploys the exact approved commit, waits for Render,
-   and verifies application health.
-4. `Deploy to local pre-production` runs on the dedicated self-hosted runner
-   after the image build. It downloads no source checkout, pulls the immutable
-   image, starts Compose, verifies health, and rolls back when possible.
+3. `Build pre-production image` runs only for a trusted push to
+   `feat/preprod-deployment`. It builds the exact approved commit, publishes
+   immutable and convenience tags to GHCR, and uploads the deployment bundle.
+4. `Deploy to local pre-production` runs in the GitHub `preprod` environment on
+   the dedicated self-hosted runner after the image build. It downloads no
+   source checkout, pulls the immutable image, starts Compose, verifies health,
+   and rolls back when possible.
+5. `Deploy to Render` runs in the GitHub `production` environment only for a
+   push to `master` and only after the quality job succeeds. It deploys the
+   exact approved commit, waits for Render, and verifies application health.
 
 Triggers:
 
-- A pull request targeting `master` runs only the quality check.
-- A push to `master`, including a merged pull request, runs quality checks and
-  then deploys when they pass.
+- `workflow_dispatch` allows an authorized user to select
+  `feat/preprod-deployment` and run the pre-production pipeline from the
+  GitHub Actions web interface. The workflow containing this trigger must first
+  exist on the repository default branch for the `Run workflow` button to
+  appear.
+- A pull request targeting `feat/preprod-deployment` runs the quality check.
+- A push or merge to `feat/preprod-deployment` runs quality checks, builds the
+  image, and deploys it to the local pre-production machine.
+- A pull request targeting `master` runs the source-branch validation and the
+  quality check.
+- A push or merge to `master` runs quality checks and deploys to Render
+  production. It does not deploy to the local pre-production machine.
 
 ```mermaid
 flowchart LR
-    A[PR targeting master] --> Q[Quality check]
-    M[Push or merge to master] --> Q
-    Q --> T[mvn verify]
-    T --> S[SonarCloud Quality Gate]
-    S -->|PR| E[Finish]
-    S -->|approved push| D[Call Render API]
-    D --> W[Wait for live deploy]
-    W --> H[Verify Render health]
-    S -->|approved push| B[Build and push GHCR image]
-    B --> P[Deploy immutable SHA on self-hosted runner]
-    P --> L[Verify local health or roll back]
-    H --> G[Render job succeeds]
-    L --> G2[Pre-production job succeeds]
-    S -->|rejected| F[Red workflow; no deploy]
-    W -->|failure or timeout| F
-    H -->|non-2xx response| F
-    B -->|build or publish failure| F
-    L -->|health failure| F
+    F[Feature branch] --> PRP[PR to feat/preprod-deployment]
+    PRP --> Q[Quality check]
+    Q -->|approved merge| P[Push to preprod branch]
+    P --> B[Build and push GHCR image]
+    B --> L[Deploy immutable SHA locally]
+    L --> H[Verify health or roll back]
+    H --> T[Manual pre-production testing]
+    T --> PRM[PR from preprod to master]
+    PRM --> V[Validate production source]
+    PRM --> Q2[Quality check]
+    V --> M[Merge to master]
+    Q2 --> M
+    M --> R[Deploy to Render production]
 ```
 
-The Render and local pre-production jobs are independent after the Quality
-Gate. An offline self-hosted runner does not prevent the Render job from
-starting or completing.
+Pre-production and production are separate stages. Production promotion is a
+reviewed merge from `feat/preprod-deployment` to `master`; a local deployment
+does not automatically update Render.
+
+## Branch protection and environments
+
+Create GitHub environments named `preprod` and `production`. The workflow
+associates local deployment with `preprod` and Render deployment with
+`production`, allowing environment-specific approvals and secrets when needed.
+Restrict the `preprod` environment to `feat/preprod-deployment` and the
+`production` environment to `master`. Production may additionally require a
+reviewer before the deployment job starts.
+
+Configure repository branch rules as follows:
+
+- For `feat/preprod-deployment`, block deletion and force pushes, require pull
+  requests, and require the `Quality check` status check before merging.
+- For `master`, block deletion and force pushes, require pull requests, and
+  require both `Validate production source branch` and `Quality check`.
+- Do not allow routine bypass of these rules. The validation job rejects a
+  production pull request whose source is not `feat/preprod-deployment` in
+  this repository.
+
+These settings are configured under `Settings > Rules > Rulesets` or branch
+protection in GitHub. Workflow YAML cannot make a branch undeletable by itself.
 
 ## `Quality check` job
 
@@ -88,7 +117,8 @@ gate required at least 90%. Update this document if the external gate changes.
 
 The job has three controls:
 
-- `if: github.event_name == 'push'`: pull requests never deploy.
+- `if` requires a push to `refs/heads/master`; pull requests and preprod
+  pushes never deploy to Render.
 - `needs: quality-check`: tests and Sonar must pass first.
 - `timeout-minutes: 25`: the workflow cannot wait indefinitely.
 
@@ -109,7 +139,9 @@ the single deployment orchestrator.
 
 ## Local pre-production jobs
 
-The build job uses a GitHub-hosted runner and publishes two GHCR tags:
+These jobs run after a push to `feat/preprod-deployment` or a manual
+`workflow_dispatch` that selects that branch. The build job uses a
+GitHub-hosted runner and publishes two GHCR tags:
 
 - `ghcr.io/blnunes/sisdent:<commit SHA>` is immutable and is the deployment
   input;

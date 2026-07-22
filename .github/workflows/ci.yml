@@ -1,14 +1,31 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
+      - feat/preprod-deployment
   pull_request:
     branches:
       - master
+      - feat/preprod-deployment
 
 jobs:
+  validate-production-source:
+    name: Validate production source branch
+    if: github.event_name == 'pull_request' && github.base_ref == 'master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require pre-production branch
+        run: |
+          source_repository="$(jq --raw-output '.pull_request.head.repo.full_name' "$GITHUB_EVENT_PATH")"
+          if [[ "$GITHUB_HEAD_REF" != "feat/preprod-deployment" || \
+                "$source_repository" != "$GITHUB_REPOSITORY" ]]; then
+            echo "Production pull requests must come from feat/preprod-deployment in this repository"
+            exit 1
+          fi
+
   quality-check:
     name: Quality check
     runs-on: ubuntu-latest
@@ -36,7 +53,9 @@ jobs:
 
   build-preprod-image:
     name: Build pre-production image
-    if: github.event_name == 'push' && github.repository == 'blnunes/sisdent'
+    if: >-
+      github.repository == 'blnunes/sisdent' &&
+      github.ref == 'refs/heads/feat/preprod-deployment'
     needs: quality-check
     runs-on: ubuntu-latest
     permissions:
@@ -83,10 +102,11 @@ jobs:
 
   deploy-render:
     name: Deploy to Render
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: quality-check
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    environment: production
     env:
       RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
       RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
@@ -154,10 +174,13 @@ jobs:
 
   deploy-preprod:
     name: Deploy to local pre-production
-    if: github.event_name == 'push' && github.repository == 'blnunes/sisdent'
+    if: >-
+      github.repository == 'blnunes/sisdent' &&
+      github.ref == 'refs/heads/feat/preprod-deployment'
     needs: build-preprod-image
     runs-on: [self-hosted, linux, x64, sisdent-preprod]
     timeout-minutes: 15
+    environment: preprod
     concurrency:
       group: sisdent-preprod
       cancel-in-progress: false
@@ -183,3 +206,19 @@ jobs:
       - name: Deploy approved image
         shell: bash
         run: bash /srv/sisdent/deploy/preprod/deploy.sh "${GITHUB_SHA}"
+
+      - name: Verify LAN endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          bind_address="$(sed -n 's/^SISDENT_BIND_ADDRESS=//p' /srv/sisdent/runtime.env)"
+          lan_ip="$(ip -4 route get 1.1.1.1 | awk '{print $7; exit}')"
+
+          if [[ "$bind_address" != "0.0.0.0" && "$bind_address" != "$lan_ip" ]]; then
+            echo "SISDENT_BIND_ADDRESS must be 0.0.0.0 or the LAN IP $lan_ip"
+            exit 1
+          fi
+
+          curl --fail --silent --show-error --max-time 10 \
+            "http://${lan_ip}/actuator/health"
+          echo "Swagger UI: http://${lan_ip}/swagger-ui/index.html"
