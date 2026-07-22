@@ -21,13 +21,3 @@ jobs:
 
       - name: Unit tests
         run: mvn --batch-mode --no-transfer-progress verify
-
-      - name: SonarCloud
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          org.sonarsource.scanner.maven:sonar-maven-plugin:5.7.0.6970:sonar
-          -Dsonar.organization=blnunes
-          -Dsonar.projectKey=blnunes_sisdent
-          -Dsonar.qualitygate.wait=true

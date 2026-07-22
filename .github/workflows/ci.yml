@@ -24,6 +24,7 @@ jobs:
         run: mvn --batch-mode --no-transfer-progress verify
 
       - name: SonarCloud
+        if: github.ref == 'refs/heads/master'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >-
