@@ -56,12 +56,17 @@ public class InitialDataLoader implements ApplicationRunner {
     @Override
     @Transactional(rollbackFor = IOException.class)
     public void run(ApplicationArguments arguments) throws IOException {
+        InitialData initialData = readInitialData();
+
         if (hasExistingData()) {
-            LOGGER.info("Initial data loading skipped because the database is not empty");
+            long insertedSpecialities = saveMissingSpecialities(initialData.specialities());
+            LOGGER.info(
+                    "Initial data loading skipped because the database is not empty; "
+                            + "{} missing specialities were loaded",
+                    insertedSpecialities);
             return;
         }
 
-        InitialData initialData = readInitialData();
         Map<String, State> statesByAbbreviation = saveStates(initialData.states());
         Map<String, Speciality> specialitiesByName = saveSpecialities(initialData.specialities());
         Map<String, Address> addressesByReference = saveAddresses(
@@ -105,6 +110,13 @@ public class InitialDataLoader implements ApplicationRunner {
         return specialities.stream()
                 .map(speciality -> specialityRepository.save(new Speciality(speciality.name())))
                 .collect(Collectors.toMap(Speciality::getName, Function.identity()));
+    }
+
+    private long saveMissingSpecialities(List<SpecialityData> specialities) {
+        return specialities.stream()
+                .filter(speciality -> specialityRepository.findByName(speciality.name()).isEmpty())
+                .map(speciality -> specialityRepository.save(new Speciality(speciality.name())))
+                .count();
     }
 
     private Map<String, Address> saveAddresses(
