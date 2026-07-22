@@ -9,10 +9,16 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "patients")
@@ -42,6 +48,14 @@ public class Patient {
     @JoinColumn(name = "address_id", nullable = false)
     private Address address;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "patient_specialities",
+            joinColumns = @JoinColumn(name = "patient_id"),
+            inverseJoinColumns = @JoinColumn(name = "speciality_id"))
+    @OrderBy("name ASC")
+    private Set<Speciality> specialities = new LinkedHashSet<>();
+
     protected Patient() {
     }
 
@@ -51,13 +65,15 @@ public class Patient {
             boolean active,
             Gender gender,
             String taxId,
-            Address address) {
+            Address address,
+            Collection<Speciality> specialities) {
         this.name = name;
         this.birthDate = birthDate;
         this.active = active;
         this.gender = gender;
         this.taxId = taxId;
         this.address = address;
+        this.specialities.addAll(specialities);
     }
 
     public Long getId() {
@@ -86,5 +102,9 @@ public class Patient {
 
     public Address getAddress() {
         return address;
+    }
+
+    public Set<Speciality> getSpecialities() {
+        return Set.copyOf(specialities);
     }
 }

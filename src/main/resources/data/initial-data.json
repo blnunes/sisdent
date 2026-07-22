@@ -1,4 +1,15 @@
 {
+  "specialities": [
+    {
+      "name": "Pediatric"
+    },
+    {
+      "name": "Endontia"
+    },
+    {
+      "name": "Ortodontia"
+    }
+  ],
   "states": [
     {
       "name": "Goiás",
@@ -36,7 +47,8 @@
       "active": true,
       "gender": "FEMALE",
       "taxId": "12345678901",
-      "addressReference": "goiania-clinic"
+      "addressReference": "goiania-clinic",
+      "specialityNames": ["Pediatric", "Ortodontia"]
     },
     {
       "name": "Daniel Costa",
@@ -44,7 +56,8 @@
       "active": true,
       "gender": "MALE",
       "taxId": "10987654321",
-      "addressReference": "sao-paulo-clinic"
+      "addressReference": "sao-paulo-clinic",
+      "specialityNames": ["Endontia"]
     }
   ]
 }

@@ -2,15 +2,18 @@ package br.com.itbn.sisdent.mapper;
 
 import br.com.itbn.sisdent.dto.AddressResponse;
 import br.com.itbn.sisdent.dto.PatientResponse;
+import br.com.itbn.sisdent.dto.SpecialityResponse;
 import br.com.itbn.sisdent.dto.StateResponse;
 import br.com.itbn.sisdent.model.Address;
 import br.com.itbn.sisdent.model.Gender;
 import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.model.State;
+import br.com.itbn.sisdent.model.Speciality;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -58,7 +61,8 @@ class ResponseMapperTest {
                 true,
                 Gender.FEMALE,
                 "12345678901",
-                address);
+                address,
+                List.of(new Speciality("Pediatric"), new Speciality("Ortodontia")));
 
         PatientResponse response = ResponseMapper.toResponse(patient);
 
@@ -67,5 +71,8 @@ class ResponseMapperTest {
         assertThat(response.active()).isTrue();
         assertThat(response.gender()).isEqualTo(Gender.FEMALE);
         assertThat(response.address().state().abbreviation()).isEqualTo("GO");
+        assertThat(response.specialities())
+                .extracting(SpecialityResponse::name)
+                .containsExactly("Ortodontia", "Pediatric");
     }
 }
