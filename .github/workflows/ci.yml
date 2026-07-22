@@ -222,6 +222,6 @@ jobs:
           # Intentional HTTP: this health request contains no credentials and is
           # restricted to the trusted RFC 1918 LAN; router port forwarding is disabled.
           lan_health_url="http://${lan_ip}/actuator/health" # NOSONAR
-          curl --fail --silent --show-error --max-time 10 "${lan_health_url}"
+          curl --fail --silent --show-error --max-time 10 "${lan_health_url}" # NOSONAR
           swagger_url="http://${lan_ip}/swagger-ui/index.html" # NOSONAR
           echo "Swagger UI: ${swagger_url}"
