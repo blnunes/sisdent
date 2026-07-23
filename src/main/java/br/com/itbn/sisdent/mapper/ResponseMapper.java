@@ -3,9 +3,13 @@ package br.com.itbn.sisdent.mapper;
 import br.com.itbn.sisdent.dto.AddressResponse;
 import br.com.itbn.sisdent.dto.PatientResponse;
 import br.com.itbn.sisdent.dto.StateResponse;
+import br.com.itbn.sisdent.dto.SpecialityResponse;
 import br.com.itbn.sisdent.model.Address;
 import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.model.State;
+import br.com.itbn.sisdent.model.Speciality;
+
+import java.util.Comparator;
 
 public final class ResponseMapper {
 
@@ -14,6 +18,10 @@ public final class ResponseMapper {
 
     public static StateResponse toResponse(State state) {
         return new StateResponse(state.getId(), state.getName(), state.getAbbreviation());
+    }
+
+    public static SpecialityResponse toResponse(Speciality speciality) {
+        return new SpecialityResponse(speciality.getId(), speciality.getName());
     }
 
     public static AddressResponse toResponse(Address address) {
@@ -35,6 +43,10 @@ public final class ResponseMapper {
                 patient.isActive(),
                 patient.getGender(),
                 patient.getTaxId(),
-                toResponse(patient.getAddress()));
+                toResponse(patient.getAddress()),
+                patient.getSpecialities().stream()
+                        .sorted(Comparator.comparing(Speciality::getName))
+                        .map(ResponseMapper::toResponse)
+                        .toList());
     }
 }

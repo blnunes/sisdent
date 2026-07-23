@@ -1,0 +1,56 @@
+name: sisdent-preprod
+
+services:
+  data-init:
+    image: busybox:1.37
+    command: ["sh", "-c", "chown -R 1001:1001 /data"]
+    user: "0:0"
+    volumes:
+      - sisdent-data:/data
+    network_mode: none
+    restart: "no"
+
+  app:
+    image: "${SISDENT_IMAGE_REPOSITORY:-ghcr.io/blnunes/sisdent}:${SISDENT_IMAGE_TAG:?SISDENT_IMAGE_TAG is required}"
+    environment:
+      H2_CONSOLE_ENABLED: "false"
+      SPRING_DATASOURCE_URL: "jdbc:h2:file:/data/sisdent;DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=FALSE"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    expose:
+      - "8080"
+    volumes:
+      - sisdent-data:/data
+    depends_on:
+      data-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    stop_grace_period: 30s
+    networks:
+      - backend
+
+  proxy:
+    image: caddy:2-alpine
+    ports:
+      - "${SISDENT_BIND_ADDRESS:-127.0.0.1}:80:80"
+    volumes:
+      - ./deploy/preprod/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      app:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - backend
+
+volumes:
+  sisdent-data:
+    name: sisdent-preprod-data
+
+networks:
+  backend:
+    name: sisdent-preprod-backend

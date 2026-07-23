@@ -5,3 +5,6 @@
 target
 HELP.md
 *.iml
+*.log
+.DS_Store
+docs

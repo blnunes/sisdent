@@ -8,6 +8,7 @@ import br.com.itbn.sisdent.model.Address;
 import br.com.itbn.sisdent.model.Gender;
 import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.model.State;
+import br.com.itbn.sisdent.model.Speciality;
 import br.com.itbn.sisdent.repository.PatientRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +21,7 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,6 +36,9 @@ class PatientServiceTest {
 
     @Mock
     private AddressService addressService;
+
+    @Mock
+    private SpecialityService specialityService;
 
     @InjectMocks
     private PatientService patientService;
@@ -64,6 +69,8 @@ class PatientServiceTest {
     void createsPatientReusingExistingAddress() {
         Address address = existingAddress();
         when(addressService.findOrCreate(patientRequest().address())).thenReturn(address);
+        when(specialityService.findAllByIds(patientRequest().specialityIds()))
+                .thenReturn(List.of(new Speciality("Pediatric")));
         when(patientRepository.save(any(Patient.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -78,6 +85,8 @@ class PatientServiceTest {
     void createsPatientWithResolvedAddress() {
         Address address = existingAddress();
         when(addressService.findOrCreate(patientRequest().address())).thenReturn(address);
+        when(specialityService.findAllByIds(patientRequest().specialityIds()))
+                .thenReturn(List.of(new Speciality("Pediatric")));
         when(patientRepository.save(any(Patient.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -101,7 +110,8 @@ class PatientServiceTest {
                         "Suite 1204",
                         "B",
                         "01310100",
-                        new StateRequest("São Paulo", "SP")));
+                        new StateRequest("São Paulo", "SP")),
+                Set.of(1L));
     }
 
     private Patient patient(Address address) {
@@ -111,7 +121,8 @@ class PatientServiceTest {
                 true,
                 Gender.FEMALE,
                 "12345678901",
-                address);
+                address,
+                List.of(new Speciality("Pediatric")));
     }
 
     private Address existingAddress() {

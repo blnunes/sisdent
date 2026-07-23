@@ -85,6 +85,13 @@ The normal flow is `Controller -> Service -> Repository -> H2`. Controllers do
 not access repositories directly. Request and response records are separate
 from JPA entities.
 
+`OpenApiConfiguration` is used indirectly by the Spring container. Spring Boot
+finds the class through component scanning because it is annotated with
+`@Configuration`; its `sisdentOpenApi` method registers an `OpenAPI` bean that
+Springdoc reads when serving `/v3/api-docs` and Swagger UI. There is deliberately
+no direct Java call to this class or method, so IDE "unused" inspections must not
+be interpreted as evidence that the configuration can be removed.
+
 `PatientService.create` contains the main business flow: it looks up an address
 by postal code and a state by abbreviation, creates missing records, and then
 persists the patient in one transaction.
@@ -211,4 +218,3 @@ Recommended order:
 Before storing real clinical data, review privacy, retention, consent, and
 applicable legal requirements. Clinical data requires substantially stronger
 controls than the current prototype.
-

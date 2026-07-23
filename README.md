@@ -37,3 +37,9 @@ The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
 ```bash
 mvn test
 ```
+
+## Deployment
+
+The Render and local pre-production deployment flows are documented in
+[`docs/PIPELINE.md`](docs/PIPELINE.md). The Ubuntu host bootstrap and operating
+instructions are in [`docs/PREPROD.md`](docs/PREPROD.md).
