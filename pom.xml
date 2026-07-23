@@ -19,6 +19,7 @@
 
     <properties>
         <java.version>25</java.version>
+        <sonar.exclusions>.github/workflows/**</sonar.exclusions>
     </properties>
 
     <dependencies>

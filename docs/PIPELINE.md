@@ -108,6 +108,10 @@ Steps:
 4. `-Dsonar.qualitygate.wait=true` waits for SonarCloud. A rejected Quality Gate
    makes the command fail and prevents deployment.
 
+The Maven property `sonar.exclusions` excludes `.github/workflows/**` from
+SonarCloud analysis. GitHub Actions workflow files are validated by GitHub when
+the workflows run and are intentionally outside the Java quality gate.
+
 The `contents: read` permission belongs only to this job because it is the only
 job that checks out the repository. The deployment job performs no checkout,
 avoiding duplicate work and following least privilege.

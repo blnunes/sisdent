@@ -41,9 +41,10 @@ class SpecialityServiceTest {
 
     @Test
     void rejectsUnknownSpecialityIds() {
-        when(specialityRepository.findAllById(Set.of(999L))).thenReturn(List.of());
+        Set<Long> unknownSpecialityIds = Set.of(999L);
+        when(specialityRepository.findAllById(unknownSpecialityIds)).thenReturn(List.of());
 
-        assertThatThrownBy(() -> specialityService.findAllByIds(Set.of(999L)))
+        assertThatThrownBy(() -> specialityService.findAllByIds(unknownSpecialityIds))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("One or more specialities do not exist");
     }
