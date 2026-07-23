@@ -7,37 +7,40 @@ developer or agent can maintain it without reconstructing previous decisions.
 
 Related files:
 
-- `.github/workflows/ci.yml`: GitHub Actions workflow.
+- `.github/workflows/ci.yml`: production deployment and release tagging.
+- `.github/workflows/preprod.yml`: local pre-production deployment.
+- `.github/workflows/pr-quality.yml`: pull-request quality checks.
+- `.github/workflows/rollback-production.yml`: manual production rollback.
 - `pom.xml`: Maven build, tests, and JaCoCo configuration.
 - `Dockerfile`: container image deployed to Render.
 - `render.yaml`: Render service definition.
 
 ## Current workflow
 
-The pipeline contains five jobs:
+The automation is split into independent workflows so production-only jobs do
+not appear as skipped in pre-production runs:
 
-1. `Validate production source branch` runs on pull requests targeting `master`
-   and accepts only `feat/preprod-deployment` as the source branch.
-2. `Quality check` runs tests, produces coverage, submits the SonarCloud
-   analysis, and waits for the Quality Gate.
-3. `Build pre-production image` runs only for a trusted push to
+1. `Quality check` runs tests, produces coverage, submits the SonarCloud
+   analysis, and waits for the Quality Gate on `master`.
+2. `Build pre-production image` runs only for a trusted push to
    `feat/preprod-deployment`. It builds the exact approved commit, publishes
    immutable and convenience tags to GHCR, and uploads the deployment bundle.
-4. `Deploy to local pre-production` runs in the GitHub `preprod` environment on
+3. `Deploy to local pre-production` runs in the GitHub `preprod` environment on
    the dedicated self-hosted runner after the image build. It downloads no
    source checkout, pulls the immutable image, starts Compose, verifies health,
    and rolls back when possible.
-5. `Deploy to Render` runs in the GitHub `production` environment only for a
+4. `Deploy to Render` runs in the GitHub `production` environment only for a
    push to `master` and only after the quality job succeeds. It deploys the
    exact approved commit, waits for Render, and verifies application health.
+5. `Tag deployed release` creates a SemVer tag only after the production health
+   check succeeds.
+6. `Rollback production` is a manual workflow that redeploys the immutable
+   commit referenced by an existing release tag.
 
 Triggers:
 
-- `workflow_dispatch` allows an authorized user to select
-  `feat/preprod-deployment` and run the pre-production pipeline from the
-  GitHub Actions web interface. The workflow containing this trigger must first
-  exist on the repository default branch for the `Run workflow` button to
-  appear.
+- `workflow_dispatch` on `CI` permits a manual quality run. Render deployment
+  and release tagging still require a push to `master`.
 - A pull request targeting `feat/preprod-deployment` runs the quality check.
 - A push or merge to `feat/preprod-deployment` runs quality checks, builds the
   image, and deploys it to the local pre-production machine.
@@ -56,11 +59,12 @@ flowchart LR
     L --> H[Verify health or roll back]
     H --> T[Manual pre-production testing]
     T --> PRM[PR from preprod to master]
-    PRM --> V[Validate production source]
     PRM --> Q2[Quality check]
-    V --> M[Merge to master]
     Q2 --> M
+    PRM --> M[Merge to master]
     M --> R[Deploy to Render production]
+    R --> C[Verify production health]
+    C --> G[Create release tag]
 ```
 
 Pre-production and production are separate stages. Production promotion is a
@@ -81,10 +85,9 @@ Configure repository branch rules as follows:
 - For `feat/preprod-deployment`, block deletion and force pushes, require pull
   requests, and require the `Quality check` status check before merging.
 - For `master`, block deletion and force pushes, require pull requests, and
-  require both `Validate production source branch` and `Quality check`.
-- Do not allow routine bypass of these rules. The validation job rejects a
-  production pull request whose source is not `feat/preprod-deployment` in
-  this repository.
+  require the `Quality check` status check.
+- Do not allow routine bypass of these rules. Promote production changes from
+  `feat/preprod-deployment` after local validation.
 
 These settings are configured under `Settings > Rules > Rulesets` or branch
 protection in GitHub. Workflow YAML cannot make a branch undeletable by itself.
@@ -137,10 +140,54 @@ Flow:
 deploy as well would allow a push to create two deployments. GitHub Actions is
 the single deployment orchestrator.
 
+## Release tags, hotfixes, and production rollback
+
+After Render reports `live` and the application health endpoint succeeds, the
+`Tag deployed release` job creates an annotated `vMAJOR.MINOR.PATCH` tag for
+the exact deployed commit. If the repository has no release tag yet, the
+initial version comes from the project version in `pom.xml` with `-SNAPSHOT`
+removed. With the current project version, the first successful release is
+`v0.0.1`. Later production deploys increment the patch number. Re-running a
+completed workflow is idempotent: an already tagged commit receives no second
+tag.
+
+The tag job needs `contents: write` on `GITHUB_TOKEN`. In repository settings,
+ensure Actions can use read/write workflow permissions and that any tag ruleset
+allows `github-actions[bot]` to create release tags.
+
+To prepare a correction from an older production version:
+
+```bash
+git fetch origin --tags
+git switch --create hotfix/short-description v0.0.1
+```
+
+Commit the correction, validate it in `feat/preprod-deployment`, and promote
+the approved change to `master` through the normal pull-request flow. When the
+hotfix branch starts from an older tag, cherry-pick the correction commit into
+`feat/preprod-deployment` instead of merging the old branch history. A successful
+production deploy receives the next patch tag automatically.
+
+To roll production back:
+
+1. Open `Actions > Rollback production > Run workflow`.
+2. Enter an existing tag such as `v0.0.1`.
+3. Approve the `production` environment if protection requires it.
+4. Confirm the selected deployment becomes `live` and passes the health check.
+
+The rollback workflow accepts only SemVer release tags that point to a commit
+in `master` history. It resolves the tag to a commit SHA and sends that SHA to
+Render. It does not move `master`, delete tags, or create a new tag. A later
+push to `master` remains the authoritative forward deployment.
+
+Production deploys and rollbacks share the `render-production` concurrency
+group and never run simultaneously. Rollback is an application rollback only:
+database changes must remain backward-compatible or have a separate,
+explicitly tested rollback procedure.
+
 ## Local pre-production jobs
 
-These jobs run after a push to `feat/preprod-deployment` or a manual
-`workflow_dispatch` that selects that branch. The build job uses a
+These jobs run after a push to `feat/preprod-deployment`. The build job uses a
 GitHub-hosted runner and publishes two GHCR tags:
 
 - `ghcr.io/blnunes/sisdent:<commit SHA>` is immutable and is the deployment

@@ -1,0 +1,119 @@
+name: Pre-production
+
+on:
+  push:
+    branches:
+      - feat/preprod-deployment
+
+jobs:
+  quality-check:
+    name: Quality check
+    runs-on: ubuntu-latest
+    container: maven:3.9.16-eclipse-temurin-25
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Unit tests
+        run: mvn --batch-mode --no-transfer-progress verify
+
+  build-preprod-image:
+    name: Build pre-production image
+    needs: quality-check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Build and publish immutable image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/blnunes/sisdent:${{ github.sha }}
+            ghcr.io/blnunes/sisdent:preprod
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Package deployment files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sisdent-preprod-${{ github.sha }}
+          path: |
+            compose.preprod.yml
+            deploy/preprod/Caddyfile
+            deploy/preprod/deploy.sh
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy-preprod:
+    name: Deploy to local pre-production
+    needs: build-preprod-image
+    runs-on: [self-hosted, linux, x64, sisdent-preprod]
+    timeout-minutes: 15
+    environment: preprod
+    concurrency:
+      group: sisdent-preprod
+      cancel-in-progress: false
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+
+    steps:
+      - name: Download deployment bundle
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: sisdent-preprod-${{ github.sha }}
+          path: /srv/sisdent
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy approved image
+        shell: bash
+        run: bash /srv/sisdent/deploy/preprod/deploy.sh "${GITHUB_SHA}"
+
+      - name: Verify LAN endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          bind_address="$(sed -n 's/^SISDENT_BIND_ADDRESS=//p' /srv/sisdent/runtime.env)"
+          lan_ip="$(ip -4 route get 1.1.1.1 | awk '{print $7; exit}')"
+
+          if [[ "$bind_address" != "0.0.0.0" && "$bind_address" != "$lan_ip" ]]; then
+            echo "SISDENT_BIND_ADDRESS must be 0.0.0.0 or the LAN IP $lan_ip"
+            exit 1
+          fi
+
+          # Intentional HTTP: this health request contains no credentials and is
+          # restricted to the trusted RFC 1918 LAN; router port forwarding is disabled.
+          lan_health_url="http://${lan_ip}/actuator/health" # NOSONAR
+          curl --fail --silent --show-error --max-time 10 "${lan_health_url}" # NOSONAR
+          swagger_url="http://${lan_ip}/swagger-ui/index.html" # NOSONAR
+          echo "Swagger UI: ${swagger_url}" # NOSONAR

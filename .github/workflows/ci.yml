@@ -5,7 +5,10 @@ on:
   push:
     branches:
       - master
-      - feat/preprod-deployment
+
+concurrency:
+  group: render-production
+  cancel-in-progress: false
 
 jobs:
   quality-check:
@@ -33,56 +36,6 @@ jobs:
           -Dsonar.organization=blnunes
           -Dsonar.projectKey=blnunes_sisdent
           -Dsonar.qualitygate.wait=true
-
-  build-preprod-image:
-    name: Build pre-production image
-    if: >-
-      github.event_name == 'push' &&
-      github.repository == 'blnunes/sisdent' &&
-      github.ref == 'refs/heads/feat/preprod-deployment'
-    needs: quality-check
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
-      - name: Build and publish immutable image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/blnunes/sisdent:${{ github.sha }}
-            ghcr.io/blnunes/sisdent:preprod
-          labels: |
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Package deployment files
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: sisdent-preprod-${{ github.sha }}
-          path: |
-            compose.preprod.yml
-            deploy/preprod/Caddyfile
-            deploy/preprod/deploy.sh
-          if-no-files-found: error
-          retention-days: 7
 
   deploy-render:
     name: Deploy to Render
@@ -156,57 +109,71 @@ jobs:
           --retry 5 --retry-delay 5 --retry-all-errors
           https://sisdent-yhze.onrender.com/actuator/health
 
-  deploy-preprod:
-    name: Deploy to local pre-production
-    if: >-
-      github.event_name == 'push' &&
-      github.repository == 'blnunes/sisdent' &&
-      github.ref == 'refs/heads/feat/preprod-deployment'
-    needs: build-preprod-image
-    runs-on: [self-hosted, linux, x64, sisdent-preprod]
-    timeout-minutes: 15
-    environment: preprod
-    concurrency:
-      group: sisdent-preprod
-      cancel-in-progress: false
+  tag-release:
+    name: Tag deployed release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: deploy-render
+    runs-on: ubuntu-latest
     permissions:
-      actions: read
-      contents: read
-      packages: read
+      contents: write
 
     steps:
-      - name: Download deployment bundle
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          name: sisdent-preprod-${{ github.sha }}
-          path: /srv/sisdent
+          fetch-depth: 0
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Deploy approved image
+      - name: Create next release tag
         shell: bash
-        run: bash /srv/sisdent/deploy/preprod/deploy.sh "${GITHUB_SHA}"
-
-      - name: Verify LAN endpoint
-        shell: bash
+        env:
+          RELEASE_COMMIT: ${{ github.sha }}
         run: |
           set -euo pipefail
-          bind_address="$(sed -n 's/^SISDENT_BIND_ADDRESS=//p' /srv/sisdent/runtime.env)"
-          lan_ip="$(ip -4 route get 1.1.1.1 | awk '{print $7; exit}')"
 
-          if [[ "$bind_address" != "0.0.0.0" && "$bind_address" != "$lan_ip" ]]; then
-            echo "SISDENT_BIND_ADDRESS must be 0.0.0.0 or the LAN IP $lan_ip"
-            exit 1
+          existing_tag="$(
+            git tag --points-at "${RELEASE_COMMIT}" |
+              grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
+              sort --version-sort |
+              tail -n 1 || true
+          )"
+          if [[ -n "${existing_tag}" ]]; then
+            echo "Commit ${RELEASE_COMMIT} is already tagged as ${existing_tag}"
+            exit 0
           fi
 
-          # Intentional HTTP: this health request contains no credentials and is
-          # restricted to the trusted RFC 1918 LAN; router port forwarding is disabled.
-          lan_health_url="http://${lan_ip}/actuator/health" # NOSONAR
-          curl --fail --silent --show-error --max-time 10 "${lan_health_url}" # NOSONAR
-          swagger_url="http://${lan_ip}/swagger-ui/index.html" # NOSONAR
-          echo "Swagger UI: ${swagger_url}" # NOSONAR
+          latest_tag="$(
+            git tag --list 'v*' |
+              grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
+              sort --version-sort |
+              tail -n 1 || true
+          )"
+
+          if [[ -z "${latest_tag}" ]]; then
+            project_version="$(
+              awk '
+                /<artifactId>sisdent<\/artifactId>/ { project = 1 }
+                project && /<version>/ {
+                  version = $0
+                  sub(/^.*<version>/, "", version)
+                  sub(/<\/version>.*$/, "", version)
+                  print version
+                  exit
+                }
+              ' pom.xml
+            )"
+            next_tag="v${project_version%-SNAPSHOT}"
+            if [[ ! "${next_tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Invalid initial version derived from pom.xml: ${next_tag}"
+              exit 1
+            fi
+          else
+            version="${latest_tag#v}"
+            IFS=. read -r major minor patch <<<"${version}"
+            next_tag="v${major}.${minor}.$((patch + 1))"
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag --annotate "${next_tag}" "${RELEASE_COMMIT}" \
+            --message "Production release ${next_tag}"
+          git push origin "refs/tags/${next_tag}"
+          echo "Created ${next_tag} for ${RELEASE_COMMIT}"
