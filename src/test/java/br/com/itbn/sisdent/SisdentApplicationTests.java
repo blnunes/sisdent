@@ -55,6 +55,10 @@ class SisdentApplicationTests {
                 .andExpect(jsonPath("$.length()").value(40))
                 .andExpect(jsonPath("$[0].name").value("Abigail Scott"))
                 .andExpect(jsonPath("$[0].address.state.abbreviation").value("IL"))
+                .andExpect(jsonPath("$[0].address.country.code").value("US"))
+                .andExpect(jsonPath("$[0].nationality.code").value("US"))
+                .andExpect(jsonPath("$[0].identificationType").value("NATIONAL_ID"))
+                .andExpect(jsonPath("$[0].identificationNumber").value("US10000000021"))
                 .andExpect(jsonPath("$[0].specialities.length()").value(2))
                 .andExpect(jsonPath("$[0].specialities[0].name").value("Endodontics"));
     }
@@ -157,6 +161,19 @@ class SisdentApplicationTests {
     }
 
     @Test
+    void returnsCountriesFromEuropeAndTheAmericas() throws Exception {
+        mockMvc.perform(get("/api/countries"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(80))
+                .andExpect(jsonPath("$[?(@.code == 'BR')].continent")
+                        .value("SOUTH_AMERICA"))
+                .andExpect(jsonPath("$[?(@.code == 'PT')].continent")
+                        .value("EUROPE"))
+                .andExpect(jsonPath("$[?(@.code == 'US')].continent")
+                        .value("NORTH_AMERICA"));
+    }
+
+    @Test
     void returnsAllSeededAddresses() throws Exception {
         mockMvc.perform(get("/api/addresses"))
                 .andExpect(status().isOk())
@@ -192,6 +209,9 @@ class SisdentApplicationTests {
                   "active": true,
                   "gender": "FEMALE",
                   "taxId": "98765432100",
+                  "identificationType": "PASSPORT",
+                  "identificationNumber": "BR 12-345 ABC",
+                  "nationalityCode": "BR",
                   "specialityIds": [1, 3],
                   "address": {
                     "street": "152 Hudson Square Avenue",
@@ -199,7 +219,8 @@ class SisdentApplicationTests {
                     "additionalInfo": "Apartment 11D",
                     "block": "North Tower",
                     "postalCode": "10000001",
-                    "state": {"name": "New York", "abbreviation": "NY"}
+                    "state": {"name": "New York", "abbreviation": "NY"},
+                    "countryCode": "US"
                   }
                 }
                 """;
@@ -209,7 +230,34 @@ class SisdentApplicationTests {
                         .content(request))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Maria Oliveira"))
+                .andExpect(jsonPath("$.identificationType").value("PASSPORT"))
+                .andExpect(jsonPath("$.identificationNumber").value("BR12345ABC"))
+                .andExpect(jsonPath("$.nationality.code").value("BR"))
                 .andExpect(jsonPath("$.address.postalCode").value("10000001"));
+    }
+
+    @Test
+    void rejectsDuplicateNormalizedIdentificationNumberAtDatabaseBoundary() throws Exception {
+        String firstRequest = patientRequest(
+                "Unique One",
+                "98765432101",
+                "PT AB-12345");
+        String duplicateRequest = patientRequest(
+                "Unique Two",
+                "98765432102",
+                "ptab 12345");
+
+        mockMvc.perform(post("/api/patients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(firstRequest))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.identificationNumber").value("PTAB12345"));
+
+        mockMvc.perform(post("/api/patients")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(duplicateRequest))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.title").value("Database constraint violation"));
     }
 
     @Test
@@ -218,5 +266,30 @@ class SisdentApplicationTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    private String patientRequest(String name, String taxId, String identificationNumber) {
+        return """
+                {
+                  "name": "%s",
+                  "birthDate": "1988-09-12",
+                  "active": true,
+                  "gender": "FEMALE",
+                  "taxId": "%s",
+                  "identificationType": "NATIONAL_ID",
+                  "identificationNumber": "%s",
+                  "nationalityCode": "PT",
+                  "specialityIds": [1],
+                  "address": {
+                    "street": "152 Hudson Square Avenue",
+                    "district": "Chelsea",
+                    "additionalInfo": "Apartment 11D",
+                    "block": "North Tower",
+                    "postalCode": "10000001",
+                    "state": {"name": "New York", "abbreviation": "NY"},
+                    "countryCode": "US"
+                  }
+                }
+                """.formatted(name, taxId, identificationNumber);
     }
 }

@@ -1,11 +1,15 @@
 package br.com.itbn.sisdent.config;
 
 import br.com.itbn.sisdent.model.Address;
+import br.com.itbn.sisdent.model.Continent;
+import br.com.itbn.sisdent.model.Country;
 import br.com.itbn.sisdent.model.Gender;
+import br.com.itbn.sisdent.model.IdentificationType;
 import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.model.State;
 import br.com.itbn.sisdent.model.Speciality;
 import br.com.itbn.sisdent.repository.AddressRepository;
+import br.com.itbn.sisdent.repository.CountryRepository;
 import br.com.itbn.sisdent.repository.PatientRepository;
 import br.com.itbn.sisdent.repository.StateRepository;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
@@ -35,6 +39,7 @@ public class InitialDataLoader implements ApplicationRunner {
     private static final String INITIAL_DATA_PATH = "data/initial-data.json";
 
     private final JsonMapper jsonMapper;
+    private final CountryRepository countryRepository;
     private final StateRepository stateRepository;
     private final SpecialityRepository specialityRepository;
     private final AddressRepository addressRepository;
@@ -42,11 +47,13 @@ public class InitialDataLoader implements ApplicationRunner {
 
     public InitialDataLoader(
             JsonMapper jsonMapper,
+            CountryRepository countryRepository,
             StateRepository stateRepository,
             SpecialityRepository specialityRepository,
             AddressRepository addressRepository,
             PatientRepository patientRepository) {
         this.jsonMapper = jsonMapper;
+        this.countryRepository = countryRepository;
         this.stateRepository = stateRepository;
         this.specialityRepository = specialityRepository;
         this.addressRepository = addressRepository;
@@ -57,19 +64,39 @@ public class InitialDataLoader implements ApplicationRunner {
     @Transactional(rollbackFor = IOException.class)
     public void run(ApplicationArguments arguments) throws IOException {
         InitialData initialData = readInitialData();
+        Map<String, Country> countriesByCode = saveCountries(initialData.countries());
         Map<String, State> statesByAbbreviation = saveStates(initialData.states());
         Map<String, Speciality> specialitiesByName = saveSpecialities(initialData.specialities());
         Map<String, Address> addressesByReference = saveAddresses(
-                initialData.addresses(), statesByAbbreviation);
-        savePatients(initialData.patients(), addressesByReference, specialitiesByName);
+                initialData.addresses(),
+                statesByAbbreviation,
+                countriesByCode,
+                initialData.seedDefaults().addressCountryCode());
+        savePatients(
+                initialData.patients(),
+                addressesByReference,
+                specialitiesByName,
+                countriesByCode,
+                initialData.seedDefaults());
 
         LOGGER.info(
-                "Initial data synchronized from {}: {} states, {} specialities, {} addresses and {} patients",
+                "Initial data synchronized from {}: {} countries, {} states, {} specialities, {} addresses and {} patients",
                 INITIAL_DATA_PATH,
+                initialData.countries().size(),
                 initialData.states().size(),
                 initialData.specialities().size(),
                 initialData.addresses().size(),
                 initialData.patients().size());
+    }
+
+    private Map<String, Country> saveCountries(List<CountryData> countries) {
+        return countries.stream()
+                .map(country -> countryRepository.findByCode(country.code())
+                        .orElseGet(() -> countryRepository.save(new Country(
+                                country.name(),
+                                country.code(),
+                                country.continent()))))
+                .collect(Collectors.toMap(Country::getCode, Function.identity()));
     }
 
     private InitialData readInitialData() throws IOException {
@@ -103,7 +130,9 @@ public class InitialDataLoader implements ApplicationRunner {
 
     private Map<String, Address> saveAddresses(
             List<AddressData> addresses,
-            Map<String, State> statesByAbbreviation) {
+            Map<String, State> statesByAbbreviation,
+            Map<String, Country> countriesByCode,
+            String addressCountryCode) {
         return addresses.stream()
                 .collect(Collectors.toMap(
                         AddressData::reference,
@@ -117,13 +146,19 @@ public class InitialDataLoader implements ApplicationRunner {
                                         requireReference(
                                                 statesByAbbreviation,
                                                 address.stateAbbreviation(),
-                                                "state abbreviation"))))));
+                                                "state abbreviation"),
+                                        requireReference(
+                                                countriesByCode,
+                                                addressCountryCode,
+                                                "country code"))))));
     }
 
     private void savePatients(
             List<PatientData> patients,
             Map<String, Address> addressesByReference,
-            Map<String, Speciality> specialitiesByName) {
+            Map<String, Speciality> specialitiesByName,
+            Map<String, Country> countriesByCode,
+            SeedDefaults seedDefaults) {
         patients.stream()
                 .filter(patient -> patientRepository.findByTaxId(patient.taxId()).isEmpty())
                 .map(patient -> new Patient(
@@ -132,6 +167,12 @@ public class InitialDataLoader implements ApplicationRunner {
                         patient.active(),
                         patient.gender(),
                         patient.taxId(),
+                        seedDefaults.identificationType(),
+                        seedDefaults.identificationPrefix() + patient.taxId(),
+                        requireReference(
+                                countriesByCode,
+                                seedDefaults.patientNationalityCode(),
+                                "nationality country code"),
                         requireReference(
                                 addressesByReference,
                                 patient.addressReference(),
@@ -155,10 +196,22 @@ public class InitialDataLoader implements ApplicationRunner {
     }
 
     public record InitialData(
+            List<CountryData> countries,
+            SeedDefaults seedDefaults,
             List<StateData> states,
             List<SpecialityData> specialities,
             List<AddressData> addresses,
             List<PatientData> patients) {
+    }
+
+    public record CountryData(String name, String code, Continent continent) {
+    }
+
+    public record SeedDefaults(
+            String addressCountryCode,
+            String patientNationalityCode,
+            IdentificationType identificationType,
+            String identificationPrefix) {
     }
 
     public record StateData(String name, String abbreviation) {

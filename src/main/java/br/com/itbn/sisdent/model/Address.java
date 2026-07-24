@@ -35,6 +35,10 @@ public class Address {
     @JoinColumn(name = "state_id", nullable = false)
     private State state;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "country_id", nullable = false)
+    private Country country;
+
     protected Address() {
     }
 
@@ -44,13 +48,15 @@ public class Address {
             String additionalInfo,
             String block,
             String postalCode,
-            State state) {
+            State state,
+            Country country) {
         this.street = street;
         this.district = district;
         this.additionalInfo = additionalInfo;
         this.block = block;
         this.postalCode = postalCode;
         this.state = state;
+        this.country = country;
     }
 
     public Long getId() {
@@ -79,5 +85,9 @@ public class Address {
 
     public State getState() {
         return state;
+    }
+
+    public Country getCountry() {
+        return country;
     }
 }

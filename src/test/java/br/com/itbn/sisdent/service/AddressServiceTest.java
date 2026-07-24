@@ -4,6 +4,8 @@ import br.com.itbn.sisdent.dto.AddressResponse;
 import br.com.itbn.sisdent.dto.AddressRequest;
 import br.com.itbn.sisdent.dto.StateRequest;
 import br.com.itbn.sisdent.model.Address;
+import br.com.itbn.sisdent.model.Continent;
+import br.com.itbn.sisdent.model.Country;
 import br.com.itbn.sisdent.model.State;
 import br.com.itbn.sisdent.repository.AddressRepository;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,9 @@ class AddressServiceTest {
 
     @Mock
     private StateService stateService;
+
+    @Mock
+    private CountryService countryService;
 
     @InjectMocks
     private AddressService addressService;
@@ -73,14 +78,17 @@ class AddressServiceTest {
     void createsMissingAddressWithResolvedState() {
         AddressRequest request = addressRequest();
         State state = new State("São Paulo", "SP");
+        Country country = country();
         when(addressRepository.findByPostalCode(request.postalCode())).thenReturn(Optional.empty());
         when(stateService.findOrCreate(request.state())).thenReturn(state);
+        when(countryService.requireByCode("BR")).thenReturn(country);
         when(addressRepository.save(any(Address.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         Address result = addressService.findOrCreate(request);
 
         assertThat(result.getState()).isSameAs(state);
+        assertThat(result.getCountry()).isSameAs(country);
         verify(addressRepository).save(any(Address.class));
     }
 
@@ -89,9 +97,10 @@ class AddressServiceTest {
                 "Avenida Paulista",
                 "Bela Vista",
                 "Suite 1204",
-                "B",
-                "01310100",
-                new StateRequest("São Paulo", "SP"));
+                        "B",
+                        "01310100",
+                        new StateRequest("São Paulo", "SP"),
+                        "BR");
     }
 
     private Address address(String postalCode) {
@@ -101,6 +110,11 @@ class AddressServiceTest {
                 "Suite 1204",
                 "B",
                 postalCode,
-                new State("São Paulo", "SP"));
+                new State("São Paulo", "SP"),
+                country());
+    }
+
+    private Country country() {
+        return new Country("Brazil", "BR", Continent.SOUTH_AMERICA);
     }
 }

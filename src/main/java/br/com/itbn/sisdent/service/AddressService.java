@@ -17,10 +17,15 @@ public class AddressService {
 
     private final AddressRepository addressRepository;
     private final StateService stateService;
+    private final CountryService countryService;
 
-    public AddressService(AddressRepository addressRepository, StateService stateService) {
+    public AddressService(
+            AddressRepository addressRepository,
+            StateService stateService,
+            CountryService countryService) {
         this.addressRepository = addressRepository;
         this.stateService = stateService;
+        this.countryService = countryService;
     }
 
     @Transactional(readOnly = true)
@@ -44,6 +49,7 @@ public class AddressService {
                         request.additionalInfo(),
                         request.block(),
                         request.postalCode(),
-                        stateService.findOrCreate(request.state()))));
+                        stateService.findOrCreate(request.state()),
+                        countryService.requireByCode(request.countryCode()))));
     }
 }

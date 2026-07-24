@@ -12,10 +12,15 @@ Static development data is loaded from
 `src/main/resources/data/initial-data.json` whenever the application starts with
 an empty database.
 
+Flyway applies versioned migrations from `src/main/resources/db/migration`
+before Hibernate validates the schema. Applied migrations are immutable;
+subsequent schema changes must use a new version.
+
 ## Endpoints
 
 ```text
 GET /api/states
+GET /api/countries
 GET /api/addresses
 GET /api/addresses/postal-code/{postalCode}
 GET /api/patients
@@ -25,6 +30,10 @@ GET /api/specialities
 POST /api/specialities
 PUT /api/specialities/{id}
 ```
+
+Countries use ISO 3166-1 alpha-2 codes. Patients carry nationality plus a
+globally unique passport or national identity number, and addresses reference
+their country of residence.
 
 Example:
 

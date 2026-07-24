@@ -29,6 +29,7 @@ public class OpenApiConfiguration {
                 .info(new Info()
                         .title("Sisdent API")
                         .version("v1")
-                        .description("API REST para gerenciamento de pacientes, endereços e estados."));
+                        .description(
+                                "REST API for managing patients, identification documents, countries, addresses, and states."));
     }
 }
