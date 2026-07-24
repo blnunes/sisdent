@@ -19,5 +19,47 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Classify pull request
+        id: change
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          mapfile -t changed_files < <(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}")
+          version_bump=false
+
+          if [[ "${#changed_files[@]}" -eq 1 && "${changed_files[0]}" == "pom.xml" ]]; then
+            old_pom="$(mktemp)"
+            git show "${BASE_SHA}:pom.xml" > "${old_pom}"
+            old_version="$(deploy/release/version.sh project-version "${old_pom}")"
+            new_version="$(deploy/release/version.sh project-version pom.xml)"
+
+            if deploy/release/version.sh is-next-snapshot \
+              "${old_version}" "${new_version}"; then
+              version_bump=true
+            fi
+          fi
+
+          echo "version_bump=${version_bump}" >> "${GITHUB_OUTPUT}"
+
+      - name: Validate production promotion source
+        if: >-
+          github.base_ref == 'master' &&
+          steps.change.outputs.version_bump != 'true'
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          if [[ "${HEAD_BRANCH}" != "feat/preprod-deployment" ]]; then
+            echo "Production changes must be promoted from feat/preprod-deployment" >&2
+            exit 1
+          fi
+
       - name: Unit tests
+        if: steps.change.outputs.version_bump != 'true'
         run: mvn --batch-mode --no-transfer-progress verify
+
+      - name: Validate next development version
+        if: steps.change.outputs.version_bump == 'true'
+        run: mvn --batch-mode --no-transfer-progress validate

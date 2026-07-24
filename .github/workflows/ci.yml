@@ -13,6 +13,8 @@ concurrency:
 jobs:
   quality-check:
     name: Quality check
+    outputs:
+      version_bump: ${{ steps.change.outputs.version_bump }}
     runs-on: ubuntu-latest
     container: maven:3.9.16-eclipse-temurin-25
     permissions:
@@ -23,11 +25,53 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Classify push
+        id: change
+        shell: bash
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          version_bump=false
+
+          if [[ "${GITHUB_EVENT_NAME}" == "push" &&
+                "${BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]]; then
+            mapfile -t changed_files < <(
+              git diff --name-only "${BEFORE_SHA}" "${GITHUB_SHA}"
+            )
+
+            if [[ "${#changed_files[@]}" -eq 1 &&
+                  "${changed_files[0]}" == "pom.xml" ]]; then
+              old_pom="$(mktemp)"
+              git show "${BEFORE_SHA}:pom.xml" > "${old_pom}"
+              old_version="$(
+                deploy/release/version.sh project-version "${old_pom}"
+              )"
+              new_version="$(
+                deploy/release/version.sh project-version pom.xml
+              )"
+
+              if deploy/release/version.sh is-next-snapshot \
+                "${old_version}" "${new_version}"; then
+                version_bump=true
+              fi
+            fi
+          fi
+
+          echo "version_bump=${version_bump}" >> "${GITHUB_OUTPUT}"
+
       - name: Unit tests
+        if: steps.change.outputs.version_bump != 'true'
         run: mvn --batch-mode --no-transfer-progress verify
 
+      - name: Validate next development version
+        if: steps.change.outputs.version_bump == 'true'
+        run: mvn --batch-mode --no-transfer-progress validate
+
       - name: SonarCloud
-        if: github.ref == 'refs/heads/master'
+        if: >-
+          github.ref == 'refs/heads/master' &&
+          steps.change.outputs.version_bump != 'true'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >-
@@ -39,7 +83,10 @@ jobs:
 
   deploy-render:
     name: Deploy to Render
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/master' &&
+      needs.quality-check.outputs.version_bump != 'true'
     needs: quality-check
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -111,8 +158,15 @@ jobs:
 
   tag-release:
     name: Tag deployed release
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: deploy-render
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/master' &&
+      needs.quality-check.outputs.version_bump != 'true'
+    needs:
+      - quality-check
+      - deploy-render
+    outputs:
+      release-version: ${{ steps.release.outputs.version }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -122,12 +176,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create next release tag
+      - name: Create release tag
+        id: release
         shell: bash
         env:
           RELEASE_COMMIT: ${{ github.sha }}
         run: |
           set -euo pipefail
+
+          snapshot_version="$(deploy/release/version.sh project-version pom.xml)"
+          release_version="$(
+            deploy/release/version.sh release-version "${snapshot_version}"
+          )"
+          release_tag="v${release_version}"
+          echo "version=${release_version}" >> "${GITHUB_OUTPUT}"
 
           existing_tag="$(
             git tag --points-at "${RELEASE_COMMIT}" |
@@ -136,44 +198,112 @@ jobs:
               tail -n 1 || true
           )"
           if [[ -n "${existing_tag}" ]]; then
+            if [[ "${existing_tag}" != "${release_tag}" ]]; then
+              echo "Commit is tagged ${existing_tag}, expected ${release_tag}" >&2
+              exit 1
+            fi
             echo "Commit ${RELEASE_COMMIT} is already tagged as ${existing_tag}"
             exit 0
           fi
 
-          latest_tag="$(
-            git tag --list 'v*' |
-              grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' |
-              sort --version-sort |
-              tail -n 1 || true
-          )"
-
-          if [[ -z "${latest_tag}" ]]; then
-            project_version="$(
-              awk '
-                /<artifactId>sisdent<\/artifactId>/ { project = 1 }
-                project && /<version>/ {
-                  version = $0
-                  sub(/^.*<version>/, "", version)
-                  sub(/<\/version>.*$/, "", version)
-                  print version
-                  exit
-                }
-              ' pom.xml
-            )"
-            next_tag="v${project_version%-SNAPSHOT}"
-            if [[ ! "${next_tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "Invalid initial version derived from pom.xml: ${next_tag}"
-              exit 1
-            fi
-          else
-            version="${latest_tag#v}"
-            IFS=. read -r major minor patch <<<"${version}"
-            next_tag="v${major}.${minor}.$((patch + 1))"
+          if git show-ref --verify --quiet "refs/tags/${release_tag}"; then
+            echo "Tag ${release_tag} already points to another commit" >&2
+            exit 1
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag --annotate "${next_tag}" "${RELEASE_COMMIT}" \
-            --message "Production release ${next_tag}"
-          git push origin "refs/tags/${next_tag}"
-          echo "Created ${next_tag} for ${RELEASE_COMMIT}"
+          git tag --annotate "${release_tag}" "${RELEASE_COMMIT}" \
+            --message "Production release ${release_tag}"
+          git push origin "refs/tags/${release_tag}"
+          echo "Created ${release_tag} for ${RELEASE_COMMIT}"
+
+  prepare-next-version:
+    name: Prepare next development version
+    needs: tag-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ secrets.RELEASE_AUTOMATION_TOKEN }}
+      RELEASE_VERSION: ${{ needs.tag-release.outputs.release-version }}
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_AUTOMATION_TOKEN }}
+
+      - name: Open version bump pull request
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${GH_TOKEN:?Missing RELEASE_AUTOMATION_TOKEN secret}"
+
+          next_snapshot="$(
+            deploy/release/version.sh next-snapshot "${RELEASE_VERSION}"
+          )"
+          current_snapshot="$(deploy/release/version.sh project-version pom.xml)"
+
+          if [[ "${current_snapshot}" == "${next_snapshot}" ]]; then
+            echo "Master already uses ${next_snapshot}"
+            exit 0
+          fi
+
+          expected_snapshot="${RELEASE_VERSION}-SNAPSHOT"
+          if [[ "${current_snapshot}" != "${expected_snapshot}" ]]; then
+            echo "Expected master at ${expected_snapshot}, got ${current_snapshot}" >&2
+            exit 1
+          fi
+
+          branch="automation/prepare-${next_snapshot}"
+          existing_pr="$(
+            gh pr list \
+              --repo "${GITHUB_REPOSITORY}" \
+              --head "${branch}" \
+              --base master \
+              --state open \
+              --json number \
+              --jq '.[0].number // empty'
+          )"
+          if [[ -n "${existing_pr}" ]]; then
+            gh pr merge "${existing_pr}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --squash \
+              --auto \
+              --delete-branch
+            exit 0
+          fi
+
+          git switch --create "${branch}"
+          sed -i \
+            "0,/<version>${current_snapshot}<\\/version>/s//<version>${next_snapshot}<\\/version>/" \
+            pom.xml
+
+          mapfile -t changed_files < <(git diff --name-only)
+          if [[ "${#changed_files[@]}" -ne 1 ||
+                "${changed_files[0]}" != "pom.xml" ]]; then
+            echo "Version preparation changed files other than pom.xml" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pom.xml
+          git commit --message "chore(release): prepare ${next_snapshot}"
+          git push --set-upstream origin "${branch}"
+
+          pr_url="$(
+            gh pr create \
+              --repo "${GITHUB_REPOSITORY}" \
+              --base master \
+              --head "${branch}" \
+              --title "chore(release): prepare ${next_snapshot}" \
+              --body "Automated post-release update after v${RELEASE_VERSION}. Changes only the Maven development version to ${next_snapshot}."
+          )"
+          gh pr merge "${pr_url}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --squash \
+            --auto \
+            --delete-branch
