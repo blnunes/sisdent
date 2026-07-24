@@ -1,0 +1,8 @@
+{
+  "name": "sisdent",
+  "private": true,
+  "scripts": {
+    "dev": "./run-dev.sh",
+    "kill-dev": "./kill-dev.sh"
+  }
+}

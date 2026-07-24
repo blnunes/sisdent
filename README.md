@@ -2,6 +2,9 @@
 
 REST API built with Java 25, Spring Boot 4 and an in-memory H2 database.
 
+The `frontend` directory contains an Angular 22 and Angular Material 22
+interface for authentication and administrative user management.
+
 ## Run
 
 ```bash
@@ -15,6 +18,17 @@ an empty database.
 Flyway applies versioned migrations from `src/main/resources/db/migration`
 before Hibernate validates the schema. Applied migrations are immutable;
 subsequent schema changes must use a new version.
+
+Start the web interface in a second terminal:
+
+```bash
+cd frontend
+npm ci
+npm start
+```
+
+Open `http://localhost:4200` and use `NATIONAL_ID / ADMIN / admin`. See
+[`frontend/README.md`](frontend/README.md) for frontend details.
 
 ## Endpoints
 

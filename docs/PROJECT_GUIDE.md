@@ -3,9 +3,9 @@
 ## Purpose
 
 Sisdent is an early REST API for managing patients in a dental clinic. The
-current scope covers patients, addresses, and states. Authentication,
-scheduling, practitioners, clinical records, treatments, and billing are not
-implemented yet.
+current scope covers patients, addresses, states, JWT authentication, users,
+roles, and permissions. Scheduling, practitioners, clinical records,
+treatments, and billing are not implemented yet.
 
 This document describes the system that exists today. Future ideas are kept in
 a separate section so they are not mistaken for implemented features.
@@ -28,6 +28,10 @@ Related documents:
 - Seed demonstration data from JSON when the database is empty.
 - Expose OpenAPI documentation and Swagger UI.
 - Expose an application health endpoint for the hosting platform.
+- Authenticate with an identification type and normalized identification
+  number, issuing one-hour JWT access tokens.
+- Manage users and their permissions through admin-only endpoints, with logical
+  deletion.
 - List countries from Europe, North America, and South America.
 - Associate addresses with a country of residence.
 - Associate patients with nationality and a unique normalized identification.
@@ -44,6 +48,14 @@ Related documents:
 | `GET` | `/api/specialities` | List specialities with their procedures |
 | `POST` | `/api/specialities` | Create a speciality and its procedures |
 | `PUT` | `/api/specialities/{id}` | Replace a speciality and its nested procedures |
+| `POST` | `/api/auth/login` | Authenticate and issue a JWT |
+| `GET` | `/api/users` | List active users (admin only) |
+| `GET` | `/api/users/{id}` | Find an active user (admin only) |
+| `POST` | `/api/users` | Create a user (admin only) |
+| `PUT` | `/api/users/{id}` | Update a user (admin only) |
+| `PUT` | `/api/users/{id}/permissions` | Replace permissions (admin only) |
+| `DELETE` | `/api/users/{id}` | Logically delete a user (admin only) |
+| `PATCH` | `/api/users/me/password` | Change the authenticated user's password |
 | `GET` | `/actuator/health` | Application health |
 | `GET` | `/v3/api-docs` | OpenAPI JSON contract |
 | `GET` | `/swagger-ui.html` | Swagger UI redirect |
@@ -60,6 +72,7 @@ Published environment:
 | Language | Java 25 |
 | Framework | Spring Boot 4.1.0 |
 | Web | Spring MVC |
+| Security | Spring Security, OAuth2 Resource Server, signed JWT, BCrypt |
 | Persistence | Spring Data JPA and Hibernate |
 | Database | In-memory H2 |
 | Validation | Jakarta Bean Validation |
@@ -116,6 +129,8 @@ associations and avoid extra queries while mapping response DTOs.
 - Identification type is required: `NATIONAL_ID` or `PASSPORT`.
 - Identification number accepts letters, numbers, spaces, and hyphens. It is
   normalized to uppercase without spaces or hyphens before persistence.
+- Login applies the same normalization, so identification numbers are
+  case-insensitive (`admin`, `Admin`, and `ADMIN` all resolve to `ADMIN`).
 - The normalized identification number is globally unique through a database
   constraint; duplicate creation returns HTTP `409 Conflict`.
 - Patient nationality and address country use two-letter ISO 3166-1 codes.
@@ -175,6 +190,44 @@ The default URL is `http://localhost:8080`. To select another port:
 ```bash
 PORT=9090 ./mvnw spring-boot:run
 ```
+
+Local development creates a training administrator with identification
+`NATIONAL_ID / ADMIN` and password `admin`. These deliberately weak credentials
+exist only to simplify local exercises.
+
+Every deployed environment must override these variables:
+- `JWT_SECRET` — a strong random string with at least 32 characters.
+- `BOOTSTRAP_ADMIN_IDENTIFICATION_TYPE` — optional, defaults to `NATIONAL_ID`.
+- `BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER` — admin username/identifier in the
+  target environment.
+- `BOOTSTRAP_ADMIN_PASSWORD` — a strong admin password.
+
+Use `deploy/preprod/runtime.env.example` as a template and create
+`deploy/preprod/runtime.env` on the deployment host.
+
+Login example:
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"identificationType":"NATIONAL_ID","identificationNumber":"ADMIN","password":"admin"}'
+```
+
+Send the returned token as `Authorization: Bearer <accessToken>`. Permission
+changes and logical deletion affect newly issued tokens; an already issued
+token remains valid until its one-hour expiry.
+
+Every authenticated role can change its own password by sending the current
+and new passwords to `PATCH /api/users/me/password`. The current password is
+verified with BCrypt before the new BCrypt hash is stored.
+
+Initial authorization matrix:
+
+| Role | Non-user services | User service |
+| --- | --- | --- |
+| `ADMIN` | Create, update, read, delete | Full access |
+| `MANAGER` | Create, update, read, delete | No access |
+| `USER` | Read | No access |
 
 Quick checks:
 

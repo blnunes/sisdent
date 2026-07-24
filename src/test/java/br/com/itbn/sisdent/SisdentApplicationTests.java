@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @Transactional
 @Tag("integration")
 class SisdentApplicationTests {
@@ -46,6 +46,11 @@ class SisdentApplicationTests {
                 .andExpect(jsonPath("$.paths['/api/patients']").exists());
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(jsonPath("$.paths['/api/specialities']").exists());
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(jsonPath("$.components.schemas.LoginRequest.properties.identificationNumber.example")
+                        .value("ADMIN"))
+                .andExpect(jsonPath("$.components.schemas.LoginRequest.properties.password.example")
+                        .value("admin"));
     }
 
     @Test

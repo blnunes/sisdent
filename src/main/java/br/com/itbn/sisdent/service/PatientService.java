@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -56,15 +55,11 @@ public class PatientService {
                 request.gender(),
                 request.taxId(),
                 request.identificationType(),
-                normalizeIdentificationNumber(request.identificationNumber()),
+                IdentificationNumbers.normalize(request.identificationNumber()),
                 countryService.requireByCode(request.nationalityCode()),
                 address,
                 specialityService.findAllByIds(request.specialityIds()));
         return ResponseMapper.toResponse(patientRepository.saveAndFlush(patient));
     }
 
-    private String normalizeIdentificationNumber(String value) {
-        return value.replaceAll("[\\s-]", "")
-                .toUpperCase(Locale.ROOT);
-    }
 }
