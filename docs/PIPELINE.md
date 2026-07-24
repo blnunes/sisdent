@@ -221,6 +221,14 @@ GitHub-hosted runner and publishes two GHCR tags:
 - `ghcr.io/blnunes/sisdent:preprod` is a convenience pointer and is never used
   as the authoritative rollback record.
 
+After quality checks, `Check local pre-production runner` polls the GitHub
+self-hosted runners API every 10 seconds for up to one minute. It requires an
+online, idle runner carrying the `sisdent-preprod` label. If no matching runner
+becomes available, the job succeeds with a visible warning and summary; image
+building and local deployment are skipped. This avoids leaving a deployment
+queued for GitHub's default self-hosted-runner timeout when the local machine
+is off.
+
 The build job packages only `compose.preprod.yml`, the Caddy configuration, and
 `deploy/preprod/deploy.sh`. The self-hosted job downloads that artifact directly
 to `/srv/sisdent`; it does not run `actions/checkout` and keeps no source tree.
@@ -245,6 +253,7 @@ Repository secrets live under
 | `RENDER_API_KEY` | Render Account Settings > API Keys | Authenticate deployment API calls |
 | `RENDER_SERVICE_ID` | Render service settings; value starts with `srv-` | Identify the Sisdent service |
 | `RELEASE_AUTOMATION_TOKEN` | Fine-grained PAT or GitHub App token | Create the post-release branch and auto-merge PR |
+| `PREPROD_RUNNER_TOKEN` | Fine-grained PAT with repository Administration read permission | Check whether the local runner is online and idle |
 
 Never store secret values in source files, logs, commits, or documentation.
 GitHub can show a secret name and update date but cannot reveal its value.

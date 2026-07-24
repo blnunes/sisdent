@@ -15,6 +15,8 @@ bundle and starts the approved image.
 ```text
 push or merge to feat/preprod-deployment
   -> tests and SonarCloud Quality Gate
+  -> wait up to one minute for the local runner
+  -> skip with a warning when the runner stays unavailable
   -> build image on a GitHub-hosted runner
   -> push ghcr.io/blnunes/sisdent:<commit SHA>
   -> send Compose, Caddy, and deploy script as an Actions artifact
