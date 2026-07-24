@@ -28,10 +28,14 @@ Related documents:
 - Seed demonstration data from JSON when the database is empty.
 - Expose OpenAPI documentation and Swagger UI.
 - Expose an application health endpoint for the hosting platform.
+- List countries from Europe, North America, and South America.
+- Associate addresses with a country of residence.
+- Associate patients with nationality and a unique normalized identification.
 
 | Method | Path | Result |
 | --- | --- | --- |
 | `GET` | `/api/states` | List states |
+| `GET` | `/api/countries` | List countries ordered by name |
 | `GET` | `/api/addresses` | List addresses |
 | `GET` | `/api/addresses/postal-code/{postalCode}` | Find address by postal code |
 | `GET` | `/api/patients` | List patients |
@@ -109,6 +113,12 @@ associations and avoid extra queries while mapping response DTOs.
 - `active` is required.
 - Gender is required: `FEMALE`, `MALE`, or `OTHER`.
 - Tax ID must contain exactly 11 digits and is unique in the database.
+- Identification type is required: `NATIONAL_ID` or `PASSPORT`.
+- Identification number accepts letters, numbers, spaces, and hyphens. It is
+  normalized to uppercase without spaces or hyphens before persistence.
+- The normalized identification number is globally unique through a database
+  constraint; duplicate creation returns HTTP `409 Conflict`.
+- Patient nationality and address country use two-letter ISO 3166-1 codes.
 - Street and district are required.
 - Postal code must contain exactly 8 digits and is unique.
 - State name is required; abbreviation must be two uppercase letters and unique.
@@ -124,14 +134,23 @@ The application uses an in-memory H2 database:
 jdbc:h2:mem:sisdent
 ```
 
-`spring.jpa.hibernate.ddl-auto=create-drop` recreates the schema for every
-process. When the database is empty, `InitialDataLoader` reads
-`src/main/resources/data/initial-data.json` and inserts demonstration states,
-addresses, and patients.
+Flyway applies the versioned SQL files in `src/main/resources/db/migration`
+before Hibernate starts. Hibernate uses `ddl-auto=validate`, so model/schema
+drift stops startup instead of silently changing the database. When the
+database is empty, `InitialDataLoader` reads
+`src/main/resources/data/initial-data.json` and inserts demonstration countries,
+states, addresses, and patients. Country reference data contains 80 sovereign
+states from Europe, North America (including Central America and the Caribbean),
+and South America. Codes follow ISO 3166-1 alpha-2.
 
-Important consequence: data created through the API on Render disappears when
-the process restarts or a new deployment occurs. The JSON seed is loaded again.
-This H2 setup does not provide production persistence.
+Country data is local so startup and patient creation do not depend on an
+external service. ISO's Online Browsing Platform is the authoritative
+maintenance source. REST Countries may support a future offline update tool,
+but it is not a runtime dependency.
+
+The default local in-memory database still loses API data when the process
+ends. Pre-production uses file-backed H2 in a persistent Docker volume. Render
+must use a persistent database to retain data between service replacements.
 
 The H2 console is available locally at `/h2-console` and disabled on Render by
 `H2_CONSOLE_ENABLED=false`.
@@ -196,16 +215,16 @@ first. Run `./mvnw verify` before building an image locally.
 - Coverage of endpoints, seed data, 404 responses, invalid input, creation, and
   the OpenAPI contract.
 
-On July 21, 2026, 20 tests passed with 97.54% line coverage. These values are a
+On July 24, 2026, 35 tests passed with 97.87% line coverage. These values are a
 snapshot and should be updated as the project grows.
 
 ## Suggested evolution
 
 Recommended order:
 
-1. **Durable persistence:** migrate to PostgreSQL, use environment-specific
-   credentials, and add Flyway or Liquibase. Replace `create-drop` with
-   migrations.
+1. **Durable persistence:** migrate to PostgreSQL and use environment-specific
+   credentials. Flyway is already the schema authority; future changes must be
+   introduced as new migrations.
 2. **Security and privacy:** add Spring Security, users and roles, personal-data
    protection, appropriate Tax ID masking, and audit trails.
 3. **Consistent errors:** add `@RestControllerAdvice` with Problem Details,

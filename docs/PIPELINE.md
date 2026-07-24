@@ -325,5 +325,7 @@ and enabled Actions notifications.
 - Do not enable Render auto deploy while GitHub controls deployments.
 - For staging and production, use GitHub Environments, environment-specific
   secrets, and separate Render service IDs.
-- Before PostgreSQL deployment, introduce migrations and never use
-  `ddl-auto=create-drop` in production.
+- Flyway owns schema evolution and Hibernate must remain in `validate` mode
+  outside disposable experiments. Never edit an applied migration.
+- Before the PostgreSQL transition, validate the existing migrations against
+  PostgreSQL and add database-specific migration tests where necessary.

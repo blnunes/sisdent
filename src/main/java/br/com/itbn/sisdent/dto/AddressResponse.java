@@ -7,5 +7,6 @@ public record AddressResponse(
         String additionalInfo,
         String block,
         String postalCode,
-        StateResponse state) {
+        StateResponse state,
+        CountryResponse country) {
 }

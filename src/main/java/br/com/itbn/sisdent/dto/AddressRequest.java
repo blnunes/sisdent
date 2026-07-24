@@ -11,5 +11,6 @@ public record AddressRequest(
         String additionalInfo,
         String block,
         @NotBlank @Pattern(regexp = "\\d{8}") String postalCode,
-        @NotNull @Valid StateRequest state) {
+        @NotNull @Valid StateRequest state,
+        @NotBlank @Pattern(regexp = "[A-Z]{2}") String countryCode) {
 }

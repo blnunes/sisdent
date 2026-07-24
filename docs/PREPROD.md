@@ -107,6 +107,24 @@ GitHub-hosted runners.
 The named volume `sisdent-preprod-data` survives container recreation and new
 deployments. Do not remove it during routine cleanup.
 
+### Schema compatibility note
+
+Flyway owns the schema and Hibernate runs with `ddl-auto=validate`. On the first
+deployment over the existing pre-production database, Flyway records baseline
+version `1` and applies `V2`, which adds countries and patient identification
+while preserving existing rows. New databases apply both `V1` and `V2`.
+
+Create and verify a backup of `sisdent-preprod-data` before that first
+migration, set `FLYWAY_BASELINE_ON_MIGRATE=true` in `/srv/sisdent/runtime.env`,
+and deploy. After the first successful migration, return it to `false`; this
+restores Flyway's protection against accidentally adopting an unrelated
+non-empty schema.
+
+A failed application health check rolls the container image back, but database
+migrations are not automatically reversed. Never remove the volume as part of
+an ordinary deploy and never edit a migration that has already been applied;
+add a new version instead.
+
 ## Health check and rollback
 
 `deploy/preprod/deploy.sh` waits up to three minutes for

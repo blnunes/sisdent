@@ -11,9 +11,9 @@ import java.util.Optional;
 public interface AddressRepository extends JpaRepository<Address, Long> {
 
     @Override
-    @EntityGraph(attributePaths = "state")
+    @EntityGraph(attributePaths = {"state", "country"})
     List<Address> findAll(Sort sort);
 
-    @EntityGraph(attributePaths = "state")
+    @EntityGraph(attributePaths = {"state", "country"})
     Optional<Address> findByPostalCode(String postalCode);
 }
