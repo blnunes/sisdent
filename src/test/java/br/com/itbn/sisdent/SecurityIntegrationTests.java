@@ -19,6 +19,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -144,6 +145,57 @@ class SecurityIntegrationTests {
                                 }
                                 """))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void authenticatedUserCanChangeOwnPassword() throws Exception {
+        saveUser(IdentificationType.PASSPORT, "PASSWORD-USER", "old-password", Role.USER);
+        String token = login("PASSPORT", "PASSWORD-USER", "old-password");
+
+        mockMvc.perform(patch("/api/users/me/password")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "currentPassword": "old-password",
+                                  "newPassword": "new-secure-password"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Password changed successfully"));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "identificationType": "PASSPORT",
+                                  "identificationNumber": "PASSWORD-USER",
+                                  "password": "old-password"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+        login("PASSPORT", "PASSWORD-USER", "new-secure-password");
+    }
+
+    @Test
+    void rejectsOwnPasswordChangeWhenCurrentPasswordIsWrong() throws Exception {
+        saveUser(IdentificationType.NATIONAL_ID, "PASSWORD-FAIL", "correct-password", Role.MANAGER);
+        String token = login("NATIONAL_ID", "PASSWORD-FAIL", "correct-password");
+
+        mockMvc.perform(patch("/api/users/me/password")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "currentPassword": "wrong-password",
+                                  "newPassword": "new-secure-password"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Password change failed"))
+                .andExpect(jsonPath("$.detail").value("Current password is incorrect"));
+
+        login("NATIONAL_ID", "PASSWORD-FAIL", "correct-password");
     }
 
     private void saveUser(

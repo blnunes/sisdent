@@ -130,4 +130,8 @@ public class User {
     public void deactivate() {
         this.active = false;
     }
+
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
 }

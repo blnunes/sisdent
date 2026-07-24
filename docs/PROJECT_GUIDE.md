@@ -55,6 +55,7 @@ Related documents:
 | `PUT` | `/api/users/{id}` | Update a user (admin only) |
 | `PUT` | `/api/users/{id}/permissions` | Replace permissions (admin only) |
 | `DELETE` | `/api/users/{id}` | Logically delete a user (admin only) |
+| `PATCH` | `/api/users/me/password` | Change the authenticated user's password |
 | `GET` | `/actuator/health` | Application health |
 | `GET` | `/v3/api-docs` | OpenAPI JSON contract |
 | `GET` | `/swagger-ui.html` | Swagger UI redirect |
@@ -205,6 +206,10 @@ curl -X POST http://localhost:8080/api/auth/login \
 Send the returned token as `Authorization: Bearer <accessToken>`. Permission
 changes and logical deletion affect newly issued tokens; an already issued
 token remains valid until its one-hour expiry.
+
+Every authenticated role can change its own password by sending the current
+and new passwords to `PATCH /api/users/me/password`. The current password is
+verified with BCrypt before the new BCrypt hash is stored.
 
 Initial authorization matrix:
 

@@ -45,6 +45,8 @@ public class SecurityConfiguration {
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/me/password")
+                        .authenticated()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/**").hasAuthority("READ")
                         .requestMatchers(HttpMethod.POST, "/api/**").hasAuthority("CREATE")

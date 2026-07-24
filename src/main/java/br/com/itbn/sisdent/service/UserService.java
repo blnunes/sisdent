@@ -1,6 +1,7 @@
 package br.com.itbn.sisdent.service;
 
 import br.com.itbn.sisdent.dto.PermissionRequest;
+import br.com.itbn.sisdent.dto.PasswordChangeRequest;
 import br.com.itbn.sisdent.dto.UserRequest;
 import br.com.itbn.sisdent.dto.UserResponse;
 import br.com.itbn.sisdent.dto.UserUpdateRequest;
@@ -73,6 +74,16 @@ public class UserService {
     public void delete(Long id) {
         User user = requireActive(id);
         user.deactivate();
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void changeOwnPassword(Long userId, PasswordChangeRequest request) {
+        User user = requireActive(userId);
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw new InvalidCurrentPasswordException();
+        }
+        user.changePassword(passwordEncoder.encode(request.newPassword()));
         userRepository.save(user);
     }
 

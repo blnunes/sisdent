@@ -1,15 +1,20 @@
 package br.com.itbn.sisdent.controller;
 
 import br.com.itbn.sisdent.dto.PermissionRequest;
+import br.com.itbn.sisdent.dto.PasswordChangeRequest;
+import br.com.itbn.sisdent.dto.PasswordChangeResponse;
 import br.com.itbn.sisdent.dto.UserRequest;
 import br.com.itbn.sisdent.dto.UserResponse;
 import br.com.itbn.sisdent.dto.UserUpdateRequest;
 import br.com.itbn.sisdent.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,6 +42,15 @@ public class UserController {
     @GetMapping("/{id}")
     public UserResponse findById(@PathVariable Long id) {
         return userService.findById(id);
+    }
+
+    @PatchMapping("/me/password")
+    public PasswordChangeResponse changeOwnPassword(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody PasswordChangeRequest request) {
+        Number userId = jwt.getClaim("userId");
+        userService.changeOwnPassword(userId.longValue(), request);
+        return new PasswordChangeResponse("Password changed successfully");
     }
 
     @PostMapping
