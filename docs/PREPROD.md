@@ -13,10 +13,9 @@ A self-hosted runner on the Ubuntu machine downloads only the deployment
 bundle and starts the approved image.
 
 ```text
-push or merge to feat/preprod-deployment
-  -> tests and SonarCloud Quality Gate
-  -> wait up to one minute for the local runner
-  -> skip with a warning when the runner stays unavailable
+manually run "Deploy pre-production" with a branch, tag, or commit
+  -> resolve the selected revision to an immutable commit SHA
+  -> run tests
   -> build image on a GitHub-hosted runner
   -> push ghcr.io/blnunes/sisdent:<commit SHA>
   -> send Compose, Caddy, and deploy script as an Actions artifact
@@ -24,13 +23,13 @@ push or merge to feat/preprod-deployment
   -> verify /actuator/health
   -> keep the new image, or roll back to the last healthy image
   -> validate pre-production manually
-  -> open a pull request from feat/preprod-deployment to master
-  -> merge to master and deploy the approved commit to Render
+  -> merge an approved pull request to master when production is desired
+  -> the master push deploys that commit to Render
 ```
 
 The local host is the pre-production target and Render is the production target.
-There is no automatic promotion: the tested pre-production branch must be
-reviewed and merged into `master` before the Render deployment runs.
+There is no automatic promotion. A pre-production run never invokes the Render
+workflow, and Render deployment requires a push whose ref is exactly `master`.
 
 ## Host responsibilities
 
@@ -93,8 +92,9 @@ shell history, or chat transcripts. The runner needs outbound HTTPS access to
 GitHub and GHCR; it does not require an inbound internet port.
 
 The runner has Docker access and therefore must be treated as a privileged
-deployment identity. It must run deployment jobs only from trusted pushes to
-this repository. Pull-request jobs stay on GitHub-hosted runners.
+deployment identity. It runs only the manually selected revision after
+GitHub-hosted validation and image building. Pull-request jobs stay on
+GitHub-hosted runners.
 
 ## Deployment contents
 
