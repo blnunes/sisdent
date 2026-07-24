@@ -170,6 +170,12 @@ does not run the full tests, SonarCloud, Render deployment, or release tagging.
 Any additional file or unexpected version change follows the complete release
 pipeline.
 
+The push classifier fetches the previous `master` commit when it is absent
+from the checkout. If either commit or the diff cannot be inspected,
+classification fails and production deployment remains blocked. Deploy and
+tag jobs run only when classification explicitly reports a regular release
+change.
+
 The tag job needs `contents: write` on `GITHUB_TOKEN`. In repository settings,
 ensure Actions can use read/write workflow permissions and that any tag ruleset
 allows `github-actions[bot]` to create release tags.
