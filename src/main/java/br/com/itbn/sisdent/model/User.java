@@ -1,5 +1,8 @@
 package br.com.itbn.sisdent.model;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -13,9 +16,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-
-import java.util.EnumSet;
-import java.util.Set;
 
 @Entity
 @Table(

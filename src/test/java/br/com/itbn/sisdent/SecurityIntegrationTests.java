@@ -1,11 +1,7 @@
 package br.com.itbn.sisdent;
 
-import br.com.itbn.sisdent.model.IdentificationType;
-import br.com.itbn.sisdent.model.Permission;
-import br.com.itbn.sisdent.model.Role;
-import br.com.itbn.sisdent.model.User;
-import br.com.itbn.sisdent.repository.UserRepository;
-import br.com.itbn.sisdent.service.IdentificationNumbers;
+import java.util.Set;
+
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +10,6 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.json.JsonMapper;
-
-import java.util.Set;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -27,6 +17,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.itbn.sisdent.model.IdentificationType;
+import br.com.itbn.sisdent.model.Permission;
+import br.com.itbn.sisdent.model.Role;
+import br.com.itbn.sisdent.model.User;
+import br.com.itbn.sisdent.repository.UserRepository;
+import br.com.itbn.sisdent.service.IdentificationNumbers;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @SpringBootTest
 @AutoConfigureMockMvc

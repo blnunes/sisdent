@@ -1,16 +1,17 @@
 package br.com.itbn.sisdent.config;
 
-import br.com.itbn.sisdent.model.IdentificationType;
-import br.com.itbn.sisdent.model.Role;
-import br.com.itbn.sisdent.model.User;
-import br.com.itbn.sisdent.repository.UserRepository;
-import br.com.itbn.sisdent.service.IdentificationNumbers;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import br.com.itbn.sisdent.model.IdentificationType;
+import br.com.itbn.sisdent.model.Role;
+import br.com.itbn.sisdent.model.User;
+import br.com.itbn.sisdent.repository.UserRepository;
+import br.com.itbn.sisdent.service.IdentificationNumbers;
 
 @Component
 public class AdminDataLoader implements ApplicationRunner {
