@@ -227,7 +227,10 @@ online, idle runner carrying the `sisdent-preprod` label. If no matching runner
 becomes available, the job succeeds with a visible warning and summary; image
 building and local deployment are skipped. This avoids leaving a deployment
 queued for GitHub's default self-hosted-runner timeout when the local machine
-is off.
+is off. A missing or invalid `PREPROD_RUNNER_TOKEN`, or an unavailable runners
+API, also produces a warning and skips deployment instead of failing the
+workflow. The warning must still be corrected before relying on local
+pre-production validation.
 
 The build job packages only `compose.preprod.yml`, the Caddy configuration, and
 `deploy/preprod/deploy.sh`. The self-hosted job downloads that artifact directly
