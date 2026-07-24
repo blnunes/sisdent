@@ -1,20 +1,21 @@
 package br.com.itbn.sisdent.service;
 
-import br.com.itbn.sisdent.dto.PermissionRequest;
-import br.com.itbn.sisdent.dto.PasswordChangeRequest;
-import br.com.itbn.sisdent.dto.UserRequest;
-import br.com.itbn.sisdent.dto.UserResponse;
-import br.com.itbn.sisdent.dto.UserUpdateRequest;
-import br.com.itbn.sisdent.model.Role;
-import br.com.itbn.sisdent.model.User;
-import br.com.itbn.sisdent.repository.UserRepository;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
+import br.com.itbn.sisdent.dto.PasswordChangeRequest;
+import br.com.itbn.sisdent.dto.PermissionRequest;
+import br.com.itbn.sisdent.dto.UserRequest;
+import br.com.itbn.sisdent.dto.UserResponse;
+import br.com.itbn.sisdent.dto.UserUpdateRequest;
+import br.com.itbn.sisdent.model.Role;
+import br.com.itbn.sisdent.model.User;
+import br.com.itbn.sisdent.repository.UserRepository;
 
 @Service
 public class UserService {
