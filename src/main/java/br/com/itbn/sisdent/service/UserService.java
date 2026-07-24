@@ -5,6 +5,7 @@ import br.com.itbn.sisdent.dto.PasswordChangeRequest;
 import br.com.itbn.sisdent.dto.UserRequest;
 import br.com.itbn.sisdent.dto.UserResponse;
 import br.com.itbn.sisdent.dto.UserUpdateRequest;
+import br.com.itbn.sisdent.model.Role;
 import br.com.itbn.sisdent.model.User;
 import br.com.itbn.sisdent.repository.UserRepository;
 import org.springframework.http.HttpStatus;

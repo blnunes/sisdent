@@ -71,7 +71,7 @@ class SecurityIntegrationTests {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.identificationNumber").value("PT123ABC"))
                 .andExpect(jsonPath("$.role").value("MANAGER"))
-                .andExpect(jsonPath("$.permissions.length()").value(5))
+                .andExpect(jsonPath("$.permissions.length()").value(7))
                 .andReturn().getResponse().getContentAsString();
 
         long userId = jsonMapper.readTree(response).get("id").asLong();
