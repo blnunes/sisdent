@@ -19,6 +19,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Test release change classifier
+        run: deploy/release/classify-change.test.sh
+
       - name: Classify pull request
         id: change
         shell: bash
@@ -27,19 +30,12 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          mapfile -t changed_files < <(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}")
+          classification="$(
+            deploy/release/classify-change.sh "${BASE_SHA}" "${HEAD_SHA}"
+          )"
           version_bump=false
-
-          if [[ "${#changed_files[@]}" -eq 1 && "${changed_files[0]}" == "pom.xml" ]]; then
-            old_pom="$(mktemp)"
-            git show "${BASE_SHA}:pom.xml" > "${old_pom}"
-            old_version="$(deploy/release/version.sh project-version "${old_pom}")"
-            new_version="$(deploy/release/version.sh project-version pom.xml)"
-
-            if deploy/release/version.sh is-next-snapshot \
-              "${old_version}" "${new_version}"; then
-              version_bump=true
-            fi
+          if [[ "${classification}" == "version-bump" ]]; then
+            version_bump=true
           fi
 
           echo "version_bump=${version_bump}" >> "${GITHUB_OUTPUT}"

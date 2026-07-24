@@ -25,6 +25,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Test release change classifier
+        run: deploy/release/classify-change.test.sh
+
       - name: Classify push
         id: change
         shell: bash
@@ -36,25 +39,15 @@ jobs:
 
           if [[ "${GITHUB_EVENT_NAME}" == "push" &&
                 "${BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]]; then
-            mapfile -t changed_files < <(
-              git diff --name-only "${BEFORE_SHA}" "${GITHUB_SHA}"
-            )
+            if ! git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+              git fetch --no-tags --depth=2 origin master
+            fi
 
-            if [[ "${#changed_files[@]}" -eq 1 &&
-                  "${changed_files[0]}" == "pom.xml" ]]; then
-              old_pom="$(mktemp)"
-              git show "${BEFORE_SHA}:pom.xml" > "${old_pom}"
-              old_version="$(
-                deploy/release/version.sh project-version "${old_pom}"
-              )"
-              new_version="$(
-                deploy/release/version.sh project-version pom.xml
-              )"
-
-              if deploy/release/version.sh is-next-snapshot \
-                "${old_version}" "${new_version}"; then
-                version_bump=true
-              fi
+            classification="$(
+              deploy/release/classify-change.sh "${BEFORE_SHA}" "${GITHUB_SHA}"
+            )"
+            if [[ "${classification}" == "version-bump" ]]; then
+              version_bump=true
             fi
           fi
 
@@ -86,7 +79,7 @@ jobs:
     if: >-
       github.event_name == 'push' &&
       github.ref == 'refs/heads/master' &&
-      needs.quality-check.outputs.version_bump != 'true'
+      needs.quality-check.outputs.version_bump == 'false'
     needs: quality-check
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -161,7 +154,7 @@ jobs:
     if: >-
       github.event_name == 'push' &&
       github.ref == 'refs/heads/master' &&
-      needs.quality-check.outputs.version_bump != 'true'
+      needs.quality-check.outputs.version_bump == 'false'
     needs:
       - quality-check
       - deploy-render
