@@ -34,13 +34,18 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import br.com.itbn.sisdent.model.Permission;
+
 @Configuration
 public class SecurityConfiguration {
+
+    private static final String USER_RESOURCE = "/api/users/**";
+    private static final String MAINTAIN_SPECIALITIES_PERMISSION = Permission.MAINTAIN_SPECIALITIES.name();
 
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
+            JwtAuthenticationConverter jwtAuthenticationConverter) {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
@@ -55,15 +60,15 @@ public class SecurityConfiguration {
                                 "/h2-console/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/api/users/me/password")
                         .authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/users/**")
+                        .requestMatchers(HttpMethod.GET, USER_RESOURCE)
                         .access(hasAnyPermission("READ_USERS", "MAINTAIN_USERS"))
-                        .requestMatchers(HttpMethod.POST, "/api/users/**")
+                        .requestMatchers(HttpMethod.POST, USER_RESOURCE)
                         .access(hasAnyPermission("MAINTAIN_USERS"))
-                        .requestMatchers(HttpMethod.PUT, "/api/users/**")
+                        .requestMatchers(HttpMethod.PUT, USER_RESOURCE)
                         .access(hasAnyPermission("MAINTAIN_USERS"))
-                        .requestMatchers(HttpMethod.PATCH, "/api/users/**")
+                        .requestMatchers(HttpMethod.PATCH, USER_RESOURCE)
                         .access(hasAnyPermission("MAINTAIN_USERS"))
-                        .requestMatchers(HttpMethod.DELETE, "/api/users/**")
+                        .requestMatchers(HttpMethod.DELETE, USER_RESOURCE)
                         .access(hasAnyPermission("MAINTAIN_USERS"))
                         .requestMatchers(HttpMethod.GET, "/api/patients/**")
                         .access(hasAnyPermission("READ_PATIENTS", "MAINTAIN_PATIENTS"))
@@ -74,13 +79,13 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.DELETE, "/api/patients/**")
                         .access(hasAnyPermission("MAINTAIN_PATIENTS"))
                         .requestMatchers(HttpMethod.GET, "/api/specialities/**")
-                        .access(hasAnyPermission("READ_SPECIALITIES", "MAINTAIN_SPECIALITIES"))
+                        .access(hasAnyPermission("READ_SPECIALITIES", MAINTAIN_SPECIALITIES_PERMISSION))
                         .requestMatchers(HttpMethod.POST, "/api/specialities/**")
-                        .access(hasAnyPermission("MAINTAIN_SPECIALITIES"))
+                        .access(hasAnyPermission(MAINTAIN_SPECIALITIES_PERMISSION))
                         .requestMatchers(HttpMethod.PUT, "/api/specialities/**")
-                        .access(hasAnyPermission("MAINTAIN_SPECIALITIES"))
+                        .access(hasAnyPermission(MAINTAIN_SPECIALITIES_PERMISSION))
                         .requestMatchers(HttpMethod.DELETE, "/api/specialities/**")
-                        .access(hasAnyPermission("MAINTAIN_SPECIALITIES"))
+                        .access(hasAnyPermission(MAINTAIN_SPECIALITIES_PERMISSION))
                         .requestMatchers(HttpMethod.GET, "/api/addresses/**")
                         .access(hasAnyPermission("READ_ADDRESSES", "MAINTAIN_ADDRESSES"))
                         .requestMatchers(HttpMethod.GET, "/api/countries/**")
