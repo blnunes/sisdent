@@ -203,11 +203,7 @@ jobs:
               --jq '.[0].number // empty'
           )"
           if [[ -n "${existing_pr}" ]]; then
-            gh pr merge "${existing_pr}" \
-              --repo "${GITHUB_REPOSITORY}" \
-              --squash \
-              --auto \
-              --delete-branch
+            echo "Version preparation PR #${existing_pr} is already open"
             exit 0
           fi
 
@@ -237,8 +233,4 @@ jobs:
               --title "chore(release): prepare ${next_snapshot}" \
               --body "Automated post-release update after v${RELEASE_VERSION}. Changes only the Maven development version to ${next_snapshot}."
           )"
-          gh pr merge "${pr_url}" \
-            --repo "${GITHUB_REPOSITORY}" \
-            --squash \
-            --auto \
-            --delete-branch
+          echo "Created version preparation PR: ${pr_url}"
