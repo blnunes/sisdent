@@ -2,10 +2,12 @@ package br.com.itbn.sisdent.mapper;
 
 import br.com.itbn.sisdent.dto.AddressResponse;
 import br.com.itbn.sisdent.dto.PatientResponse;
+import br.com.itbn.sisdent.dto.ProcedureResponse;
 import br.com.itbn.sisdent.dto.StateResponse;
 import br.com.itbn.sisdent.dto.SpecialityResponse;
 import br.com.itbn.sisdent.model.Address;
 import br.com.itbn.sisdent.model.Patient;
+import br.com.itbn.sisdent.model.Procedure;
 import br.com.itbn.sisdent.model.State;
 import br.com.itbn.sisdent.model.Speciality;
 
@@ -21,7 +23,17 @@ public final class ResponseMapper {
     }
 
     public static SpecialityResponse toResponse(Speciality speciality) {
-        return new SpecialityResponse(speciality.getId(), speciality.getName());
+        return new SpecialityResponse(
+                speciality.getId(),
+                speciality.getName(),
+                speciality.getProcedures().stream()
+                        .sorted(Comparator.comparing(Procedure::getName))
+                        .map(ResponseMapper::toResponse)
+                        .toList());
+    }
+
+    public static ProcedureResponse toResponse(Procedure procedure) {
+        return new ProcedureResponse(procedure.getId(), procedure.getName());
     }
 
     public static AddressResponse toResponse(Address address) {

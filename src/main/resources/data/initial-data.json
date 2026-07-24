@@ -1,17 +1,53 @@
 {
   "specialities": [
-    { "name": "Dental Anesthesiology" },
-    { "name": "Dental Public Health" },
-    { "name": "Endodontics" },
-    { "name": "Oral and Maxillofacial Pathology" },
-    { "name": "Oral and Maxillofacial Radiology" },
-    { "name": "Oral and Maxillofacial Surgery" },
-    { "name": "Oral Medicine" },
-    { "name": "Orofacial Pain" },
-    { "name": "Orthodontics and Dentofacial Orthopedics" },
-    { "name": "Pediatric Dentistry" },
-    { "name": "Periodontics" },
-    { "name": "Prosthodontics" }
+    {
+      "name": "Dental Anesthesiology",
+      "procedures": ["Local anesthesia", "Sedation"]
+    },
+    {
+      "name": "Dental Public Health",
+      "procedures": ["Oral health assessment", "Preventive program"]
+    },
+    {
+      "name": "Endodontics",
+      "procedures": ["Pulpotomy", "Root canal treatment"]
+    },
+    {
+      "name": "Oral and Maxillofacial Pathology",
+      "procedures": ["Histopathological examination", "Oral biopsy"]
+    },
+    {
+      "name": "Oral and Maxillofacial Radiology",
+      "procedures": ["CBCT scan", "Panoramic radiograph"]
+    },
+    {
+      "name": "Oral and Maxillofacial Surgery",
+      "procedures": ["Dental implant placement", "Tooth extraction"]
+    },
+    {
+      "name": "Oral Medicine",
+      "procedures": ["Oral lesion evaluation", "Salivary gland assessment"]
+    },
+    {
+      "name": "Orofacial Pain",
+      "procedures": ["Occlusal splint therapy", "TMJ evaluation"]
+    },
+    {
+      "name": "Orthodontics and Dentofacial Orthopedics",
+      "procedures": ["Orthodontic adjustment", "Orthodontic appliance installation"]
+    },
+    {
+      "name": "Pediatric Dentistry",
+      "procedures": ["Dental sealant", "Fluoride application"]
+    },
+    {
+      "name": "Periodontics",
+      "procedures": ["Gingival graft", "Scaling and root planing"]
+    },
+    {
+      "name": "Prosthodontics",
+      "procedures": ["Dental crown placement", "Denture fitting"]
+    }
   ],
   "states": [
     { "name": "California", "abbreviation": "CA" },

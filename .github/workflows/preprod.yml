@@ -21,9 +21,85 @@ jobs:
       - name: Unit tests
         run: mvn --batch-mode --no-transfer-progress verify
 
+  check-preprod-runner:
+    name: Check local pre-production runner
+    needs: quality-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    outputs:
+      available: ${{ steps.runner.outputs.available }}
+
+    steps:
+      - name: Wait up to one minute for runner
+        id: runner
+        shell: bash
+        env:
+          RUNNER_TOKEN: ${{ secrets.PREPROD_RUNNER_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          skip_deployment() {
+            local reason="${1:?Skip reason is required}"
+            echo "available=false" >> "${GITHUB_OUTPUT}"
+            echo "::warning title=Pre-production deployment skipped::${reason}"
+            {
+              echo "## Pre-production deployment skipped"
+              echo
+              echo "${reason}"
+              echo "The image was not built and no deployment was attempted."
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          }
+
+          if [[ -z "${RUNNER_TOKEN}" ]]; then
+            skip_deployment \
+              "PREPROD_RUNNER_TOKEN is not configured, so runner availability could not be checked."
+          fi
+
+          for attempt in {1..7}; do
+            if ! response="$(
+              curl --fail-with-body --silent --show-error \
+                --header "Accept: application/vnd.github+json" \
+                --header "Authorization: Bearer ${RUNNER_TOKEN}" \
+                --header "X-GitHub-Api-Version: 2022-11-28" \
+                "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners?per_page=100"
+            )"; then
+              skip_deployment \
+                "The GitHub runners API could not be queried; verify PREPROD_RUNNER_TOKEN."
+            fi
+            available="$(
+              jq --raw-output '
+                any(
+                  .runners[];
+                  .status == "online"
+                  and .busy == false
+                  and any(.labels[]; .name == "sisdent-preprod")
+                )
+              ' <<<"${response}"
+            )"
+
+            if [[ "${available}" == "true" ]]; then
+              echo "available=true" >> "${GITHUB_OUTPUT}"
+              echo "Local pre-production runner is online and idle."
+              exit 0
+            fi
+
+            if [[ "${attempt}" -lt 7 ]]; then
+              echo "Runner unavailable; retrying in 10 seconds (${attempt}/7)."
+              sleep 10
+            fi
+          done
+
+          skip_deployment \
+            "The local runner was offline or busy for one minute."
+
   build-preprod-image:
     name: Build pre-production image
-    needs: quality-check
+    if: needs.check-preprod-runner.outputs.available == 'true'
+    needs:
+      - quality-check
+      - check-preprod-runner
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -69,7 +145,10 @@ jobs:
 
   deploy-preprod:
     name: Deploy to local pre-production
-    needs: build-preprod-image
+    if: needs.check-preprod-runner.outputs.available == 'true'
+    needs:
+      - check-preprod-runner
+      - build-preprod-image
     runs-on: [self-hosted, linux, x64, sisdent-preprod]
     timeout-minutes: 15
     environment: preprod

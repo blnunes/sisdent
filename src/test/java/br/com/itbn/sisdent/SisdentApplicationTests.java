@@ -3,6 +3,7 @@ package br.com.itbn.sisdent;
 import br.com.itbn.sisdent.config.InitialDataLoader;
 import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.repository.PatientRepository;
+import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -32,6 +34,9 @@ class SisdentApplicationTests {
 
     @Autowired
     private PatientRepository patientRepository;
+
+    @Autowired
+    private SpecialityRepository specialityRepository;
 
     @Test
     void exposesOpenApiDocumentation() throws Exception {
@@ -81,7 +86,65 @@ class SisdentApplicationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(12))
                 .andExpect(jsonPath("$[0].name").value("Dental Anesthesiology"))
+                .andExpect(jsonPath("$[0].procedures.length()").value(2))
+                .andExpect(jsonPath("$[0].procedures[0].name").value("Local anesthesia"))
                 .andExpect(jsonPath("$[11].name").value("Prosthodontics"));
+    }
+
+    @Test
+    void createsSpecialityWithNestedProcedures() throws Exception {
+        String request = """
+                {
+                  "name": "Implant Dentistry",
+                  "procedures": [
+                    {"name": "Implant placement"},
+                    {"name": "Bone graft"}
+                  ]
+                }
+                """;
+
+        mockMvc.perform(post("/api/specialities")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Implant Dentistry"))
+                .andExpect(jsonPath("$.procedures.length()").value(2))
+                .andExpect(jsonPath("$.procedures[0].name").value("Bone graft"))
+                .andExpect(jsonPath("$.procedures[1].name").value("Implant placement"));
+    }
+
+    @Test
+    void updatesSpecialityAndItsNestedProcedures() throws Exception {
+        var speciality = specialityRepository.findByName("Endodontics").orElseThrow();
+        var retainedProcedure = speciality.getProcedures().stream()
+                .filter(procedure -> procedure.getName().equals("Pulpotomy"))
+                .findFirst()
+                .orElseThrow();
+        String request = """
+                {
+                  "name": "Advanced Endodontics",
+                  "procedures": [
+                    {"id": %d, "name": "Advanced pulpotomy"},
+                    {"name": "Apicoectomy"}
+                  ]
+                }
+                """.formatted(retainedProcedure.getId());
+
+        mockMvc.perform(put("/api/specialities/{id}", speciality.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Advanced Endodontics"))
+                .andExpect(jsonPath("$.procedures.length()").value(2))
+                .andExpect(jsonPath("$.procedures[0].name").value("Advanced pulpotomy"))
+                .andExpect(jsonPath("$.procedures[1].name").value("Apicoectomy"))
+                .andExpect(jsonPath("$.procedures[1].id").isNumber());
+    }
+
+    @Test
+    void doesNotExposeStandaloneProcedureEndpoint() throws Exception {
+        mockMvc.perform(get("/api/procedures"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

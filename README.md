@@ -21,6 +21,9 @@ GET /api/addresses/postal-code/{postalCode}
 GET /api/patients
 GET /api/patients/{id}
 POST /api/patients
+GET /api/specialities
+POST /api/specialities
+PUT /api/specialities/{id}
 ```
 
 Example:
@@ -28,6 +31,10 @@ Example:
 ```bash
 curl http://localhost:8080/api/patients
 ```
+
+Procedures are nested resources owned by a speciality. They are returned,
+created, updated, and removed through the speciality endpoints; there is no
+standalone `/api/procedures` endpoint.
 
 The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
 `jdbc:h2:mem:sisdent`, username `sa`, and an empty password.

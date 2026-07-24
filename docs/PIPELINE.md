@@ -86,6 +86,10 @@ Configure repository branch rules as follows:
   requests, and require the `Quality check` status check before merging.
 - For `master`, block deletion and force pushes, require pull requests, and
   require the `Quality check` status check.
+- Do not configure a required deployment on `master`: production deploys happen
+  after merge, while the `Quality check` rejects normal production PRs whose
+  source is not `feat/preprod-deployment`. The only other accepted shape is the
+  strictly validated, `pom.xml`-only automatic version bump.
 - Do not allow routine bypass of these rules. Promote production changes from
   `feat/preprod-deployment` after local validation.
 
@@ -148,16 +152,34 @@ the single deployment orchestrator.
 
 After Render reports `live` and the application health endpoint succeeds, the
 `Tag deployed release` job creates an annotated `vMAJOR.MINOR.PATCH` tag for
-the exact deployed commit. If the repository has no release tag yet, the
-initial version comes from the project version in `pom.xml` with `-SNAPSHOT`
-removed. With the current project version, the first successful release is
-`v0.0.1`. Later production deploys increment the patch number. Re-running a
-completed workflow is idempotent: an already tagged commit receives no second
-tag.
+the exact deployed commit. The release tag is the project version in `pom.xml`
+with `-SNAPSHOT` removed. A tag with that version must not already point to
+another commit. Re-running a completed workflow is idempotent: an already
+tagged commit receives no second tag.
+
+After tagging, `Prepare next development version` calculates the next patch,
+creates an `automation/prepare-<version>-SNAPSHOT` branch, changes only
+`pom.xml`, opens a pull request to `master`, and enables squash auto-merge. This
+keeps `master` one development-version commit ahead of the production tag, so
+new branches always inherit the next `-SNAPSHOT` version.
+
+Both the pull-request and push quality workflows classify a change as an
+automatic version bump only when `pom.xml` is the sole changed file and its
+version advances by exactly one patch. Such a change runs `mvn validate` but
+does not run the full tests, SonarCloud, Render deployment, or release tagging.
+Any additional file or unexpected version change follows the complete release
+pipeline.
 
 The tag job needs `contents: write` on `GITHUB_TOKEN`. In repository settings,
 ensure Actions can use read/write workflow permissions and that any tag ruleset
 allows `github-actions[bot]` to create release tags.
+
+The version preparation job uses `RELEASE_AUTOMATION_TOKEN`, a fine-grained
+personal access token or GitHub App installation token with repository Contents
+and Pull requests read/write permissions. The associated identity must be able
+to create branches and enable auto-merge without bypassing the `master`
+requirements. Enable **Allow auto-merge** in the repository pull-request
+settings.
 
 To prepare a correction from an older production version:
 
@@ -199,6 +221,17 @@ GitHub-hosted runner and publishes two GHCR tags:
 - `ghcr.io/blnunes/sisdent:preprod` is a convenience pointer and is never used
   as the authoritative rollback record.
 
+After quality checks, `Check local pre-production runner` polls the GitHub
+self-hosted runners API every 10 seconds for up to one minute. It requires an
+online, idle runner carrying the `sisdent-preprod` label. If no matching runner
+becomes available, the job succeeds with a visible warning and summary; image
+building and local deployment are skipped. This avoids leaving a deployment
+queued for GitHub's default self-hosted-runner timeout when the local machine
+is off. A missing or invalid `PREPROD_RUNNER_TOKEN`, or an unavailable runners
+API, also produces a warning and skips deployment instead of failing the
+workflow. The warning must still be corrected before relying on local
+pre-production validation.
+
 The build job packages only `compose.preprod.yml`, the Caddy configuration, and
 `deploy/preprod/deploy.sh`. The self-hosted job downloads that artifact directly
 to `/srv/sisdent`; it does not run `actions/checkout` and keeps no source tree.
@@ -222,6 +255,8 @@ Repository secrets live under
 | `SONAR_TOKEN` | SonarCloud | Authenticate code analysis |
 | `RENDER_API_KEY` | Render Account Settings > API Keys | Authenticate deployment API calls |
 | `RENDER_SERVICE_ID` | Render service settings; value starts with `srv-` | Identify the Sisdent service |
+| `RELEASE_AUTOMATION_TOKEN` | Fine-grained PAT or GitHub App token | Create the post-release branch and auto-merge PR |
+| `PREPROD_RUNNER_TOKEN` | Fine-grained PAT with repository Administration read permission | Check whether the local runner is online and idle |
 
 Never store secret values in source files, logs, commits, or documentation.
 GitHub can show a secret name and update date but cannot reveal its value.
