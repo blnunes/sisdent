@@ -172,9 +172,11 @@ tagged commit receives no second tag.
 
 After tagging, `Prepare next development version` calculates the next patch,
 creates an `automation/prepare-<version>-SNAPSHOT` branch, changes only
-`pom.xml`, opens a pull request to `master`, and enables squash auto-merge. This
-keeps `master` one development-version commit ahead of the production tag, so
-new branches always inherit the next `-SNAPSHOT` version.
+`pom.xml`, and opens a pull request to `master`. Merge that pull request after
+its checks pass. This keeps `master` one development-version commit ahead of
+the production tag, so new branches inherit the next `-SNAPSHOT` version.
+Re-running the release workflow detects an existing open version PR and exits
+successfully without creating a duplicate.
 
 Both the pull-request and push quality workflows classify a change as an
 automatic version bump only when `pom.xml` is the sole changed file and its
@@ -196,9 +198,9 @@ allows `github-actions[bot]` to create release tags.
 The version preparation job uses `RELEASE_AUTOMATION_TOKEN`, a fine-grained
 personal access token or GitHub App installation token with repository Contents
 and Pull requests read/write permissions. The associated identity must be able
-to create branches and enable auto-merge without bypassing the `master`
-requirements. Enable **Allow auto-merge** in the repository pull-request
-settings.
+to create branches and pull requests. Auto-merge is deliberately not requested:
+GitHub rejects it when the base branch has no compatible protection rule, and
+the version PR is small enough to review and merge explicitly.
 
 To prepare a correction from an older production version:
 
@@ -282,7 +284,7 @@ Repository secrets live under
 | `SONAR_TOKEN` | SonarCloud | Authenticate code analysis |
 | `RENDER_API_KEY` | Render Account Settings > API Keys | Authenticate deployment API calls |
 | `RENDER_SERVICE_ID` | Render service settings; value starts with `srv-` | Identify the Sisdent service |
-| `RELEASE_AUTOMATION_TOKEN` | Fine-grained PAT or GitHub App token | Create the post-release branch and auto-merge PR |
+| `RELEASE_AUTOMATION_TOKEN` | Fine-grained PAT or GitHub App token | Create the post-release branch and pull request |
 
 Never store secret values in source files, logs, commits, or documentation.
 GitHub can show a secret name and update date but cannot reveal its value.
