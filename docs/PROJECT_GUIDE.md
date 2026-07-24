@@ -193,10 +193,17 @@ PORT=9090 ./mvnw spring-boot:run
 
 Local development creates a training administrator with identification
 `NATIONAL_ID / ADMIN` and password `admin`. These deliberately weak credentials
-exist only to simplify local exercises. Every deployed
-environment must override `JWT_SECRET`, `BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER`,
-and `BOOTSTRAP_ADMIN_PASSWORD`. The JWT secret must contain at least 32
-characters.
+exist only to simplify local exercises.
+
+Every deployed environment must override these variables:
+- `JWT_SECRET` — a strong random string with at least 32 characters.
+- `BOOTSTRAP_ADMIN_IDENTIFICATION_TYPE` — optional, defaults to `NATIONAL_ID`.
+- `BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER` — admin username/identifier in the
+  target environment.
+- `BOOTSTRAP_ADMIN_PASSWORD` — a strong admin password.
+
+Use `deploy/preprod/runtime.env.example` as a template and create
+`deploy/preprod/runtime.env` on the deployment host.
 
 Login example:
 

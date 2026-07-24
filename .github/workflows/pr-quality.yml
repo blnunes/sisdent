@@ -65,4 +65,7 @@ jobs:
       - name: Validate pre-production Compose model
         env:
           SISDENT_IMAGE_TAG: validation
+          JWT_SECRET: validation-secret-123456789012345678901234
+          BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER: ADMIN
+          BOOTSTRAP_ADMIN_PASSWORD: validation-password
         run: docker compose --file compose.preprod.yml config --quiet
