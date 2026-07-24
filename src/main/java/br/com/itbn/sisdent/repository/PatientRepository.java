@@ -13,11 +13,19 @@ import java.util.Optional;
 public interface PatientRepository extends JpaRepository<Patient, Long> {
 
     @Override
-    @EntityGraph(attributePaths = {"address", "address.state", "specialities"})
+    @EntityGraph(attributePaths = {
+            "address",
+            "address.state",
+            "specialities",
+            "specialities.procedures"})
     List<Patient> findAll(Sort sort);
 
     @Override
-    @EntityGraph(attributePaths = {"address", "address.state", "specialities"})
+    @EntityGraph(attributePaths = {
+            "address",
+            "address.state",
+            "specialities",
+            "specialities.procedures"})
     Optional<Patient> findById(Long id);
 
     Optional<Patient> findByTaxId(String taxId);

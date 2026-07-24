@@ -37,6 +37,9 @@ Related documents:
 | `GET` | `/api/patients` | List patients |
 | `GET` | `/api/patients/{id}` | Find patient by ID |
 | `POST` | `/api/patients` | Create patient and missing address/state |
+| `GET` | `/api/specialities` | List specialities with their procedures |
+| `POST` | `/api/specialities` | Create a speciality and its procedures |
+| `PUT` | `/api/specialities/{id}` | Replace a speciality and its nested procedures |
 | `GET` | `/actuator/health` | Application health |
 | `GET` | `/v3/api-docs` | OpenAPI JSON contract |
 | `GET` | `/swagger-ui.html` | Swagger UI redirect |

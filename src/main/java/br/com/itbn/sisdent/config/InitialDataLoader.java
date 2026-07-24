@@ -92,9 +92,12 @@ public class InitialDataLoader implements ApplicationRunner {
 
     private Map<String, Speciality> saveSpecialities(List<SpecialityData> specialities) {
         return specialities.stream()
-                .map(speciality -> specialityRepository.findByName(speciality.name())
-                        .orElseGet(() -> specialityRepository.save(
-                                new Speciality(speciality.name()))))
+                .map(speciality -> {
+                    Speciality entity = specialityRepository.findByName(speciality.name())
+                            .orElseGet(() -> new Speciality(speciality.name()));
+                    entity.addMissingProcedures(speciality.procedures());
+                    return specialityRepository.save(entity);
+                })
                 .collect(Collectors.toMap(Speciality::getName, Function.identity()));
     }
 
@@ -161,7 +164,7 @@ public class InitialDataLoader implements ApplicationRunner {
     public record StateData(String name, String abbreviation) {
     }
 
-    public record SpecialityData(String name) {
+    public record SpecialityData(String name, List<String> procedures) {
     }
 
     public record AddressData(
