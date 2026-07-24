@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - master
-      - feat/preprod-deployment
 
 jobs:
   quality-check:
@@ -43,18 +42,6 @@ jobs:
 
           echo "version_bump=${version_bump}" >> "${GITHUB_OUTPUT}"
 
-      - name: Validate production promotion source
-        if: >-
-          github.base_ref == 'master' &&
-          steps.change.outputs.version_bump != 'true'
-        env:
-          HEAD_BRANCH: ${{ github.head_ref }}
-        run: |
-          if [[ "${HEAD_BRANCH}" != "feat/preprod-deployment" ]]; then
-            echo "Production changes must be promoted from feat/preprod-deployment" >&2
-            exit 1
-          fi
-
       - name: Unit tests
         if: steps.change.outputs.version_bump != 'true'
         run: mvn --batch-mode --no-transfer-progress verify
@@ -62,3 +49,20 @@ jobs:
       - name: Validate next development version
         if: steps.change.outputs.version_bump == 'true'
         run: mvn --batch-mode --no-transfer-progress validate
+
+  infrastructure-check:
+    name: Infrastructure check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Validate shell syntax
+        run: bash -n deploy/preprod/deploy.sh deploy/release/*.sh
+
+      - name: Validate pre-production Compose model
+        env:
+          SISDENT_IMAGE_TAG: validation
+        run: docker compose --file compose.preprod.yml config --quiet

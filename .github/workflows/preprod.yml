@@ -1,13 +1,23 @@
-name: Pre-production
+name: Deploy pre-production
 
 on:
-  push:
-    branches:
-      - feat/preprod-deployment
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag, or commit SHA to deploy
+        required: true
+        default: master
+        type: string
+
+concurrency:
+  group: sisdent-preprod
+  cancel-in-progress: false
 
 jobs:
   quality-check:
-    name: Quality check
+    name: Validate selected revision
+    outputs:
+      commit-sha: ${{ steps.commit.outputs.sha }}
     runs-on: ubuntu-latest
     container: maven:3.9.16-eclipse-temurin-25
     permissions:
@@ -16,90 +26,20 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
+          ref: ${{ inputs.ref }}
           fetch-depth: 0
+
+      - name: Resolve deployment commit
+        id: commit
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
 
       - name: Unit tests
         run: mvn --batch-mode --no-transfer-progress verify
 
-  check-preprod-runner:
-    name: Check local pre-production runner
+  build-image:
+    name: Build immutable image
     needs: quality-check
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    permissions: {}
-    outputs:
-      available: ${{ steps.runner.outputs.available }}
-
-    steps:
-      - name: Wait up to one minute for runner
-        id: runner
-        shell: bash
-        env:
-          RUNNER_TOKEN: ${{ secrets.PREPROD_RUNNER_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          skip_deployment() {
-            local reason="${1:?Skip reason is required}"
-            echo "available=false" >> "${GITHUB_OUTPUT}"
-            echo "::warning title=Pre-production deployment skipped::${reason}"
-            {
-              echo "## Pre-production deployment skipped"
-              echo
-              echo "${reason}"
-              echo "The image was not built and no deployment was attempted."
-            } >> "${GITHUB_STEP_SUMMARY}"
-            exit 0
-          }
-
-          if [[ -z "${RUNNER_TOKEN}" ]]; then
-            skip_deployment \
-              "PREPROD_RUNNER_TOKEN is not configured, so runner availability could not be checked."
-          fi
-
-          for attempt in {1..7}; do
-            if ! response="$(
-              curl --fail-with-body --silent --show-error \
-                --header "Accept: application/vnd.github+json" \
-                --header "Authorization: Bearer ${RUNNER_TOKEN}" \
-                --header "X-GitHub-Api-Version: 2022-11-28" \
-                "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runners?per_page=100"
-            )"; then
-              skip_deployment \
-                "The GitHub runners API could not be queried; verify PREPROD_RUNNER_TOKEN."
-            fi
-            available="$(
-              jq --raw-output '
-                any(
-                  .runners[];
-                  .status == "online"
-                  and .busy == false
-                  and any(.labels[]; .name == "sisdent-preprod")
-                )
-              ' <<<"${response}"
-            )"
-
-            if [[ "${available}" == "true" ]]; then
-              echo "available=true" >> "${GITHUB_OUTPUT}"
-              echo "Local pre-production runner is online and idle."
-              exit 0
-            fi
-
-            if [[ "${attempt}" -lt 7 ]]; then
-              echo "Runner unavailable; retrying in 10 seconds (${attempt}/7)."
-              sleep 10
-            fi
-          done
-
-          skip_deployment \
-            "The local runner was offline or busy for one minute."
-
-  build-preprod-image:
-    name: Build pre-production image
-    if: needs.check-preprod-runner.outputs.available == 'true'
-    needs:
-      - quality-check
-      - check-preprod-runner
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -107,6 +47,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.quality-check.outputs.commit-sha }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
@@ -124,10 +66,10 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/blnunes/sisdent:${{ github.sha }}
+            ghcr.io/blnunes/sisdent:${{ needs.quality-check.outputs.commit-sha }}
             ghcr.io/blnunes/sisdent:preprod
           labels: |
-            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.revision=${{ needs.quality-check.outputs.commit-sha }}
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -135,7 +77,7 @@ jobs:
       - name: Package deployment files
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: sisdent-preprod-${{ github.sha }}
+          name: sisdent-preprod-${{ needs.quality-check.outputs.commit-sha }}
           path: |
             compose.preprod.yml
             deploy/preprod/Caddyfile
@@ -143,18 +85,14 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  deploy-preprod:
-    name: Deploy to local pre-production
-    if: needs.check-preprod-runner.outputs.available == 'true'
+  deploy:
+    name: Deploy selected revision
     needs:
-      - check-preprod-runner
-      - build-preprod-image
+      - quality-check
+      - build-image
     runs-on: [self-hosted, linux, x64, sisdent-preprod]
     timeout-minutes: 15
     environment: preprod
-    concurrency:
-      group: sisdent-preprod
-      cancel-in-progress: false
     permissions:
       actions: read
       contents: read
@@ -164,7 +102,7 @@ jobs:
       - name: Download deployment bundle
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
-          name: sisdent-preprod-${{ github.sha }}
+          name: sisdent-preprod-${{ needs.quality-check.outputs.commit-sha }}
           path: /srv/sisdent
 
       - name: Log in to GitHub Container Registry
@@ -176,7 +114,9 @@ jobs:
 
       - name: Deploy approved image
         shell: bash
-        run: bash /srv/sisdent/deploy/preprod/deploy.sh "${GITHUB_SHA}"
+        run: >-
+          bash /srv/sisdent/deploy/preprod/deploy.sh
+          "${{ needs.quality-check.outputs.commit-sha }}"
 
       - name: Verify LAN endpoint
         shell: bash
@@ -185,14 +125,15 @@ jobs:
           bind_address="$(sed -n 's/^SISDENT_BIND_ADDRESS=//p' /srv/sisdent/runtime.env)"
           lan_ip="$(ip -4 route get 1.1.1.1 | awk '{print $7; exit}')"
 
-          if [[ "$bind_address" != "0.0.0.0" && "$bind_address" != "$lan_ip" ]]; then
-            echo "SISDENT_BIND_ADDRESS must be 0.0.0.0 or the LAN IP $lan_ip"
+          if [[ "${bind_address}" != "0.0.0.0" &&
+                "${bind_address}" != "${lan_ip}" ]]; then
+            echo "SISDENT_BIND_ADDRESS must be 0.0.0.0 or the LAN IP ${lan_ip}"
             exit 1
           fi
 
-          # Intentional HTTP: this health request contains no credentials and is
-          # restricted to the trusted RFC 1918 LAN; router port forwarding is disabled.
+          # Intentional HTTP on the trusted LAN. HTTPS is tracked separately.
           lan_health_url="http://${lan_ip}/actuator/health" # NOSONAR
-          curl --fail --silent --show-error --max-time 10 "${lan_health_url}" # NOSONAR
-          swagger_url="http://${lan_ip}/swagger-ui/index.html" # NOSONAR
-          echo "Swagger UI: ${swagger_url}" # NOSONAR
+          response="$(curl --fail --silent --show-error --max-time 10 \
+            "${lan_health_url}")" # NOSONAR
+          grep -Eq '"status"[[:space:]]*:[[:space:]]*"UP"' <<<"${response}"
+          echo "Swagger UI: http://${lan_ip}/swagger-ui/index.html" # NOSONAR
