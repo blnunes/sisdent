@@ -129,6 +129,8 @@ associations and avoid extra queries while mapping response DTOs.
 - Identification type is required: `NATIONAL_ID` or `PASSPORT`.
 - Identification number accepts letters, numbers, spaces, and hyphens. It is
   normalized to uppercase without spaces or hyphens before persistence.
+- Login applies the same normalization, so identification numbers are
+  case-insensitive (`admin`, `Admin`, and `ADMIN` all resolve to `ADMIN`).
 - The normalized identification number is globally unique through a database
   constraint; duplicate creation returns HTTP `409 Conflict`.
 - Patient nationality and address country use two-letter ISO 3166-1 codes.

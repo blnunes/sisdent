@@ -51,11 +51,11 @@ class SecurityIntegrationTests {
 
     @Test
     void adminCanManageUsersAndPermissionsWithSoftDelete() throws Exception {
-        String adminToken = login("NATIONAL_ID", "ADMIN", "admin");
+        String adminToken = login("NATIONAL_ID", "aDmIn", "admin");
         String createRequest = """
                 {
                   "identificationType": "PASSPORT",
-                  "identificationNumber": "PT 123-ABC",
+                  "identificationNumber": "pT 123-aBc",
                   "password": "manager-password",
                   "role": "MANAGER"
                 }
