@@ -22,8 +22,8 @@ flowchart LR
     RD --> R
 ```
 
-There is currently no external database, queue, cache, separate frontend, or
-identity provider.
+Authentication is local and stateless through signed JWTs. There is currently
+no external database, queue, cache, separate frontend, or identity provider.
 
 ## Runtime container
 
@@ -52,7 +52,8 @@ environment variable.
 
 ```mermaid
 flowchart LR
-    HTTP[HTTP request] --> C[Controllers]
+    HTTP[HTTP request] --> SEC[JWT authentication and authorization]
+    SEC --> C[Controllers]
     C --> V[DTO validation]
     V --> S[Services]
     S --> RP[Repositories]
@@ -98,6 +99,7 @@ defines API title, version, and description.
 erDiagram
     COUNTRY ||--o{ ADDRESS : locates
     COUNTRY ||--o{ PATIENT : nationality
+    APP_USER ||--o{ USER_PERMISSION : grants
     STATE ||--o{ ADDRESS : contains
     ADDRESS ||--o{ PATIENT : assigned_to
 
@@ -133,6 +135,18 @@ erDiagram
         varchar identification_number UK
         bigint nationality_country_id FK
         bigint address_id FK
+    }
+    APP_USER {
+        bigint id PK
+        varchar identification_type
+        varchar identification_number
+        varchar password
+        varchar role
+        boolean active
+    }
+    USER_PERMISSION {
+        bigint user_id FK
+        varchar permission
     }
 ```
 
@@ -208,7 +222,8 @@ Schema changes must be added as immutable, forward-only Flyway migrations.
 
 - Local in-memory H2 loses changes after process shutdown.
 - File-backed H2 is not the intended final production database.
-- There is no authentication or authorization.
+- JWT revocation is not persisted, so permission changes and deactivation take
+  effect on the next login or after the current token expires.
 - Tax IDs and other personal data are returned in full.
 - There is no audit history, backup, or recovery strategy.
 - List endpoints have no pagination.

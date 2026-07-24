@@ -1,7 +1,10 @@
 package br.com.itbn.sisdent.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,10 +29,17 @@ public class OpenApiConfiguration {
     @SuppressWarnings("unused") // Invoked by Spring through the @Bean lifecycle.
     OpenAPI sisdentOpenApi() {
         return new OpenAPI()
+                .components(new Components().addSecuritySchemes(
+                        "bearerAuth",
+                        new SecurityScheme()
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")))
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .info(new Info()
                         .title("Sisdent API")
                         .version("v1")
                         .description(
-                                "REST API for managing patients, identification documents, countries, addresses, and states."));
+                                "Authenticated REST API for managing patients, users, permissions, countries, addresses, and states."));
     }
 }
