@@ -189,8 +189,9 @@ The default URL is `http://localhost:8080`. To select another port:
 PORT=9090 ./mvnw spring-boot:run
 ```
 
-Local development creates an initial administrator with identification
-`NATIONAL_ID / ADMIN-001` and password `change-me-now`. Every deployed
+Local development creates a training administrator with identification
+`NATIONAL_ID / ADMIN` and password `admin`. These deliberately weak credentials
+exist only to simplify local exercises. Every deployed
 environment must override `JWT_SECRET`, `BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER`,
 and `BOOTSTRAP_ADMIN_PASSWORD`. The JWT secret must contain at least 32
 characters.
@@ -200,7 +201,7 @@ Login example:
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"identificationType":"NATIONAL_ID","identificationNumber":"ADMIN-001","password":"change-me-now"}'
+  -d '{"identificationType":"NATIONAL_ID","identificationNumber":"ADMIN","password":"admin"}'
 ```
 
 Send the returned token as `Authorization: Bearer <accessToken>`. Permission
