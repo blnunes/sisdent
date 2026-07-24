@@ -30,7 +30,7 @@ describe('AuthService', () => {
 
     const request = http.expectOne('/api/auth/login');
     expect(request.request.method).toBe('POST');
-    const token = jwt({ userId: 1, authorities: ['ROLE_ADMIN', 'READ'], exp: futureExpiration() });
+    const token = jwt({ userId: 1, authorities: ['ROLE_ADMIN', 'READ_USERS'], exp: futureExpiration() });
     request.flush({ accessToken: token, tokenType: 'Bearer', expiresIn: 3600 });
 
     expect(service.authenticated()).toBe(true);
@@ -50,7 +50,7 @@ describe('AuthService', () => {
 
     const request = http.expectOne('/api/auth/login');
     request.flush({
-      accessToken: jwt({ userId: 2, authorities: ['ROLE_USER', 'READ'], exp: futureExpiration() }),
+      accessToken: jwt({ userId: 2, authorities: ['ROLE_USER', 'READ_USERS'], exp: futureExpiration() }),
       tokenType: 'Bearer',
       expiresIn: 3600,
     });

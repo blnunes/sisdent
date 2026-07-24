@@ -5,8 +5,20 @@ import java.util.Set;
 
 public enum Role {
     ADMIN(EnumSet.allOf(Permission.class)),
-    MANAGER(EnumSet.allOf(Permission.class)),
-    USER(EnumSet.of(Permission.READ));
+    MANAGER(EnumSet.of(
+            Permission.READ_PATIENTS,
+            Permission.MAINTAIN_PATIENTS,
+            Permission.READ_SPECIALITIES,
+            Permission.MAINTAIN_SPECIALITIES,
+            Permission.READ_ADDRESSES,
+            Permission.READ_COUNTRIES,
+            Permission.READ_STATES)),
+    USER(EnumSet.of(
+            Permission.READ_PATIENTS,
+            Permission.READ_SPECIALITIES,
+            Permission.READ_ADDRESSES,
+            Permission.READ_COUNTRIES,
+            Permission.READ_STATES));
 
     private final Set<Permission> defaultPermissions;
 

@@ -38,15 +38,19 @@ public class AdminDataLoader implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         String normalizedNumber = IdentificationNumbers.normalize(identificationNumber);
-        if (userRepository.findByIdentificationTypeAndIdentificationNumber(
+        userRepository.findByIdentificationTypeAndIdentificationNumber(
                 identificationType,
-                normalizedNumber).isEmpty()) {
-            userRepository.save(new User(
-                    identificationType,
-                    normalizedNumber,
-                    passwordEncoder.encode(password),
-                    Role.ADMIN,
-                    Role.ADMIN.defaultPermissions()));
-        }
+                normalizedNumber)
+                .ifPresentOrElse(existingUser -> {
+                    if (existingUser.getRole() == Role.ADMIN) {
+                        existingUser.setPermissions(Role.ADMIN.defaultPermissions());
+                        userRepository.save(existingUser);
+                    }
+                }, () -> userRepository.save(new User(
+                        identificationType,
+                        normalizedNumber,
+                        passwordEncoder.encode(password),
+                        Role.ADMIN,
+                        Role.ADMIN.defaultPermissions())));
     }
 }

@@ -8,8 +8,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -23,8 +27,12 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Configuration
 public class SecurityConfiguration {
@@ -47,12 +55,38 @@ public class SecurityConfiguration {
                                 "/h2-console/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/api/users/me/password")
                         .authenticated()
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/**").hasAuthority("READ")
-                        .requestMatchers(HttpMethod.POST, "/api/**").hasAuthority("CREATE")
-                        .requestMatchers(HttpMethod.PUT, "/api/**").hasAuthority("UPDATE")
-                        .requestMatchers(HttpMethod.PATCH, "/api/**").hasAuthority("UPDATE")
-                        .requestMatchers(HttpMethod.DELETE, "/api/**").hasAuthority("DELETE")
+                        .requestMatchers(HttpMethod.GET, "/api/users/**")
+                        .access(hasAnyPermission("READ_USERS", "MAINTAIN_USERS"))
+                        .requestMatchers(HttpMethod.POST, "/api/users/**")
+                        .access(hasAnyPermission("MAINTAIN_USERS"))
+                        .requestMatchers(HttpMethod.PUT, "/api/users/**")
+                        .access(hasAnyPermission("MAINTAIN_USERS"))
+                        .requestMatchers(HttpMethod.PATCH, "/api/users/**")
+                        .access(hasAnyPermission("MAINTAIN_USERS"))
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/**")
+                        .access(hasAnyPermission("MAINTAIN_USERS"))
+                        .requestMatchers(HttpMethod.GET, "/api/patients/**")
+                        .access(hasAnyPermission("READ_PATIENTS", "MAINTAIN_PATIENTS"))
+                        .requestMatchers(HttpMethod.POST, "/api/patients/**")
+                        .access(hasAnyPermission("MAINTAIN_PATIENTS"))
+                        .requestMatchers(HttpMethod.PUT, "/api/patients/**")
+                        .access(hasAnyPermission("MAINTAIN_PATIENTS"))
+                        .requestMatchers(HttpMethod.DELETE, "/api/patients/**")
+                        .access(hasAnyPermission("MAINTAIN_PATIENTS"))
+                        .requestMatchers(HttpMethod.GET, "/api/specialities/**")
+                        .access(hasAnyPermission("READ_SPECIALITIES", "MAINTAIN_SPECIALITIES"))
+                        .requestMatchers(HttpMethod.POST, "/api/specialities/**")
+                        .access(hasAnyPermission("MAINTAIN_SPECIALITIES"))
+                        .requestMatchers(HttpMethod.PUT, "/api/specialities/**")
+                        .access(hasAnyPermission("MAINTAIN_SPECIALITIES"))
+                        .requestMatchers(HttpMethod.DELETE, "/api/specialities/**")
+                        .access(hasAnyPermission("MAINTAIN_SPECIALITIES"))
+                        .requestMatchers(HttpMethod.GET, "/api/addresses/**")
+                        .access(hasAnyPermission("READ_ADDRESSES", "MAINTAIN_ADDRESSES"))
+                        .requestMatchers(HttpMethod.GET, "/api/countries/**")
+                        .access(hasAnyPermission("READ_COUNTRIES", "MAINTAIN_COUNTRIES"))
+                        .requestMatchers(HttpMethod.GET, "/api/states/**")
+                        .access(hasAnyPermission("READ_STATES", "MAINTAIN_STATES"))
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
@@ -87,6 +121,23 @@ public class SecurityConfiguration {
                 new JwtTimestampValidator(),
                 new JwtIssuerValidator("sisdent")));
         return decoder;
+    }
+
+    private AuthorizationManager<RequestAuthorizationContext> hasAnyPermission(String... permissions) {
+        return (authentication, context) -> {
+            Authentication auth = authentication.get();
+            if (auth == null || !auth.isAuthenticated()) {
+                return new AuthorizationDecision(false);
+            }
+
+            Set<String> authorities = auth.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toSet());
+
+            boolean admin = authorities.contains("ROLE_ADMIN");
+            boolean allowed = admin || authorities.stream().anyMatch(authority -> Arrays.asList(permissions).contains(authority));
+            return new AuthorizationDecision(allowed);
+        };
     }
 
     @Bean

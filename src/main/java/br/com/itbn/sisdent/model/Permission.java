@@ -1,8 +1,16 @@
 package br.com.itbn.sisdent.model;
 
 public enum Permission {
-    CREATE,
-    UPDATE,
-    READ,
-    DELETE
+    READ_USERS,
+    MAINTAIN_USERS,
+    READ_PATIENTS,
+    MAINTAIN_PATIENTS,
+    READ_SPECIALITIES,
+    MAINTAIN_SPECIALITIES,
+    READ_ADDRESSES,
+    MAINTAIN_ADDRESSES,
+    READ_COUNTRIES,
+    MAINTAIN_COUNTRIES,
+    READ_STATES,
+    MAINTAIN_STATES
 }

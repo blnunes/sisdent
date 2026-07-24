@@ -10,7 +10,25 @@ CREATE TABLE app_users (
 
 CREATE TABLE user_permissions (
     user_id BIGINT NOT NULL,
-    permission ENUM ('CREATE', 'UPDATE', 'READ', 'DELETE') NOT NULL,
+    permission ENUM (
+        'CREATE',
+        'UPDATE',
+        'READ',
+        'DELETE',
+        'READ_PATIENTS',
+        'CREATE_PATIENTS',
+        'UPDATE_PATIENTS',
+        'DELETE_PATIENTS',
+        'READ_SPECIALITIES',
+        'CREATE_SPECIALITIES',
+        'UPDATE_SPECIALITIES',
+        'DELETE_SPECIALITIES',
+        'READ_ADDRESSES',
+        'READ_COUNTRIES',
+        'READ_STATES',
+        'READ_USERS',
+        'MANAGE_USERS'
+    ) NOT NULL,
     PRIMARY KEY (user_id, permission),
     CONSTRAINT fk_user_permissions_user
         FOREIGN KEY (user_id) REFERENCES app_users (id)

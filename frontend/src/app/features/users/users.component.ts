@@ -151,7 +151,20 @@ export class UsersComponent {
   }
 
   permissionLabel(permission: Permission): string {
-    return { CREATE: 'Criar', UPDATE: 'Alterar', READ: 'Consultar', DELETE: 'Eliminar' }[permission];
+    return {
+      READ_USERS: 'Utilizadores · Ler',
+      MAINTAIN_USERS: 'Utilizadores · Manter',
+      READ_PATIENTS: 'Pacientes · Ler',
+      MAINTAIN_PATIENTS: 'Pacientes · Manter',
+      READ_SPECIALITIES: 'Especialidades · Ler',
+      MAINTAIN_SPECIALITIES: 'Especialidades · Manter',
+      READ_ADDRESSES: 'Endereços · Ler',
+      MAINTAIN_ADDRESSES: 'Endereços · Manter',
+      READ_COUNTRIES: 'Países · Ler',
+      MAINTAIN_COUNTRIES: 'Países · Manter',
+      READ_STATES: 'Estados · Ler',
+      MAINTAIN_STATES: 'Estados · Manter',
+    }[permission];
   }
 
   private changed(message: string): void {
@@ -272,7 +285,7 @@ export class UserFormDialog {
       <p class="helper">Escolha as ações permitidas. O perfil define o limite máximo de acesso.</p>
       <div class="permission-grid">
         @for (permission of allPermissions; track permission) {
-          <mat-checkbox [checked]="selected().has(permission)" (change)="toggle(permission, $event.checked)">
+          <mat-checkbox [checked]="selected().has(permission)" [disabled]="isAdmin" (change)="toggle(permission, $event.checked)">
             <span class="permission-name">{{ labels[permission] }}</span>
             <small>{{ descriptions[permission] }}</small>
           </mat-checkbox>
@@ -281,7 +294,7 @@ export class UserFormDialog {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button class="primary-action" (click)="save()">Guardar permissões</button>
+      <button mat-flat-button class="primary-action" [disabled]="isAdmin" (click)="save()">Guardar permissões</button>
     </mat-dialog-actions>
   `,
   styles: [`
@@ -301,22 +314,65 @@ export class UserFormDialog {
 export class PermissionDialog {
   readonly user = inject<User>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<PermissionDialog, Permission[]>);
-  readonly allPermissions: Permission[] = ['CREATE', 'UPDATE', 'READ', 'DELETE'];
+  readonly allPermissions: Permission[] = [
+    'READ_USERS',
+    'MAINTAIN_USERS',
+    'READ_PATIENTS',
+    'MAINTAIN_PATIENTS',
+    'READ_SPECIALITIES',
+    'MAINTAIN_SPECIALITIES',
+    'READ_ADDRESSES',
+    'MAINTAIN_ADDRESSES',
+    'READ_COUNTRIES',
+    'MAINTAIN_COUNTRIES',
+    'READ_STATES',
+    'MAINTAIN_STATES',
+  ];
   readonly selected = signal(new Set(this.user.permissions));
-  readonly labels: Record<Permission, string> = { CREATE: 'Criar', UPDATE: 'Alterar', READ: 'Consultar', DELETE: 'Eliminar' };
+  readonly isAdmin = this.user.role === 'ADMIN';
+  readonly labels: Record<Permission, string> = {
+    READ_USERS: 'Utilizadores · Ler',
+    MAINTAIN_USERS: 'Utilizadores · Manter',
+    READ_PATIENTS: 'Pacientes · Ler',
+    MAINTAIN_PATIENTS: 'Pacientes · Manter',
+    READ_SPECIALITIES: 'Especialidades · Ler',
+    MAINTAIN_SPECIALITIES: 'Especialidades · Manter',
+    READ_ADDRESSES: 'Endereços · Ler',
+    MAINTAIN_ADDRESSES: 'Endereços · Manter',
+    READ_COUNTRIES: 'Países · Ler',
+    MAINTAIN_COUNTRIES: 'Países · Manter',
+    READ_STATES: 'Estados · Ler',
+    MAINTAIN_STATES: 'Estados · Manter',
+  };
   readonly descriptions: Record<Permission, string> = {
-    CREATE: 'Adicionar novos registos',
-    UPDATE: 'Editar registos existentes',
-    READ: 'Visualizar informação',
-    DELETE: 'Efetuar exclusão lógica',
+    READ_USERS: 'Consultar utilizadores',
+    MAINTAIN_USERS: 'Criar, alterar e remover utilizadores',
+    READ_PATIENTS: 'Consultar pacientes',
+    MAINTAIN_PATIENTS: 'Criar, alterar e remover pacientes',
+    READ_SPECIALITIES: 'Consultar especialidades',
+    MAINTAIN_SPECIALITIES: 'Criar, alterar e remover especialidades',
+    READ_ADDRESSES: 'Consultar endereços',
+    MAINTAIN_ADDRESSES: 'Gerir endereços',
+    READ_COUNTRIES: 'Consultar países',
+    MAINTAIN_COUNTRIES: 'Gerir países',
+    READ_STATES: 'Consultar estados',
+    MAINTAIN_STATES: 'Gerir estados',
   };
 
   toggle(permission: Permission, checked: boolean): void {
+    if (this.isAdmin) {
+      return;
+    }
     const next = new Set(this.selected());
     checked ? next.add(permission) : next.delete(permission);
     this.selected.set(next);
   }
-  save(): void { this.ref.close([...this.selected()]); }
+  save(): void {
+    if (this.isAdmin) {
+      return;
+    }
+    this.ref.close([...this.selected()]);
+  }
 }
 
 @Component({

@@ -1,6 +1,7 @@
 package br.com.itbn.sisdent;
 
 import br.com.itbn.sisdent.model.IdentificationType;
+import br.com.itbn.sisdent.model.Permission;
 import br.com.itbn.sisdent.model.Role;
 import br.com.itbn.sisdent.model.User;
 import br.com.itbn.sisdent.repository.UserRepository;
@@ -16,6 +17,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
+
+import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -68,7 +71,7 @@ class SecurityIntegrationTests {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.identificationNumber").value("PT123ABC"))
                 .andExpect(jsonPath("$.role").value("MANAGER"))
-                .andExpect(jsonPath("$.permissions.length()").value(4))
+                .andExpect(jsonPath("$.permissions.length()").value(5))
                 .andReturn().getResponse().getContentAsString();
 
         long userId = jsonMapper.readTree(response).get("id").asLong();
@@ -76,7 +79,7 @@ class SecurityIntegrationTests {
                         .header("Authorization", bearer(adminToken))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"permissions": ["READ", "UPDATE"]}
+                                {"permissions": ["READ_PATIENTS", "READ_SPECIALITIES"]}
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.permissions.length()").value(2));
@@ -130,6 +133,25 @@ class SecurityIntegrationTests {
                         .content("""
                                 {"name": "Forbidden", "procedures": []}
                                 """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void routeSpecificPermissionsRestrictAccessToConfiguredRoutes() throws Exception {
+        userRepository.saveAndFlush(new User(
+                IdentificationType.PASSPORT,
+                IdentificationNumbers.normalize("ROUTE-USER"),
+                passwordEncoder.encode("route-password"),
+                Role.MANAGER,
+                Set.of(Permission.READ_PATIENTS)));
+        String token = login("PASSPORT", "ROUTE-USER", "route-password");
+
+        mockMvc.perform(get("/api/patients")
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/specialities")
+                        .header("Authorization", bearer(token)))
                 .andExpect(status().isForbidden());
     }
 

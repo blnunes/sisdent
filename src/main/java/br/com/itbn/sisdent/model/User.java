@@ -116,15 +116,11 @@ public class User {
 
     public void setPermissions(Set<Permission> permissions) {
         this.permissions.clear();
-        switch (role) {
-            case ADMIN -> this.permissions.addAll(Role.ADMIN.defaultPermissions());
-            case MANAGER -> this.permissions.addAll(permissions);
-            case USER -> {
-                if (permissions.contains(Permission.READ)) {
-                    this.permissions.add(Permission.READ);
-                }
-            }
+        if (role == Role.ADMIN) {
+            this.permissions.addAll(Role.ADMIN.defaultPermissions());
+            return;
         }
+        this.permissions.addAll(permissions);
     }
 
     public void deactivate() {

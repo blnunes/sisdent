@@ -34,10 +34,10 @@ describe('UserApiService', () => {
     service.update(7, user).subscribe();
     expect(http.expectOne('/api/users/7').request.method).toBe('PUT');
 
-    service.updatePermissions(7, ['READ']).subscribe();
+    service.updatePermissions(7, ['READ_PATIENTS']).subscribe();
     const permissions = http.expectOne('/api/users/7/permissions');
     expect(permissions.request.method).toBe('PUT');
-    expect(permissions.request.body).toEqual({ permissions: ['READ'] });
+    expect(permissions.request.body).toEqual({ permissions: ['READ_PATIENTS'] });
 
     service.delete(7).subscribe();
     expect(http.expectOne('/api/users/7').request.method).toBe('DELETE');

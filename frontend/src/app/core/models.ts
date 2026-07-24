@@ -1,6 +1,18 @@
 export type IdentificationType = 'NATIONAL_ID' | 'PASSPORT';
 export type Role = 'ADMIN' | 'MANAGER' | 'USER';
-export type Permission = 'CREATE' | 'UPDATE' | 'READ' | 'DELETE';
+export type Permission =
+  | 'READ_USERS'
+  | 'MAINTAIN_USERS'
+  | 'READ_PATIENTS'
+  | 'MAINTAIN_PATIENTS'
+  | 'READ_SPECIALITIES'
+  | 'MAINTAIN_SPECIALITIES'
+  | 'READ_ADDRESSES'
+  | 'MAINTAIN_ADDRESSES'
+  | 'READ_COUNTRIES'
+  | 'MAINTAIN_COUNTRIES'
+  | 'READ_STATES'
+  | 'MAINTAIN_STATES';
 
 export interface LoginRequest {
   identificationType: IdentificationType;
