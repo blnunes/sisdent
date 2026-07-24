@@ -40,6 +40,12 @@ import br.com.itbn.sisdent.model.Permission;
 public class SecurityConfiguration {
 
     private static final String USER_RESOURCE = "/api/users/**";
+    private static final String PATIENT_RESOURCE = "/api/patients/**";
+    private static final String SPECIALITY_RESOURCE = "/api/specialities/**";
+    private static final String MAINTAIN_USERS_PERMISSION = Permission.MAINTAIN_USERS.name();
+    private static final String READ_USERS_PERMISSION = Permission.READ_USERS.name();
+    private static final String MAINTAIN_PATIENTS_PERMISSION = Permission.MAINTAIN_PATIENTS.name();
+    private static final String READ_PATIENTS_PERMISSION = Permission.READ_PATIENTS.name();
     private static final String MAINTAIN_SPECIALITIES_PERMISSION = Permission.MAINTAIN_SPECIALITIES.name();
 
     @Bean
@@ -47,6 +53,8 @@ public class SecurityConfiguration {
             HttpSecurity http,
             JwtAuthenticationConverter jwtAuthenticationConverter) {
         http
+                // This API is stateless and uses JWT Bearer tokens for auth, so CSRF protection is not required.
+                // Keep CSRF disabled only while authentication relies on Authorization headers rather than cookies/sessions.
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -61,30 +69,30 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.PATCH, "/api/users/me/password")
                         .authenticated()
                         .requestMatchers(HttpMethod.GET, USER_RESOURCE)
-                        .access(hasAnyPermission("READ_USERS", "MAINTAIN_USERS"))
+                        .access(hasAnyPermission(READ_USERS_PERMISSION, MAINTAIN_USERS_PERMISSION))
                         .requestMatchers(HttpMethod.POST, USER_RESOURCE)
-                        .access(hasAnyPermission("MAINTAIN_USERS"))
+                        .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
                         .requestMatchers(HttpMethod.PUT, USER_RESOURCE)
-                        .access(hasAnyPermission("MAINTAIN_USERS"))
+                        .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
                         .requestMatchers(HttpMethod.PATCH, USER_RESOURCE)
-                        .access(hasAnyPermission("MAINTAIN_USERS"))
+                        .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
                         .requestMatchers(HttpMethod.DELETE, USER_RESOURCE)
-                        .access(hasAnyPermission("MAINTAIN_USERS"))
-                        .requestMatchers(HttpMethod.GET, "/api/patients/**")
-                        .access(hasAnyPermission("READ_PATIENTS", "MAINTAIN_PATIENTS"))
-                        .requestMatchers(HttpMethod.POST, "/api/patients/**")
-                        .access(hasAnyPermission("MAINTAIN_PATIENTS"))
-                        .requestMatchers(HttpMethod.PUT, "/api/patients/**")
-                        .access(hasAnyPermission("MAINTAIN_PATIENTS"))
-                        .requestMatchers(HttpMethod.DELETE, "/api/patients/**")
-                        .access(hasAnyPermission("MAINTAIN_PATIENTS"))
-                        .requestMatchers(HttpMethod.GET, "/api/specialities/**")
+                        .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
+                        .requestMatchers(HttpMethod.GET, PATIENT_RESOURCE)
+                        .access(hasAnyPermission(READ_PATIENTS_PERMISSION, MAINTAIN_PATIENTS_PERMISSION))
+                        .requestMatchers(HttpMethod.POST, PATIENT_RESOURCE)
+                        .access(hasAnyPermission(MAINTAIN_PATIENTS_PERMISSION))
+                        .requestMatchers(HttpMethod.PUT, PATIENT_RESOURCE)
+                        .access(hasAnyPermission(MAINTAIN_PATIENTS_PERMISSION))
+                        .requestMatchers(HttpMethod.DELETE, PATIENT_RESOURCE)
+                        .access(hasAnyPermission(MAINTAIN_PATIENTS_PERMISSION))
+                        .requestMatchers(HttpMethod.GET, SPECIALITY_RESOURCE)
                         .access(hasAnyPermission("READ_SPECIALITIES", MAINTAIN_SPECIALITIES_PERMISSION))
-                        .requestMatchers(HttpMethod.POST, "/api/specialities/**")
+                        .requestMatchers(HttpMethod.POST, SPECIALITY_RESOURCE)
                         .access(hasAnyPermission(MAINTAIN_SPECIALITIES_PERMISSION))
-                        .requestMatchers(HttpMethod.PUT, "/api/specialities/**")
+                        .requestMatchers(HttpMethod.PUT, SPECIALITY_RESOURCE)
                         .access(hasAnyPermission(MAINTAIN_SPECIALITIES_PERMISSION))
-                        .requestMatchers(HttpMethod.DELETE, "/api/specialities/**")
+                        .requestMatchers(HttpMethod.DELETE, SPECIALITY_RESOURCE)
                         .access(hasAnyPermission(MAINTAIN_SPECIALITIES_PERMISSION))
                         .requestMatchers(HttpMethod.GET, "/api/addresses/**")
                         .access(hasAnyPermission("READ_ADDRESSES", "MAINTAIN_ADDRESSES"))
