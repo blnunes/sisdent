@@ -16,8 +16,6 @@ concurrency:
 jobs:
   quality_check:
     name: Validate selected revision
-    outputs:
-      commit_sha: ${{ steps.commit.outputs.sha }}
     runs-on: ubuntu-latest
     container: maven:3.9.16-eclipse-temurin-25
     permissions:
@@ -32,7 +30,15 @@ jobs:
       - name: Resolve deployment commit
         id: commit
         shell: bash
-        run: echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+        run: git rev-parse HEAD > deployment-commit.txt
+
+      - name: Package deployment commit
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sisdent-preprod-commit
+          path: deployment-commit.txt
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Unit tests
         run: mvn --batch-mode --no-transfer-progress verify
@@ -50,7 +56,18 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: ${{ needs.quality_check.outputs.commit_sha }}
+          ref: ${{ inputs.ref }}
+
+      - name: Download deployment commit
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: sisdent-preprod-commit
+          path: .deployment
+
+      - name: Load deployment commit
+        id: commit
+        shell: bash
+        run: echo "sha=$(<.deployment/deployment-commit.txt)" >> "${GITHUB_OUTPUT}"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
@@ -68,10 +85,10 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/blnunes/sisdent:${{ needs.quality_check.outputs.commit_sha }}
+            ghcr.io/blnunes/sisdent:${{ steps.commit.outputs.sha }}
             ghcr.io/blnunes/sisdent:preprod
           labels: |
-            org.opencontainers.image.revision=${{ needs.quality_check.outputs.commit_sha }}
+            org.opencontainers.image.revision=${{ steps.commit.outputs.sha }}
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -79,7 +96,7 @@ jobs:
       - name: Package deployment files
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: sisdent-preprod-${{ needs.quality_check.outputs.commit_sha }}
+          name: sisdent-preprod-bundle
           path: |
             compose.preprod.yml
             deploy/preprod/Caddyfile
@@ -97,7 +114,7 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: ${{ needs.quality_check.outputs.commit_sha }}
+          ref: ${{ inputs.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -136,8 +153,14 @@ jobs:
       - name: Download deployment bundle
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
-          name: sisdent-preprod-${{ needs.quality_check.outputs.commit_sha }}
+          name: sisdent-preprod-bundle
           path: /srv/sisdent
+
+      - name: Download deployment commit
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: sisdent-preprod-commit
+          path: /srv/sisdent/.deployment
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
@@ -148,9 +171,10 @@ jobs:
 
       - name: Deploy approved image
         shell: bash
-        run: >-
-          bash /srv/sisdent/deploy/preprod/deploy.sh
-          "${{ needs.quality_check.outputs.commit_sha }}"
+        run: |
+          set -euo pipefail
+          image_tag="$(</srv/sisdent/.deployment/deployment-commit.txt)"
+          bash /srv/sisdent/deploy/preprod/deploy.sh "${image_tag}"
 
       - name: Verify LAN endpoint
         shell: bash
