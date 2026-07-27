@@ -192,13 +192,32 @@ Membership in the `docker` group is effectively root-equivalent. It is limited
 to the dedicated deployment identity and must not be granted to untrusted
 users.
 
-Write the following non-secret runtime configuration to
-`/srv/sisdent/runtime.env`:
+Write the following runtime configuration to `/srv/sisdent/runtime.env`. The
+image tag is deliberately omitted: the workflow supplies the immutable commit
+SHA for every deployment.
 
 ```dotenv
 SISDENT_IMAGE_REPOSITORY=ghcr.io/blnunes/sisdent
 SISDENT_BIND_ADDRESS=0.0.0.0
+JWT_SECRET=<a-random-secret-of-at-least-32-characters>
+BOOTSTRAP_ADMIN_IDENTIFICATION_TYPE=NATIONAL_ID
+BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER=<initial-admin-identifier>
+BOOTSTRAP_ADMIN_PASSWORD=<strong-initial-admin-password>
 ```
+
+`JWT_SECRET`, `BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER`, and
+`BOOTSTRAP_ADMIN_PASSWORD` are required by `compose.preprod.yml`. Docker
+Compose validates variable interpolation before it starts containers, so a
+missing value stops the deployment before an image is pulled or a rollback can
+run. Generate the JWT secret locally, for example with `openssl rand -hex 32`,
+and never commit or print the resulting file.
+
+### Current host bootstrap record
+
+On the `sisdent-preprod` host, the initial administrator was configured as
+`NATIONAL_ID / admin` with password `admin`. This is a temporary, deliberately
+weak bootstrap credential selected for initial access. Change it immediately
+after the first successful deployment; do not reuse it in another environment.
 
 Then restore ownership and permissions:
 

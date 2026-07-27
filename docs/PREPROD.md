@@ -69,10 +69,22 @@ The host bootstrap creates `/srv/sisdent/runtime.env` from this template:
 ```dotenv
 SISDENT_IMAGE_REPOSITORY=ghcr.io/blnunes/sisdent
 SISDENT_BIND_ADDRESS=127.0.0.1
+JWT_SECRET=<a-random-secret-of-at-least-32-characters>
+BOOTSTRAP_ADMIN_IDENTIFICATION_TYPE=NATIONAL_ID
+BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER=<initial-admin-identifier>
+BOOTSTRAP_ADMIN_PASSWORD=<strong-initial-admin-password>
 ```
 
 The image tag is supplied by the workflow and always equals the Git commit SHA
 that passed the selected revision's backend and Angular validation jobs.
+All three secret/bootstrap values are mandatory: Compose fails before starting
+the services if any is missing. Generate `JWT_SECRET` locally (for example,
+`openssl rand -hex 32`) and keep this file owned by `github-runner` with mode
+`0600`.
+
+The current `sisdent-preprod` host was initially configured with
+`NATIONAL_ID / admin` and password `admin`. These are temporary bootstrap
+credentials only and must be changed after the first successful deployment.
 
 ## GitHub runner registration
 
