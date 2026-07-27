@@ -98,3 +98,17 @@ jobs:
             --retry 5 --retry-delay 5 --retry-all-errors \
             https://sisdent-yhze.onrender.com/actuator/health)"
           jq --exit-status '.status == "UP"' <<<"${response}" >/dev/null
+
+      - name: Verify Angular application
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in / /login; do
+            page="$(curl --fail --silent --show-error \
+              --retry 5 --retry-delay 5 --retry-all-errors \
+              "https://sisdent-yhze.onrender.com${path}")"
+            if [[ "${page}" != *"<app-root"* ]]; then
+              echo "Angular application shell was not served at ${path}" >&2
+              exit 1
+            fi
+          done

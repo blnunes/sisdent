@@ -18,7 +18,10 @@ public class SpaWebConfig implements WebMvcConfigurer {
         // infinite forward loop: /index.html has a dot, so it is not re-captured.
         registry.addViewController("/{path:^(?!api|actuator)[^.]*$}")
                 .setViewName("forward:/index.html");
-        registry.addViewController("/**/{path:^(?!api|actuator)[^.]*$}")
+        // Match the first path segment here. Putting /** first allows it to consume
+        // "/api" and incorrectly forwards unknown API endpoints such as
+        // "/api/procedures" to Angular with HTTP 200.
+        registry.addViewController("/{path:^(?!api$|actuator$)[^.]+}/**")
                 .setViewName("forward:/index.html");
     }
 }

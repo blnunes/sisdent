@@ -21,17 +21,20 @@ Related files:
 The automation is split into independent workflows so production-only jobs do
 not appear as skipped in pre-production runs:
 
-1. `Quality check` runs tests, produces coverage, submits the SonarCloud
-   analysis, and waits for the Quality Gate on `master`.
-2. `Deploy pre-production` is started manually with a branch, tag, or commit
+1. `Quality check` runs backend tests, produces coverage, submits the
+   SonarCloud analysis, and waits for the Quality Gate on `master`.
+2. `Frontend quality` installs the locked npm dependencies, runs Angular tests,
+   and creates the production Angular build.
+3. `Deploy pre-production` is started manually with a branch, tag, or commit
    input. It resolves that reference to an immutable SHA, tests it, publishes
    the image and deployment bundle, and deploys through the `preprod`
    environment on the dedicated self-hosted runner.
 4. `Deploy to Render` runs in the GitHub `production` environment only for a
-   push to `master` and only after the quality job succeeds. It deploys the
-   exact approved commit, waits for Render, and verifies application health.
-5. `Tag deployed release` creates a SemVer tag only after the production health
-   check succeeds.
+   push to `master` and only after the backend and frontend quality jobs
+   succeed. It deploys the exact approved commit, waits for Render, and verifies
+   the backend health endpoint and Angular application shell.
+5. `Tag deployed release` creates a SemVer tag only after the production smoke
+   checks succeed.
 6. `Rollback production` is a manual workflow that redeploys the immutable
    commit referenced by an existing release tag.
 
@@ -142,7 +145,8 @@ The job has three controls:
 
 - `if` requires a push to `refs/heads/master`; pull requests and manual
   pre-production runs never deploy to Render.
-- `needs: quality-check`: tests and Sonar must pass first.
+- `needs: [quality-check, frontend-quality]`: backend tests, Sonar, Angular
+  tests, and the Angular production build must pass first.
 - `timeout-minutes: 25`: the workflow cannot wait indefinitely.
 
 Flow:
@@ -156,6 +160,16 @@ Flow:
    `update_failed`, `pre_deploy_failed`, `canceled`, or `deactivated`.
 6. Request `https://sisdent-yhze.onrender.com/actuator/health`, with retries to
    allow for startup time on the free plan.
+7. Request `/` and `/login` and verify that both return the Angular
+   `<app-root>` shell. This covers static frontend provisioning and deep-link
+   routing before the release is tagged.
+
+Render still provisions a single web service. Its multi-stage `Dockerfile`
+builds Angular first, copies `frontend/dist/frontend/browser` into Spring
+Boot's static resources, packages the backend JAR, and runs that combined
+artifact. Because the Angular client uses relative `/api` URLs, the browser
+calls the backend on the same Render origin without CORS configuration or a
+second Render service.
 
 `render.yaml` deliberately uses `autoDeployTrigger: off`. Enabling Render auto
 deploy as well would allow a push to create two deployments. GitHub Actions is
@@ -293,13 +307,18 @@ GitHub can show a secret name and update date but cannot reveal its value.
 
 1. Open `GitHub > Actions > CI` and find the first failing step.
 2. For `Unit tests`, reproduce with `./mvnw verify`.
-3. If `SonarCloud` ends with `QUALITY GATE STATUS: FAILED`, inspect the Sonar
+3. For `Frontend quality`, reproduce with
+   `cd frontend && npm ci && npm test -- --watch=false && npm run build`.
+4. If `SonarCloud` ends with `QUALITY GATE STATUS: FAILED`, inspect the Sonar
    dashboard. Intermediate warnings such as SLF4J messages are not necessarily
    the cause.
-4. For `Trigger deploy`, verify both Render secrets and API-key permissions.
-5. For `Wait for deploy`, inspect the corresponding Render deployment logs.
-6. For `Verify application health`, inspect `/actuator/health`, `${PORT}`, and
+5. For `Trigger deploy`, verify both Render secrets and API-key permissions.
+6. For `Wait for deploy`, inspect the corresponding Render deployment logs.
+7. For `Verify application health`, inspect `/actuator/health`, `${PORT}`, and
    application startup logs.
+8. For `Verify Angular application`, inspect the Docker frontend build, the
+   contents of the packaged JAR under `BOOT-INF/classes/static`, and the
+   Spring Security/static route configuration.
 
 Useful commands:
 
