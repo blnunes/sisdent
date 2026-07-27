@@ -111,6 +111,10 @@ preservando bindings, eventos, control flow Angular e estilos encapsulados.
   arquivos em `frontend/public/i18n/` para que o build os copie para a raiz dos
   assets publicados. O backend deve manter `/i18n/**` público, pois a tela de
   login precisa carregar traduções antes da autenticação.
+- O inglês (`en`) é o idioma padrão e também fica embutido no bundle como
+  fallback offline. Assim, `/login` não pode exibir chaves como `LOGIN.TITLE`
+  mesmo que o request de `/i18n/en.json` falhe; os idiomas adicionais continuam
+  sendo carregados de `/i18n/`.
 - Para componentes Material, importar explicitamente os módulos usados no
   componente standalone.
 - Colocar testes ao lado da implementação quando a funcionalidade tiver

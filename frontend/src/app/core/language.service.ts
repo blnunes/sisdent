@@ -30,6 +30,6 @@ export class LanguageService {
 
   private savedLanguage(): Language {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return SUPPORTED_LANGUAGES.includes(saved as Language) ? (saved as Language) : 'pt-PT';
+    return SUPPORTED_LANGUAGES.includes(saved as Language) ? (saved as Language) : 'en';
   }
 }
