@@ -100,6 +100,17 @@ public class SecurityConfiguration {
                         .access(hasAnyPermission("READ_COUNTRIES", "MAINTAIN_COUNTRIES"))
                         .requestMatchers(HttpMethod.GET, "/api/states/**")
                         .access(hasAnyPermission("READ_STATES", "MAINTAIN_STATES"))
+                        // Single-page application shell, static assets, and client-side routes.
+                        // The SPA bundle contains no secrets; data authorization is enforced on
+                        // the /api/** matchers above. Client-side route protection is handled by
+                        // the Angular authGuard/adminGuard.
+                        .requestMatchers(HttpMethod.GET,
+                                "/",
+                                "/index.html",
+                                "/favicon.ico",
+                                "/{path:^(?!api|actuator).*$}",
+                                "/{path:^(?!api|actuator).*$}/**")
+                        .permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
