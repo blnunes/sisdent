@@ -1,11 +1,13 @@
 package br.com.itbn.sisdent.mapper;
 
 import br.com.itbn.sisdent.dto.AddressResponse;
+import br.com.itbn.sisdent.dto.CountryResponse;
 import br.com.itbn.sisdent.dto.PatientResponse;
 import br.com.itbn.sisdent.dto.ProcedureResponse;
 import br.com.itbn.sisdent.dto.StateResponse;
 import br.com.itbn.sisdent.dto.SpecialityResponse;
 import br.com.itbn.sisdent.model.Address;
+import br.com.itbn.sisdent.model.Country;
 import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.model.Procedure;
 import br.com.itbn.sisdent.model.State;
@@ -20,6 +22,14 @@ public final class ResponseMapper {
 
     public static StateResponse toResponse(State state) {
         return new StateResponse(state.getId(), state.getName(), state.getAbbreviation());
+    }
+
+    public static CountryResponse toResponse(Country country) {
+        return new CountryResponse(
+                country.getId(),
+                country.getName(),
+                country.getCode(),
+                country.getContinent());
     }
 
     public static SpecialityResponse toResponse(Speciality speciality) {
@@ -44,7 +54,8 @@ public final class ResponseMapper {
                 address.getAdditionalInfo(),
                 address.getBlock(),
                 address.getPostalCode(),
-                toResponse(address.getState()));
+                toResponse(address.getState()),
+                toResponse(address.getCountry()));
     }
 
     public static PatientResponse toResponse(Patient patient) {
@@ -55,6 +66,9 @@ public final class ResponseMapper {
                 patient.isActive(),
                 patient.getGender(),
                 patient.getTaxId(),
+                patient.getIdentificationType(),
+                patient.getIdentificationNumber(),
+                toResponse(patient.getNationality()),
                 toResponse(patient.getAddress()),
                 patient.getSpecialities().stream()
                         .sorted(Comparator.comparing(Speciality::getName))

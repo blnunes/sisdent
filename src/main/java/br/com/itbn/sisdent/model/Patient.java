@@ -44,6 +44,17 @@ public class Patient {
     @Column(nullable = false, unique = true, length = 11)
     private String taxId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private IdentificationType identificationType;
+
+    @Column(nullable = false, unique = true, length = 64)
+    private String identificationNumber;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "nationality_country_id", nullable = false)
+    private Country nationality;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "address_id", nullable = false)
     private Address address;
@@ -65,6 +76,9 @@ public class Patient {
             boolean active,
             Gender gender,
             String taxId,
+            IdentificationType identificationType,
+            String identificationNumber,
+            Country nationality,
             Address address,
             Collection<Speciality> specialities) {
         this.name = name;
@@ -72,6 +86,9 @@ public class Patient {
         this.active = active;
         this.gender = gender;
         this.taxId = taxId;
+        this.identificationType = identificationType;
+        this.identificationNumber = identificationNumber;
+        this.nationality = nationality;
         this.address = address;
         this.specialities.addAll(specialities);
     }
@@ -98,6 +115,18 @@ public class Patient {
 
     public String getTaxId() {
         return taxId;
+    }
+
+    public IdentificationType getIdentificationType() {
+        return identificationType;
+    }
+
+    public String getIdentificationNumber() {
+        return identificationNumber;
+    }
+
+    public Country getNationality() {
+        return nationality;
     }
 
     public Address getAddress() {

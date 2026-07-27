@@ -3,9 +3,9 @@
 ## Purpose
 
 Sisdent is an early REST API for managing patients in a dental clinic. The
-current scope covers patients, addresses, and states. Authentication,
-scheduling, practitioners, clinical records, treatments, and billing are not
-implemented yet.
+current scope covers patients, addresses, states, JWT authentication, users,
+roles, and permissions. Scheduling, practitioners, clinical records,
+treatments, and billing are not implemented yet.
 
 This document describes the system that exists today. Future ideas are kept in
 a separate section so they are not mistaken for implemented features.
@@ -28,10 +28,18 @@ Related documents:
 - Seed demonstration data from JSON when the database is empty.
 - Expose OpenAPI documentation and Swagger UI.
 - Expose an application health endpoint for the hosting platform.
+- Authenticate with an identification type and normalized identification
+  number, issuing one-hour JWT access tokens.
+- Manage users and their permissions through admin-only endpoints, with logical
+  deletion.
+- List countries from Europe, North America, and South America.
+- Associate addresses with a country of residence.
+- Associate patients with nationality and a unique normalized identification.
 
 | Method | Path | Result |
 | --- | --- | --- |
 | `GET` | `/api/states` | List states |
+| `GET` | `/api/countries` | List countries ordered by name |
 | `GET` | `/api/addresses` | List addresses |
 | `GET` | `/api/addresses/postal-code/{postalCode}` | Find address by postal code |
 | `GET` | `/api/patients` | List patients |
@@ -40,6 +48,14 @@ Related documents:
 | `GET` | `/api/specialities` | List specialities with their procedures |
 | `POST` | `/api/specialities` | Create a speciality and its procedures |
 | `PUT` | `/api/specialities/{id}` | Replace a speciality and its nested procedures |
+| `POST` | `/api/auth/login` | Authenticate and issue a JWT |
+| `GET` | `/api/users` | List active users (admin only) |
+| `GET` | `/api/users/{id}` | Find an active user (admin only) |
+| `POST` | `/api/users` | Create a user (admin only) |
+| `PUT` | `/api/users/{id}` | Update a user (admin only) |
+| `PUT` | `/api/users/{id}/permissions` | Replace permissions (admin only) |
+| `DELETE` | `/api/users/{id}` | Logically delete a user (admin only) |
+| `PATCH` | `/api/users/me/password` | Change the authenticated user's password |
 | `GET` | `/actuator/health` | Application health |
 | `GET` | `/v3/api-docs` | OpenAPI JSON contract |
 | `GET` | `/swagger-ui.html` | Swagger UI redirect |
@@ -56,6 +72,7 @@ Published environment:
 | Language | Java 25 |
 | Framework | Spring Boot 4.1.0 |
 | Web | Spring MVC |
+| Security | Spring Security, OAuth2 Resource Server, signed JWT, BCrypt |
 | Persistence | Spring Data JPA and Hibernate |
 | Database | In-memory H2 |
 | Validation | Jakarta Bean Validation |
@@ -109,6 +126,14 @@ associations and avoid extra queries while mapping response DTOs.
 - `active` is required.
 - Gender is required: `FEMALE`, `MALE`, or `OTHER`.
 - Tax ID must contain exactly 11 digits and is unique in the database.
+- Identification type is required: `NATIONAL_ID` or `PASSPORT`.
+- Identification number accepts letters, numbers, spaces, and hyphens. It is
+  normalized to uppercase without spaces or hyphens before persistence.
+- Login applies the same normalization, so identification numbers are
+  case-insensitive (`admin`, `Admin`, and `ADMIN` all resolve to `ADMIN`).
+- The normalized identification number is globally unique through a database
+  constraint; duplicate creation returns HTTP `409 Conflict`.
+- Patient nationality and address country use two-letter ISO 3166-1 codes.
 - Street and district are required.
 - Postal code must contain exactly 8 digits and is unique.
 - State name is required; abbreviation must be two uppercase letters and unique.
@@ -124,14 +149,23 @@ The application uses an in-memory H2 database:
 jdbc:h2:mem:sisdent
 ```
 
-`spring.jpa.hibernate.ddl-auto=create-drop` recreates the schema for every
-process. When the database is empty, `InitialDataLoader` reads
-`src/main/resources/data/initial-data.json` and inserts demonstration states,
-addresses, and patients.
+Flyway applies the versioned SQL files in `src/main/resources/db/migration`
+before Hibernate starts. Hibernate uses `ddl-auto=validate`, so model/schema
+drift stops startup instead of silently changing the database. When the
+database is empty, `InitialDataLoader` reads
+`src/main/resources/data/initial-data.json` and inserts demonstration countries,
+states, addresses, and patients. Country reference data contains 80 sovereign
+states from Europe, North America (including Central America and the Caribbean),
+and South America. Codes follow ISO 3166-1 alpha-2.
 
-Important consequence: data created through the API on Render disappears when
-the process restarts or a new deployment occurs. The JSON seed is loaded again.
-This H2 setup does not provide production persistence.
+Country data is local so startup and patient creation do not depend on an
+external service. ISO's Online Browsing Platform is the authoritative
+maintenance source. REST Countries may support a future offline update tool,
+but it is not a runtime dependency.
+
+The default local in-memory database still loses API data when the process
+ends. Pre-production uses file-backed H2 in a persistent Docker volume. Render
+must use a persistent database to retain data between service replacements.
 
 The H2 console is available locally at `/h2-console` and disabled on Render by
 `H2_CONSOLE_ENABLED=false`.
@@ -156,6 +190,44 @@ The default URL is `http://localhost:8080`. To select another port:
 ```bash
 PORT=9090 ./mvnw spring-boot:run
 ```
+
+Local development creates a training administrator with identification
+`NATIONAL_ID / ADMIN` and password `admin`. These deliberately weak credentials
+exist only to simplify local exercises.
+
+Every deployed environment must override these variables:
+- `JWT_SECRET` — a strong random string with at least 32 characters.
+- `BOOTSTRAP_ADMIN_IDENTIFICATION_TYPE` — optional, defaults to `NATIONAL_ID`.
+- `BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER` — admin username/identifier in the
+  target environment.
+- `BOOTSTRAP_ADMIN_PASSWORD` — a strong admin password.
+
+Use `deploy/preprod/runtime.env.example` as a template and create
+`deploy/preprod/runtime.env` on the deployment host.
+
+Login example:
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"identificationType":"NATIONAL_ID","identificationNumber":"ADMIN","password":"admin"}'
+```
+
+Send the returned token as `Authorization: Bearer <accessToken>`. Permission
+changes and logical deletion affect newly issued tokens; an already issued
+token remains valid until its one-hour expiry.
+
+Every authenticated role can change its own password by sending the current
+and new passwords to `PATCH /api/users/me/password`. The current password is
+verified with BCrypt before the new BCrypt hash is stored.
+
+Initial authorization matrix:
+
+| Role | Non-user services | User service |
+| --- | --- | --- |
+| `ADMIN` | Create, update, read, delete | Full access |
+| `MANAGER` | Create, update, read, delete | No access |
+| `USER` | Read | No access |
 
 Quick checks:
 
@@ -196,16 +268,16 @@ first. Run `./mvnw verify` before building an image locally.
 - Coverage of endpoints, seed data, 404 responses, invalid input, creation, and
   the OpenAPI contract.
 
-On July 21, 2026, 20 tests passed with 97.54% line coverage. These values are a
+On July 24, 2026, 35 tests passed with 97.87% line coverage. These values are a
 snapshot and should be updated as the project grows.
 
 ## Suggested evolution
 
 Recommended order:
 
-1. **Durable persistence:** migrate to PostgreSQL, use environment-specific
-   credentials, and add Flyway or Liquibase. Replace `create-drop` with
-   migrations.
+1. **Durable persistence:** migrate to PostgreSQL and use environment-specific
+   credentials. Flyway is already the schema authority; future changes must be
+   introduced as new migrations.
 2. **Security and privacy:** add Spring Security, users and roles, personal-data
    protection, appropriate Tax ID masking, and audit trails.
 3. **Consistent errors:** add `@RestControllerAdvice` with Problem Details,

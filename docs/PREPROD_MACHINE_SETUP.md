@@ -43,7 +43,7 @@ The following state was validated on July 22, 2026:
 The deployment bundle was staged in `/srv/sisdent`, a local image was built
 from the current checkout for initial validation, and the Compose stack was
 started successfully. The GitHub Actions workflow is already configured for
-the machine labels, but automated deployment becomes active only after the
+the machine labels, but a manually requested deployment can run only after the
 self-hosted runner is registered, installed as a service, and shown as online
 in GitHub.
 
@@ -56,8 +56,9 @@ and persistent application data.
 The normal deployment flow is:
 
 ```text
-push or merge to feat/preprod-deployment
-  -> GitHub-hosted runner runs tests and the SonarCloud Quality Gate
+manually select a branch, tag, or commit in Deploy pre-production
+  -> GitHub-hosted runner resolves it to a commit SHA and runs tests
+  -> GitHub-hosted runner validates the Angular production build
   -> GitHub-hosted runner builds the container image
   -> image is published as ghcr.io/blnunes/sisdent:<commit-sha>
   -> deployment bundle is uploaded as a GitHub Actions artifact
@@ -66,8 +67,7 @@ push or merge to feat/preprod-deployment
   -> /actuator/health is checked
   -> the deployment is accepted or rolled back
   -> pre-production is tested and approved
-  -> pull request from feat/preprod-deployment to master
-  -> merge to master deploys the approved commit to Render production
+  -> reviewed merge to master deploys the approved commit to Render production
 ```
 
 Java, Maven, Caddy, H2, and the application itself run in containers or on
@@ -324,12 +324,11 @@ minutes. It records the last healthy image in
 recreates the stack using the last healthy image and leaves the workflow
 failed so the event remains visible.
 
-## 8. Trigger the first automated deployment
+## 8. Trigger the first deployment
 
-The current workflow deploys local pre-production on a trusted push to
-`feat/preprod-deployment` or a manual web run that selects this branch in the
-`blnunes/sisdent` repository. Pull requests run validation but do not deploy. A push to `master` deploys only to Render
-production after its quality checks pass.
+Local pre-production deployment is always manual. Pull requests run validation
+but do not deploy. A push to `master` deploys only to Render production after
+its quality checks pass.
 
 Before pushing, confirm:
 
@@ -339,24 +338,26 @@ sudo /opt/actions-runner/svc.sh status
 getent hosts sisdent-preprod.local
 ```
 
-Push or merge an approved commit into `feat/preprod-deployment`, or open
-`Actions > CI > Run workflow` and select that branch. GitHub requires the
-workflow with `workflow_dispatch` to exist on the default branch before it
-shows this button. The expected jobs are:
+Open `Actions > Deploy pre-production > Run workflow`, enter the branch, tag,
+or commit to test, and start the run. GitHub requires this workflow to exist on
+the default branch before the button is available. The expected jobs are:
 
-1. `Quality check`;
-2. `Build pre-production image`;
-3. `Deploy to local pre-production`.
+1. `Validate selected revision`;
+2. `Validate frontend`;
+3. `Build immutable image`;
+4. `Deploy selected revision`.
 
 The deployment then validates that `SISDENT_BIND_ADDRESS` is `0.0.0.0` or the
 current LAN IPv4 address and requests `/actuator/health` through that LAN
-address. The job fails if the service is only bound to loopback or the LAN URL
-is not healthy.
+address. It also verifies that `/` and `/login` return the Angular `<app-root>`
+shell. The job fails if the service is only bound to loopback, the LAN URL is
+not healthy, or the image does not serve the Angular application.
 
 The local deployment job waits for a runner with the labels
 `self-hosted`, `linux`, `x64`, and `sisdent-preprod`. If the runner is offline,
-the job remains queued. Promotion to `master` should wait until local
-pre-production has been deployed, tested, and approved.
+the job remains queued. A merge to `master` should wait until local
+pre-production has been deployed, tested, and approved whenever the change
+requires pre-production evidence.
 
 ## 9. Validate the deployment
 
@@ -369,6 +370,8 @@ docker compose \
   -f /srv/sisdent/compose.preprod.yml ps
 
 curl --fail http://127.0.0.1/actuator/health
+curl --fail http://127.0.0.1/ | grep -F '<app-root'
+curl --fail http://127.0.0.1/login | grep -F '<app-root'
 curl --head http://sisdent-preprod.local/swagger-ui.html
 curl --fail http://sisdent-preprod.local/swagger-ui/index.html >/dev/null
 ss -lnt '( sport = :80 )'
@@ -459,5 +462,6 @@ GitHub Actions and remove the source checkout from the deployment host.
 - Do not store GitHub registration tokens or long-lived GHCR credentials.
 - Keep `/srv/sisdent/runtime.env` owned by `github-runner` with mode `0600`.
 - Treat the runner and Docker group membership as privileged access.
-- Deploy only immutable commit-SHA image tags that passed the Quality Gate.
+- Deploy only immutable commit-SHA image tags that passed the selected
+  revision's backend and Angular validation jobs.
 - Preserve the `sisdent-preprod-data` volume during routine deployments.

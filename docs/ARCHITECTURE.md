@@ -22,8 +22,8 @@ flowchart LR
     RD --> R
 ```
 
-There is currently no external database, queue, cache, separate frontend, or
-identity provider.
+Authentication is local and stateless through signed JWTs. There is currently
+no external database, queue, cache, separate frontend, or identity provider.
 
 ## Runtime container
 
@@ -52,7 +52,8 @@ environment variable.
 
 ```mermaid
 flowchart LR
-    HTTP[HTTP request] --> C[Controllers]
+    HTTP[HTTP request] --> SEC[JWT authentication and authorization]
+    SEC --> C[Controllers]
     C --> V[DTO validation]
     V --> S[Services]
     S --> RP[Repositories]
@@ -96,6 +97,9 @@ defines API title, version, and description.
 
 ```mermaid
 erDiagram
+    COUNTRY ||--o{ ADDRESS : locates
+    COUNTRY ||--o{ PATIENT : nationality
+    APP_USER ||--o{ USER_PERMISSION : grants
     STATE ||--o{ ADDRESS : contains
     ADDRESS ||--o{ PATIENT : assigned_to
 
@@ -103,6 +107,12 @@ erDiagram
         bigint id PK
         varchar name
         varchar abbreviation UK
+    }
+    COUNTRY {
+        bigint id PK
+        varchar name UK
+        char code UK
+        varchar continent
     }
     ADDRESS {
         bigint id PK
@@ -112,6 +122,7 @@ erDiagram
         varchar block
         varchar postal_code UK
         bigint state_id FK
+        bigint country_id FK
     }
     PATIENT {
         bigint id PK
@@ -120,7 +131,22 @@ erDiagram
         boolean active
         varchar gender
         varchar tax_id UK
+        varchar identification_type
+        varchar identification_number UK
+        bigint nationality_country_id FK
         bigint address_id FK
+    }
+    APP_USER {
+        bigint id PK
+        varchar identification_type
+        varchar identification_number
+        varchar password
+        varchar role
+        boolean active
+    }
+    USER_PERMISSION {
+        bigint user_id FK
+        varchar permission
     }
 ```
 
@@ -130,6 +156,9 @@ Current cardinalities:
 - An address can be assigned to multiple patients.
 - Every patient has exactly one address.
 - Every address has exactly one state.
+- Every address has exactly one country of residence.
+- Every patient has one nationality country.
+- Patient identification numbers are normalized and globally unique.
 
 No JPA cascade is configured. The service coordinates creation explicitly.
 
@@ -166,15 +195,14 @@ failure rolls it back.
 
 ## Data initialization and lifecycle
 
-1. Spring Boot starts, and Hibernate creates the tables.
-2. `InitialDataLoader` checks all three entity counts.
-3. If any data exists, the complete seed process is skipped.
-4. Otherwise, states, addresses, and patients are loaded from JSON in that
-   order.
-5. On shutdown, `create-drop` removes the schema. The cycle starts again on the
-   next process start.
+1. Spring Boot starts, and Flyway validates and applies pending migrations.
+2. Hibernate validates that the entity mappings match the migrated schema.
+3. `InitialDataLoader` idempotently synchronizes countries, states,
+   specialities, addresses, and patients from JSON.
+4. The default local in-memory database disappears with the process;
+   pre-production uses file-backed H2 in a persistent volume.
 
-This is suitable for a demonstration but incompatible with durable data.
+Schema changes must be added as immutable, forward-only Flyway migrations.
 
 ## Architecture qualities
 
@@ -192,9 +220,10 @@ This is suitable for a demonstration but incompatible with durable data.
 
 ### Limitations and risks
 
-- In-memory H2 loses changes after restarts and deployments.
-- `create-drop` is unsafe for real data.
-- There is no authentication or authorization.
+- Local in-memory H2 loses changes after process shutdown.
+- File-backed H2 is not the intended final production database.
+- JWT revocation is not persisted, so permission changes and deactivation take
+  effect on the next login or after the current token expires.
 - Tax IDs and other personal data are returned in full.
 - There is no audit history, backup, or recovery strategy.
 - List endpoints have no pagination.
@@ -243,7 +272,7 @@ flowchart LR
 
 Recommended sequence:
 
-1. External PostgreSQL with Flyway or Liquibase migrations.
+1. External PostgreSQL, retaining Flyway as the migration authority.
 2. `local`, `test`, and `prod` profiles; H2 only for development and tests.
 3. Spring Security and role-based access control.
 4. Problem Details and stable application error codes.
@@ -262,4 +291,3 @@ Recommended sequence:
 - Never expose the H2 console publicly.
 - Before introducing real clinical data, treat security, privacy, retention,
   and auditing as architecture requirements rather than optional improvements.
-

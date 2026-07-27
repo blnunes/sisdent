@@ -2,6 +2,9 @@
 
 REST API built with Java 25, Spring Boot 4 and an in-memory H2 database.
 
+The `frontend` directory contains an Angular 22 and Angular Material 22
+interface for authentication and administrative user management.
+
 ## Run
 
 ```bash
@@ -12,10 +15,26 @@ Static development data is loaded from
 `src/main/resources/data/initial-data.json` whenever the application starts with
 an empty database.
 
+Flyway applies versioned migrations from `src/main/resources/db/migration`
+before Hibernate validates the schema. Applied migrations are immutable;
+subsequent schema changes must use a new version.
+
+Start the web interface in a second terminal:
+
+```bash
+cd frontend
+npm ci
+npm start
+```
+
+Open `http://localhost:4200` and use `NATIONAL_ID / ADMIN / admin`. See
+[`frontend/README.md`](frontend/README.md) for frontend details.
+
 ## Endpoints
 
 ```text
 GET /api/states
+GET /api/countries
 GET /api/addresses
 GET /api/addresses/postal-code/{postalCode}
 GET /api/patients
@@ -25,6 +44,10 @@ GET /api/specialities
 POST /api/specialities
 PUT /api/specialities/{id}
 ```
+
+Countries use ISO 3166-1 alpha-2 codes. Patients carry nationality plus a
+globally unique passport or national identity number, and addresses reference
+their country of residence.
 
 Example:
 

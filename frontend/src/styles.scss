@@ -1,0 +1,42 @@
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+
+html {
+  height: 100%;
+}
+
+body {
+  // Default the application to a light color theme. This can be changed to
+  // `dark` to enable the dark color theme, or to `light dark` to defer to the
+  // user's system settings.
+  color-scheme: light;
+
+  // Set a default background, font and text colors for the application using
+  // Angular Material's system-level CSS variables. Learn more about these
+  // variables at https://material.angular.dev/guide/system-variables
+  background-color: #f8fcfc;
+  color: #173e4b;
+  font: 400 16px/1.5 Roboto, Arial, sans-serif;
+
+  // Reset the user agent margin.
+  margin: 0;
+  height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.mat-mdc-dialog-surface {
+  border-radius: 24px !important;
+}
+
+.error-snackbar {
+  --mdc-snackbar-container-color: #8f2636;
+  --mdc-snackbar-supporting-text-color: white;
+}

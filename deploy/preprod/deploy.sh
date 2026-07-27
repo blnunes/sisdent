@@ -36,8 +36,12 @@ compose() {
 
 healthy() {
   for attempt in {1..36}; do
-    if curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}" >/dev/null; then
-      return 0
+    if response="$(
+      curl --fail --silent --show-error --max-time 5 "${HEALTH_URL}"
+    )"; then
+      if grep -Eq '"status"[[:space:]]*:[[:space:]]*"UP"' <<<"${response}"; then
+        return 0
+      fi
     fi
     echo "Health check ${attempt}/36 failed; retrying in 5 seconds"
     sleep 5
@@ -67,6 +71,7 @@ fi
 
 export SISDENT_IMAGE_TAG="${previous_image_tag}"
 echo "Rolling back to image tag ${SISDENT_IMAGE_TAG}" >&2
+compose pull
 compose up --detach --remove-orphans
 
 if healthy; then

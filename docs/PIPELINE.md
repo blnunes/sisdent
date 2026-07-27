@@ -8,6 +8,7 @@ developer or agent can maintain it without reconstructing previous decisions.
 Related files:
 
 - `.github/workflows/ci.yml`: production deployment and release tagging.
+- `.github/workflows/_render-deploy.yml`: shared Render deployment implementation.
 - `.github/workflows/preprod.yml`: local pre-production deployment.
 - `.github/workflows/pr-quality.yml`: pull-request quality checks.
 - `.github/workflows/rollback-production.yml`: manual production rollback.
@@ -20,20 +21,20 @@ Related files:
 The automation is split into independent workflows so production-only jobs do
 not appear as skipped in pre-production runs:
 
-1. `Quality check` runs tests, produces coverage, submits the SonarCloud
-   analysis, and waits for the Quality Gate on `master`.
-2. `Build pre-production image` runs only for a trusted push to
-   `feat/preprod-deployment`. It builds the exact approved commit, publishes
-   immutable and convenience tags to GHCR, and uploads the deployment bundle.
-3. `Deploy to local pre-production` runs in the GitHub `preprod` environment on
-   the dedicated self-hosted runner after the image build. It downloads no
-   source checkout, pulls the immutable image, starts Compose, verifies health,
-   and rolls back when possible.
+1. `Quality check` runs backend tests, produces coverage, submits the
+   SonarCloud analysis, and waits for the Quality Gate on `master`.
+2. `Frontend quality` installs the locked npm dependencies, runs Angular tests,
+   and creates the production Angular build.
+3. `Deploy pre-production` is started manually with a branch, tag, or commit
+   input. It resolves that reference to an immutable SHA, validates the backend
+   and Angular frontend, publishes the image and deployment bundle, and deploys
+   through the `preprod` environment on the dedicated self-hosted runner.
 4. `Deploy to Render` runs in the GitHub `production` environment only for a
-   push to `master` and only after the quality job succeeds. It deploys the
-   exact approved commit, waits for Render, and verifies application health.
-5. `Tag deployed release` creates a SemVer tag only after the production health
-   check succeeds.
+   push to `master` and only after the backend and frontend quality jobs
+   succeed. It deploys the exact approved commit, waits for Render, and verifies
+   the backend health endpoint and Angular application shell.
+5. `Tag deployed release` creates a SemVer tag only after the production smoke
+   checks succeed.
 6. `Rollback production` is a manual workflow that redeploys the immutable
    commit referenced by an existing release tag.
 
@@ -41,60 +42,74 @@ Triggers:
 
 - `workflow_dispatch` on `CI` permits a manual quality run. Render deployment
   and release tagging still require a push to `master`.
-- A pull request targeting `feat/preprod-deployment` runs the quality check.
-- A push or merge to `feat/preprod-deployment` runs quality checks, builds the
-  image, and deploys it to the local pre-production machine.
-- A pull request targeting `master` runs the source-branch validation and the
-  quality check.
+- A pull request targeting `master` runs application and infrastructure checks.
+- `workflow_dispatch` on `Deploy pre-production` permits an operator to select
+  any branch, tag, or full commit for local validation. No push deploys locally.
 - A push or merge to `master` runs quality checks and deploys to Render
   production. It does not deploy to the local pre-production machine.
 
 ```mermaid
 flowchart LR
-    F[Feature branch] --> PRP[PR to feat/preprod-deployment]
-    PRP --> Q[Quality check]
-    Q -->|approved merge| P[Push to preprod branch]
-    P --> B[Build and push GHCR image]
+    F[Feature branch] --> Q[PR quality check]
+    F -->|manual preprod selection| B[Build and push immutable GHCR image]
     B --> L[Deploy immutable SHA locally]
     L --> H[Verify health or roll back]
     H --> T[Manual pre-production testing]
-    T --> PRM[PR from preprod to master]
-    PRM --> Q2[Quality check]
-    Q2 --> M
-    PRM --> M[Merge to master]
+    Q --> M[Reviewed merge to master]
+    T --> M
     M --> R[Deploy to Render production]
     R --> C[Verify production health]
     C --> G[Create release tag]
 ```
 
-Pre-production and production are separate stages. Production promotion is a
-reviewed merge from `feat/preprod-deployment` to `master`; a local deployment
-does not automatically update Render.
+Pre-production and production are separate environments. A local deployment
+does not update Render. Only a successful push created on `master` can enter
+the production workflow.
 
 ## Branch protection and environments
 
 Create GitHub environments named `preprod` and `production`. The workflow
 associates local deployment with `preprod` and Render deployment with
 `production`, allowing environment-specific approvals and secrets when needed.
-Restrict the `preprod` environment to `feat/preprod-deployment` and the
-`production` environment to `master`. Production may additionally require a
-reviewer before the deployment job starts.
+Allow selected branches and tags in `preprod`, because its workflow is manual.
+Restrict `production` deployment branches and tags to `master`. Production may
+additionally require a reviewer before the deployment job starts.
 
 Configure repository branch rules as follows:
 
-- For `feat/preprod-deployment`, block deletion and force pushes, require pull
-  requests, and require the `Quality check` status check before merging.
 - For `master`, block deletion and force pushes, require pull requests, and
-  require the `Quality check` status check.
+  require the `Quality check` and `Infrastructure check` status checks.
 - Do not configure a required deployment on `master`: production deploys happen
-  after merge, while the `Quality check` rejects normal production PRs whose
-  source is not `feat/preprod-deployment`. The only other accepted shape is the
-  strictly validated, `pom.xml`-only automatic version bump.
-- Do not allow routine bypass of these rules. Promote production changes from
-  `feat/preprod-deployment` after local validation.
+  only after merge. The workflow itself also requires a push event whose ref is
+  exactly `refs/heads/master`.
+- Do not allow routine bypass of these rules. Pre-production evidence is a
+  release decision and may be required through review policy when appropriate.
 
 These settings are configured under `Settings > Rules > Rulesets` or branch
 protection in GitHub. Workflow YAML cannot make a branch undeletable by itself.
+
+### Required GitHub configuration
+
+After merging the workflow change:
+
+1. In `Settings > Environments > production`, set deployment branches and tags
+   to selected branches and add only `master`. Keep `RENDER_API_KEY` and
+   `RENDER_SERVICE_ID` available as repository secrets for the reusable
+   workflow. An optional required reviewer creates a second production gate.
+2. In `Settings > Environments > preprod`, allow the branches and tags that an
+   operator may select for local testing. Add a required reviewer only if the
+   operator starting the workflow must not approve their own deployment.
+3. In the `master` ruleset, require both `Quality check` and
+   `Infrastructure check`. Remove any rule that requires PRs to originate from
+   `feat/preprod-deployment`.
+4. Delete `PREPROD_RUNNER_TOKEN`; the pipeline no longer queries the runners
+   administration API.
+5. Keep Render automatic deployments disabled. No Render platform change is
+   required for this iteration.
+
+The workflow-level production condition and the environment branch policy are
+independent barriers. The workflow requires a push to `refs/heads/master`; the
+GitHub Environment independently rejects deployment from any other branch.
 
 ## `Quality check` job
 
@@ -128,21 +143,33 @@ gate required at least 90%. Update this document if the external gate changes.
 
 The job has three controls:
 
-- `if` requires a push to `refs/heads/master`; pull requests and preprod
-  pushes never deploy to Render.
-- `needs: quality-check`: tests and Sonar must pass first.
+- `if` requires a push to `refs/heads/master`; pull requests and manual
+  pre-production runs never deploy to Render.
+- `needs: [quality-check, frontend-quality]`: backend tests, Sonar, Angular
+  tests, and the Angular production build must pass first.
 - `timeout-minutes: 25`: the workflow cannot wait indefinitely.
 
 Flow:
 
 1. Validate `RENDER_API_KEY` and `RENDER_SERVICE_ID`.
-2. Call `POST /v1/services/{serviceId}/deploys` with `GITHUB_SHA`, ensuring
+2. Call the private reusable `_render-deploy.yml` workflow with `GITHUB_SHA`.
+3. Call `POST /v1/services/{serviceId}/deploys` with that SHA, ensuring
    Render deploys exactly the commit that passed quality checks.
-3. Read the returned deploy ID and poll Render every 10 seconds.
-4. Treat `live` as success. Fail immediately for `build_failed`,
+4. Read the returned deploy ID and poll Render every 10 seconds.
+5. Treat `live` as success. Fail immediately for `build_failed`,
    `update_failed`, `pre_deploy_failed`, `canceled`, or `deactivated`.
-5. Request `https://sisdent-yhze.onrender.com/actuator/health`, with retries to
+6. Request `https://sisdent-yhze.onrender.com/actuator/health`, with retries to
    allow for startup time on the free plan.
+7. Request `/` and `/login` and verify that both return the Angular
+   `<app-root>` shell. This covers static frontend provisioning and deep-link
+   routing before the release is tagged.
+
+Render still provisions a single web service. Its multi-stage `Dockerfile`
+builds Angular first, copies `frontend/dist/frontend/browser` into Spring
+Boot's static resources, packages the backend JAR, and runs that combined
+artifact. Because the Angular client uses relative `/api` URLs, the browser
+calls the backend on the same Render origin without CORS configuration or a
+second Render service.
 
 `render.yaml` deliberately uses `autoDeployTrigger: off`. Enabling Render auto
 deploy as well would allow a push to create two deployments. GitHub Actions is
@@ -159,9 +186,11 @@ tagged commit receives no second tag.
 
 After tagging, `Prepare next development version` calculates the next patch,
 creates an `automation/prepare-<version>-SNAPSHOT` branch, changes only
-`pom.xml`, opens a pull request to `master`, and enables squash auto-merge. This
-keeps `master` one development-version commit ahead of the production tag, so
-new branches always inherit the next `-SNAPSHOT` version.
+`pom.xml`, and opens a pull request to `master`. Merge that pull request after
+its checks pass. This keeps `master` one development-version commit ahead of
+the production tag, so new branches inherit the next `-SNAPSHOT` version.
+Re-running the release workflow detects an existing open version PR and exits
+successfully without creating a duplicate.
 
 Both the pull-request and push quality workflows classify a change as an
 automatic version bump only when `pom.xml` is the sole changed file and its
@@ -183,9 +212,9 @@ allows `github-actions[bot]` to create release tags.
 The version preparation job uses `RELEASE_AUTOMATION_TOKEN`, a fine-grained
 personal access token or GitHub App installation token with repository Contents
 and Pull requests read/write permissions. The associated identity must be able
-to create branches and enable auto-merge without bypassing the `master`
-requirements. Enable **Allow auto-merge** in the repository pull-request
-settings.
+to create branches and pull requests. Auto-merge is deliberately not requested:
+GitHub rejects it when the base branch has no compatible protection rule, and
+the version PR is small enough to review and merge explicitly.
 
 To prepare a correction from an older production version:
 
@@ -194,11 +223,9 @@ git fetch origin --tags
 git switch --create hotfix/short-description v0.0.1
 ```
 
-Commit the correction, validate it in `feat/preprod-deployment`, and promote
-the approved change to `master` through the normal pull-request flow. When the
-hotfix branch starts from an older tag, cherry-pick the correction commit into
-`feat/preprod-deployment` instead of merging the old branch history. A successful
-production deploy receives the next patch tag automatically.
+Commit the correction, deploy that branch manually to pre-production, and
+promote the approved change to `master` through the normal pull-request flow.
+A successful production deploy receives the next patch tag automatically.
 
 To roll production back:
 
@@ -219,24 +246,19 @@ explicitly tested rollback procedure.
 
 ## Local pre-production jobs
 
-These jobs run after a push to `feat/preprod-deployment`. The build job uses a
-GitHub-hosted runner and publishes two GHCR tags:
+These jobs run only after an operator starts `Deploy pre-production` and
+supplies a Git reference. The validation job resolves it to a commit SHA before
+the frontend job runs the locked Angular tests and production build. Only then
+does the image build publish two GHCR tags:
 
 - `ghcr.io/blnunes/sisdent:<commit SHA>` is immutable and is the deployment
   input;
 - `ghcr.io/blnunes/sisdent:preprod` is a convenience pointer and is never used
   as the authoritative rollback record.
 
-After quality checks, `Check local pre-production runner` polls the GitHub
-self-hosted runners API every 10 seconds for up to one minute. It requires an
-online, idle runner carrying the `sisdent-preprod` label. If no matching runner
-becomes available, the job succeeds with a visible warning and summary; image
-building and local deployment are skipped. This avoids leaving a deployment
-queued for GitHub's default self-hosted-runner timeout when the local machine
-is off. A missing or invalid `PREPROD_RUNNER_TOKEN`, or an unavailable runners
-API, also produces a warning and skips deployment instead of failing the
-workflow. The warning must still be corrected before relying on local
-pre-production validation.
+Start the workflow only while the local runner is online. If it is offline,
+the deployment job remains queued; the already published immutable image can
+be reused by rerunning the failed or queued deployment.
 
 The build job packages only `compose.preprod.yml`, the Caddy configuration, and
 `deploy/preprod/deploy.sh`. The self-hosted job downloads that artifact directly
@@ -247,9 +269,30 @@ labels plus the custom `sisdent-preprod` label. Host bootstrap, network policy,
 runtime files, rollback behavior, and registration steps are documented in
 `docs/PREPROD.md`.
 
+After deployment, the runner verifies `/actuator/health` through its LAN
+address and confirms that both `/` and `/login` serve Angular's `<app-root>`
+shell. The latter verifies that the Docker image contains the frontend bundle
+and that SPA deep links work through Caddy.
+
 The workflow authenticates to GHCR with its short-lived `GITHUB_TOKEN`. No
 long-lived registry token belongs on the Ubuntu host. The build job receives
 `packages: write`; the deployment job receives `packages: read`.
+
+### Adding a future local development environment
+
+Do not share the pre-production runner label, environment, volume names, or
+concurrency group with development. Create:
+
+- a `dev` GitHub Environment;
+- a dedicated runner label such as `sisdent-dev`;
+- environment-specific Compose project, bind address, volumes, and runtime
+  directory;
+- a manual caller workflow using the same validate, immutable-image, health,
+  and rollback sequence.
+
+The selected Git reference must still be resolved to a full commit SHA before
+building. Load testing should use the immutable SHA tag and record that SHA with
+the test results so a run can be reproduced.
 
 ## Required secrets
 
@@ -261,8 +304,7 @@ Repository secrets live under
 | `SONAR_TOKEN` | SonarCloud | Authenticate code analysis |
 | `RENDER_API_KEY` | Render Account Settings > API Keys | Authenticate deployment API calls |
 | `RENDER_SERVICE_ID` | Render service settings; value starts with `srv-` | Identify the Sisdent service |
-| `RELEASE_AUTOMATION_TOKEN` | Fine-grained PAT or GitHub App token | Create the post-release branch and auto-merge PR |
-| `PREPROD_RUNNER_TOKEN` | Fine-grained PAT with repository Administration read permission | Check whether the local runner is online and idle |
+| `RELEASE_AUTOMATION_TOKEN` | Fine-grained PAT or GitHub App token | Create the post-release branch and pull request |
 
 Never store secret values in source files, logs, commits, or documentation.
 GitHub can show a secret name and update date but cannot reveal its value.
@@ -271,13 +313,18 @@ GitHub can show a secret name and update date but cannot reveal its value.
 
 1. Open `GitHub > Actions > CI` and find the first failing step.
 2. For `Unit tests`, reproduce with `./mvnw verify`.
-3. If `SonarCloud` ends with `QUALITY GATE STATUS: FAILED`, inspect the Sonar
+3. For `Frontend quality`, reproduce with
+   `cd frontend && npm ci && npm test -- --watch=false && npm run build`.
+4. If `SonarCloud` ends with `QUALITY GATE STATUS: FAILED`, inspect the Sonar
    dashboard. Intermediate warnings such as SLF4J messages are not necessarily
    the cause.
-4. For `Trigger deploy`, verify both Render secrets and API-key permissions.
-5. For `Wait for deploy`, inspect the corresponding Render deployment logs.
-6. For `Verify application health`, inspect `/actuator/health`, `${PORT}`, and
+5. For `Trigger deploy`, verify both Render secrets and API-key permissions.
+6. For `Wait for deploy`, inspect the corresponding Render deployment logs.
+7. For `Verify application health`, inspect `/actuator/health`, `${PORT}`, and
    application startup logs.
+8. For `Verify Angular application`, inspect the Docker frontend build, the
+   contents of the packaged JAR under `BOOT-INF/classes/static`, and the
+   Spring Security/static route configuration.
 
 Useful commands:
 
@@ -305,5 +352,7 @@ and enabled Actions notifications.
 - Do not enable Render auto deploy while GitHub controls deployments.
 - For staging and production, use GitHub Environments, environment-specific
   secrets, and separate Render service IDs.
-- Before PostgreSQL deployment, introduce migrations and never use
-  `ddl-auto=create-drop` in production.
+- Flyway owns schema evolution and Hibernate must remain in `validate` mode
+  outside disposable experiments. Never edit an applied migration.
+- Before the PostgreSQL transition, validate the existing migrations against
+  PostgreSQL and add database-specific migration tests where necessary.

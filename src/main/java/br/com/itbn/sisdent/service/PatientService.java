@@ -19,14 +19,17 @@ public class PatientService {
     private final PatientRepository patientRepository;
     private final AddressService addressService;
     private final SpecialityService specialityService;
+    private final CountryService countryService;
 
     public PatientService(
             PatientRepository patientRepository,
             AddressService addressService,
-            SpecialityService specialityService) {
+            SpecialityService specialityService,
+            CountryService countryService) {
         this.patientRepository = patientRepository;
         this.addressService = addressService;
         this.specialityService = specialityService;
+        this.countryService = countryService;
     }
 
     @Transactional(readOnly = true)
@@ -51,9 +54,12 @@ public class PatientService {
                 request.active(),
                 request.gender(),
                 request.taxId(),
+                request.identificationType(),
+                IdentificationNumbers.normalize(request.identificationNumber()),
+                countryService.requireByCode(request.nationalityCode()),
                 address,
                 specialityService.findAllByIds(request.specialityIds()));
-        return ResponseMapper.toResponse(patientRepository.save(patient));
+        return ResponseMapper.toResponse(patientRepository.saveAndFlush(patient));
     }
 
 }

@@ -13,10 +13,9 @@ A self-hosted runner on the Ubuntu machine downloads only the deployment
 bundle and starts the approved image.
 
 ```text
-push or merge to feat/preprod-deployment
-  -> tests and SonarCloud Quality Gate
-  -> wait up to one minute for the local runner
-  -> skip with a warning when the runner stays unavailable
+manually run "Deploy pre-production" with a branch, tag, or commit
+  -> resolve the selected revision to an immutable commit SHA
+  -> run backend and Angular tests, then build Angular for production
   -> build image on a GitHub-hosted runner
   -> push ghcr.io/blnunes/sisdent:<commit SHA>
   -> send Compose, Caddy, and deploy script as an Actions artifact
@@ -24,13 +23,13 @@ push or merge to feat/preprod-deployment
   -> verify /actuator/health
   -> keep the new image, or roll back to the last healthy image
   -> validate pre-production manually
-  -> open a pull request from feat/preprod-deployment to master
-  -> merge to master and deploy the approved commit to Render
+  -> merge an approved pull request to master when production is desired
+  -> the master push deploys that commit to Render
 ```
 
 The local host is the pre-production target and Render is the production target.
-There is no automatic promotion: the tested pre-production branch must be
-reviewed and merged into `master` before the Render deployment runs.
+There is no automatic promotion. A pre-production run never invokes the Render
+workflow, and Render deployment requires a push whose ref is exactly `master`.
 
 ## Host responsibilities
 
@@ -73,7 +72,7 @@ SISDENT_BIND_ADDRESS=127.0.0.1
 ```
 
 The image tag is supplied by the workflow and always equals the Git commit SHA
-that passed the Quality Gate.
+that passed the selected revision's backend and Angular validation jobs.
 
 ## GitHub runner registration
 
@@ -93,8 +92,9 @@ shell history, or chat transcripts. The runner needs outbound HTTPS access to
 GitHub and GHCR; it does not require an inbound internet port.
 
 The runner has Docker access and therefore must be treated as a privileged
-deployment identity. It must run deployment jobs only from trusted pushes to
-this repository. Pull-request jobs stay on GitHub-hosted runners.
+deployment identity. It runs only the manually selected revision after
+GitHub-hosted validation and image building. Pull-request jobs stay on
+GitHub-hosted runners.
 
 ## Deployment contents
 
@@ -102,10 +102,29 @@ this repository. Pull-request jobs stay on GitHub-hosted runners.
 
 - `data-init`, which gives container user `1001` ownership of the data volume;
 - `app`, using the immutable GHCR image and a file-backed H2 database;
+- the Angular production bundle embedded in the immutable application image;
 - `proxy`, using Caddy on port 80 with compression and defensive headers.
 
 The named volume `sisdent-preprod-data` survives container recreation and new
 deployments. Do not remove it during routine cleanup.
+
+### Schema compatibility note
+
+Flyway owns the schema and Hibernate runs with `ddl-auto=validate`. On the first
+deployment over the existing pre-production database, Flyway records baseline
+version `1` and applies `V2`, which adds countries and patient identification
+while preserving existing rows. New databases apply both `V1` and `V2`.
+
+Create and verify a backup of `sisdent-preprod-data` before that first
+migration, set `FLYWAY_BASELINE_ON_MIGRATE=true` in `/srv/sisdent/runtime.env`,
+and deploy. After the first successful migration, return it to `false`; this
+restores Flyway's protection against accidentally adopting an unrelated
+non-empty schema.
+
+A failed application health check rolls the container image back, but database
+migrations are not automatically reversed. Never remove the volume as part of
+an ordinary deploy and never edit a migration that has already been applied;
+add a new version instead.
 
 ## Health check and rollback
 
@@ -114,6 +133,11 @@ deployments. Do not remove it during routine cleanup.
 `/srv/sisdent/.last-successful-image`. If a later image fails its health check,
 the script recreates the services with the last successful tag and leaves the
 workflow red so the failure is visible.
+
+After the deploy script succeeds, the self-hosted workflow also requests the
+health endpoint through the host LAN address and verifies that `/` and `/login`
+serve the Angular `<app-root>` shell. This detects a missing frontend bundle or
+a broken SPA deep link before manual pre-production testing begins.
 
 The first deployment has no rollback target. If it fails, inspect:
 
