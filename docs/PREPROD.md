@@ -15,7 +15,7 @@ bundle and starts the approved image.
 ```text
 manually run "Deploy pre-production" with a branch, tag, or commit
   -> resolve the selected revision to an immutable commit SHA
-  -> run tests
+  -> run backend and Angular tests, then build Angular for production
   -> build image on a GitHub-hosted runner
   -> push ghcr.io/blnunes/sisdent:<commit SHA>
   -> send Compose, Caddy, and deploy script as an Actions artifact
@@ -69,10 +69,22 @@ The host bootstrap creates `/srv/sisdent/runtime.env` from this template:
 ```dotenv
 SISDENT_IMAGE_REPOSITORY=ghcr.io/blnunes/sisdent
 SISDENT_BIND_ADDRESS=127.0.0.1
+JWT_SECRET=<a-random-secret-of-at-least-32-characters>
+BOOTSTRAP_ADMIN_IDENTIFICATION_TYPE=NATIONAL_ID
+BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER=<initial-admin-identifier>
+BOOTSTRAP_ADMIN_PASSWORD=<strong-initial-admin-password>
 ```
 
 The image tag is supplied by the workflow and always equals the Git commit SHA
-that passed the Quality Gate.
+that passed the selected revision's backend and Angular validation jobs.
+All three secret/bootstrap values are mandatory: Compose fails before starting
+the services if any is missing. Generate `JWT_SECRET` locally (for example,
+`openssl rand -hex 32`) and keep this file owned by `github-runner` with mode
+`0600`.
+
+The current `sisdent-preprod` host was initially configured with
+`NATIONAL_ID / admin` and password `admin`. These are temporary bootstrap
+credentials only and must be changed after the first successful deployment.
 
 ## GitHub runner registration
 
@@ -102,6 +114,7 @@ GitHub-hosted runners.
 
 - `data-init`, which gives container user `1001` ownership of the data volume;
 - `app`, using the immutable GHCR image and a file-backed H2 database;
+- the Angular production bundle embedded in the immutable application image;
 - `proxy`, using Caddy on port 80 with compression and defensive headers.
 
 The named volume `sisdent-preprod-data` survives container recreation and new
@@ -116,14 +129,56 @@ while preserving existing rows. New databases apply both `V1` and `V2`.
 
 Create and verify a backup of `sisdent-preprod-data` before that first
 migration, set `FLYWAY_BASELINE_ON_MIGRATE=true` in `/srv/sisdent/runtime.env`,
-and deploy. After the first successful migration, return it to `false`; this
-restores Flyway's protection against accidentally adopting an unrelated
-non-empty schema.
+and deploy. Leave the setting enabled while adopting the pre-existing database;
+once Flyway history exists, it has no effect on that database. Do not enable it
+for an unrelated non-empty database.
 
 A failed application health check rolls the container image back, but database
 migrations are not automatically reversed. Never remove the volume as part of
 an ordinary deploy and never edit a migration that has already been applied;
 add a new version instead.
+
+### Disposable pre-production database recovery
+
+If pre-production data is explicitly confirmed as disposable and its schema or
+Flyway history is incompatible, recreate only the named H2 volume. This is a
+destructive operation: it deletes all pre-production application data. Do not
+use it for production or for data that has not been approved for deletion.
+
+First wait for any running deployment to finish its rollback. Then stop the
+pre-production stack and remove only its data volume:
+
+```bash
+cd /srv/sisdent
+SISDENT_IMAGE_TAG="$(<.last-successful-image)" docker compose \
+  --env-file runtime.env \
+  -f compose.preprod.yml down --remove-orphans
+docker volume rm sisdent-preprod-data
+```
+
+Run **Deploy pre-production** again for the intended commit. Flyway creates a
+fresh schema from its versioned migrations and the bootstrap administrator is
+created from `runtime.env`.
+
+## GitHub CLI operational access
+
+The host has GitHub CLI (`gh`) installed for operator investigation and manual
+workflow dispatch. Authenticate only an administrator account and keep its
+token in the operating system keyring; the Actions runner itself continues to
+use its short-lived `GITHUB_TOKEN`.
+
+```bash
+gh auth status
+gh workflow run preprod.yml \
+  --repo blnunes/sisdent \
+  --ref <branch-containing-the-workflow> \
+  -f ref=<full-commit-sha>
+gh run view <run-id> --repo blnunes/sisdent --log-failed
+```
+
+The second `ref` is the immutable application revision that is validated and
+deployed. The `--ref` argument selects the branch that supplies the workflow
+definition.
 
 ## Health check and rollback
 
@@ -132,6 +187,11 @@ add a new version instead.
 `/srv/sisdent/.last-successful-image`. If a later image fails its health check,
 the script recreates the services with the last successful tag and leaves the
 workflow red so the failure is visible.
+
+After the deploy script succeeds, the self-hosted workflow also requests the
+health endpoint through the host LAN address and verifies that `/` and `/login`
+serve the Angular `<app-root>` shell. This detects a missing frontend bundle or
+a broken SPA deep link before manual pre-production testing begins.
 
 The first deployment has no rollback target. If it fails, inspect:
 

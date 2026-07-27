@@ -58,6 +58,7 @@ The normal deployment flow is:
 ```text
 manually select a branch, tag, or commit in Deploy pre-production
   -> GitHub-hosted runner resolves it to a commit SHA and runs tests
+  -> GitHub-hosted runner validates the Angular production build
   -> GitHub-hosted runner builds the container image
   -> image is published as ghcr.io/blnunes/sisdent:<commit-sha>
   -> deployment bundle is uploaded as a GitHub Actions artifact
@@ -191,13 +192,32 @@ Membership in the `docker` group is effectively root-equivalent. It is limited
 to the dedicated deployment identity and must not be granted to untrusted
 users.
 
-Write the following non-secret runtime configuration to
-`/srv/sisdent/runtime.env`:
+Write the following runtime configuration to `/srv/sisdent/runtime.env`. The
+image tag is deliberately omitted: the workflow supplies the immutable commit
+SHA for every deployment.
 
 ```dotenv
 SISDENT_IMAGE_REPOSITORY=ghcr.io/blnunes/sisdent
 SISDENT_BIND_ADDRESS=0.0.0.0
+JWT_SECRET=<a-random-secret-of-at-least-32-characters>
+BOOTSTRAP_ADMIN_IDENTIFICATION_TYPE=NATIONAL_ID
+BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER=<initial-admin-identifier>
+BOOTSTRAP_ADMIN_PASSWORD=<strong-initial-admin-password>
 ```
+
+`JWT_SECRET`, `BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER`, and
+`BOOTSTRAP_ADMIN_PASSWORD` are required by `compose.preprod.yml`. Docker
+Compose validates variable interpolation before it starts containers, so a
+missing value stops the deployment before an image is pulled or a rollback can
+run. Generate the JWT secret locally, for example with `openssl rand -hex 32`,
+and never commit or print the resulting file.
+
+### Current host bootstrap record
+
+On the `sisdent-preprod` host, the initial administrator was configured as
+`NATIONAL_ID / admin` with password `admin`. This is a temporary, deliberately
+weak bootstrap credential selected for initial access. Change it immediately
+after the first successful deployment; do not reuse it in another environment.
 
 Then restore ownership and permissions:
 
@@ -342,13 +362,15 @@ or commit to test, and start the run. GitHub requires this workflow to exist on
 the default branch before the button is available. The expected jobs are:
 
 1. `Validate selected revision`;
-2. `Build immutable image`;
-3. `Deploy selected revision`.
+2. `Validate frontend`;
+3. `Build immutable image`;
+4. `Deploy selected revision`.
 
 The deployment then validates that `SISDENT_BIND_ADDRESS` is `0.0.0.0` or the
 current LAN IPv4 address and requests `/actuator/health` through that LAN
-address. The job fails if the service is only bound to loopback or the LAN URL
-is not healthy.
+address. It also verifies that `/` and `/login` return the Angular `<app-root>`
+shell. The job fails if the service is only bound to loopback, the LAN URL is
+not healthy, or the image does not serve the Angular application.
 
 The local deployment job waits for a runner with the labels
 `self-hosted`, `linux`, `x64`, and `sisdent-preprod`. If the runner is offline,
@@ -367,6 +389,8 @@ docker compose \
   -f /srv/sisdent/compose.preprod.yml ps
 
 curl --fail http://127.0.0.1/actuator/health
+curl --fail http://127.0.0.1/ | grep -F '<app-root'
+curl --fail http://127.0.0.1/login | grep -F '<app-root'
 curl --head http://sisdent-preprod.local/swagger-ui.html
 curl --fail http://sisdent-preprod.local/swagger-ui/index.html >/dev/null
 ss -lnt '( sport = :80 )'
@@ -457,5 +481,6 @@ GitHub Actions and remove the source checkout from the deployment host.
 - Do not store GitHub registration tokens or long-lived GHCR credentials.
 - Keep `/srv/sisdent/runtime.env` owned by `github-runner` with mode `0600`.
 - Treat the runner and Docker group membership as privileged access.
-- Deploy only immutable commit-SHA image tags that passed the Quality Gate.
+- Deploy only immutable commit-SHA image tags that passed the selected
+  revision's backend and Angular validation jobs.
 - Preserve the `sisdent-preprod-data` volume during routine deployments.
