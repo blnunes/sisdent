@@ -115,6 +115,10 @@ preservando bindings, eventos, control flow Angular e estilos encapsulados.
   fallback offline. Assim, `/login` não pode exibir chaves como `LOGIN.TITLE`
   mesmo que o request de `/i18n/en.json` falhe; os idiomas adicionais continuam
   sendo carregados de `/i18n/`.
+- `LanguageService` deve tratar falhas no carregamento HTTP de um idioma salvo e
+  trocar explicitamente para `en`; nunca deixar a exceção sem handler. O deploy
+  de preprod deve validar que `/i18n/en.json` retorna o conteúdo esperado, além
+  de apenas validar a página `/login`.
 - Para componentes Material, importar explicitamente os módulos usados no
   componente standalone.
 - Colocar testes ao lado da implementação quando a funcionalidade tiver

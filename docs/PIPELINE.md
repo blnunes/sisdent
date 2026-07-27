@@ -270,9 +270,10 @@ runtime files, rollback behavior, and registration steps are documented in
 `docs/PREPROD.md`.
 
 After deployment, the runner verifies `/actuator/health` through its LAN
-address and confirms that both `/` and `/login` serve Angular's `<app-root>`
-shell. The latter verifies that the Docker image contains the frontend bundle
-and that SPA deep links work through Caddy.
+address, confirms that both `/` and `/login` serve Angular's `<app-root>`
+shell, and checks that `/i18n/en.json` contains the expected translation keys.
+This verifies the frontend bundle, SPA deep links, and the public translation
+asset required before authentication.
 
 The workflow authenticates to GHCR with its short-lived `GITHUB_TOKEN`. No
 long-lived registry token belongs on the Ubuntu host. The build job receives

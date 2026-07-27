@@ -23,9 +23,24 @@ export class LanguageService {
     this.current.set(language);
     localStorage.setItem(STORAGE_KEY, language);
     this.document.documentElement.lang = language;
-    this.translate.use(language).subscribe(() => {
-      this.title.setTitle(this.translate.instant('APP.TITLE'));
+    this.translate.use(language).subscribe({
+      next: () => this.setTitle(),
+      error: () => this.useEnglishFallback(),
     });
+  }
+
+  private useEnglishFallback(): void {
+    this.current.set('en');
+    localStorage.setItem(STORAGE_KEY, 'en');
+    this.document.documentElement.lang = 'en';
+    this.translate.use('en').subscribe({
+      next: () => this.setTitle(),
+      error: () => this.setTitle(),
+    });
+  }
+
+  private setTitle(): void {
+    this.title.setTitle(this.translate.instant('APP.TITLE'));
   }
 
   private savedLanguage(): Language {
