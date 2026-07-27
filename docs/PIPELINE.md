@@ -26,9 +26,9 @@ not appear as skipped in pre-production runs:
 2. `Frontend quality` installs the locked npm dependencies, runs Angular tests,
    and creates the production Angular build.
 3. `Deploy pre-production` is started manually with a branch, tag, or commit
-   input. It resolves that reference to an immutable SHA, tests it, publishes
-   the image and deployment bundle, and deploys through the `preprod`
-   environment on the dedicated self-hosted runner.
+   input. It resolves that reference to an immutable SHA, validates the backend
+   and Angular frontend, publishes the image and deployment bundle, and deploys
+   through the `preprod` environment on the dedicated self-hosted runner.
 4. `Deploy to Render` runs in the GitHub `production` environment only for a
    push to `master` and only after the backend and frontend quality jobs
    succeed. It deploys the exact approved commit, waits for Render, and verifies
@@ -248,7 +248,8 @@ explicitly tested rollback procedure.
 
 These jobs run only after an operator starts `Deploy pre-production` and
 supplies a Git reference. The validation job resolves it to a commit SHA before
-the build job publishes two GHCR tags:
+the frontend job runs the locked Angular tests and production build. Only then
+does the image build publish two GHCR tags:
 
 - `ghcr.io/blnunes/sisdent:<commit SHA>` is immutable and is the deployment
   input;
@@ -267,6 +268,11 @@ The self-hosted runner must have the standard `self-hosted`, `linux`, and `x64`
 labels plus the custom `sisdent-preprod` label. Host bootstrap, network policy,
 runtime files, rollback behavior, and registration steps are documented in
 `docs/PREPROD.md`.
+
+After deployment, the runner verifies `/actuator/health` through its LAN
+address and confirms that both `/` and `/login` serve Angular's `<app-root>`
+shell. The latter verifies that the Docker image contains the frontend bundle
+and that SPA deep links work through Caddy.
 
 The workflow authenticates to GHCR with its short-lived `GITHUB_TOKEN`. No
 long-lived registry token belongs on the Ubuntu host. The build job receives

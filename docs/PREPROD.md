@@ -15,7 +15,7 @@ bundle and starts the approved image.
 ```text
 manually run "Deploy pre-production" with a branch, tag, or commit
   -> resolve the selected revision to an immutable commit SHA
-  -> run tests
+  -> run backend and Angular tests, then build Angular for production
   -> build image on a GitHub-hosted runner
   -> push ghcr.io/blnunes/sisdent:<commit SHA>
   -> send Compose, Caddy, and deploy script as an Actions artifact
@@ -72,7 +72,7 @@ SISDENT_BIND_ADDRESS=127.0.0.1
 ```
 
 The image tag is supplied by the workflow and always equals the Git commit SHA
-that passed the Quality Gate.
+that passed the selected revision's backend and Angular validation jobs.
 
 ## GitHub runner registration
 
@@ -102,6 +102,7 @@ GitHub-hosted runners.
 
 - `data-init`, which gives container user `1001` ownership of the data volume;
 - `app`, using the immutable GHCR image and a file-backed H2 database;
+- the Angular production bundle embedded in the immutable application image;
 - `proxy`, using Caddy on port 80 with compression and defensive headers.
 
 The named volume `sisdent-preprod-data` survives container recreation and new
@@ -132,6 +133,11 @@ add a new version instead.
 `/srv/sisdent/.last-successful-image`. If a later image fails its health check,
 the script recreates the services with the last successful tag and leaves the
 workflow red so the failure is visible.
+
+After the deploy script succeeds, the self-hosted workflow also requests the
+health endpoint through the host LAN address and verifies that `/` and `/login`
+serve the Angular `<app-root>` shell. This detects a missing frontend bundle or
+a broken SPA deep link before manual pre-production testing begins.
 
 The first deployment has no rollback target. If it fails, inspect:
 

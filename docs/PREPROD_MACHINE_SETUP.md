@@ -58,6 +58,7 @@ The normal deployment flow is:
 ```text
 manually select a branch, tag, or commit in Deploy pre-production
   -> GitHub-hosted runner resolves it to a commit SHA and runs tests
+  -> GitHub-hosted runner validates the Angular production build
   -> GitHub-hosted runner builds the container image
   -> image is published as ghcr.io/blnunes/sisdent:<commit-sha>
   -> deployment bundle is uploaded as a GitHub Actions artifact
@@ -342,13 +343,15 @@ or commit to test, and start the run. GitHub requires this workflow to exist on
 the default branch before the button is available. The expected jobs are:
 
 1. `Validate selected revision`;
-2. `Build immutable image`;
-3. `Deploy selected revision`.
+2. `Validate frontend`;
+3. `Build immutable image`;
+4. `Deploy selected revision`.
 
 The deployment then validates that `SISDENT_BIND_ADDRESS` is `0.0.0.0` or the
 current LAN IPv4 address and requests `/actuator/health` through that LAN
-address. The job fails if the service is only bound to loopback or the LAN URL
-is not healthy.
+address. It also verifies that `/` and `/login` return the Angular `<app-root>`
+shell. The job fails if the service is only bound to loopback, the LAN URL is
+not healthy, or the image does not serve the Angular application.
 
 The local deployment job waits for a runner with the labels
 `self-hosted`, `linux`, `x64`, and `sisdent-preprod`. If the runner is offline,
@@ -367,6 +370,8 @@ docker compose \
   -f /srv/sisdent/compose.preprod.yml ps
 
 curl --fail http://127.0.0.1/actuator/health
+curl --fail http://127.0.0.1/ | grep -F '<app-root'
+curl --fail http://127.0.0.1/login | grep -F '<app-root'
 curl --head http://sisdent-preprod.local/swagger-ui.html
 curl --fail http://sisdent-preprod.local/swagger-ui/index.html >/dev/null
 ss -lnt '( sport = :80 )'
@@ -457,5 +462,6 @@ GitHub Actions and remove the source checkout from the deployment host.
 - Do not store GitHub registration tokens or long-lived GHCR credentials.
 - Keep `/srv/sisdent/runtime.env` owned by `github-runner` with mode `0600`.
 - Treat the runner and Docker group membership as privileged access.
-- Deploy only immutable commit-SHA image tags that passed the Quality Gate.
+- Deploy only immutable commit-SHA image tags that passed the selected
+  revision's backend and Angular validation jobs.
 - Preserve the `sisdent-preprod-data` volume during routine deployments.
