@@ -21,7 +21,7 @@ public class SpaWebConfig implements WebMvcConfigurer {
         // Match the first path segment here. Putting /** first allows it to consume
         // "/api" and incorrectly forwards unknown API endpoints such as
         // "/api/procedures" to Angular with HTTP 200.
-        registry.addViewController("/{path:^(?!api$|actuator$)[^.]+}/**")
+        registry.addViewController("/{path:^(?!api$|actuator$|i18n$)[^.]+}/**")
                 .setViewName("forward:/index.html");
     }
 }
