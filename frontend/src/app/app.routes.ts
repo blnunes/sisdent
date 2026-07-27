@@ -16,6 +16,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
   },
+  {
+    path: 'translation-error',
+    loadComponent: () =>
+      import('./features/translation-error/translation-error.component').then((m) => m.TranslationErrorComponent),
+  },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'not-found' },
 ];
