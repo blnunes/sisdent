@@ -1,7 +1,10 @@
 <main class="login-page">
   <section class="welcome-panel" [attr.aria-label]="'LOGIN.ARIA' | translate">
     <div class="brand"><mat-icon>dentistry</mat-icon><span>Sisdent</span></div>
-    <app-language-selector class="login-language" />
+    <div class="login-controls">
+      <app-theme-toggle />
+      <app-language-selector />
+    </div>
     <div class="welcome-copy">
       <span class="eyebrow">{{ 'LOGIN.TAGLINE' | translate }}</span>
       <h1>{{ 'LOGIN.TITLE' | translate }}</h1>

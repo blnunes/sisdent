@@ -12,6 +12,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth.service';
 import { IdentificationType } from '../../core/models';
 import { LanguageSelectorComponent } from '../../shared/language-selector.component';
+import { ThemeToggleComponent } from '../../shared/theme-toggle.component';
 
 @Component({
   selector: 'app-login',
@@ -26,6 +27,7 @@ import { LanguageSelectorComponent } from '../../shared/language-selector.compon
     MatSelectModule,
     TranslatePipe,
     LanguageSelectorComponent,
+    ThemeToggleComponent,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',

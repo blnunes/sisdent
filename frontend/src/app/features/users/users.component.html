@@ -3,6 +3,7 @@
     <a class="brand" href="/users"><mat-icon>dentistry</mat-icon><span>Sisdent</span></a>
     <span class="spacer"></span>
     <app-language-selector class="header-language" />
+    <app-theme-toggle />
     <span class="admin-badge"><mat-icon>shield_person</mat-icon>{{ 'USERS.ADMIN' | translate }}</span>
     <button mat-icon-button (click)="auth.logout()" [attr.aria-label]="'USERS.LOGOUT' | translate" [title]="'USERS.LOGOUT' | translate">
       <mat-icon>logout</mat-icon>
@@ -45,7 +46,7 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'USERS.SEARCH' | translate }}</mat-label>
           <mat-icon matPrefix>search</mat-icon>
-          <input matInput #search (input)="filter(search.value)" [placeholder]="'USERS.SEARCH_PLACEHOLDER' | translate" />
+          <input matInput #search (input)="filter(search.value)" />
         </mat-form-field>
       </div>
 

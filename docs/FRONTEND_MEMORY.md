@@ -30,6 +30,44 @@ estilo. Por exemplo, uma feature usa `nome.component.ts`,
 `nome.component.html` e `nome.component.scss`. Serviços e modelos comuns ficam
 em `core`; componentes reutilizáveis ficam em `shared`.
 
+## Temas claro e escuro
+
+O frontend suporta os temas `light` e `dark`. O estado é centralizado no
+`ThemeService` (`core/theme.service.ts`), que aplica `data-theme` no elemento
+`html`, atualiza `color-scheme` e persiste a escolha em `localStorage` com a
+chave `sisdent-theme`. O controle visual reutilizável é
+`shared/theme-toggle.component.ts`.
+
+Novas cores de interface devem usar as variáveis/seletores globais de tema ou
+ser compatíveis com ambos os temas. Ao criar uma nova página, disponibilizar o
+`app-theme-toggle` no cabeçalho ou área de ações. Não duplicar lógica de troca
+de tema dentro das features.
+
+A paleta escura é exclusiva do seletor `html[data-theme='dark']`; nunca alterar
+as regras do tema claro ao refiná-la. A referência de marca é odontologia e
+saúde: fundo azul-marinho (`#081c24`), superfícies azul-petróleo (`#102b35`),
+bordas azuladas (`#28515c`), texto aqua claro (`#e4f5f5`) e ações em teal
+(`#12a99b`/`#46d7c8`). Azul e verde/teal são associados a confiança, limpeza e
+calma em comunicação odontológica; usar vermelho apenas para erros/desativação
+e nunca como cor primária.
+
+Em superfícies escuras, chips, etiquetas e metadados não devem usar cinza de
+baixo contraste. Usar uma superfície teal distinta, borda teal média e texto
+aqua claro; verificar visualmente texto e borda em cada componente Material.
+Campos de formulário escuros devem usar uma superfície elevada, placeholder
+aqua legível e contorno com contraste suficiente; nunca depender da cor padrão
+do placeholder do Angular Material.
+Em `mat-form-field`, não usar `mat-label` e `placeholder` para a mesma
+instrução: o Material apresenta o label como placeholder quando o campo está
+vazio, e a duplicação provoca sobreposição visual.
+No tema escuro, aplicar contraste tanto ao `::placeholder` nativo quanto ao
+`.mdc-floating-label`, pois este é o texto visível quando o `mat-label` ocupa
+o campo vazio.
+Controles posicionados sobre elementos decorativos devem ficar em um contêiner
+flexível com alinhamento explícito e `z-index` acima da decoração. Elementos
+puramente visuais, como bolhas de fundo, devem usar `pointer-events: none` para
+nunca bloquear cliques.
+
 ## Regra obrigatória de templates
 
 Nunca criar HTML dentro do próprio componente TypeScript. Não usar `template:`

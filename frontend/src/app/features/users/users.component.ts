@@ -19,6 +19,7 @@ import { AuthService } from '../../core/auth.service';
 import { Permission, Role, User, UserWrite } from '../../core/models';
 import { UserApiService } from '../../core/user-api.service';
 import { LanguageSelectorComponent } from '../../shared/language-selector.component';
+import { ThemeToggleComponent } from '../../shared/theme-toggle.component';
 
 @Component({
   selector: 'app-users',
@@ -36,6 +37,7 @@ import { LanguageSelectorComponent } from '../../shared/language-selector.compon
     MatToolbarModule,
     TranslatePipe,
     LanguageSelectorComponent,
+    ThemeToggleComponent,
   ],
   templateUrl: './users.component.html',
   styleUrl: './users.component.scss',
