@@ -17,7 +17,7 @@ jobs:
   quality-check:
     name: Validate selected revision
     outputs:
-      commit-sha: ${{ steps.commit.outputs.sha }}
+      commit_sha: ${{ steps.commit.outputs.sha }}
     runs-on: ubuntu-latest
     container: maven:3.9.16-eclipse-temurin-25
     permissions:
@@ -50,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: ${{ needs.quality-check.outputs['commit-sha'] }}
+          ref: ${{ needs.quality-check.outputs.commit_sha }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
@@ -68,10 +68,10 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/blnunes/sisdent:${{ needs.quality-check.outputs['commit-sha'] }}
+            ghcr.io/blnunes/sisdent:${{ needs.quality-check.outputs.commit_sha }}
             ghcr.io/blnunes/sisdent:preprod
           labels: |
-            org.opencontainers.image.revision=${{ needs.quality-check.outputs['commit-sha'] }}
+            org.opencontainers.image.revision=${{ needs.quality-check.outputs.commit_sha }}
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -79,7 +79,7 @@ jobs:
       - name: Package deployment files
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: sisdent-preprod-${{ needs.quality-check.outputs['commit-sha'] }}
+          name: sisdent-preprod-${{ needs.quality-check.outputs.commit_sha }}
           path: |
             compose.preprod.yml
             deploy/preprod/Caddyfile
@@ -97,7 +97,7 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: ${{ needs.quality-check.outputs['commit-sha'] }}
+          ref: ${{ needs.quality-check.outputs.commit_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -136,7 +136,7 @@ jobs:
       - name: Download deployment bundle
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
-          name: sisdent-preprod-${{ needs.quality-check.outputs['commit-sha'] }}
+          name: sisdent-preprod-${{ needs.quality-check.outputs.commit_sha }}
           path: /srv/sisdent
 
       - name: Log in to GitHub Container Registry
@@ -150,7 +150,7 @@ jobs:
         shell: bash
         run: >-
           bash /srv/sisdent/deploy/preprod/deploy.sh
-          "${{ needs.quality-check.outputs['commit-sha'] }}"
+          "${{ needs.quality-check.outputs.commit_sha }}"
 
       - name: Verify LAN endpoint
         shell: bash
