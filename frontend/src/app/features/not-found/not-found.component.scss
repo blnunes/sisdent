@@ -1,5 +1,7 @@
 :host { display:block; min-height:100%; }
-.not-found-page { min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:28px 20px; overflow:hidden; background:radial-gradient(circle at 50% 25%,#e2faf6 0,#f7fbfb 45%,#eef7f8 100%); color:#173e4b; }
+.not-found-page { min-height:100vh; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; padding:28px 20px; overflow:hidden; background:radial-gradient(circle at 50% 25%,#e2faf6 0,#f7fbfb 45%,#eef7f8 100%); color:#173e4b; }
+.not-found-header { width:min(100%, 1240px); display:flex; justify-content:space-between; align-items:center; }
+.header-actions { display:flex; align-items:center; gap:10px; }
 .brand { align-self:flex-start; display:flex; align-items:center; gap:9px; margin-left:clamp(0px,4vw,60px); color:#0a6770; text-decoration:none; font-size:1.2rem; font-weight:800; }
 .brand mat-icon { color:#0b918a; }
 .message-card { width:min(700px,100%); margin:auto 0; text-align:center; }
@@ -25,3 +27,7 @@ p { max-width:570px; margin:0 auto 28px; color:#607980; font-size:1.04rem; line-
   .tooth-scene { transform:scale(.78); margin-left:-50px; margin-right:-50px; }
   .tooth-left { left:10%; }.tooth-right { right:10%; }
 }
+html[data-theme='dark'] .not-found-page { background:radial-gradient(circle at 50% 25%, #163f48 0, var(--dental-night) 60%) !important; color:var(--dental-text); }
+html[data-theme='dark'] .tooth mat-icon { color:#1b4a55; -webkit-text-stroke-color:var(--dental-teal); }
+html[data-theme='dark'] .tooth span { color:var(--dental-aqua); }
+html[data-theme='dark'] .ground { background:rgba(70,215,200,.18); }

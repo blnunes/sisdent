@@ -1,5 +1,5 @@
 <main class="not-found-page">
-  <a class="brand" routerLink="/login"><mat-icon>dentistry</mat-icon>Sisdent</a>
+  <header class="not-found-header"><a class="brand" routerLink="/login"><mat-icon>dentistry</mat-icon>Sisdent</a><span class="header-actions"><app-language-selector /><app-theme-toggle /></span></header>
   <section class="message-card">
     <div class="tooth-scene" aria-hidden="true">
       <div class="sparkle one">✦</div>
@@ -9,17 +9,14 @@
       <div class="tooth tooth-right"><mat-icon>dentistry</mat-icon><span>•ᴗ•</span></div>
       <div class="ground"></div>
     </div>
-    <span class="error-code">ACESSO RESTRITO</span>
-    <h1>Ops! Este cantinho não é para o seu perfil.</h1>
-    <p>
-      A gestão de utilizadores é reservada a administradores. Os nossos dentinhos
-      guardiões vão ajudá-lo a voltar para um lugar seguro.
-    </p>
+    <span class="error-code">{{ 'NOT_FOUND.RESTRICTED' | translate }}</span>
+    <h1>{{ 'NOT_FOUND.TITLE' | translate }}</h1>
+    <p>{{ 'NOT_FOUND.DESCRIPTION' | translate }}</p>
     <div class="actions">
       @if (auth.authenticated()) {
-        <button mat-flat-button (click)="auth.logout()"><mat-icon>logout</mat-icon>Terminar sessão</button>
+        <button mat-flat-button (click)="auth.logout()"><mat-icon>logout</mat-icon>{{ 'NOT_FOUND.LOGOUT' | translate }}</button>
       } @else {
-        <a mat-flat-button routerLink="/login"><mat-icon>arrow_back</mat-icon>Voltar ao login</a>
+        <a mat-flat-button routerLink="/login"><mat-icon>arrow_back</mat-icon>{{ 'NOT_FOUND.BACK' | translate }}</a>
       }
     </div>
   </section>

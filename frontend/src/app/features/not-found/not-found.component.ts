@@ -3,10 +3,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { TranslatePipe } from '@ngx-translate/core';
+import { LanguageSelectorComponent } from '../../shared/language-selector.component';
+import { ThemeToggleComponent } from '../../shared/theme-toggle.component';
 
 @Component({
   selector: 'app-not-found',
-  imports: [MatButtonModule, MatIconModule, RouterLink],
+  imports: [MatButtonModule, MatIconModule, RouterLink, TranslatePipe, LanguageSelectorComponent, ThemeToggleComponent],
   templateUrl: './not-found.component.html',
   styleUrl: './not-found.component.scss',
 })
