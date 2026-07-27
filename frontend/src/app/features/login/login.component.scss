@@ -1,5 +1,5 @@
-:host { display: block; min-height: 100%; }
-.login-page { min-height: 100vh; display: grid; grid-template-columns: minmax(360px, 1.15fr) minmax(420px, .85fr); background: #f8fcfc; }
+:host { display: block; min-height: 100%; background: var(--app-canvas); }
+.login-page { min-height: 100vh; display: grid; grid-template-columns: minmax(360px, 1.15fr) minmax(420px, .85fr); background: var(--app-canvas); }
 .welcome-panel { position: relative; overflow: hidden; display: flex; flex-direction: column; padding: 48px clamp(40px, 7vw, 104px); color: white; background: linear-gradient(145deg, #073f5c 0%, #086a78 56%, #19a79c 100%); }
 .brand { display: flex; align-items: center; gap: 12px; font-size: 1.35rem; font-weight: 700; letter-spacing: -.02em; }
 .brand mat-icon { width: 38px; height: 38px; font-size: 38px; color: #b8fff3; }
@@ -13,19 +13,19 @@ h1 { margin: 0; font-size: clamp(2.5rem, 5vw, 4.8rem); line-height: 1.02; letter
 .bubble { position: absolute; pointer-events:none; border-radius: 50%; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); }
 .bubble-one { width: 360px; height: 360px; right: -110px; top: -100px; }
 .bubble-two { width: 230px; height: 230px; left: -80px; bottom: -80px; }
-.form-panel { display: grid; place-items: center; padding: 32px; }
-.login-card { width: min(100%, 460px); border-color: #d8e8e9; border-radius: 28px; padding: 18px; box-shadow: 0 24px 70px rgba(9, 73, 88, .12); }
+.form-panel { display: grid; place-items: center; padding: 32px; background: var(--app-canvas); }
+.login-card { width: min(100%, 460px); border-color: var(--app-border); border-radius: 28px; padding: 18px; background: var(--app-surface) !important; box-shadow: var(--app-shadow); }
 .login-card mat-card-header { margin-bottom: 28px; }
-.tooth-avatar { display: grid; place-items: center; background: #dcfaf5; color: #087b79; }
-mat-card-title { color: #123d4c; font-size: 1.55rem; font-weight: 750; }
+.tooth-avatar { display: grid; place-items: center; background: var(--app-primary-subtle); color: var(--app-primary); }
+mat-card-title { color: var(--app-text); font-size: 1.55rem; font-weight: 750; }
 mat-card-subtitle { margin-top: 5px; }
 form { display: grid; gap: 4px; }
 mat-form-field { width: 100%; }
-.login-button { height: 52px; margin-top: 8px; border-radius: 14px; background: #087b79 !important; color: white !important; font-weight: 700; }
+.login-button { height: 52px; margin-top: 8px; border-radius: 14px; background: var(--app-primary) !important; color: var(--app-primary-contrast) !important; font-weight: 700; }
 .login-button mat-spinner { display: inline-block; }
-.error-message { display: flex; gap: 9px; align-items: flex-start; margin: 0 0 12px; padding: 12px; border-radius: 12px; color: #9b2736; background: #fff0f1; font-size: .9rem; }
-.training-hint { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 24px 0 0; color: #54717a; font-size: .83rem; }
-.training-hint mat-icon { color: #0b8e88; font-size: 18px; width: 18px; height: 18px; }
+.error-message { display: flex; gap: 9px; align-items: flex-start; margin: 0 0 12px; padding: 12px; border-radius: 12px; color: var(--app-danger); background: color-mix(in srgb, var(--app-danger) 12%, var(--app-surface)); font-size: .9rem; }
+.training-hint { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 24px 0 0; color: var(--app-text-muted); font-size: .83rem; }.training-hint mat-icon { color: var(--app-primary); font-size: 18px; width: 18px; height: 18px; }
+mat-card-subtitle { color: var(--app-text-muted) !important; }
 @media (max-width: 860px) {
   .login-page { grid-template-columns: 1fr; }
   .welcome-panel { min-height: 260px; padding: 30px; }

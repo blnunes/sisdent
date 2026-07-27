@@ -1,78 +1,88 @@
-# Memória do frontend Angular
+# Angular Frontend Memory
 
-Este documento orienta agentes que alteram o frontend do Sisdent. A aplicação
-Angular está em `frontend/` e usa componentes standalone, Angular Material,
-SCSS e `@ngx-translate/core`.
+This document guides agents modifying the Sisdent frontend. The Angular
+application is located in `frontend/` and uses standalone components, Angular
+Material, SCSS, and `@ngx-translate/core`.
 
-## Estrutura atual
+## Current structure
 
 ```text
 frontend/
-|-- angular.json              # build, serve, testes e schematics
-|-- public/i18n/              # traduções pt-PT, en e nl
+|-- angular.json              # build, serve, tests, and schematics
+|-- public/i18n/              # pt-PT, en, and nl translations
 `-- src/
-    |-- main.ts               # bootstrap da aplicação
-    |-- styles.scss           # estilos globais
+    |-- main.ts               # application bootstrap
+    |-- styles.scss           # global styles
     `-- app/
-        |-- app.ts/html/scss  # shell e router-outlet
-        |-- app.config.ts     # providers globais
-        |-- app.routes.ts     # rotas
-        |-- core/             # serviços, modelos, autenticação e interceptor
-        |-- shared/           # componentes reutilizáveis
-        `-- features/         # componentes organizados por funcionalidade
+        |-- app.ts/html/scss  # shell and router-outlet
+        |-- app.config.ts     # global providers
+        |-- app.routes.ts     # routes
+        |-- core/             # services, models, authentication, and interceptor
+        |-- shared/           # reusable components
+        `-- features/         # components grouped by feature
+            |-- home/            # authenticated home and independent navigation
             |-- login/
             |-- not-found/
+            |-- permissions/
+            |-- resources/       # read-only module listings
             `-- users/
 ```
 
-Componentes de feature devem permanecer junto dos seus arquivos de template e
-estilo. Por exemplo, uma feature usa `nome.component.ts`,
-`nome.component.html` e `nome.component.scss`. Serviços e modelos comuns ficam
-em `core`; componentes reutilizáveis ficam em `shared`.
+Feature components should remain alongside their template and style files. A
+feature should use `name.component.ts`, `name.component.html`, and
+`name.component.scss`. Shared services and models belong in `core`; reusable
+components belong in `shared`.
 
-## Temas claro e escuro
+## Light and dark themes
 
-O frontend suporta os temas `light` e `dark`. O estado é centralizado no
-`ThemeService` (`core/theme.service.ts`), que aplica `data-theme` no elemento
-`html`, atualiza `color-scheme` e persiste a escolha em `localStorage` com a
-chave `sisdent-theme`. O controle visual reutilizável é
+The frontend supports `light` and `dark` themes. State is centralized in
+`ThemeService` (`core/theme.service.ts`), which applies `data-theme` to the
+`html` element, updates `color-scheme`, and persists the choice in
+`localStorage` under `sisdent-theme`. The reusable visual control is
 `shared/theme-toggle.component.ts`.
 
-Novas cores de interface devem usar as variáveis/seletores globais de tema ou
-ser compatíveis com ambos os temas. Ao criar uma nova página, disponibilizar o
-`app-theme-toggle` no cabeçalho ou área de ações. Não duplicar lógica de troca
-de tema dentro das features.
+New interface colors must use global theme variables/selectors or work in both
+themes. When creating a page, expose `app-theme-toggle` in the header or action
+area. Do not duplicate theme-switching logic inside features.
 
-A paleta escura é exclusiva do seletor `html[data-theme='dark']`; nunca alterar
-as regras do tema claro ao refiná-la. A referência de marca é odontologia e
-saúde: fundo azul-marinho (`#081c24`), superfícies azul-petróleo (`#102b35`),
-bordas azuladas (`#28515c`), texto aqua claro (`#e4f5f5`) e ações em teal
-(`#12a99b`/`#46d7c8`). Azul e verde/teal são associados a confiança, limpeza e
-calma em comunicação odontológica; usar vermelho apenas para erros/desativação
-e nunca como cor primária.
+The dark palette is scoped to `html[data-theme='dark']`; do not change light
+theme rules while refining it. The brand reference is dentistry and healthcare:
+navy background (`#081c24`), blue-teal surfaces (`#102b35`), blue borders
+(`#28515c`), light aqua text (`#e4f5f5`), and teal actions
+(`#12a99b`/`#46d7c8`). Blue and teal communicate trust, cleanliness, and calm;
+use red only for errors or disabled states, never as the primary color.
 
-Em superfícies escuras, chips, etiquetas e metadados não devem usar cinza de
-baixo contraste. Usar uma superfície teal distinta, borda teal média e texto
-aqua claro; verificar visualmente texto e borda em cada componente Material.
-Campos de formulário escuros devem usar uma superfície elevada, placeholder
-aqua legível e contorno com contraste suficiente; nunca depender da cor padrão
-do placeholder do Angular Material.
-Em `mat-form-field`, não usar `mat-label` e `placeholder` para a mesma
-instrução: o Material apresenta o label como placeholder quando o campo está
-vazio, e a duplicação provoca sobreposição visual.
-No tema escuro, aplicar contraste tanto ao `::placeholder` nativo quanto ao
-`.mdc-floating-label`, pois este é o texto visível quando o `mat-label` ocupa
-o campo vazio.
-Controles posicionados sobre elementos decorativos devem ficar em um contêiner
-flexível com alinhamento explícito e `z-index` acima da decoração. Elementos
-puramente visuais, como bolhas de fundo, devem usar `pointer-events: none` para
-nunca bloquear cliques.
+On dark surfaces, chips, labels, and metadata must not use low-contrast gray.
+Use a distinct teal surface, medium teal border, and light aqua text; check
+text and border contrast in every Material component. Dark form fields should
+use an elevated surface, a readable aqua placeholder, and a sufficiently
+contrasting outline; never rely on Angular Material's default placeholder.
+In `mat-form-field`, do not use `mat-label` and `placeholder` for the same
+instruction: Material displays the label as the placeholder while the field is
+empty, causing overlap. In dark mode, provide contrast for both the native
+`::placeholder` and `.mdc-floating-label`, since the latter is visible when a
+`mat-label` occupies an empty field.
 
-## Regra obrigatória de templates
+Controls positioned over decorative elements must be placed in a flexible
+container with explicit alignment and a `z-index` above the decoration.
+Purely visual elements, such as background bubbles, must use
+`pointer-events: none` so they never block clicks.
 
-Nunca criar HTML dentro do próprio componente TypeScript. Não usar `template:`
-nem template string com markup em `@Component`, mesmo para templates pequenos.
-Todo componente deve apontar para um arquivo separado:
+The `/login` and `/not-found` pages must also use `--app-*` theme tokens so
+their light and dark palettes remain consistent with the rest of the system.
+In encapsulated styles, use `:host-context(html[data-theme='dark'])` when the
+component needs to react to the theme applied to the `html` element.
+
+The shared header lives in `shared/app-header.component.*`, and the authorized
+module list lives in `shared/module-navigation.component.*`. Features that
+need a menu must reuse these components to preserve the same structure,
+spacing, and focus behavior.
+
+## Mandatory template rule
+
+Never create HTML inside a TypeScript component. Do not use `template:` or a
+template string with markup in `@Component`, even for small templates. Every
+component must point to a separate file:
 
 ```ts
 @Component({
@@ -82,58 +92,69 @@ Todo componente deve apontar para um arquivo separado:
 })
 ```
 
-O mesmo princípio vale para estilos: preferir `styleUrl` apontando para um
-arquivo `.scss` em vez de `styles: [...]`. O HTML deve conter apenas a view;
-regras de negócio, estado e chamadas a serviços pertencem ao `.ts`.
+The same principle applies to styles: prefer `styleUrl` pointing to an SCSS
+file instead of `styles: [...]`. HTML should contain only the view; business
+rules, state, and service calls belong in `.ts`.
 
-Antes de concluir uma alteração, procurar violações com:
+Before completing a change, search for violations with:
 
 ```bash
 rg -n "template\\s*:|styles\\s*:" frontend/src --glob '*.ts'
 ```
 
-O resultado esperado é vazio. Ao converter um componente existente, mover o
-conteúdo de `template` para o `.html` e o conteúdo de `styles` para o `.scss`,
-preservando bindings, eventos, control flow Angular e estilos encapsulados.
+The expected result is empty. When converting an existing component, move the
+`template` content to `.html` and the `styles` content to `.scss`, preserving
+Angular bindings, events, control flow, and encapsulated styles.
 
-## Convenções de implementação
+## Implementation conventions
 
-- Usar componentes standalone e declarar as dependências no array `imports`.
-- Usar `inject()` para serviços e dependências de componentes quando esse for o
-  padrão já adotado pelo arquivo.
-- Usar signals para estado reativo local quando já adotado pela feature.
-- Manter chamadas HTTP nos serviços de `core`, e não diretamente nos templates.
-- Reutilizar os modelos em `core/models.ts` e o `AuthService`/interceptor para
-  autenticação.
-- Usar traduções de `public/i18n/` para textos de interface novos, mantendo as
-  três localidades sincronizadas.
-- O loader de traduções usa o caminho absoluto `/i18n/<idioma>.json`; manter os
-  arquivos em `frontend/public/i18n/` para que o build os copie para a raiz dos
-  assets publicados. O backend deve manter `/i18n/**` público, pois a tela de
-  login precisa carregar traduções antes da autenticação.
-- O inglês (`en`) é o idioma padrão e também fica embutido no bundle como
-  fallback offline. Assim, `/login` não pode exibir chaves como `LOGIN.TITLE`
-  mesmo que o request de `/i18n/en.json` falhe; os idiomas adicionais continuam
-  sendo carregados de `/i18n/`.
-- `LanguageService` deve tratar falhas no carregamento HTTP de um idioma salvo e
-  trocar explicitamente para `en`; nunca deixar a exceção sem handler. O deploy
-  de preprod deve validar que `/i18n/en.json` retorna o conteúdo esperado, além
-  de apenas validar a página `/login`.
-- Para componentes Material, importar explicitamente os módulos usados no
-  componente standalone.
-- Colocar testes ao lado da implementação quando a funcionalidade tiver
-  comportamento não trivial.
+- Use standalone components and declare dependencies in the `imports` array.
+- Use `inject()` for services and component dependencies when consistent with
+  the surrounding file.
+- Use signals for local reactive state where the feature already follows that
+  pattern.
+- Keep HTTP calls in `core` services, not directly in templates.
+- Reuse models from `core/models.ts` and the `AuthService`/interceptor for
+  authentication.
+- Use translations from `public/i18n/` for new interface text, keeping all
+  three locales synchronized.
+- The official language for routes and identifiers is English: use `/home`,
+  `/users`, `/permissions`, `/patients`, `/specialities`, `/addresses`,
+  `/countries`, and `/states`. Do not create Portuguese route aliases.
+- `/home` requires authentication only and has no dedicated permission. After
+  login, `AuthService.destination()` must direct authenticated users to
+  `/home`.
+- Module routes must use guards based on read or management permissions. The
+  `/permissions` page accepts `READ_PERMISSIONS` in read-only mode and
+  `MAINTAIN_PERMISSIONS` for editing; the API must still require the
+  management permission to save changes.
+- The translation loader uses the absolute `/i18n/<language>.json` path. Keep
+  files in `frontend/public/i18n/` so the build copies them to the published
+  asset root. The backend must keep `/i18n/**` public because the login page
+  loads translations before authentication.
+- English (`en`) is the default language and is also embedded in the bundle as
+  an offline fallback. `/login` must not display keys such as `LOGIN.TITLE`
+  even if `/i18n/en.json` fails; additional languages continue to load from
+  `/i18n/`.
+- `LanguageService` must handle HTTP failures while loading a saved language
+  and explicitly fall back to `en`; never leave the exception unhandled.
+  Pre-production deployment must verify that `/i18n/en.json` returns the
+  expected content, in addition to checking the `/login` page.
+- For Material components, explicitly import the modules used by the
+  standalone component.
+- Place tests next to the implementation when a feature has non-trivial
+  behavior.
 
-## Verificação
+## Verification
 
-Executar a partir de `frontend/` após mudanças:
+Run from `frontend/` after changes:
 
 ```bash
-npm install       # somente quando as dependências ainda não estiverem instaladas
+npm install       # only when dependencies are not installed yet
 npm run build
 npm test -- --watch=false
 ```
 
-Se a instalação já estiver preparada, `npm run build` é a verificação mínima.
-Falhas de orçamento de CSS, bindings, imports ou templates devem ser corrigidas
-antes de entregar a alteração.
+If installation is already prepared, `npm run build` is the minimum check.
+Fix CSS budget, binding, import, or template failures before delivering the
+change.

@@ -18,15 +18,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth.service';
 import { Permission, Role, User, UserWrite } from '../../core/models';
 import { UserApiService } from '../../core/user-api.service';
-import { LanguageSelectorComponent } from '../../shared/language-selector.component';
-import { ThemeToggleComponent } from '../../shared/theme-toggle.component';
+import { AppHeaderComponent } from '../../shared/app-header.component';
+import { ModuleNavigationComponent } from '../../shared/module-navigation.component';
 
 @Component({
   selector: 'app-users',
@@ -41,12 +39,11 @@ import { ThemeToggleComponent } from '../../shared/theme-toggle.component';
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatTableModule,
-    MatToolbarModule,
     MatSidenavModule,
     MatListModule,
     TranslatePipe,
-    LanguageSelectorComponent,
-    ThemeToggleComponent,
+    AppHeaderComponent,
+    ModuleNavigationComponent,
   ],
   templateUrl: './users.component.html',
   styleUrl: './users.component.scss',
@@ -56,7 +53,6 @@ export class UsersComponent {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
-  readonly auth = inject(AuthService);
 
   readonly loading = signal(true);
   readonly error = signal('');
@@ -222,6 +218,24 @@ export class UserFormDialog {
     ],
     role: [this.data.user?.role ?? 'USER', Validators.required],
   });
+  readonly rolePermissions: Record<Role, Permission[]> = {
+    ADMIN: [
+      'READ_USERS', 'MAINTAIN_USERS', 'READ_PATIENTS', 'MAINTAIN_PATIENTS',
+      'READ_SPECIALITIES', 'MAINTAIN_SPECIALITIES', 'READ_ADDRESSES',
+      'MAINTAIN_ADDRESSES', 'READ_COUNTRIES', 'MAINTAIN_COUNTRIES',
+      'READ_STATES', 'MAINTAIN_STATES',
+      'READ_PERMISSIONS', 'MAINTAIN_PERMISSIONS',
+    ],
+    MANAGER: [
+      'READ_PATIENTS', 'MAINTAIN_PATIENTS', 'READ_SPECIALITIES',
+      'MAINTAIN_SPECIALITIES', 'READ_ADDRESSES', 'READ_COUNTRIES', 'READ_STATES',
+    ],
+    USER: ['READ_PATIENTS', 'READ_SPECIALITIES', 'READ_ADDRESSES', 'READ_COUNTRIES', 'READ_STATES'],
+  };
+
+  permissionLabel(permission: Permission): string {
+    return `PERMISSIONS.${permission}`;
+  }
 
   save(): void {
     if (this.form.invalid) return;
@@ -264,6 +278,8 @@ export class PermissionDialog {
     'MAINTAIN_COUNTRIES',
     'READ_STATES',
     'MAINTAIN_STATES',
+    'READ_PERMISSIONS',
+    'MAINTAIN_PERMISSIONS',
   ];
   readonly selected = signal(new Set(this.user.permissions));
   readonly isAdmin = this.user.role === 'ADMIN';
@@ -280,6 +296,8 @@ export class PermissionDialog {
     MAINTAIN_COUNTRIES: 'Países · Manter',
     READ_STATES: 'Estados · Ler',
     MAINTAIN_STATES: 'Estados · Manter',
+    READ_PERMISSIONS: 'Permissões · Ler',
+    MAINTAIN_PERMISSIONS: 'Permissões · Manter',
   };
   readonly descriptions: Record<Permission, string> = {
     READ_USERS: 'Consultar utilizadores',
@@ -294,6 +312,8 @@ export class PermissionDialog {
     MAINTAIN_COUNTRIES: 'Gerir países',
     READ_STATES: 'Consultar estados',
     MAINTAIN_STATES: 'Gerir estados',
+    READ_PERMISSIONS: 'Consultar permissões',
+    MAINTAIN_PERMISSIONS: 'Gerir permissões',
   };
 
   toggle(permission: Permission, checked: boolean): void {

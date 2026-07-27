@@ -33,4 +33,5 @@ public class AuthenticationService {
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
         return jwtService.issue(user);
     }
+
 }

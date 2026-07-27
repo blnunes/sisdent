@@ -12,7 +12,9 @@ export type Permission =
   | 'READ_COUNTRIES'
   | 'MAINTAIN_COUNTRIES'
   | 'READ_STATES'
-  | 'MAINTAIN_STATES';
+  | 'MAINTAIN_STATES'
+  | 'READ_PERMISSIONS'
+  | 'MAINTAIN_PERMISSIONS';
 
 export interface LoginRequest {
   identificationType: IdentificationType;

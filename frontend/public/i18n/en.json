@@ -1,11 +1,29 @@
 {
   "APP": { "TITLE": "Sisdent | Dental management" },
   "LANGUAGE": { "SELECT": "Select language" },
+  "HOME": {
+    "TITLE": "Home",
+    "OVERTITLE": "Sisdent",
+    "WELCOME": "Welcome",
+    "DESCRIPTION": "Use the menu to get started and access the available features.",
+    "OPEN_MENU": "Open navigation menu",
+    "NAVIGATION": "Main navigation",
+    "NO_MODULES": "There are no modules available for your role."
+  },
+  "MODULES": {
+    "PATIENTS": "Patients", "PATIENTS_DESCRIPTION": "View the patients you are allowed to access.",
+    "SPECIALITIES": "Specialities", "SPECIALITIES_DESCRIPTION": "View configured specialities.",
+    "ADDRESSES": "Addresses", "ADDRESSES_DESCRIPTION": "View registered addresses.",
+    "COUNTRIES": "Countries", "COUNTRIES_DESCRIPTION": "View available countries.",
+    "STATES": "States", "STATES_DESCRIPTION": "View available states.",
+    "EMPTY": "There are no records to show.", "LOAD_ERROR": "Unable to load records."
+  },
   "NOT_FOUND": {
     "RESTRICTED": "RESTRICTED ACCESS",
     "TITLE": "Oops! This area is not available for your role.",
     "DESCRIPTION": "User management is reserved for administrators. Our guardian teeth will help you return to a safe place.",
     "LOGOUT": "Sign out",
+    "HOME": "Back to home",
     "BACK": "Back to login"
   },
   "DIALOG": {
@@ -20,6 +38,8 @@
     "NEW_PASSWORD": "New password (optional)",
     "MIN_PASSWORD": "Minimum 8 characters.",
     "ROLE": "Role",
+    "ROLE_PERMISSIONS": "Permissions for this role",
+    "FULL_ACCESS": "Full access",
     "CANCEL": "Cancel",
     "CREATE": "Create user",
     "SAVE_CHANGES": "Save changes",
@@ -43,7 +63,9 @@
     "READ_COUNTRIES": "View countries",
     "MAINTAIN_COUNTRIES": "Manage countries",
     "READ_STATES": "View states",
-    "MAINTAIN_STATES": "Manage states"
+    "MAINTAIN_STATES": "Manage states",
+    "READ_PERMISSIONS": "View permissions",
+    "MAINTAIN_PERMISSIONS": "Manage permissions"
   },
   "LOGIN": {
     "ARIA": "Sisdent introduction",
@@ -112,9 +134,9 @@
     "SAVE_SUCCESS": "Permissions saved successfully.",
     "SAVE_ERROR": "Unable to save permissions.",
     "LOAD_ERROR": "Unable to load permissions.",
-    "LOADING": "Loading permissions…", "USERS": "Users", "USERS_HELP": "Select a user to configure access.", "SEARCH": "Search permissions", "EDITING": "Editing", "CHANGES": "changes", "AVAILABLE": "Available actions", "CLEAR_SEARCH": "Clear search", "ACTIONS": "actions", "ALL": "All actions", "SELECT_USER": "Select a user to view permissions.", "ADMIN_LOCKED": "The Administrator role has full access and cannot be changed.", "UNSAVED": "unsaved changes", "DISCARD": "Discard", "UNSAVED_WARNING": "There are unsaved changes. Save them before changing users."
+    "LOADING": "Loading permissions…", "USERS": "Users", "USERS_HELP": "Select a user to configure access.", "SEARCH": "Search permissions", "EDITING": "Editing", "CHANGES": "changes", "AVAILABLE": "Available actions", "CLEAR_SEARCH": "Clear search", "ACTIONS": "actions", "ALL": "All actions", "SELECT_USER": "Select a user to view permissions.", "ADMIN_LOCKED": "The Administrator role has full access and cannot be changed.", "READ_ONLY": "You have read-only access to permissions.", "UNSAVED": "unsaved changes", "DISCARD": "Discard", "UNSAVED_WARNING": "There are unsaved changes. Save them before changing users."
   },
   "PERMISSION_GROUPS": {
-    "USERS": "Users", "PATIENTS": "Patients", "SPECIALITIES": "Specialities", "ADDRESSES": "Addresses", "COUNTRIES": "Countries", "STATES": "States"
+    "USERS": "Users", "PATIENTS": "Patients", "SPECIALITIES": "Specialities", "ADDRESSES": "Addresses", "COUNTRIES": "Countries", "STATES": "States", "PERMISSIONS": "Permissions"
   }
 }

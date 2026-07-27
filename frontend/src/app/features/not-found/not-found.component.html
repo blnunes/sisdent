@@ -1,5 +1,5 @@
 <main class="not-found-page">
-  <header class="not-found-header"><a class="brand" routerLink="/login"><mat-icon>dentistry</mat-icon>Sisdent</a><span class="header-actions"><app-language-selector /><app-theme-toggle /></span></header>
+  <header class="not-found-header"><a class="brand" [routerLink]="auth.authenticated() ? '/home' : '/login'"><mat-icon>dentistry</mat-icon>Sisdent</a><span class="header-actions"><app-language-selector /><app-theme-toggle /></span></header>
   <section class="message-card">
     <div class="tooth-scene" aria-hidden="true">
       <div class="sparkle one">✦</div>
@@ -14,7 +14,7 @@
     <p>{{ 'NOT_FOUND.DESCRIPTION' | translate }}</p>
     <div class="actions">
       @if (auth.authenticated()) {
-        <button mat-flat-button (click)="auth.logout()"><mat-icon>logout</mat-icon>{{ 'NOT_FOUND.LOGOUT' | translate }}</button>
+        <a mat-flat-button routerLink="/home"><mat-icon>home</mat-icon>{{ 'NOT_FOUND.HOME' | translate }}</a>
       } @else {
         <a mat-flat-button routerLink="/login"><mat-icon>arrow_back</mat-icon>{{ 'NOT_FOUND.BACK' | translate }}</a>
       }

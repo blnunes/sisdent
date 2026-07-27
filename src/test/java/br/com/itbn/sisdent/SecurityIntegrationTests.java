@@ -84,6 +84,15 @@ class SecurityIntegrationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.permissions.length()").value(2));
 
+        mockMvc.perform(put("/api/users/{id}/permissions", userId)
+                        .header("Authorization", bearer(adminToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"permissions": ["READ_PERMISSIONS", "MAINTAIN_PERMISSIONS"]}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.permissions.length()").value(2));
+
         mockMvc.perform(delete("/api/users/{id}", userId)
                         .header("Authorization", bearer(adminToken)))
                 .andExpect(status().isNoContent());
@@ -152,6 +161,37 @@ class SecurityIntegrationTests {
 
         mockMvc.perform(get("/api/specialities")
                         .header("Authorization", bearer(token)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void permissionsManagerCanUpdatePermissionsButCannotManageUsers() throws Exception {
+        User permissionsManager = userRepository.saveAndFlush(new User(
+                IdentificationType.PASSPORT,
+                IdentificationNumbers.normalize("PERMISSIONS-MANAGER"),
+                passwordEncoder.encode("permissions-password"),
+                Role.MANAGER,
+                Set.of(Permission.MAINTAIN_PERMISSIONS)));
+        User target = userRepository.saveAndFlush(new User(
+                IdentificationType.PASSPORT,
+                IdentificationNumbers.normalize("PERMISSIONS-TARGET"),
+                passwordEncoder.encode("target-password"),
+                Role.USER,
+                Set.of(Permission.READ_PATIENTS)));
+        String token = login("PASSPORT", "PERMISSIONS-MANAGER", "permissions-password");
+
+        mockMvc.perform(get("/api/users").header("Authorization", bearer(token)))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/api/users/{id}/permissions", target.getId())
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"permissions\":[\"READ_SPECIALITIES\"]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.permissions[0]").value("READ_SPECIALITIES"));
+        mockMvc.perform(post("/api/users")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"identificationType\":\"PASSPORT\",\"identificationNumber\":\"BLOCKED\",\"password\":\"password-123\",\"role\":\"USER\"}"))
                 .andExpect(status().isForbidden());
     }
 

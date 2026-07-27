@@ -47,6 +47,8 @@ public class SecurityConfiguration {
     private static final String MAINTAIN_PATIENTS_PERMISSION = Permission.MAINTAIN_PATIENTS.name();
     private static final String READ_PATIENTS_PERMISSION = Permission.READ_PATIENTS.name();
     private static final String MAINTAIN_SPECIALITIES_PERMISSION = Permission.MAINTAIN_SPECIALITIES.name();
+    private static final String READ_PERMISSIONS_PERMISSION = Permission.READ_PERMISSIONS.name();
+    private static final String MAINTAIN_PERMISSIONS_PERMISSION = Permission.MAINTAIN_PERMISSIONS.name();
 
     @Bean
     SecurityFilterChain securityFilterChain(
@@ -70,9 +72,15 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.PATCH, "/api/users/me/password")
                         .authenticated()
                         .requestMatchers(HttpMethod.GET, USER_RESOURCE)
-                        .access(hasAnyPermission(READ_USERS_PERMISSION, MAINTAIN_USERS_PERMISSION))
+                        .access(hasAnyPermission(
+                                READ_USERS_PERMISSION,
+                                MAINTAIN_USERS_PERMISSION,
+                                READ_PERMISSIONS_PERMISSION,
+                                MAINTAIN_PERMISSIONS_PERMISSION))
                         .requestMatchers(HttpMethod.POST, USER_RESOURCE)
                         .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
+                        .requestMatchers(HttpMethod.PUT, "/api/users/*/permissions")
+                        .access(hasAnyPermission(MAINTAIN_PERMISSIONS_PERMISSION))
                         .requestMatchers(HttpMethod.PUT, USER_RESOURCE)
                         .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
                         .requestMatchers(HttpMethod.PATCH, USER_RESOURCE)
