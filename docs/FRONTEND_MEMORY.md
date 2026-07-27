@@ -20,8 +20,11 @@ frontend/
         |-- core/             # serviços, modelos, autenticação e interceptor
         |-- shared/           # componentes reutilizáveis
         `-- features/         # componentes organizados por funcionalidade
+            |-- home/            # home autenticada e navegação independente
             |-- login/
             |-- not-found/
+            |-- permissions/
+            |-- resources/       # listagens de consulta por módulo
             `-- users/
 ```
 
@@ -68,6 +71,16 @@ flexível com alinhamento explícito e `z-index` acima da decoração. Elementos
 puramente visuais, como bolhas de fundo, devem usar `pointer-events: none` para
 nunca bloquear cliques.
 
+As páginas `/login` e `/not-found` também devem usar os tokens `--app-*` do
+tema, para manter a paleta clara e escura consistente com o restante do
+sistema. Em estilos encapsulados, use `:host-context(html[data-theme='dark'])`
+quando for necessário reagir ao tema aplicado no elemento `html`.
+
+O header compartilhado fica em `shared/app-header.component.*` e a lista de
+módulos autorizados em `shared/module-navigation.component.*`. Features que
+precisarem de menu devem reutilizar esses componentes, preservando a mesma
+estrutura, espaçamento e comportamento de foco.
+
 ## Regra obrigatória de templates
 
 Nunca criar HTML dentro do próprio componente TypeScript. Não usar `template:`
@@ -107,6 +120,16 @@ preservando bindings, eventos, control flow Angular e estilos encapsulados.
   autenticação.
 - Usar traduções de `public/i18n/` para textos de interface novos, mantendo as
   três localidades sincronizadas.
+- O idioma oficial das rotas e identificadores é inglês: usar `/home`, `/users`,
+  `/permissions`, `/patients`, `/specialities`, `/addresses`, `/countries` e
+  `/states`. Não criar aliases em português para rotas.
+- A Home (`/home`) exige apenas autenticação, sem uma permissão própria. Após o
+  login, `AuthService.destination()` deve direcionar usuários autenticados
+  para `/home`.
+- As rotas de módulo devem usar guards baseados em permissões de leitura ou
+  gestão. A tela `/permissions` aceita `READ_PERMISSIONS` em modo somente
+  leitura e `MAINTAIN_PERMISSIONS` para editar; a API deve continuar exigindo
+  a permissão de gestão para salvar alterações.
 - O loader de traduções usa o caminho absoluto `/i18n/<idioma>.json`; manter os
   arquivos em `frontend/public/i18n/` para que o build os copie para a raiz dos
   assets publicados. O backend deve manter `/i18n/**` público, pois a tela de

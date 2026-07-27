@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs';
-import { JwtPayload, LoginRequest, TokenResponse } from './models';
+import { JwtPayload, LoginRequest, Permission, TokenResponse } from './models';
 
 const TOKEN_KEY = 'sisdent.access-token';
 
@@ -20,6 +20,18 @@ export class AuthService {
   });
   readonly isAdmin = computed(() => this.payload()?.authorities.includes('ROLE_ADMIN') ?? false);
 
+  hasPermission(permission: Permission): boolean {
+    return this.isAdmin() || (this.payload()?.authorities.includes(permission) ?? false);
+  }
+
+  hasAllPermissions(...permissions: Permission[]): boolean {
+    return permissions.every((permission) => this.hasPermission(permission));
+  }
+
+  hasAnyPermission(...permissions: Permission[]): boolean {
+    return permissions.some((permission) => this.hasPermission(permission));
+  }
+
   login(request: LoginRequest) {
     return this.http.post<TokenResponse>('/api/auth/login', request).pipe(
       tap(({ accessToken }) => {
@@ -36,7 +48,7 @@ export class AuthService {
   }
 
   destination(): string {
-    return this.isAdmin() ? '/users' : '/not-found';
+    return '/home';
   }
 
   private decode(token: string | null): JwtPayload | null {

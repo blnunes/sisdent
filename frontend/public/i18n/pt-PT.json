@@ -1,11 +1,29 @@
 {
   "APP": { "TITLE": "Sisdent | Gestão odontológica" },
   "LANGUAGE": { "SELECT": "Selecionar idioma" },
+  "HOME": {
+    "TITLE": "Início",
+    "OVERTITLE": "Sisdent",
+    "WELCOME": "Bem-vindo",
+    "DESCRIPTION": "Utilize o menu para começar e aceder às funcionalidades disponíveis.",
+    "OPEN_MENU": "Abrir menu de navegação",
+    "NAVIGATION": "Navegação principal",
+    "NO_MODULES": "Não existem módulos disponíveis para o seu perfil."
+  },
+  "MODULES": {
+    "PATIENTS": "Pacientes", "PATIENTS_DESCRIPTION": "Consulte os pacientes aos quais tem acesso.",
+    "SPECIALITIES": "Especialidades", "SPECIALITIES_DESCRIPTION": "Consulte as especialidades configuradas.",
+    "ADDRESSES": "Endereços", "ADDRESSES_DESCRIPTION": "Consulte os endereços registados.",
+    "COUNTRIES": "Países", "COUNTRIES_DESCRIPTION": "Consulte os países disponíveis.",
+    "STATES": "Estados", "STATES_DESCRIPTION": "Consulte os estados disponíveis.",
+    "EMPTY": "Não existem registos para apresentar.", "LOAD_ERROR": "Não foi possível carregar os registos."
+  },
   "NOT_FOUND": {
     "RESTRICTED": "ACESSO RESTRITO",
     "TITLE": "Ops! Este cantinho não é para o seu perfil.",
     "DESCRIPTION": "A gestão de utilizadores é reservada a administradores. Os nossos dentinhos guardiões vão ajudá-lo a voltar para um lugar seguro.",
     "LOGOUT": "Terminar sessão",
+    "HOME": "Voltar ao início",
     "BACK": "Voltar ao login"
   },
   "DIALOG": {
@@ -20,6 +38,8 @@
     "NEW_PASSWORD": "Nova password (opcional)",
     "MIN_PASSWORD": "Mínimo de 8 caracteres.",
     "ROLE": "Perfil",
+    "ROLE_PERMISSIONS": "Permissões deste perfil",
+    "FULL_ACCESS": "Acesso total",
     "CANCEL": "Cancelar",
     "CREATE": "Criar utilizador",
     "SAVE_CHANGES": "Guardar alterações",
@@ -43,7 +63,9 @@
     "READ_COUNTRIES": "Visualizar países",
     "MAINTAIN_COUNTRIES": "Gerir países",
     "READ_STATES": "Visualizar estados",
-    "MAINTAIN_STATES": "Gerir estados"
+    "MAINTAIN_STATES": "Gerir estados",
+    "READ_PERMISSIONS": "Visualizar permissões",
+    "MAINTAIN_PERMISSIONS": "Gerir permissões"
   },
   "LOGIN": {
     "ARIA": "Apresentação Sisdent",
@@ -112,9 +134,9 @@
     "SAVE_SUCCESS": "Permissões guardadas com sucesso.",
     "SAVE_ERROR": "Não foi possível guardar as permissões.",
     "LOAD_ERROR": "Não foi possível carregar as permissões.",
-    "LOADING": "A carregar permissões…", "USERS": "Utilizadores", "USERS_HELP": "Selecione para configurar o acesso.", "SEARCH": "Pesquisar permissões", "EDITING": "A editar", "CHANGES": "alterações", "AVAILABLE": "Ações disponíveis", "CLEAR_SEARCH": "Limpar pesquisa", "ACTIONS": "ações", "ALL": "Todas as ações", "SELECT_USER": "Selecione um utilizador para consultar as permissões.", "ADMIN_LOCKED": "O perfil Administrador possui acesso integral e não pode ser alterado.", "UNSAVED": "alterações não guardadas", "DISCARD": "Descartar", "UNSAVED_WARNING": "Existem alterações não guardadas. Guarde-as antes de mudar de utilizador."
+    "LOADING": "A carregar permissões…", "USERS": "Utilizadores", "USERS_HELP": "Selecione para configurar o acesso.", "SEARCH": "Pesquisar permissões", "EDITING": "A editar", "CHANGES": "alterações", "AVAILABLE": "Ações disponíveis", "CLEAR_SEARCH": "Limpar pesquisa", "ACTIONS": "ações", "ALL": "Todas as ações", "SELECT_USER": "Selecione um utilizador para consultar as permissões.", "ADMIN_LOCKED": "O perfil Administrador possui acesso integral e não pode ser alterado.", "READ_ONLY": "Tem acesso apenas de consulta às permissões.", "UNSAVED": "alterações não guardadas", "DISCARD": "Descartar", "UNSAVED_WARNING": "Existem alterações não guardadas. Guarde-as antes de mudar de utilizador."
   },
   "PERMISSION_GROUPS": {
-    "USERS": "Utilizadores", "PATIENTS": "Pacientes", "SPECIALITIES": "Especialidades", "ADDRESSES": "Endereços", "COUNTRIES": "Países", "STATES": "Estados"
+    "USERS": "Utilizadores", "PATIENTS": "Pacientes", "SPECIALITIES": "Especialidades", "ADDRESSES": "Endereços", "COUNTRIES": "Países", "STATES": "Estados", "PERMISSIONS": "Permissões"
   }
 }

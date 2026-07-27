@@ -1,11 +1,29 @@
 {
   "APP": { "TITLE": "Sisdent | Tandartspraktijkbeheer" },
   "LANGUAGE": { "SELECT": "Taal selecteren" },
+  "HOME": {
+    "TITLE": "Start",
+    "OVERTITLE": "Sisdent",
+    "WELCOME": "Welkom",
+    "DESCRIPTION": "Gebruik het menu om te beginnen en de beschikbare functies te openen.",
+    "OPEN_MENU": "Navigatiemenu openen",
+    "NAVIGATION": "Hoofdnavigatie",
+    "NO_MODULES": "Er zijn geen modules beschikbaar voor uw rol."
+  },
+  "MODULES": {
+    "PATIENTS": "Patiënten", "PATIENTS_DESCRIPTION": "Bekijk de patiënten waartoe u toegang hebt.",
+    "SPECIALITIES": "Specialismen", "SPECIALITIES_DESCRIPTION": "Bekijk geconfigureerde specialismen.",
+    "ADDRESSES": "Adressen", "ADDRESSES_DESCRIPTION": "Bekijk geregistreerde adressen.",
+    "COUNTRIES": "Landen", "COUNTRIES_DESCRIPTION": "Bekijk beschikbare landen.",
+    "STATES": "Staten", "STATES_DESCRIPTION": "Bekijk beschikbare staten.",
+    "EMPTY": "Er zijn geen records om weer te geven.", "LOAD_ERROR": "Records kunnen niet worden geladen."
+  },
   "NOT_FOUND": {
     "RESTRICTED": "BEPERKTE TOEGANG",
     "TITLE": "Oeps! Dit gedeelte is niet beschikbaar voor uw rol.",
     "DESCRIPTION": "Gebruikersbeheer is voorbehouden aan beheerders. Onze beschermende tandjes helpen u terug naar een veilige plek.",
     "LOGOUT": "Afmelden",
+    "HOME": "Terug naar start",
     "BACK": "Terug naar inloggen"
   },
   "DIALOG": {
@@ -20,6 +38,8 @@
     "NEW_PASSWORD": "Nieuw wachtwoord (optioneel)",
     "MIN_PASSWORD": "Minimaal 8 tekens.",
     "ROLE": "Rol",
+    "ROLE_PERMISSIONS": "Machtigingen voor deze rol",
+    "FULL_ACCESS": "Volledige toegang",
     "CANCEL": "Annuleren",
     "CREATE": "Gebruiker aanmaken",
     "SAVE_CHANGES": "Wijzigingen opslaan",
@@ -43,7 +63,9 @@
     "READ_COUNTRIES": "Landen bekijken",
     "MAINTAIN_COUNTRIES": "Landen beheren",
     "READ_STATES": "Staten bekijken",
-    "MAINTAIN_STATES": "Staten beheren"
+    "MAINTAIN_STATES": "Staten beheren",
+    "READ_PERMISSIONS": "Machtigingen bekijken",
+    "MAINTAIN_PERMISSIONS": "Machtigingen beheren"
   },
   "LOGIN": {
     "ARIA": "Sisdent-introductie",
@@ -112,9 +134,9 @@
     "SAVE_SUCCESS": "Machtigingen zijn opgeslagen.",
     "SAVE_ERROR": "Machtigingen kunnen niet worden opgeslagen.",
     "LOAD_ERROR": "Machtigingen kunnen niet worden geladen.",
-    "LOADING": "Machtigingen laden…", "USERS": "Gebruikers", "USERS_HELP": "Selecteer een gebruiker om toegang in te stellen.", "SEARCH": "Machtigingen zoeken", "EDITING": "Bewerken", "CHANGES": "wijzigingen", "AVAILABLE": "Beschikbare acties", "CLEAR_SEARCH": "Zoeken wissen", "ACTIONS": "acties", "ALL": "Alle acties", "SELECT_USER": "Selecteer een gebruiker om machtigingen te bekijken.", "ADMIN_LOCKED": "De beheerdersrol heeft volledige toegang en kan niet worden gewijzigd.", "UNSAVED": "niet-opgeslagen wijzigingen", "DISCARD": "Verwerpen", "UNSAVED_WARNING": "Er zijn niet-opgeslagen wijzigingen. Sla ze op voordat u van gebruiker wisselt."
+    "LOADING": "Machtigingen laden…", "USERS": "Gebruikers", "USERS_HELP": "Selecteer een gebruiker om toegang in te stellen.", "SEARCH": "Machtigingen zoeken", "EDITING": "Bewerken", "CHANGES": "wijzigingen", "AVAILABLE": "Beschikbare acties", "CLEAR_SEARCH": "Zoeken wissen", "ACTIONS": "acties", "ALL": "Alle acties", "SELECT_USER": "Selecteer een gebruiker om machtigingen te bekijken.", "ADMIN_LOCKED": "De beheerdersrol heeft volledige toegang en kan niet worden gewijzigd.", "READ_ONLY": "U hebt alleen leestoegang tot machtigingen.", "UNSAVED": "niet-opgeslagen wijzigingen", "DISCARD": "Verwerpen", "UNSAVED_WARNING": "Er zijn niet-opgeslagen wijzigingen. Sla ze op voordat u van gebruiker wisselt."
   },
   "PERMISSION_GROUPS": {
-    "USERS": "Gebruikers", "PATIENTS": "Patiënten", "SPECIALITIES": "Specialismen", "ADDRESSES": "Adressen", "COUNTRIES": "Landen", "STATES": "Staten"
+    "USERS": "Gebruikers", "PATIENTS": "Patiënten", "SPECIALITIES": "Specialismen", "ADDRESSES": "Adressen", "COUNTRIES": "Landen", "STATES": "Staten", "PERMISSIONS": "Machtigingen"
   }
 }

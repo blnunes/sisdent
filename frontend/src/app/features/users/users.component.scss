@@ -7,40 +7,6 @@
 .app-shell {
   min-height: 100vh;
 }
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  height: 68px;
-  padding: 0 clamp(20px, 5vw, 72px);
-  border-bottom: 1px solid var(--app-border);
-  backdrop-filter: blur(12px);
-}
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  font-size: 1.2rem;
-  font-weight: 800;
-}
-.spacer {
-  flex: 1;
-}
-.header-language {
-  margin-right: 16px;
-  color: var(--app-text-muted);
-}
-.admin-badge {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-right: 12px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
 .content {
   width: min(1240px, calc(100% - 40px));
   margin: 0 auto;

@@ -23,4 +23,5 @@ public class AuthenticationController {
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
         return authenticationService.authenticate(request);
     }
+
 }

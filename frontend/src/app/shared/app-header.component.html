@@ -1,0 +1,9 @@
+<mat-toolbar class="app-header">
+  <button #menuButton mat-icon-button class="menu-button" type="button" (click)="menuClick.emit()" [attr.aria-label]="'HOME.OPEN_MENU' | translate"><mat-icon>menu</mat-icon></button>
+  <a class="brand" routerLink="/home"><mat-icon>dentistry</mat-icon><span>Sisdent</span></a>
+  <span class="spacer"></span>
+  <app-language-selector class="header-language" />
+  <app-theme-toggle />
+  @if (auth.isAdmin()) {<span class="admin-badge"><mat-icon>shield_person</mat-icon>{{ 'USERS.ADMIN' | translate }}</span>}
+  <button mat-icon-button type="button" (click)="auth.logout()" [attr.aria-label]="'USERS.LOGOUT' | translate" [title]="'USERS.LOGOUT' | translate"><mat-icon>logout</mat-icon></button>
+</mat-toolbar>

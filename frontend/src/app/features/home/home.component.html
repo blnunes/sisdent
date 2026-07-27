@@ -1,0 +1,23 @@
+<div class="home-shell">
+  <mat-sidenav-container class="home-container">
+    <mat-sidenav #drawer mode="over" class="home-drawer" [autoFocus]="true" (openedChange)="onDrawerChange($event, drawerScroll)">
+      <div #drawerScroll class="home-drawer-scroll">
+        <div class="drawer-brand"><mat-icon>dentistry</mat-icon><strong>Sisdent</strong></div>
+        <app-module-navigation active="home" (navigate)="closeMenu(drawer)" />
+        @if (!hasAccessibleModules()) {<p class="drawer-empty"><mat-icon>info</mat-icon>{{ 'HOME.NO_MODULES' | translate }}</p>}
+      </div>
+    </mat-sidenav>
+
+    <mat-sidenav-content class="home-content">
+      <app-header (menuClick)="drawer.toggle()" />
+
+      <main class="home-main" tabindex="-1">
+        <section class="welcome" aria-labelledby="welcome-title">
+          <span class="eyebrow">{{ 'HOME.OVERTITLE' | translate }}</span>
+          <h1 id="welcome-title">{{ 'HOME.WELCOME' | translate }}</h1>
+          <p>{{ 'HOME.DESCRIPTION' | translate }}</p>
+        </section>
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
