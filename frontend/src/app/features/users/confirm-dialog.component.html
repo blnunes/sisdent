@@ -1,0 +1,4 @@
+<div class="confirm-icon"><mat-icon>person_remove</mat-icon></div>
+<h2 mat-dialog-title>{{ 'DIALOG.DEACTIVATE_TITLE' | translate }}</h2>
+<mat-dialog-content><p><strong>{{ user.identificationNumber }}</strong> {{ 'DIALOG.DEACTIVATE_TEXT' | translate }}</p><p class="helper">{{ 'DIALOG.HISTORY' | translate }}</p></mat-dialog-content>
+<mat-dialog-actions align="end"><button mat-button mat-dialog-close>{{ 'DIALOG.CANCEL' | translate }}</button><button mat-flat-button color="warn" [mat-dialog-close]="true">{{ 'DIALOG.DEACTIVATE' | translate }}</button></mat-dialog-actions>

@@ -10,7 +10,7 @@ h1 { margin: 0; font-size: clamp(2.5rem, 5vw, 4.8rem); line-height: 1.02; letter
 .care-points { display: flex; flex-wrap: wrap; gap: 18px 24px; }
 .care-points span { display: flex; align-items: center; gap: 7px; font-size: .92rem; }
 .care-points mat-icon { color: #9af4e8; }
-.bubble { position: absolute; border-radius: 50%; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); }
+.bubble { position: absolute; pointer-events:none; border-radius: 50%; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); }
 .bubble-one { width: 360px; height: 360px; right: -110px; top: -100px; }
 .bubble-two { width: 230px; height: 230px; left: -80px; bottom: -80px; }
 .form-panel { display: grid; place-items: center; padding: 32px; }
@@ -34,3 +34,4 @@ mat-form-field { width: 100%; }
   .care-points, .welcome-copy > p { display: none; }
   .form-panel { padding: 24px 16px 40px; margin-top: -28px; position: relative; z-index: 2; }
 }
+.login-controls { position:absolute; z-index:2; top:22px; right:26px; display:flex; align-items:center; gap:10px; }

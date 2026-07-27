@@ -1,0 +1,7 @@
+.dialog-heading { display:flex; gap:14px; align-items:center; padding:24px 24px 4px; }
+.dialog-heading h2 { padding:0; margin:0; color:#123d4c; font-weight:750; }
+.dialog-heading p { margin:3px 0 0; color:#637b83; }
+.dialog-icon { display:grid; place-items:center; width:46px; height:46px; border-radius:14px; color:#087b79; background:#dcfaf5; }
+.dialog-form { display:grid; gap:5px; padding-top:14px; }
+mat-form-field { width:100%; }
+.primary-action { background:#087b79 !important; color:white !important; }

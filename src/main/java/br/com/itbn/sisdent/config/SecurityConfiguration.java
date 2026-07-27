@@ -65,7 +65,8 @@ public class SecurityConfiguration {
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
-                                "/h2-console/**").permitAll()
+                                "/h2-console/**",
+                                "/i18n/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/api/users/me/password")
                         .authenticated()
                         .requestMatchers(HttpMethod.GET, USER_RESOURCE)

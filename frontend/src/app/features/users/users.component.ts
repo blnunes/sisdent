@@ -4,7 +4,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -14,9 +19,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatListModule } from '@angular/material/list';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth.service';
 import { Permission, Role, User, UserWrite } from '../../core/models';
 import { UserApiService } from '../../core/user-api.service';
+import { LanguageSelectorComponent } from '../../shared/language-selector.component';
+import { ThemeToggleComponent } from '../../shared/theme-toggle.component';
 
 @Component({
   selector: 'app-users',
@@ -32,6 +42,11 @@ import { UserApiService } from '../../core/user-api.service';
     MatProgressSpinnerModule,
     MatTableModule,
     MatToolbarModule,
+    MatSidenavModule,
+    MatListModule,
+    TranslatePipe,
+    LanguageSelectorComponent,
+    ThemeToggleComponent,
   ],
   templateUrl: './users.component.html',
   styleUrl: './users.component.scss',
@@ -40,6 +55,7 @@ export class UsersComponent {
   private readonly api = inject(UserApiService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly translate = inject(TranslateService);
   readonly auth = inject(AuthService);
 
   readonly loading = signal(true);
@@ -67,7 +83,7 @@ export class UsersComponent {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Não foi possível carregar os utilizadores.');
+        this.error.set(this.translate.instant('USERS.LOAD_ERROR'));
         this.loading.set(false);
       },
     });
@@ -89,8 +105,8 @@ export class UsersComponent {
       .subscribe((request) => {
         if (!request) return;
         this.api.create(request).subscribe({
-          next: () => this.changed('Utilizador criado com sucesso.'),
-          error: () => this.failed('Não foi possível criar o utilizador. Verifique se a identificação já existe.'),
+          next: () => this.changed('USERS.CREATE_SUCCESS'),
+          error: () => this.failed('USERS.CREATE_ERROR'),
         });
       });
   }
@@ -106,8 +122,8 @@ export class UsersComponent {
       .subscribe((request) => {
         if (!request) return;
         this.api.update(user.id, request).subscribe({
-          next: () => this.changed('Utilizador atualizado com sucesso.'),
-          error: () => this.failed('Não foi possível atualizar o utilizador.'),
+          next: () => this.changed('USERS.UPDATE_SUCCESS'),
+          error: () => this.failed('USERS.UPDATE_ERROR'),
         });
       });
   }
@@ -123,8 +139,8 @@ export class UsersComponent {
       .subscribe((permissions) => {
         if (!permissions) return;
         this.api.updatePermissions(user.id, permissions).subscribe({
-          next: () => this.changed('Permissões atualizadas.'),
-          error: () => this.failed('Não foi possível atualizar as permissões.'),
+          next: () => this.changed('USERS.PERMISSIONS_SUCCESS'),
+          error: () => this.failed('USERS.PERMISSIONS_ERROR'),
         });
       });
   }
@@ -140,40 +156,34 @@ export class UsersComponent {
       .subscribe((confirmed) => {
         if (!confirmed) return;
         this.api.delete(user.id).subscribe({
-          next: () => this.changed('Utilizador desativado com sucesso.'),
-          error: () => this.failed('Não foi possível desativar o utilizador.'),
+          next: () => this.changed('USERS.DEACTIVATE_SUCCESS'),
+          error: () => this.failed('USERS.DEACTIVATE_ERROR'),
         });
       });
   }
 
   roleLabel(role: Role): string {
-    return { ADMIN: 'Administrador', MANAGER: 'Gestor', USER: 'Consulta' }[role];
+    return this.translate.instant(
+      `USERS.${{ ADMIN: 'ADMIN', MANAGER: 'MANAGER', USER: 'VIEWER' }[role]}`,
+    );
   }
 
   permissionLabel(permission: Permission): string {
-    return {
-      READ_USERS: 'Utilizadores · Ler',
-      MAINTAIN_USERS: 'Utilizadores · Manter',
-      READ_PATIENTS: 'Pacientes · Ler',
-      MAINTAIN_PATIENTS: 'Pacientes · Manter',
-      READ_SPECIALITIES: 'Especialidades · Ler',
-      MAINTAIN_SPECIALITIES: 'Especialidades · Manter',
-      READ_ADDRESSES: 'Endereços · Ler',
-      MAINTAIN_ADDRESSES: 'Endereços · Manter',
-      READ_COUNTRIES: 'Países · Ler',
-      MAINTAIN_COUNTRIES: 'Países · Manter',
-      READ_STATES: 'Estados · Ler',
-      MAINTAIN_STATES: 'Estados · Manter',
-    }[permission];
+    return this.translate.instant(`PERMISSIONS.${permission}`);
   }
 
   private changed(message: string): void {
-    this.snackBar.open(message, 'Fechar', { duration: 3500 });
+    this.snackBar.open(this.translate.instant(message), this.translate.instant('USERS.CLOSE'), {
+      duration: 3500,
+    });
     this.load();
   }
 
   private failed(message: string): void {
-    this.snackBar.open(message, 'Fechar', { duration: 5000, panelClass: 'error-snackbar' });
+    this.snackBar.open(this.translate.instant(message), this.translate.instant('USERS.CLOSE'), {
+      duration: 5000,
+      panelClass: 'error-snackbar',
+    });
   }
 }
 
@@ -192,60 +202,10 @@ interface UserFormData {
     MatIconModule,
     MatInputModule,
     MatSelectModule,
+    TranslatePipe,
   ],
-  template: `
-    <div class="dialog-heading">
-      <span class="dialog-icon"><mat-icon>{{ data.mode === 'create' ? 'person_add' : 'edit' }}</mat-icon></span>
-      <div>
-        <h2 mat-dialog-title>{{ data.mode === 'create' ? 'Novo utilizador' : 'Alterar utilizador' }}</h2>
-        <p>{{ data.mode === 'create' ? 'Defina a identificação e o nível de acesso.' : 'Atualize os dados necessários.' }}</p>
-      </div>
-    </div>
-    <mat-dialog-content>
-      <form [formGroup]="form" class="dialog-form">
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo de identificação</mat-label>
-          <mat-select formControlName="identificationType">
-            <mat-option value="NATIONAL_ID">Documento nacional</mat-option>
-            <mat-option value="PASSPORT">Passaporte</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Identificação</mat-label>
-          <input matInput formControlName="identificationNumber" />
-          <mat-hint>Será guardada em maiúsculas, sem espaços ou hífens.</mat-hint>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ data.mode === 'create' ? 'Password' : 'Nova password (opcional)' }}</mat-label>
-          <input matInput type="password" formControlName="password" autocomplete="new-password" />
-          <mat-hint>Mínimo de 8 caracteres.</mat-hint>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Perfil</mat-label>
-          <mat-select formControlName="role">
-            <mat-option value="ADMIN">Administrador</mat-option>
-            <mat-option value="MANAGER">Gestor</mat-option>
-            <mat-option value="USER">Consulta</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </form>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button class="primary-action" [disabled]="form.invalid" (click)="save()">
-        {{ data.mode === 'create' ? 'Criar utilizador' : 'Guardar alterações' }}
-      </button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    .dialog-heading { display:flex; gap:14px; align-items:center; padding:24px 24px 4px; }
-    .dialog-heading h2 { padding:0; margin:0; color:#123d4c; font-weight:750; }
-    .dialog-heading p { margin:3px 0 0; color:#637b83; }
-    .dialog-icon { display:grid; place-items:center; width:46px; height:46px; border-radius:14px; color:#087b79; background:#dcfaf5; }
-    .dialog-form { display:grid; gap:5px; padding-top:14px; }
-    mat-form-field { width:100%; }
-    .primary-action { background:#087b79 !important; color:white !important; }
-  `],
+  templateUrl: './user-form-dialog.component.html',
+  styleUrl: './user-form-dialog.component.scss',
 })
 export class UserFormDialog {
   readonly data = inject<UserFormData>(MAT_DIALOG_DATA);
@@ -256,7 +216,9 @@ export class UserFormDialog {
     identificationNumber: [this.data.user?.identificationNumber ?? '', Validators.required],
     password: [
       '',
-      this.data.mode === 'create' ? [Validators.required, Validators.minLength(8)] : [Validators.minLength(8)],
+      this.data.mode === 'create'
+        ? [Validators.required, Validators.minLength(8)]
+        : [Validators.minLength(8)],
     ],
     role: [this.data.user?.role ?? 'USER', Validators.required],
   });
@@ -275,41 +237,16 @@ export class UserFormDialog {
 
 @Component({
   selector: 'app-permission-dialog',
-  imports: [ReactiveFormsModule, MatButtonModule, MatCheckboxModule, MatDialogModule, MatIconModule],
-  template: `
-    <div class="dialog-heading">
-      <span class="dialog-icon"><mat-icon>admin_panel_settings</mat-icon></span>
-      <div><h2 mat-dialog-title>Gerir permissões</h2><p>{{ user.identificationNumber }} · {{ user.role }}</p></div>
-    </div>
-    <mat-dialog-content>
-      <p class="helper">Escolha as ações permitidas. O perfil define o limite máximo de acesso.</p>
-      <div class="permission-grid">
-        @for (permission of allPermissions; track permission) {
-          <mat-checkbox [checked]="selected().has(permission)" [disabled]="isAdmin" (change)="toggle(permission, $event.checked)">
-            <span class="permission-name">{{ labels[permission] }}</span>
-            <small>{{ descriptions[permission] }}</small>
-          </mat-checkbox>
-        }
-      </div>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button class="primary-action" [disabled]="isAdmin" (click)="save()">Guardar permissões</button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    .dialog-heading { display:flex; gap:14px; align-items:center; padding:24px 24px 4px; }
-    .dialog-heading h2 { padding:0; margin:0; color:#123d4c; font-weight:750; }
-    .dialog-heading p,.helper { margin:3px 0 0; color:#637b83; }
-    .dialog-icon { display:grid; place-items:center; width:46px; height:46px; border-radius:14px; color:#087b79; background:#dcfaf5; }
-    .helper { margin:12px 0 18px; }
-    .permission-grid { display:grid; gap:8px; }
-    mat-checkbox { padding:10px; border:1px solid #dbe9e9; border-radius:12px; }
-    .permission-name, small { display:block; }
-    .permission-name { font-weight:700; color:#234a57; }
-    small { color:#6b8188; margin-top:2px; }
-    .primary-action { background:#087b79 !important; color:white !important; }
-  `],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatDialogModule,
+    MatIconModule,
+    TranslatePipe,
+  ],
+  templateUrl: './permission-dialog.component.html',
+  styleUrl: './permission-dialog.component.scss',
 })
 export class PermissionDialog {
   readonly user = inject<User>(MAT_DIALOG_DATA);
@@ -377,26 +314,9 @@ export class PermissionDialog {
 
 @Component({
   selector: 'app-confirm-dialog',
-  imports: [MatButtonModule, MatDialogModule, MatIconModule],
-  template: `
-    <div class="confirm-icon"><mat-icon>person_remove</mat-icon></div>
-    <h2 mat-dialog-title>Desativar utilizador?</h2>
-    <mat-dialog-content>
-      <p><strong>{{ user.identificationNumber }}</strong> deixará de conseguir iniciar sessão.</p>
-      <p class="helper">O registo será mantido para histórico.</p>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button color="warn" [mat-dialog-close]="true">Desativar</button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    :host { display:block; padding-top:22px; }
-    .confirm-icon { display:grid; place-items:center; margin:0 auto; width:58px; height:58px; border-radius:18px; background:#fff0f1; color:#b7293e; }
-    h2 { text-align:center; color:#173e4b; }
-    mat-dialog-content { text-align:center; }
-    .helper { color:#6b8188; }
-  `],
+  imports: [MatButtonModule, MatDialogModule, MatIconModule, TranslatePipe],
+  templateUrl: './confirm-dialog.component.html',
+  styleUrl: './confirm-dialog.component.scss',
 })
 export class ConfirmDialog {
   readonly user = inject<User>(MAT_DIALOG_DATA);

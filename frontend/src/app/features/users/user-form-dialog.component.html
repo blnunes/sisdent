@@ -1,0 +1,16 @@
+<div class="dialog-heading">
+  <span class="dialog-icon"><mat-icon>{{ data.mode === 'create' ? 'person_add' : 'edit' }}</mat-icon></span>
+  <div>
+    <h2 mat-dialog-title>{{ (data.mode === 'create' ? 'DIALOG.NEW_USER' : 'DIALOG.EDIT_USER') | translate }}</h2>
+    <p>{{ (data.mode === 'create' ? 'DIALOG.DEFINE_ACCESS' : 'DIALOG.UPDATE_DATA') | translate }}</p>
+  </div>
+</div>
+<mat-dialog-content>
+  <form [formGroup]="form" class="dialog-form">
+    <mat-form-field appearance="outline"><mat-label>{{ 'DIALOG.IDENTIFICATION_TYPE' | translate }}</mat-label><mat-select formControlName="identificationType"><mat-option value="NATIONAL_ID">{{ 'LOGIN.NATIONAL_ID' | translate }}</mat-option><mat-option value="PASSPORT">{{ 'LOGIN.PASSPORT' | translate }}</mat-option></mat-select></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>{{ 'DIALOG.IDENTIFICATION' | translate }}</mat-label><input matInput formControlName="identificationNumber" /><mat-hint>{{ 'DIALOG.NORMALIZED_HINT' | translate }}</mat-hint></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>{{ (data.mode === 'create' ? 'DIALOG.PASSWORD' : 'DIALOG.NEW_PASSWORD') | translate }}</mat-label><input matInput type="password" formControlName="password" autocomplete="new-password" /><mat-hint>{{ 'DIALOG.MIN_PASSWORD' | translate }}</mat-hint>@if (form.controls.password.hasError('minlength')) {<mat-error>{{ 'DIALOG.MIN_PASSWORD' | translate }}</mat-error>}</mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>{{ 'DIALOG.ROLE' | translate }}</mat-label><mat-select formControlName="role"><mat-option value="ADMIN">{{ 'USERS.ADMIN' | translate }}</mat-option><mat-option value="MANAGER">{{ 'USERS.MANAGER' | translate }}</mat-option><mat-option value="USER">{{ 'USERS.VIEWER' | translate }}</mat-option></mat-select></mat-form-field>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end"><button mat-button mat-dialog-close>{{ 'DIALOG.CANCEL' | translate }}</button><button mat-flat-button class="primary-action" [disabled]="form.invalid" (click)="save()">{{ (data.mode === 'create' ? 'DIALOG.CREATE' : 'DIALOG.SAVE_CHANGES') | translate }}</button></mat-dialog-actions>

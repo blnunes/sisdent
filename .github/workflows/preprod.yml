@@ -213,3 +213,11 @@ jobs:
               exit 1
             fi
           done
+
+          translation="$(curl --fail --silent --show-error --max-time 10 \
+            "http://${lan_ip}/i18n/en.json")" # NOSONAR
+          if [[ "${translation}" != *'"LOGIN"'* ||
+                "${translation}" != *'"WELCOME"'* ]]; then
+            echo "English translation asset was not served at /i18n/en.json" >&2
+            exit 1
+          fi

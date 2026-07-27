@@ -8,8 +8,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth.service';
 import { IdentificationType } from '../../core/models';
+import { LanguageSelectorComponent } from '../../shared/language-selector.component';
+import { ThemeToggleComponent } from '../../shared/theme-toggle.component';
 
 @Component({
   selector: 'app-login',
@@ -22,6 +25,9 @@ import { IdentificationType } from '../../core/models';
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    TranslatePipe,
+    LanguageSelectorComponent,
+    ThemeToggleComponent,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -30,6 +36,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
   readonly hidePassword = signal(true);
@@ -48,7 +55,7 @@ export class LoginComponent {
     this.auth.login(this.form.getRawValue()).subscribe({
       next: () => void this.router.navigateByUrl(this.auth.destination()),
       error: () => {
-        this.error.set('Identificação ou password inválida. Verifique os dados e tente novamente.');
+        this.error.set(this.translate.instant('LOGIN.INVALID'));
         this.loading.set(false);
       },
     });

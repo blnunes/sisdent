@@ -1,42 +1,238 @@
 @import '@angular/material/prebuilt-themes/azure-blue.css';
 
-html {
-  height: 100%;
-}
-
-body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
+:root {
   color-scheme: light;
-
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: #f8fcfc;
-  color: #173e4b;
-  font: 400 16px/1.5 Roboto, Arial, sans-serif;
-
-  // Reset the user agent margin.
-  margin: 0;
-  height: 100%;
+  --app-canvas: #f4f9f9;
+  --app-surface: #ffffff;
+  --app-surface-raised: #ffffff;
+  --app-surface-subtle: #eef6f6;
+  --app-text: #173e4b;
+  --app-text-muted: #627b83;
+  --app-border: #dbe9e9;
+  --app-border-strong: #9fc4c6;
+  --app-primary: #087b79;
+  --app-primary-contrast: #ffffff;
+  --app-primary-subtle: #e1f8f4;
+  --app-danger: #b34250;
+  --app-shadow: 0 18px 45px rgba(27, 71, 80, 0.12);
+  --mat-sys-surface: var(--app-surface);
+  --mat-sys-surface-container: var(--app-surface-raised);
+  --mat-sys-surface-container-high: var(--app-surface-raised);
+  --mat-sys-on-surface: var(--app-text);
+  --mat-sys-on-surface-variant: var(--app-text-muted);
+  --mat-sys-outline: var(--app-border-strong);
+  --mat-sys-outline-variant: var(--app-border);
+  --mat-sys-primary: var(--app-primary);
+  --mat-sys-on-primary: var(--app-primary-contrast);
+  --mat-sidenav-content-background-color: var(--app-canvas);
 }
 
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --app-canvas: #081c24;
+  --app-surface: #102b35;
+  --app-surface-raised: #163944;
+  --app-surface-subtle: #153f43;
+  --app-text: #e4f5f5;
+  --app-text-muted: #a8c4c9;
+  --app-border: #28515c;
+  --app-border-strong: #5c8d95;
+  --app-primary: #12a99b;
+  --app-primary-contrast: #f4fffe;
+  --app-primary-subtle: #153f43;
+  --app-danger: #ff8e9c;
+  --app-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+}
+
+html,
+body {
+  min-height: 100%;
+}
+body {
+  margin: 0;
+  background: var(--app-canvas);
+  color: var(--app-text);
+  font:
+    400 16px/1.5 Roboto,
+    Arial,
+    sans-serif;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
 * {
   box-sizing: border-box;
 }
-
 button,
 input,
 select {
   font: inherit;
 }
 
-.mat-mdc-dialog-surface {
-  border-radius: 24px !important;
+/* Shared application primitives. New features use these tokens/classes instead of component-specific dark selectors. */
+.app-shell,
+.app-page,
+.mat-drawer-container,
+.mat-sidenav-container,
+.mat-sidenav-content,
+mat-sidenav-container,
+mat-sidenav-content {
+  min-height: 100%;
+  background: var(--app-canvas) !important;
+  color: var(--app-text);
 }
-
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: color-mix(in srgb, var(--app-surface) 94%, transparent) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text);
+}
+.topbar .menu-button {
+  margin-right: 4px;
+}
+.topbar .header-language {
+  margin-left: 18px;
+}
+.topbar app-theme-toggle {
+  display: inline-flex;
+  margin-left: 2px;
+}
+.topbar .admin-badge {
+  margin-left: 8px;
+}
+.language-panel {
+  min-width: 168px !important;
+}
+.language-panel .mat-mdc-option {
+  min-height: 52px;
+  font-size: 15px;
+}
+.topbar,
+.mat-sidenav,
+.mat-drawer,
+.mat-mdc-card,
+.mat-mdc-dialog-surface,
+.mat-mdc-menu-panel,
+.mat-mdc-select-panel,
+.mat-mdc-autocomplete-panel,
+.mat-mdc-table,
+.mat-mdc-paginator {
+  background-color: var(--app-surface) !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+.mat-mdc-card,
+.mat-mdc-dialog-surface {
+  box-shadow: var(--app-shadow);
+}
+.page-header p,
+.table-toolbar p,
+.state,
+.empty,
+.helper,
+.user-cell small,
+.summary-grid span {
+  color: var(--app-text-muted) !important;
+}
+.brand,
+.brand mat-icon,
+.eyebrow {
+  color: var(--app-primary) !important;
+}
+.create-button,
+.login-button {
+  background: var(--app-primary) !important;
+  color: var(--app-primary-contrast) !important;
+}
+.role-badge.admin,
+.admin-badge,
+.avatar,
+.summary-icon.teal {
+  background: var(--app-primary-subtle) !important;
+  color: var(--app-primary) !important;
+}
+.role-badge {
+  background: var(--app-surface-subtle) !important;
+  color: var(--app-text-muted) !important;
+}
+.mat-mdc-header-cell,
+.mat-mdc-cell,
+th,
+td {
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+.mat-mdc-form-field {
+  --mdc-outlined-text-field-outline-color: var(--app-border-strong);
+  --mdc-outlined-text-field-hover-outline-color: var(--app-primary);
+  --mdc-outlined-text-field-focus-outline-color: var(--app-primary);
+  --mdc-outlined-text-field-label-text-color: var(--app-text-muted);
+  --mdc-outlined-text-field-input-text-color: var(--app-text);
+  --mat-select-enabled-trigger-text-color: var(--app-text);
+  --mat-select-enabled-arrow-color: var(--app-text-muted);
+}
+.mat-mdc-text-field-wrapper {
+  background: var(--app-surface-raised) !important;
+}
+.mat-mdc-input-element,
+.mat-mdc-select-value,
+.mat-mdc-option {
+  color: var(--app-text) !important;
+}
+.mat-mdc-input-element::placeholder,
+.mat-mdc-form-field .mdc-floating-label {
+  color: var(--app-text-muted) !important;
+  opacity: 1;
+}
+.mat-mdc-option:hover,
+.mat-mdc-option.mdc-list-item--selected {
+  background: var(--app-surface-subtle) !important;
+}
+.mat-mdc-chip {
+  --mdc-chip-elevated-container-color: var(--app-surface-subtle);
+  --mdc-chip-label-text-color: var(--app-text);
+  --mdc-chip-outline-color: var(--app-border-strong);
+  border: 1px solid var(--app-border-strong) !important;
+}
+.mat-mdc-chip .mdc-evolution-chip__text-label {
+  color: var(--app-text) !important;
+}
+.mat-mdc-icon-button {
+  color: var(--app-text-muted) !important;
+}
 .error-snackbar {
   --mdc-snackbar-container-color: #8f2636;
   --mdc-snackbar-supporting-text-color: white;
+}
+.mat-mdc-dialog-surface {
+  border-radius: 24px !important;
+}
+.drawer-container {
+  min-height: calc(100vh - 68px);
+  background: var(--app-canvas);
+}
+.side-drawer {
+  width: min(320px, 86vw);
+  padding: 22px 14px;
+  background: var(--app-surface) !important;
+  border-right: 1px solid var(--app-border);
+}
+.drawer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px 26px;
+  color: var(--app-primary);
+  font-size: 1.25rem;
+}
+.drawer-link {
+  margin: 4px 0;
+  border-radius: 12px;
+  color: var(--app-text) !important;
+}
+.drawer-link.active {
+  background: var(--app-primary-subtle);
+  color: var(--app-primary) !important;
 }

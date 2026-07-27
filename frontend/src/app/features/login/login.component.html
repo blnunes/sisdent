@@ -1,14 +1,18 @@
 <main class="login-page">
-  <section class="welcome-panel" aria-label="Apresentação Sisdent">
+  <section class="welcome-panel" [attr.aria-label]="'LOGIN.ARIA' | translate">
     <div class="brand"><mat-icon>dentistry</mat-icon><span>Sisdent</span></div>
+    <div class="login-controls">
+      <app-theme-toggle />
+      <app-language-selector />
+    </div>
     <div class="welcome-copy">
-      <span class="eyebrow">Gestão odontológica simples</span>
-      <h1>Um consultório mais leve começa por aqui.</h1>
-      <p>Organize a sua equipa e cuide dos acessos com tranquilidade, segurança e clareza.</p>
+      <span class="eyebrow">{{ 'LOGIN.TAGLINE' | translate }}</span>
+      <h1>{{ 'LOGIN.TITLE' | translate }}</h1>
+      <p>{{ 'LOGIN.DESCRIPTION' | translate }}</p>
       <div class="care-points">
-        <span><mat-icon>verified_user</mat-icon>Acessos por perfil</span>
-        <span><mat-icon>encrypted</mat-icon>Proteção com JWT</span>
-        <span><mat-icon>sentiment_satisfied</mat-icon>Experiência acolhedora</span>
+        <span><mat-icon>verified_user</mat-icon>{{ 'LOGIN.ACCESS' | translate }}</span>
+        <span><mat-icon>encrypted</mat-icon>{{ 'LOGIN.SECURITY' | translate }}</span>
+        <span><mat-icon>sentiment_satisfied</mat-icon>{{ 'LOGIN.EXPERIENCE' | translate }}</span>
       </div>
     </div>
     <div class="bubble bubble-one"></div>
@@ -19,18 +23,18 @@
     <mat-card appearance="outlined" class="login-card">
       <mat-card-header>
         <div mat-card-avatar class="tooth-avatar"><mat-icon>dentistry</mat-icon></div>
-        <mat-card-title>Bem-vindo de volta</mat-card-title>
-        <mat-card-subtitle>Entre com a sua identificação</mat-card-subtitle>
+        <mat-card-title>{{ 'LOGIN.WELCOME' | translate }}</mat-card-title>
+        <mat-card-subtitle>{{ 'LOGIN.SIGN_IN' | translate }}</mat-card-subtitle>
       </mat-card-header>
 
       <mat-card-content>
         <form [formGroup]="form" (ngSubmit)="submit()">
           <mat-form-field appearance="outline">
-            <mat-label>Tipo de identificação</mat-label>
+            <mat-label>{{ 'LOGIN.ID_TYPE' | translate }}</mat-label>
             <mat-select formControlName="identificationType">
               @for (type of types; track type) {
                 <mat-option [value]="type">
-                  {{ type === 'NATIONAL_ID' ? 'Documento nacional' : 'Passaporte' }}
+                  {{ type === 'NATIONAL_ID' ? ('LOGIN.NATIONAL_ID' | translate) : ('LOGIN.PASSPORT' | translate) }}
                 </mat-option>
               }
             </mat-select>
@@ -38,13 +42,13 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Identificação</mat-label>
+            <mat-label>{{ 'LOGIN.IDENTIFICATION' | translate }}</mat-label>
             <input matInput formControlName="identificationNumber" autocomplete="username" />
             <mat-icon matPrefix>person</mat-icon>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Password</mat-label>
+            <mat-label>{{ 'LOGIN.PASSWORD' | translate }}</mat-label>
             <input
               matInput
               formControlName="password"
@@ -57,7 +61,7 @@
               mat-icon-button
               matSuffix
               (click)="hidePassword.set(!hidePassword())"
-              [attr.aria-label]="hidePassword() ? 'Mostrar password' : 'Ocultar password'"
+              [attr.aria-label]="hidePassword() ? ('LOGIN.SHOW_PASSWORD' | translate) : ('LOGIN.HIDE_PASSWORD' | translate)"
             >
               <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
             </button>
@@ -73,14 +77,14 @@
             @if (loading()) {
               <mat-spinner diameter="20"></mat-spinner>
             } @else {
-              <span>Entrar</span>
+              <span>{{ 'LOGIN.ENTER' | translate }}</span>
             }
           </button>
         </form>
 
         <p class="training-hint">
           <mat-icon>school</mat-icon>
-          Treino local: <strong>ADMIN</strong> / <strong>admin</strong>
+          {{ 'LOGIN.TRAINING' | translate }} <strong>ADMIN</strong> / <strong>admin</strong>
         </p>
       </mat-card-content>
     </mat-card>
