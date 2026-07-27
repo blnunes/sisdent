@@ -186,59 +186,8 @@ interface UserFormData {
     MatSelectModule,
     TranslatePipe,
   ],
-  template: `
-    <div class="dialog-heading">
-      <span class="dialog-icon"><mat-icon>{{ data.mode === 'create' ? 'person_add' : 'edit' }}</mat-icon></span>
-      <div>
-        <h2 mat-dialog-title>{{ data.mode === 'create' ? 'Novo utilizador' : 'Alterar utilizador' }}</h2>
-        <p>{{ data.mode === 'create' ? 'Defina a identificação e o nível de acesso.' : 'Atualize os dados necessários.' }}</p>
-      </div>
-    </div>
-    <mat-dialog-content>
-      <form [formGroup]="form" class="dialog-form">
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo de identificação</mat-label>
-          <mat-select formControlName="identificationType">
-            <mat-option value="NATIONAL_ID">{{ 'LOGIN.NATIONAL_ID' | translate }}</mat-option>
-            <mat-option value="PASSPORT">{{ 'LOGIN.PASSPORT' | translate }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Identificação</mat-label>
-          <input matInput formControlName="identificationNumber" />
-          <mat-hint>Será guardada em maiúsculas, sem espaços ou hífens.</mat-hint>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>{{ data.mode === 'create' ? 'Password' : 'Nova password (opcional)' }}</mat-label>
-          <input matInput type="password" formControlName="password" autocomplete="new-password" />
-          <mat-hint>Mínimo de 8 caracteres.</mat-hint>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Perfil</mat-label>
-          <mat-select formControlName="role">
-            <mat-option value="ADMIN">{{ 'USERS.ADMIN' | translate }}</mat-option>
-            <mat-option value="MANAGER">{{ 'USERS.MANAGER' | translate }}</mat-option>
-            <mat-option value="USER">{{ 'USERS.VIEWER' | translate }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </form>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button class="primary-action" [disabled]="form.invalid" (click)="save()">
-        {{ data.mode === 'create' ? 'Criar utilizador' : 'Guardar alterações' }}
-      </button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    .dialog-heading { display:flex; gap:14px; align-items:center; padding:24px 24px 4px; }
-    .dialog-heading h2 { padding:0; margin:0; color:#123d4c; font-weight:750; }
-    .dialog-heading p { margin:3px 0 0; color:#637b83; }
-    .dialog-icon { display:grid; place-items:center; width:46px; height:46px; border-radius:14px; color:#087b79; background:#dcfaf5; }
-    .dialog-form { display:grid; gap:5px; padding-top:14px; }
-    mat-form-field { width:100%; }
-    .primary-action { background:#087b79 !important; color:white !important; }
-  `],
+  templateUrl: './user-form-dialog.component.html',
+  styleUrl: './user-form-dialog.component.scss',
 })
 export class UserFormDialog {
   readonly data = inject<UserFormData>(MAT_DIALOG_DATA);
@@ -269,40 +218,8 @@ export class UserFormDialog {
 @Component({
   selector: 'app-permission-dialog',
   imports: [ReactiveFormsModule, MatButtonModule, MatCheckboxModule, MatDialogModule, MatIconModule, TranslatePipe],
-  template: `
-    <div class="dialog-heading">
-      <span class="dialog-icon"><mat-icon>admin_panel_settings</mat-icon></span>
-      <div><h2 mat-dialog-title>Gerir permissões</h2><p>{{ user.identificationNumber }} · {{ user.role }}</p></div>
-    </div>
-    <mat-dialog-content>
-      <p class="helper">Escolha as ações permitidas. O perfil define o limite máximo de acesso.</p>
-      <div class="permission-grid">
-        @for (permission of allPermissions; track permission) {
-          <mat-checkbox [checked]="selected().has(permission)" [disabled]="isAdmin" (change)="toggle(permission, $event.checked)">
-            <span class="permission-name">{{ 'PERMISSIONS.' + permission | translate }}</span>
-            <small>{{ descriptions[permission] }}</small>
-          </mat-checkbox>
-        }
-      </div>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button class="primary-action" [disabled]="isAdmin" (click)="save()">Guardar permissões</button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    .dialog-heading { display:flex; gap:14px; align-items:center; padding:24px 24px 4px; }
-    .dialog-heading h2 { padding:0; margin:0; color:#123d4c; font-weight:750; }
-    .dialog-heading p,.helper { margin:3px 0 0; color:#637b83; }
-    .dialog-icon { display:grid; place-items:center; width:46px; height:46px; border-radius:14px; color:#087b79; background:#dcfaf5; }
-    .helper { margin:12px 0 18px; }
-    .permission-grid { display:grid; gap:8px; }
-    mat-checkbox { padding:10px; border:1px solid #dbe9e9; border-radius:12px; }
-    .permission-name, small { display:block; }
-    .permission-name { font-weight:700; color:#234a57; }
-    small { color:#6b8188; margin-top:2px; }
-    .primary-action { background:#087b79 !important; color:white !important; }
-  `],
+  templateUrl: './permission-dialog.component.html',
+  styleUrl: './permission-dialog.component.scss',
 })
 export class PermissionDialog {
   readonly user = inject<User>(MAT_DIALOG_DATA);
@@ -371,25 +288,8 @@ export class PermissionDialog {
 @Component({
   selector: 'app-confirm-dialog',
   imports: [MatButtonModule, MatDialogModule, MatIconModule],
-  template: `
-    <div class="confirm-icon"><mat-icon>person_remove</mat-icon></div>
-    <h2 mat-dialog-title>Desativar utilizador?</h2>
-    <mat-dialog-content>
-      <p><strong>{{ user.identificationNumber }}</strong> deixará de conseguir iniciar sessão.</p>
-      <p class="helper">O registo será mantido para histórico.</p>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button color="warn" [mat-dialog-close]="true">Desativar</button>
-    </mat-dialog-actions>
-  `,
-  styles: [`
-    :host { display:block; padding-top:22px; }
-    .confirm-icon { display:grid; place-items:center; margin:0 auto; width:58px; height:58px; border-radius:18px; background:#fff0f1; color:#b7293e; }
-    h2 { text-align:center; color:#173e4b; }
-    mat-dialog-content { text-align:center; }
-    .helper { color:#6b8188; }
-  `],
+  templateUrl: './confirm-dialog.component.html',
+  styleUrl: './confirm-dialog.component.scss',
 })
 export class ConfirmDialog {
   readonly user = inject<User>(MAT_DIALOG_DATA);

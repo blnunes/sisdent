@@ -1,0 +1,4 @@
+<div class="confirm-icon"><mat-icon>person_remove</mat-icon></div>
+<h2 mat-dialog-title>Desativar utilizador?</h2>
+<mat-dialog-content><p><strong>{{ user.identificationNumber }}</strong> deixará de conseguir iniciar sessão.</p><p class="helper">O registo será mantido para histórico.</p></mat-dialog-content>
+<mat-dialog-actions align="end"><button mat-button mat-dialog-close>Cancelar</button><button mat-flat-button color="warn" [mat-dialog-close]="true">Desativar</button></mat-dialog-actions>
