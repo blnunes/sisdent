@@ -4,7 +4,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -14,6 +19,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatListModule } from '@angular/material/list';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth.service';
 import { Permission, Role, User, UserWrite } from '../../core/models';
@@ -35,6 +42,8 @@ import { ThemeToggleComponent } from '../../shared/theme-toggle.component';
     MatProgressSpinnerModule,
     MatTableModule,
     MatToolbarModule,
+    MatSidenavModule,
+    MatListModule,
     TranslatePipe,
     LanguageSelectorComponent,
     ThemeToggleComponent,
@@ -154,7 +163,9 @@ export class UsersComponent {
   }
 
   roleLabel(role: Role): string {
-    return this.translate.instant(`USERS.${{ ADMIN: 'ADMIN', MANAGER: 'MANAGER', USER: 'VIEWER' }[role]}`);
+    return this.translate.instant(
+      `USERS.${{ ADMIN: 'ADMIN', MANAGER: 'MANAGER', USER: 'VIEWER' }[role]}`,
+    );
   }
 
   permissionLabel(permission: Permission): string {
@@ -162,12 +173,17 @@ export class UsersComponent {
   }
 
   private changed(message: string): void {
-    this.snackBar.open(this.translate.instant(message), this.translate.instant('USERS.CLOSE'), { duration: 3500 });
+    this.snackBar.open(this.translate.instant(message), this.translate.instant('USERS.CLOSE'), {
+      duration: 3500,
+    });
     this.load();
   }
 
   private failed(message: string): void {
-    this.snackBar.open(this.translate.instant(message), this.translate.instant('USERS.CLOSE'), { duration: 5000, panelClass: 'error-snackbar' });
+    this.snackBar.open(this.translate.instant(message), this.translate.instant('USERS.CLOSE'), {
+      duration: 5000,
+      panelClass: 'error-snackbar',
+    });
   }
 }
 
@@ -200,7 +216,9 @@ export class UserFormDialog {
     identificationNumber: [this.data.user?.identificationNumber ?? '', Validators.required],
     password: [
       '',
-      this.data.mode === 'create' ? [Validators.required, Validators.minLength(8)] : [Validators.minLength(8)],
+      this.data.mode === 'create'
+        ? [Validators.required, Validators.minLength(8)]
+        : [Validators.minLength(8)],
     ],
     role: [this.data.user?.role ?? 'USER', Validators.required],
   });
@@ -219,7 +237,14 @@ export class UserFormDialog {
 
 @Component({
   selector: 'app-permission-dialog',
-  imports: [ReactiveFormsModule, MatButtonModule, MatCheckboxModule, MatDialogModule, MatIconModule, TranslatePipe],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatDialogModule,
+    MatIconModule,
+    TranslatePipe,
+  ],
   templateUrl: './permission-dialog.component.html',
   styleUrl: './permission-dialog.component.scss',
 })

@@ -1,246 +1,238 @@
 @import '@angular/material/prebuilt-themes/azure-blue.css';
 
-html {
-  height: 100%;
-}
-
-body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
+:root {
   color-scheme: light;
-
-  // Set a default background, font and text colors for the application using
-  // Angular Material's system-level CSS variables. Learn more about these
-  // variables at https://material.angular.dev/guide/system-variables
-  background-color: #f8fcfc;
-  color: #173e4b;
-  font: 400 16px/1.5 Roboto, Arial, sans-serif;
-
-  // Reset the user agent margin.
-  margin: 0;
-  height: 100%;
+  --app-canvas: #f4f9f9;
+  --app-surface: #ffffff;
+  --app-surface-raised: #ffffff;
+  --app-surface-subtle: #eef6f6;
+  --app-text: #173e4b;
+  --app-text-muted: #627b83;
+  --app-border: #dbe9e9;
+  --app-border-strong: #9fc4c6;
+  --app-primary: #087b79;
+  --app-primary-contrast: #ffffff;
+  --app-primary-subtle: #e1f8f4;
+  --app-danger: #b34250;
+  --app-shadow: 0 18px 45px rgba(27, 71, 80, 0.12);
+  --mat-sys-surface: var(--app-surface);
+  --mat-sys-surface-container: var(--app-surface-raised);
+  --mat-sys-surface-container-high: var(--app-surface-raised);
+  --mat-sys-on-surface: var(--app-text);
+  --mat-sys-on-surface-variant: var(--app-text-muted);
+  --mat-sys-outline: var(--app-border-strong);
+  --mat-sys-outline-variant: var(--app-border);
+  --mat-sys-primary: var(--app-primary);
+  --mat-sys-on-primary: var(--app-primary-contrast);
+  --mat-sidenav-content-background-color: var(--app-canvas);
 }
 
-/* Dark dental palette: deep navy conveys clinical trust; teal/aqua adds calm and freshness. */
 html[data-theme='dark'] {
   color-scheme: dark;
-  --dental-night: #081c24;
-  --dental-surface: #102b35;
-  --dental-surface-raised: #163944;
-  --dental-border: #28515c;
-  --dental-text: #e4f5f5;
-  --dental-muted: #a8c4c9;
-  --dental-teal: #46d7c8;
-  --dental-teal-strong: #12a99b;
-  --dental-aqua: #bff7f0;
+  --app-canvas: #081c24;
+  --app-surface: #102b35;
+  --app-surface-raised: #163944;
+  --app-surface-subtle: #153f43;
+  --app-text: #e4f5f5;
+  --app-text-muted: #a8c4c9;
+  --app-border: #28515c;
+  --app-border-strong: #5c8d95;
+  --app-primary: #12a99b;
+  --app-primary-contrast: #f4fffe;
+  --app-primary-subtle: #153f43;
+  --app-danger: #ff8e9c;
+  --app-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
 }
 
-html[data-theme='dark'] body,
-html[data-theme='dark'] .app-shell,
-html[data-theme='dark'] .not-found-page {
-  background: var(--dental-night) !important;
-  color: var(--dental-text);
+html,
+body {
+  min-height: 100%;
 }
-
-html[data-theme='dark'] .topbar,
-html[data-theme='dark'] .table-card,
-html[data-theme='dark'] .summary-grid mat-card,
-html[data-theme='dark'] .login-card,
-html[data-theme='dark'] .mat-mdc-dialog-surface,
-html[data-theme='dark'] .mat-mdc-menu-panel,
-html[data-theme='dark'] .mat-mdc-select-panel,
-html[data-theme='dark'] .mat-mdc-autocomplete-panel,
-html[data-theme='dark'] .mat-mdc-table,
-html[data-theme='dark'] .mat-mdc-paginator {
-  background: var(--dental-surface) !important;
-  color: var(--dental-text) !important;
-  border-color: var(--dental-border) !important;
+body {
+  margin: 0;
+  background: var(--app-canvas);
+  color: var(--app-text);
+  font:
+    400 16px/1.5 Roboto,
+    Arial,
+    sans-serif;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
-
-html[data-theme='dark'] .topbar {
-  background: rgba(8, 28, 36, .94) !important;
-  border-bottom-color: var(--dental-border) !important;
-}
-
-html[data-theme='dark'] .brand,
-html[data-theme='dark'] .brand mat-icon,
-html[data-theme='dark'] .eyebrow,
-html[data-theme='dark'] .error-code {
-  color: var(--dental-teal) !important;
-}
-
-html[data-theme='dark'] .page-header p,
-html[data-theme='dark'] .table-toolbar p,
-html[data-theme='dark'] .summary-grid span,
-html[data-theme='dark'] .user-cell small,
-html[data-theme='dark'] .state,
-html[data-theme='dark'] .empty,
-html[data-theme='dark'] .training-hint,
-html[data-theme='dark'] .not-found-page p,
-html[data-theme='dark'] .header-language {
-  color: var(--dental-muted) !important;
-}
-
-html[data-theme='dark'] .dialog-heading h2,
-html[data-theme='dark'] .confirm-dialog h2,
-html[data-theme='dark'] .mat-mdc-dialog-container,
-html[data-theme='dark'] .mat-mdc-dialog-container p,
-html[data-theme='dark'] .permission-name {
-  color: var(--dental-text) !important;
-}
-
-html[data-theme='dark'] .dialog-heading p,
-html[data-theme='dark'] .helper,
-html[data-theme='dark'] .permission-grid small {
-  color: var(--dental-muted) !important;
-}
-
-html[data-theme='dark'] .dialog-icon { background: #153f43 !important; color: var(--dental-teal) !important; }
-html[data-theme='dark'] .permission-grid mat-checkbox { border-color: var(--dental-border) !important; }
-
-html[data-theme='dark'] .summary-grid mat-card,
-html[data-theme='dark'] .table-card,
-html[data-theme='dark'] .login-card {
-  box-shadow: 0 18px 45px rgba(0, 0, 0, .24);
-}
-
-html[data-theme='dark'] .summary-icon.teal,
-html[data-theme='dark'] .avatar,
-html[data-theme='dark'] .tooth-avatar,
-html[data-theme='dark'] .admin-badge,
-html[data-theme='dark'] .role-badge.admin {
-  background: #153f43 !important;
-  color: var(--dental-teal) !important;
-}
-
-html[data-theme='dark'] .summary-icon.blue { background: #17384e !important; color: #7dcbff !important; }
-html[data-theme='dark'] .summary-icon.mint { background: #183d31 !important; color: #8ce7b6 !important; }
-html[data-theme='dark'] .role-badge { background: #213e47 !important; color: #c2dce0 !important; }
-
-html[data-theme='dark'] .create-button,
-html[data-theme='dark'] .login-button,
-html[data-theme='dark'] .actions a,
-html[data-theme='dark'] .actions button {
-  background: var(--dental-teal-strong) !important;
-  color: #f4fffe !important;
-}
-
-html[data-theme='dark'] th,
-html[data-theme='dark'] td,
-html[data-theme='dark'] .mat-mdc-header-cell,
-html[data-theme='dark'] .mat-mdc-cell,
-html[data-theme='dark'] .mat-mdc-paginator,
-html[data-theme='dark'] .mat-mdc-paginator-page-size-label,
-html[data-theme='dark'] .mat-mdc-paginator-range-label {
-  color: var(--dental-text) !important;
-  border-color: var(--dental-border) !important;
-}
-
-html[data-theme='dark'] mat-chip,
-html[data-theme='dark'] .mat-mdc-chip,
-html[data-theme='dark'] .mat-mdc-standard-chip {
-  --mdc-chip-elevated-container-color: #164550;
-  --mdc-chip-label-text-color: #ddfffb;
-  --mdc-chip-outline-color: #4c9ca5;
-  background: #164550 !important;
-  border: 1px solid #4c9ca5 !important;
-  color: #ddfffb !important;
-  font-weight: 650;
-}
-
-html[data-theme='dark'] .mat-mdc-chip .mdc-evolution-chip__text-label,
-html[data-theme='dark'] .mat-mdc-chip .mdc-evolution-chip__action,
-html[data-theme='dark'] .mat-mdc-chip .mat-mdc-chip-action-label {
-  color: #ddfffb !important;
-  opacity: 1;
-}
-
-html[data-theme='dark'] .mat-mdc-form-field,
-html[data-theme='dark'] .mat-mdc-text-field-wrapper {
-  --mdc-outlined-text-field-outline-color: #54747d;
-  --mdc-outlined-text-field-hover-outline-color: #88afb5;
-  --mdc-outlined-text-field-focus-outline-color: var(--dental-teal);
-  --mdc-outlined-text-field-label-text-color: var(--dental-muted);
-  --mdc-outlined-text-field-input-text-color: var(--dental-text);
-  --mat-select-enabled-trigger-text-color: var(--dental-text);
-  --mat-select-enabled-arrow-color: var(--dental-muted);
-  --mat-form-field-enabled-select-arrow-color: var(--dental-muted);
-}
-
-html[data-theme='dark'] .mat-mdc-form-field .mdc-text-field--outlined {
-  background: var(--dental-surface-raised) !important;
-  border-radius: 6px;
-}
-
-html[data-theme='dark'] .mat-mdc-form-field .mdc-notched-outline__leading,
-html[data-theme='dark'] .mat-mdc-form-field .mdc-notched-outline__notch,
-html[data-theme='dark'] .mat-mdc-form-field .mdc-notched-outline__trailing {
-  border-color: #5c8d95 !important;
-}
-
-html[data-theme='dark'] .mat-mdc-form-field:hover .mdc-notched-outline__leading,
-html[data-theme='dark'] .mat-mdc-form-field:hover .mdc-notched-outline__notch,
-html[data-theme='dark'] .mat-mdc-form-field:hover .mdc-notched-outline__trailing {
-  border-color: #86c5c8 !important;
-}
-
-html[data-theme='dark'] .mat-mdc-form-field .mat-mdc-input-element::placeholder {
-  color: #c5e2e3 !important;
-  opacity: 1;
-}
-
-html[data-theme='dark'] .mat-mdc-form-field .mdc-floating-label,
-html[data-theme='dark'] .mat-mdc-form-field.mat-focused .mdc-floating-label {
-  color: #7f9493 !important;
-  opacity: 1;
-}
-
-html[data-theme='dark'] .mat-mdc-form-field .mat-mdc-form-field-icon-prefix,
-html[data-theme='dark'] .mat-mdc-form-field .mat-mdc-form-field-icon-suffix {
-  color: #7ee0d7 !important;
-}
-
-html[data-theme='dark'] .mat-mdc-input-element,
-html[data-theme='dark'] .mat-mdc-select-value,
-html[data-theme='dark'] .mat-mdc-select-arrow,
-html[data-theme='dark'] .mat-mdc-form-field mat-icon,
-html[data-theme='dark'] .mat-mdc-select-panel,
-html[data-theme='dark'] .mat-mdc-option {
-  color: var(--dental-text) !important;
-}
-
-html[data-theme='dark'] .mat-mdc-option:hover,
-html[data-theme='dark'] .mat-mdc-option.mdc-list-item--selected {
-  background: #1b414a !important;
-}
-
-html[data-theme='dark'] .mat-mdc-icon-button,
-html[data-theme='dark'] .actions button { color: var(--dental-muted) !important; }
-html[data-theme='dark'] .actions .delete { color: #ff8e9c !important; }
-html[data-theme='dark'] .status-dot { background: #48daa2; box-shadow: 0 0 0 4px #194b3a; }
-
-html[data-theme='dark'] .login-page { background: var(--dental-night); }
-html[data-theme='dark'] .welcome-panel { background: linear-gradient(145deg, #082d40 0%, #0b5963 56%, #148f88 100%); }
-html[data-theme='dark'] mat-card-title { color: var(--dental-text) !important; }
-html[data-theme='dark'] .error-message { background: #4a2630; color: #ffd9df; }
-html[data-theme='dark'] .not-found-page { background: radial-gradient(circle at 50% 25%, #123b43 0, #081c24 62%) !important; }
-
 * {
   box-sizing: border-box;
 }
-
 button,
 input,
 select {
   font: inherit;
 }
 
-.mat-mdc-dialog-surface {
-  border-radius: 24px !important;
+/* Shared application primitives. New features use these tokens/classes instead of component-specific dark selectors. */
+.app-shell,
+.app-page,
+.mat-drawer-container,
+.mat-sidenav-container,
+.mat-sidenav-content,
+mat-sidenav-container,
+mat-sidenav-content {
+  min-height: 100%;
+  background: var(--app-canvas) !important;
+  color: var(--app-text);
 }
-
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: color-mix(in srgb, var(--app-surface) 94%, transparent) !important;
+  border-color: var(--app-border) !important;
+  color: var(--app-text);
+}
+.topbar .menu-button {
+  margin-right: 4px;
+}
+.topbar .header-language {
+  margin-left: 18px;
+}
+.topbar app-theme-toggle {
+  display: inline-flex;
+  margin-left: 2px;
+}
+.topbar .admin-badge {
+  margin-left: 8px;
+}
+.language-panel {
+  min-width: 168px !important;
+}
+.language-panel .mat-mdc-option {
+  min-height: 52px;
+  font-size: 15px;
+}
+.topbar,
+.mat-sidenav,
+.mat-drawer,
+.mat-mdc-card,
+.mat-mdc-dialog-surface,
+.mat-mdc-menu-panel,
+.mat-mdc-select-panel,
+.mat-mdc-autocomplete-panel,
+.mat-mdc-table,
+.mat-mdc-paginator {
+  background-color: var(--app-surface) !important;
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+.mat-mdc-card,
+.mat-mdc-dialog-surface {
+  box-shadow: var(--app-shadow);
+}
+.page-header p,
+.table-toolbar p,
+.state,
+.empty,
+.helper,
+.user-cell small,
+.summary-grid span {
+  color: var(--app-text-muted) !important;
+}
+.brand,
+.brand mat-icon,
+.eyebrow {
+  color: var(--app-primary) !important;
+}
+.create-button,
+.login-button {
+  background: var(--app-primary) !important;
+  color: var(--app-primary-contrast) !important;
+}
+.role-badge.admin,
+.admin-badge,
+.avatar,
+.summary-icon.teal {
+  background: var(--app-primary-subtle) !important;
+  color: var(--app-primary) !important;
+}
+.role-badge {
+  background: var(--app-surface-subtle) !important;
+  color: var(--app-text-muted) !important;
+}
+.mat-mdc-header-cell,
+.mat-mdc-cell,
+th,
+td {
+  color: var(--app-text) !important;
+  border-color: var(--app-border) !important;
+}
+.mat-mdc-form-field {
+  --mdc-outlined-text-field-outline-color: var(--app-border-strong);
+  --mdc-outlined-text-field-hover-outline-color: var(--app-primary);
+  --mdc-outlined-text-field-focus-outline-color: var(--app-primary);
+  --mdc-outlined-text-field-label-text-color: var(--app-text-muted);
+  --mdc-outlined-text-field-input-text-color: var(--app-text);
+  --mat-select-enabled-trigger-text-color: var(--app-text);
+  --mat-select-enabled-arrow-color: var(--app-text-muted);
+}
+.mat-mdc-text-field-wrapper {
+  background: var(--app-surface-raised) !important;
+}
+.mat-mdc-input-element,
+.mat-mdc-select-value,
+.mat-mdc-option {
+  color: var(--app-text) !important;
+}
+.mat-mdc-input-element::placeholder,
+.mat-mdc-form-field .mdc-floating-label {
+  color: var(--app-text-muted) !important;
+  opacity: 1;
+}
+.mat-mdc-option:hover,
+.mat-mdc-option.mdc-list-item--selected {
+  background: var(--app-surface-subtle) !important;
+}
+.mat-mdc-chip {
+  --mdc-chip-elevated-container-color: var(--app-surface-subtle);
+  --mdc-chip-label-text-color: var(--app-text);
+  --mdc-chip-outline-color: var(--app-border-strong);
+  border: 1px solid var(--app-border-strong) !important;
+}
+.mat-mdc-chip .mdc-evolution-chip__text-label {
+  color: var(--app-text) !important;
+}
+.mat-mdc-icon-button {
+  color: var(--app-text-muted) !important;
+}
 .error-snackbar {
   --mdc-snackbar-container-color: #8f2636;
   --mdc-snackbar-supporting-text-color: white;
+}
+.mat-mdc-dialog-surface {
+  border-radius: 24px !important;
+}
+.drawer-container {
+  min-height: calc(100vh - 68px);
+  background: var(--app-canvas);
+}
+.side-drawer {
+  width: min(320px, 86vw);
+  padding: 22px 14px;
+  background: var(--app-surface) !important;
+  border-right: 1px solid var(--app-border);
+}
+.drawer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px 26px;
+  color: var(--app-primary);
+  font-size: 1.25rem;
+}
+.drawer-link {
+  margin: 4px 0;
+  border-radius: 12px;
+  color: var(--app-text) !important;
+}
+.drawer-link.active {
+  background: var(--app-primary-subtle);
+  color: var(--app-primary) !important;
 }

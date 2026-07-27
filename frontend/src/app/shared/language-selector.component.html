@@ -1,6 +1,7 @@
 <mat-icon aria-hidden="true">language</mat-icon>
 <mat-select
   class="language-selector"
+  panelClass="language-panel"
   [value]="language.current()"
   (selectionChange)="language.set($event.value)"
   [attr.aria-label]="'LANGUAGE.SELECT' | translate"

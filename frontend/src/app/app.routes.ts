@@ -12,6 +12,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/users/users.component').then((m) => m.UsersComponent),
   },
   {
+    path: 'permissions',
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () => import('./features/permissions/permissions.component').then((m) => m.PermissionsComponent),
+  },
+  {
     path: 'not-found',
     loadComponent: () =>
       import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
