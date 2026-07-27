@@ -156,20 +156,7 @@ export class UsersComponent {
   }
 
   permissionLabel(permission: Permission): string {
-    return {
-      READ_USERS: 'Utilizadores · Ler',
-      MAINTAIN_USERS: 'Utilizadores · Manter',
-      READ_PATIENTS: 'Pacientes · Ler',
-      MAINTAIN_PATIENTS: 'Pacientes · Manter',
-      READ_SPECIALITIES: 'Especialidades · Ler',
-      MAINTAIN_SPECIALITIES: 'Especialidades · Manter',
-      READ_ADDRESSES: 'Endereços · Ler',
-      MAINTAIN_ADDRESSES: 'Endereços · Manter',
-      READ_COUNTRIES: 'Países · Ler',
-      MAINTAIN_COUNTRIES: 'Países · Manter',
-      READ_STATES: 'Estados · Ler',
-      MAINTAIN_STATES: 'Estados · Manter',
-    }[permission];
+    return this.translate.instant(`PERMISSIONS.${permission}`);
   }
 
   private changed(message: string): void {
@@ -281,7 +268,7 @@ export class UserFormDialog {
 
 @Component({
   selector: 'app-permission-dialog',
-  imports: [ReactiveFormsModule, MatButtonModule, MatCheckboxModule, MatDialogModule, MatIconModule],
+  imports: [ReactiveFormsModule, MatButtonModule, MatCheckboxModule, MatDialogModule, MatIconModule, TranslatePipe],
   template: `
     <div class="dialog-heading">
       <span class="dialog-icon"><mat-icon>admin_panel_settings</mat-icon></span>
@@ -292,7 +279,7 @@ export class UserFormDialog {
       <div class="permission-grid">
         @for (permission of allPermissions; track permission) {
           <mat-checkbox [checked]="selected().has(permission)" [disabled]="isAdmin" (change)="toggle(permission, $event.checked)">
-            <span class="permission-name">{{ labels[permission] }}</span>
+            <span class="permission-name">{{ 'PERMISSIONS.' + permission | translate }}</span>
             <small>{{ descriptions[permission] }}</small>
           </mat-checkbox>
         }
