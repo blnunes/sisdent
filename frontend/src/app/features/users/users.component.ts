@@ -197,6 +197,7 @@ interface UserFormData {
     MatIconModule,
     MatInputModule,
     MatSelectModule,
+    TranslatePipe,
   ],
   template: `
     <div class="dialog-heading">
@@ -211,8 +212,8 @@ interface UserFormData {
         <mat-form-field appearance="outline">
           <mat-label>Tipo de identificação</mat-label>
           <mat-select formControlName="identificationType">
-            <mat-option value="NATIONAL_ID">Documento nacional</mat-option>
-            <mat-option value="PASSPORT">Passaporte</mat-option>
+            <mat-option value="NATIONAL_ID">{{ 'LOGIN.NATIONAL_ID' | translate }}</mat-option>
+            <mat-option value="PASSPORT">{{ 'LOGIN.PASSPORT' | translate }}</mat-option>
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">
@@ -228,9 +229,9 @@ interface UserFormData {
         <mat-form-field appearance="outline">
           <mat-label>Perfil</mat-label>
           <mat-select formControlName="role">
-            <mat-option value="ADMIN">Administrador</mat-option>
-            <mat-option value="MANAGER">Gestor</mat-option>
-            <mat-option value="USER">Consulta</mat-option>
+            <mat-option value="ADMIN">{{ 'USERS.ADMIN' | translate }}</mat-option>
+            <mat-option value="MANAGER">{{ 'USERS.MANAGER' | translate }}</mat-option>
+            <mat-option value="USER">{{ 'USERS.VIEWER' | translate }}</mat-option>
           </mat-select>
         </mat-form-field>
       </form>

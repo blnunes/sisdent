@@ -61,7 +61,7 @@
               <td mat-cell *matCellDef="let user">
                 <div class="user-cell">
                   <span class="avatar">{{ user.identificationNumber.charAt(0) }}</span>
-                  <div><strong>{{ user.identificationNumber }}</strong><small>{{ user.identificationType === 'NATIONAL_ID' ? 'Documento nacional' : 'Passaporte' }}</small></div>
+                  <div><strong>{{ user.identificationNumber }}</strong><small>{{ user.identificationType === 'NATIONAL_ID' ? ('LOGIN.NATIONAL_ID' | translate) : ('LOGIN.PASSPORT' | translate) }}</small></div>
                 </div>
               </td>
             </ng-container>
