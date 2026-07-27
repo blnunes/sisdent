@@ -274,6 +274,10 @@ address, confirms that both `/` and `/login` serve Angular's `<app-root>`
 shell, and checks that `/i18n/en.json` contains the expected translation keys.
 This verifies the frontend bundle, SPA deep links, and the public translation
 asset required before authentication.
+address and confirms that both `/` and `/login` serve Angular's `<app-root>`
+shell. It also checks that `/i18n/en.json` contains the expected translation
+keys. These checks verify the frontend bundle, SPA deep links, and the public
+translation assets required before authentication.
 
 The workflow authenticates to GHCR with its short-lived `GITHUB_TOKEN`. No
 long-lived registry token belongs on the Ubuntu host. The build job receives
