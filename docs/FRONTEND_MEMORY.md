@@ -107,6 +107,10 @@ preservando bindings, eventos, control flow Angular e estilos encapsulados.
   autenticação.
 - Usar traduções de `public/i18n/` para textos de interface novos, mantendo as
   três localidades sincronizadas.
+- O loader de traduções usa o caminho absoluto `/i18n/<idioma>.json`; manter os
+  arquivos em `frontend/public/i18n/` para que o build os copie para a raiz dos
+  assets publicados. O backend deve manter `/i18n/**` público, pois a tela de
+  login precisa carregar traduções antes da autenticação.
 - Para componentes Material, importar explicitamente os módulos usados no
   componente standalone.
 - Colocar testes ao lado da implementação quando a funcionalidade tiver
