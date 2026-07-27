@@ -14,9 +14,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth.service';
 import { Permission, Role, User, UserWrite } from '../../core/models';
 import { UserApiService } from '../../core/user-api.service';
+import { LanguageSelectorComponent } from '../../shared/language-selector.component';
 
 @Component({
   selector: 'app-users',
@@ -32,6 +34,8 @@ import { UserApiService } from '../../core/user-api.service';
     MatProgressSpinnerModule,
     MatTableModule,
     MatToolbarModule,
+    TranslatePipe,
+    LanguageSelectorComponent,
   ],
   templateUrl: './users.component.html',
   styleUrl: './users.component.scss',
@@ -40,6 +44,7 @@ export class UsersComponent {
   private readonly api = inject(UserApiService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly translate = inject(TranslateService);
   readonly auth = inject(AuthService);
 
   readonly loading = signal(true);
@@ -67,7 +72,7 @@ export class UsersComponent {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Não foi possível carregar os utilizadores.');
+        this.error.set(this.translate.instant('USERS.LOAD_ERROR'));
         this.loading.set(false);
       },
     });
@@ -89,8 +94,8 @@ export class UsersComponent {
       .subscribe((request) => {
         if (!request) return;
         this.api.create(request).subscribe({
-          next: () => this.changed('Utilizador criado com sucesso.'),
-          error: () => this.failed('Não foi possível criar o utilizador. Verifique se a identificação já existe.'),
+          next: () => this.changed('USERS.CREATE_SUCCESS'),
+          error: () => this.failed('USERS.CREATE_ERROR'),
         });
       });
   }
@@ -106,8 +111,8 @@ export class UsersComponent {
       .subscribe((request) => {
         if (!request) return;
         this.api.update(user.id, request).subscribe({
-          next: () => this.changed('Utilizador atualizado com sucesso.'),
-          error: () => this.failed('Não foi possível atualizar o utilizador.'),
+          next: () => this.changed('USERS.UPDATE_SUCCESS'),
+          error: () => this.failed('USERS.UPDATE_ERROR'),
         });
       });
   }
@@ -123,8 +128,8 @@ export class UsersComponent {
       .subscribe((permissions) => {
         if (!permissions) return;
         this.api.updatePermissions(user.id, permissions).subscribe({
-          next: () => this.changed('Permissões atualizadas.'),
-          error: () => this.failed('Não foi possível atualizar as permissões.'),
+          next: () => this.changed('USERS.PERMISSIONS_SUCCESS'),
+          error: () => this.failed('USERS.PERMISSIONS_ERROR'),
         });
       });
   }
@@ -140,14 +145,14 @@ export class UsersComponent {
       .subscribe((confirmed) => {
         if (!confirmed) return;
         this.api.delete(user.id).subscribe({
-          next: () => this.changed('Utilizador desativado com sucesso.'),
-          error: () => this.failed('Não foi possível desativar o utilizador.'),
+          next: () => this.changed('USERS.DEACTIVATE_SUCCESS'),
+          error: () => this.failed('USERS.DEACTIVATE_ERROR'),
         });
       });
   }
 
   roleLabel(role: Role): string {
-    return { ADMIN: 'Administrador', MANAGER: 'Gestor', USER: 'Consulta' }[role];
+    return this.translate.instant(`USERS.${{ ADMIN: 'ADMIN', MANAGER: 'MANAGER', USER: 'VIEWER' }[role]}`);
   }
 
   permissionLabel(permission: Permission): string {
@@ -168,12 +173,12 @@ export class UsersComponent {
   }
 
   private changed(message: string): void {
-    this.snackBar.open(message, 'Fechar', { duration: 3500 });
+    this.snackBar.open(this.translate.instant(message), this.translate.instant('USERS.CLOSE'), { duration: 3500 });
     this.load();
   }
 
   private failed(message: string): void {
-    this.snackBar.open(message, 'Fechar', { duration: 5000, panelClass: 'error-snackbar' });
+    this.snackBar.open(this.translate.instant(message), this.translate.instant('USERS.CLOSE'), { duration: 5000, panelClass: 'error-snackbar' });
   }
 }
 

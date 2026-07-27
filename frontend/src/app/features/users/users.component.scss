@@ -4,6 +4,7 @@
 .brand { display:flex; align-items:center; gap:10px; text-decoration:none; color:#0a5969; font-size:1.2rem; font-weight:800; }
 .brand mat-icon { color:#0b918a; }
 .spacer { flex:1; }
+.header-language { margin-right:16px; color:#42616b; }
 .admin-badge { display:flex; align-items:center; gap:7px; margin-right:12px; padding:7px 12px; border-radius:999px; background:#e1f8f4; color:#08726e; font-size:.82rem; font-weight:700; }
 .content { width:min(1240px, calc(100% - 40px)); margin:0 auto; padding:54px 0 70px; }
 .page-header { display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-bottom:32px; }
