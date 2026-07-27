@@ -129,14 +129,56 @@ while preserving existing rows. New databases apply both `V1` and `V2`.
 
 Create and verify a backup of `sisdent-preprod-data` before that first
 migration, set `FLYWAY_BASELINE_ON_MIGRATE=true` in `/srv/sisdent/runtime.env`,
-and deploy. After the first successful migration, return it to `false`; this
-restores Flyway's protection against accidentally adopting an unrelated
-non-empty schema.
+and deploy. Leave the setting enabled while adopting the pre-existing database;
+once Flyway history exists, it has no effect on that database. Do not enable it
+for an unrelated non-empty database.
 
 A failed application health check rolls the container image back, but database
 migrations are not automatically reversed. Never remove the volume as part of
 an ordinary deploy and never edit a migration that has already been applied;
 add a new version instead.
+
+### Disposable pre-production database recovery
+
+If pre-production data is explicitly confirmed as disposable and its schema or
+Flyway history is incompatible, recreate only the named H2 volume. This is a
+destructive operation: it deletes all pre-production application data. Do not
+use it for production or for data that has not been approved for deletion.
+
+First wait for any running deployment to finish its rollback. Then stop the
+pre-production stack and remove only its data volume:
+
+```bash
+cd /srv/sisdent
+SISDENT_IMAGE_TAG="$(<.last-successful-image)" docker compose \
+  --env-file runtime.env \
+  -f compose.preprod.yml down --remove-orphans
+docker volume rm sisdent-preprod-data
+```
+
+Run **Deploy pre-production** again for the intended commit. Flyway creates a
+fresh schema from its versioned migrations and the bootstrap administrator is
+created from `runtime.env`.
+
+## GitHub CLI operational access
+
+The host has GitHub CLI (`gh`) installed for operator investigation and manual
+workflow dispatch. Authenticate only an administrator account and keep its
+token in the operating system keyring; the Actions runner itself continues to
+use its short-lived `GITHUB_TOKEN`.
+
+```bash
+gh auth status
+gh workflow run preprod.yml \
+  --repo blnunes/sisdent \
+  --ref <branch-containing-the-workflow> \
+  -f ref=<full-commit-sha>
+gh run view <run-id> --repo blnunes/sisdent --log-failed
+```
+
+The second `ref` is the immutable application revision that is validated and
+deployed. The `--ref` argument selects the branch that supplies the workflow
+definition.
 
 ## Health check and rollback
 
