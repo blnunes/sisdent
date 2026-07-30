@@ -4,7 +4,6 @@ import br.com.itbn.sisdent.model.Gender;
 import br.com.itbn.sisdent.model.IdentificationType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
@@ -23,5 +22,5 @@ public record PatientRequest(
         String identificationNumber,
         @NotBlank @Pattern(regexp = "[A-Z]{2}") String nationalityCode,
         @NotNull @Valid AddressRequest address,
-        @NotEmpty Set<@NotNull Long> specialityIds) {
+        @NotNull Set<@NotNull Long> specialityIds) {
 }

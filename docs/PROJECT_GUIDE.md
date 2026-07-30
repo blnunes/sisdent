@@ -23,6 +23,7 @@ Related documents:
 - List patients ordered by name.
 - Find a patient by ID.
 - Create a patient with request validation.
+- Update a patient and replace its speciality assignments.
 - Reuse an existing address when its postal code already exists.
 - Create a missing state and address during patient creation.
 - Seed demonstration data from JSON when the database is empty.
@@ -46,6 +47,7 @@ Related documents:
 | `GET` | `/api/patients?page=0&size=10` | List patients in pages |
 | `GET` | `/api/patients/{id}` | Find patient by ID |
 | `POST` | `/api/patients` | Create patient and missing address/state |
+| `PUT` | `/api/patients/{id}` | Replace patient data and speciality assignments |
 | `GET` | `/api/specialities?page=0&size=10` | List specialities with their procedures in pages |
 | `POST` | `/api/specialities` | Create a speciality and its procedures |
 | `PUT` | `/api/specialities/{id}` | Replace a speciality and its nested procedures |
@@ -135,6 +137,9 @@ associations and avoid extra queries while mapping response DTOs.
 - The normalized identification number is globally unique through a database
   constraint; duplicate creation returns HTTP `409 Conflict`.
 - Patient nationality and address country use two-letter ISO 3166-1 codes.
+- `specialityIds` is required in patient create and update requests. An empty
+  array is valid and removes all speciality assignments without deleting the
+  speciality records.
 - Street and district are required.
 - Postal code must contain exactly 8 digits and is unique.
 - State name is required; abbreviation must be two uppercase letters and unique.

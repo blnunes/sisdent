@@ -19,6 +19,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -197,6 +198,107 @@ class SisdentApplicationTests {
     void returnsNotFoundForUnknownPatient() throws Exception {
         mockMvc.perform(get("/api/patients/999"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updatesPatientByRemovingOnlyTheirSpecialityLinks() throws Exception {
+        Patient patientBeforeUpdate = patientRepository.findById(1L).orElseThrow();
+        var specialityIdsBeforeUpdate = patientBeforeUpdate.getSpecialities().stream()
+                .map(speciality -> speciality.getId())
+                .toList();
+
+        mockMvc.perform(put("/api/patients/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Olivia Bennett",
+                                  "birthDate": "1992-04-18",
+                                  "active": true,
+                                  "gender": "FEMALE",
+                                  "taxId": "10000000001",
+                                  "identificationType": "NATIONAL_ID",
+                                  "identificationNumber": "US10000000001",
+                                  "nationalityCode": "US",
+                                  "specialityIds": [],
+                                  "address": {
+                                    "street": "1842 Maple Grove Avenue",
+                                    "district": "North Loop",
+                                    "additionalInfo": "Apartment 3B",
+                                    "block": "Building A",
+                                    "postalCode": "73000001",
+                                    "state": {"name": "Texas", "abbreviation": "TX"},
+                                    "countryCode": "US"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.specialities.length()").value(0));
+
+        patientRepository.flush();
+
+        assertThat(patientRepository.findById(1L).orElseThrow().getSpecialities()).isEmpty();
+        assertThat(specialityIdsBeforeUpdate)
+                .allSatisfy(specialityId -> assertThat(specialityRepository.existsById(specialityId)).isTrue());
+    }
+
+    @Test
+    void rejectsPatientResponseJsonWhenUsedAsUpdateRequest() throws Exception {
+        mockMvc.perform(put("/api/patients/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "id": 1,
+                                  "name": "Olivia Bennett",
+                                  "birthDate": "2026-07-02",
+                                  "active": true,
+                                  "gender": "FEMALE",
+                                  "taxId": "10000000001",
+                                  "identificationType": "NATIONAL_ID",
+                                  "identificationNumber": "US10000000001",
+                                  "nationality": {"id": 1, "name": "United States", "code": "US", "continent": "NORTH_AMERICA"},
+                                  "address": {
+                                    "id": 1,
+                                    "street": "1842 Maple Grove Avenue",
+                                    "district": "North Loop",
+                                    "additionalInfo": "Apartment 3B",
+                                    "block": "Building A",
+                                    "postalCode": "73000001",
+                                    "state": {"id": 6, "name": "Texas", "abbreviation": "TX"},
+                                    "country": {"id": 1, "name": "United States", "code": "US", "continent": "NORTH_AMERICA"}
+                                  },
+                                  "specialities": []
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void requiresSpecialityIdsWhenUpdatingPatient() throws Exception {
+        mockMvc.perform(put("/api/patients/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Olivia Bennett",
+                                  "birthDate": "1992-04-18",
+                                  "active": true,
+                                  "gender": "FEMALE",
+                                  "taxId": "10000000001",
+                                  "identificationType": "NATIONAL_ID",
+                                  "identificationNumber": "US10000000001",
+                                  "nationalityCode": "US",
+                                  "address": {
+                                    "street": "1842 Maple Grove Avenue",
+                                    "district": "North Loop",
+                                    "additionalInfo": "Apartment 3B",
+                                    "block": "Building A",
+                                    "postalCode": "73000001",
+                                    "state": {"name": "Texas", "abbreviation": "TX"},
+                                    "countryCode": "US"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

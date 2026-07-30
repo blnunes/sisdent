@@ -40,6 +40,7 @@ GET /api/addresses/postal-code/{postalCode}
 GET /api/patients
 GET /api/patients/{id}
 POST /api/patients
+PUT /api/patients/{id}
 GET /api/specialities
 POST /api/specialities
 PUT /api/specialities/{id}
@@ -58,6 +59,11 @@ curl http://localhost:8080/api/patients
 Procedures are nested resources owned by a speciality. They are returned,
 created, updated, and removed through the speciality endpoints; there is no
 standalone `/api/procedures` endpoint.
+
+To replace a patient's speciality assignments, send their IDs in
+`specialityIds` to `PUT /api/patients/{id}`. Send an empty array
+(`"specialityIds": []`) to remove every assignment from that patient; this
+does not delete the speciality records.
 
 The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
 `jdbc:h2:mem:sisdent`, username `sa`, and an empty password.
