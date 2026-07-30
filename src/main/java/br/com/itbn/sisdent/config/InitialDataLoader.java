@@ -16,12 +16,22 @@ import br.com.itbn.sisdent.model.Membership;
 import br.com.itbn.sisdent.model.MembershipRole;
 import br.com.itbn.sisdent.model.Organization;
 import br.com.itbn.sisdent.model.Person;
+import br.com.itbn.sisdent.model.PatientOrganizationLink;
+import br.com.itbn.sisdent.model.PatientLinkBasis;
+import br.com.itbn.sisdent.model.Practitioner;
+import br.com.itbn.sisdent.model.Appointment;
+import br.com.itbn.sisdent.model.AppointmentStatus;
+import br.com.itbn.sisdent.model.PerformedProcedure;
 import br.com.itbn.sisdent.repository.AccountEmailClaimRepository;
 import br.com.itbn.sisdent.repository.AccountRepository;
 import br.com.itbn.sisdent.repository.ClinicUnitRepository;
 import br.com.itbn.sisdent.repository.MembershipRepository;
 import br.com.itbn.sisdent.repository.OrganizationRepository;
 import br.com.itbn.sisdent.repository.PersonRepository;
+import br.com.itbn.sisdent.repository.PatientOrganizationLinkRepository;
+import br.com.itbn.sisdent.repository.PractitionerRepository;
+import br.com.itbn.sisdent.repository.AppointmentRepository;
+import br.com.itbn.sisdent.repository.PerformedProcedureRepository;
 import br.com.itbn.sisdent.repository.AdministrativeDivisionRepository;
 import br.com.itbn.sisdent.repository.AddressRepository;
 import br.com.itbn.sisdent.repository.CountryRepository;
@@ -42,6 +52,9 @@ import tools.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -68,6 +81,10 @@ public class InitialDataLoader implements ApplicationRunner {
     private final PersonRepository personRepository;
     private final MembershipRepository membershipRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PatientOrganizationLinkRepository patientLinkRepository;
+    private final PractitionerRepository practitionerRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final PerformedProcedureRepository performedProcedureRepository;
 
     public InitialDataLoader(
             JsonMapper jsonMapper,
@@ -78,7 +95,9 @@ public class InitialDataLoader implements ApplicationRunner {
             PatientRepository patientRepository, OrganizationRepository organizationRepository,
             ClinicUnitRepository clinicUnitRepository, AccountRepository accountRepository,
             AccountEmailClaimRepository emailClaimRepository, PersonRepository personRepository,
-            MembershipRepository membershipRepository, PasswordEncoder passwordEncoder) {
+            MembershipRepository membershipRepository, PasswordEncoder passwordEncoder,
+            PatientOrganizationLinkRepository patientLinkRepository, PractitionerRepository practitionerRepository,
+            AppointmentRepository appointmentRepository, PerformedProcedureRepository performedProcedureRepository) {
         this.jsonMapper = jsonMapper;
         this.countryRepository = countryRepository;
         this.administrativeDivisionRepository = administrativeDivisionRepository;
@@ -89,6 +108,9 @@ public class InitialDataLoader implements ApplicationRunner {
         this.accountRepository = accountRepository; this.emailClaimRepository = emailClaimRepository;
         this.personRepository = personRepository; this.membershipRepository = membershipRepository;
         this.passwordEncoder = passwordEncoder;
+        this.patientLinkRepository = patientLinkRepository; this.practitionerRepository = practitionerRepository;
+        this.appointmentRepository = appointmentRepository;
+        this.performedProcedureRepository = performedProcedureRepository;
     }
 
     @Override
@@ -113,6 +135,7 @@ public class InitialDataLoader implements ApplicationRunner {
                 countriesByCode,
                 initialData.seedDefaults());
         saveDemoProfiles(initialData.demoProfiles());
+        saveOperationalDemo(initialData.operationalDemo(), specialitiesByName);
 
         LOGGER.info(
                 "Initial data synchronized from {}: {} countries, {} administrative divisions, {} specialities, {} addresses and {} patients",
@@ -122,6 +145,39 @@ public class InitialDataLoader implements ApplicationRunner {
                 initialData.specialities().size(),
                 initialData.addresses().size(),
                 initialData.patients().size());
+    }
+
+    private void saveOperationalDemo(List<DemoOrganizationData> organizations, Map<String, Speciality> specialities) {
+        for (DemoOrganizationData data : organizations) {
+            Organization organization = organizationRepository.findByName(data.organizationName()).orElseThrow();
+            ClinicUnit clinic = clinicUnitRepository.findByOrganization_IdAndName(organization.getId(), data.clinicUnitName()).orElseThrow();
+            List<PatientOrganizationLink> links = data.patientTaxIds().stream().map(taxId -> {
+                Patient patient = patientRepository.findByTaxId(taxId).orElseThrow();
+                return patientLinkRepository.findFirstByPatient_GlobalIdAndOrganization_GlobalId(patient.getGlobalId(), organization.getGlobalId())
+                        .orElseGet(() -> patientLinkRepository.save(new PatientOrganizationLink(patient, organization, clinic, PatientLinkBasis.ATTENDANCE)));
+            }).toList();
+            List<Practitioner> practitioners = data.practitioners().stream().map(practitioner -> practitionerRepository
+                    .findAllByOrganization_GlobalIdOrderByDisplayName(organization.getGlobalId()).stream()
+                    .filter(existing -> existing.getDisplayName().equals(practitioner.displayName())).findFirst()
+                    .orElseGet(() -> practitionerRepository.save(new Practitioner(organization, null, practitioner.displayName(),
+                            practitioner.registrationNumber(), practitioner.specialityNames().stream().map(specialities::get)
+                                    .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)))))).toList();
+            if (!appointmentRepository.existsByOrganization_Id(organization.getId())) {
+                Appointment scheduled = new Appointment(organization, clinic, links.getFirst(), practitioners.getFirst(),
+                        Instant.parse(data.scheduledStart()), Instant.parse(data.scheduledEnd()), "Europe/Lisbon");
+                appointmentRepository.save(scheduled);
+                Appointment completed = new Appointment(organization, clinic, links.get(Math.min(1, links.size() - 1)), practitioners.getFirst(),
+                        Instant.parse(data.completedStart()), Instant.parse(data.completedEnd()), "Europe/Lisbon");
+                completed.transition(AppointmentStatus.COMPLETED);
+                appointmentRepository.save(completed);
+                PerformedProcedure performedProcedure = new PerformedProcedure(
+                        completed,
+                        practitioners.getFirst().getSpecialities().iterator().next().getProcedures().iterator().next(),
+                        completed.getEndAt(),
+                        "Seeded completed appointment record");
+                performedProcedureRepository.save(performedProcedure);
+            }
+        }
     }
 
     private void saveDemoProfiles(List<DemoProfileData> profiles) {
@@ -279,7 +335,8 @@ public class InitialDataLoader implements ApplicationRunner {
             List<SpecialityData> specialities,
             List<AddressData> addresses,
             List<PatientData> patients,
-            List<DemoProfileData> demoProfiles) {
+            List<DemoProfileData> demoProfiles,
+            List<DemoOrganizationData> operationalDemo) {
     }
 
     public record CountryData(String name, String code, Continent continent) {
@@ -322,5 +379,13 @@ public class InitialDataLoader implements ApplicationRunner {
     public record DemoProfileData(
             String displayName, String email, String password, boolean platformAdministrator,
             String organizationName, String clinicUnitName, MembershipRole membershipRole) {
+    }
+
+    public record DemoOrganizationData(String organizationName, String clinicUnitName, List<String> patientTaxIds,
+            List<DemoPractitionerData> practitioners, String scheduledStart, String scheduledEnd,
+            String completedStart, String completedEnd) {
+    }
+
+    public record DemoPractitionerData(String displayName, String registrationNumber, List<String> specialityNames) {
     }
 }

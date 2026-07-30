@@ -773,5 +773,29 @@
     { "displayName": "Northstar Read Only Staff", "email": "northstar.readonly@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": "Northstar Central Clinic", "membershipRole": "READ_ONLY" },
     { "displayName": "Harbor Administrator", "email": "harbor.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Harbor Dental Clinic", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
     { "displayName": "Harbor Scheduler", "email": "harbor.scheduler@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Harbor Dental Clinic", "clinicUnitName": "Harbor Riverside Unit", "membershipRole": "APPOINTMENT_MANAGER" }
+  ],
+  "operationalDemo": [
+    {
+      "organizationName": "Northstar Dental Group",
+      "clinicUnitName": "Northstar Central Clinic",
+      "patientTaxIds": ["10000000001", "10000000002", "10000000003", "10000000004", "10000000005", "10000000006", "10000000007", "10000000008", "10000000009", "10000000010", "10000000011", "10000000012"],
+      "practitioners": [
+        { "displayName": "Dr. Rowan Blake", "registrationNumber": "NS-1001", "specialityNames": ["Endodontics", "Periodontics"] },
+        { "displayName": "Dr. Casey Monroe", "registrationNumber": "NS-1002", "specialityNames": ["Pediatric Dentistry", "Orthodontics and Dentofacial Orthopedics"] }
+      ],
+      "scheduledStart": "2030-01-15T09:00:00Z", "scheduledEnd": "2030-01-15T09:30:00Z",
+      "completedStart": "2025-01-15T09:00:00Z", "completedEnd": "2025-01-15T09:30:00Z"
+    },
+    {
+      "organizationName": "Harbor Dental Clinic",
+      "clinicUnitName": "Harbor Riverside Unit",
+      "patientTaxIds": ["10000000013", "10000000014", "10000000015", "10000000016", "10000000017", "10000000018", "10000000019", "10000000020", "10000000021", "10000000022", "10000000023", "10000000024"],
+      "practitioners": [
+        { "displayName": "Dr. Jordan Ellis", "registrationNumber": "HB-2001", "specialityNames": ["Prosthodontics", "Oral Medicine"] },
+        { "displayName": "Dr. Taylor Quinn", "registrationNumber": "HB-2002", "specialityNames": ["Oral and Maxillofacial Surgery"] }
+      ],
+      "scheduledStart": "2030-01-16T10:00:00Z", "scheduledEnd": "2030-01-16T10:30:00Z",
+      "completedStart": "2025-01-16T10:00:00Z", "completedEnd": "2025-01-16T10:30:00Z"
+    }
   ]
 }

@@ -105,7 +105,7 @@ class SisdentApplicationTests {
 
     @Test
     void restoresMissingInitialDataWithoutDuplicatingExistingData() throws Exception {
-        Patient patient = patientRepository.findByTaxId("10000000001").orElseThrow();
+        Patient patient = patientRepository.findByTaxId("10000000048").orElseThrow();
         patientRepository.delete(patient);
         patientRepository.flush();
 

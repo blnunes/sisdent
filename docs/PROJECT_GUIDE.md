@@ -105,6 +105,20 @@ Flyway applies immutable migrations from
 `InitialDataLoader` then synchronizes demonstration reference and patient data
 from `src/main/resources/data/initial-data.json`.
 
+The same file provides a self-contained operational scenario for the Phase 1–4
+roles. All demo profile passwords are `odonto2026@O`.
+
+| Profile | Tenant scope | Demonstration data |
+| --- | --- | --- |
+| `platform.operations@sisdent.demo` | Platform | Cross-organization administration; no tenant records are assigned. |
+| `northstar.admin@sisdent.demo`, `northstar.manager@sisdent.demo`, `northstar.practitioners@sisdent.demo` | Northstar Dental Group | 12 linked patients, 2 practitioners, one scheduled appointment, and one completed appointment with a performed procedure. |
+| `northstar.scheduler@sisdent.demo`, `northstar.viewer@sisdent.demo`, `northstar.readonly@sisdent.demo` | Northstar Central Clinic | The Northstar clinic scenario above, constrained by their respective roles. |
+| `harbor.admin@sisdent.demo` | Harbor Dental Clinic | 12 different linked patients, 2 practitioners, one scheduled appointment, and one completed appointment with a performed procedure. |
+| `harbor.scheduler@sisdent.demo` | Harbor Riverside Unit | The Harbor clinic scenario, with appointment-management scope. |
+
+The Northstar and Harbor patient, practitioner, appointment, and procedure
+records are deliberately separate, so tenant-isolation flows can be exercised.
+
 Local development uses:
 
 ```text
