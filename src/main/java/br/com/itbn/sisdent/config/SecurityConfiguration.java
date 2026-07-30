@@ -122,14 +122,16 @@ public class SecurityConfiguration {
                         .access(hasAnyPermission("MAINTAIN_COUNTRIES"))
                         .requestMatchers(HttpMethod.DELETE, "/api/countries/**")
                         .access(hasAnyPermission("MAINTAIN_COUNTRIES"))
-                        .requestMatchers(HttpMethod.GET, "/api/states/**")
-                        .access(hasAnyPermission("READ_STATES", "MAINTAIN_STATES"))
-                        .requestMatchers(HttpMethod.POST, "/api/states/**")
-                        .access(hasAnyPermission("MAINTAIN_STATES"))
-                        .requestMatchers(HttpMethod.PUT, "/api/states/**")
-                        .access(hasAnyPermission("MAINTAIN_STATES"))
-                        .requestMatchers(HttpMethod.DELETE, "/api/states/**")
-                        .access(hasAnyPermission("MAINTAIN_STATES"))
+                        .requestMatchers(HttpMethod.GET, "/api/administrative-divisions/**", "/api/states/**")
+                        .access(hasAnyPermission(
+                                "READ_ADMINISTRATIVE_DIVISIONS",
+                                "MAINTAIN_ADMINISTRATIVE_DIVISIONS"))
+                        .requestMatchers(HttpMethod.POST, "/api/administrative-divisions/**", "/api/states/**")
+                        .access(hasAnyPermission("MAINTAIN_ADMINISTRATIVE_DIVISIONS"))
+                        .requestMatchers(HttpMethod.PUT, "/api/administrative-divisions/**", "/api/states/**")
+                        .access(hasAnyPermission("MAINTAIN_ADMINISTRATIVE_DIVISIONS"))
+                        .requestMatchers(HttpMethod.DELETE, "/api/administrative-divisions/**", "/api/states/**")
+                        .access(hasAnyPermission("MAINTAIN_ADMINISTRATIVE_DIVISIONS"))
                         // Single-page application shell, static assets, and client-side routes.
                         // The SPA bundle contains no secrets; data authorization is enforced on
                         // the /api/** matchers above. Client-side route protection is handled by

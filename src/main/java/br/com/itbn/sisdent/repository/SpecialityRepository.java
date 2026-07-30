@@ -37,6 +37,6 @@ public interface SpecialityRepository extends JpaRepository<Speciality, Long>, J
     @Query("select distinct s.name from Speciality s where lower(s.name) like lower(concat('%', :query, '%')) order by s.name")
     List<String> findNameSuggestions(@Param("query") String query, Pageable pageable);
 
-    @Query("select distinct p.name from Procedure p where lower(p.name) like lower(concat('%', :query, '%')) order by p.name")
+    @Query("select distinct p.name from DentalProcedure p where lower(p.name) like lower(concat('%', :query, '%')) order by p.name")
     List<String> findProcedureSuggestions(@Param("query") String query, Pageable pageable);
 }

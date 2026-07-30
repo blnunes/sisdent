@@ -4,9 +4,10 @@ public record AddressResponse(
         Long id,
         String street,
         String district,
+        String city,
         String additionalInfo,
         String block,
         String postalCode,
-        StateResponse state,
+        AdministrativeDivisionResponse administrativeDivision,
         CountryResponse country) {
 }

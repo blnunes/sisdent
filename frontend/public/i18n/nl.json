@@ -15,7 +15,7 @@
     "SPECIALITIES": "Specialismen", "SPECIALITIES_DESCRIPTION": "Bekijk geconfigureerde specialismen.",
     "ADDRESSES": "Adressen", "ADDRESSES_DESCRIPTION": "Bekijk geregistreerde adressen.",
     "COUNTRIES": "Landen", "COUNTRIES_DESCRIPTION": "Bekijk beschikbare landen.",
-    "STATES": "Staten", "STATES_DESCRIPTION": "Bekijk beschikbare staten.",
+    "ADMINISTRATIVE_DIVISIONS": "Bestuurlijke gebieden", "ADMINISTRATIVE_DIVISIONS_DESCRIPTION": "Bekijk landspecifieke bestuurlijke gebieden.",
     "EMPTY": "Er zijn geen records om weer te geven.", "LOAD_ERROR": "Records kunnen niet worden geladen."
   },
   "NOT_FOUND": {
@@ -62,8 +62,8 @@
     "MAINTAIN_ADDRESSES": "Adressen beheren",
     "READ_COUNTRIES": "Landen bekijken",
     "MAINTAIN_COUNTRIES": "Landen beheren",
-    "READ_STATES": "Staten bekijken",
-    "MAINTAIN_STATES": "Staten beheren",
+    "READ_ADMINISTRATIVE_DIVISIONS": "Bestuurlijke gebieden bekijken",
+    "MAINTAIN_ADMINISTRATIVE_DIVISIONS": "Bestuurlijke gebieden beheren",
     "READ_PERMISSIONS": "Machtigingen bekijken",
     "MAINTAIN_PERMISSIONS": "Machtigingen beheren"
   },
@@ -150,6 +150,6 @@
     }
   },
   "PERMISSION_GROUPS": {
-    "USERS": "Gebruikers", "PATIENTS": "Patiënten", "SPECIALITIES": "Specialismen", "ADDRESSES": "Adressen", "COUNTRIES": "Landen", "STATES": "Staten", "PERMISSIONS": "Machtigingen"
+    "USERS": "Gebruikers", "PATIENTS": "Patiënten", "SPECIALITIES": "Specialismen", "ADDRESSES": "Adressen", "COUNTRIES": "Landen", "ADMINISTRATIVE_DIVISIONS": "Bestuurlijke gebieden", "PERMISSIONS": "Machtigingen"
   }
 }

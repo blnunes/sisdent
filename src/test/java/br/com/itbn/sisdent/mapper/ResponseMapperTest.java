@@ -1,21 +1,20 @@
 package br.com.itbn.sisdent.mapper;
 
 import br.com.itbn.sisdent.dto.AddressResponse;
+import br.com.itbn.sisdent.dto.AdministrativeDivisionResponse;
 import br.com.itbn.sisdent.dto.PatientResponse;
 import br.com.itbn.sisdent.dto.SpecialityResponse;
-import br.com.itbn.sisdent.dto.StateResponse;
 import br.com.itbn.sisdent.model.Address;
+import br.com.itbn.sisdent.model.AdministrativeDivision;
 import br.com.itbn.sisdent.model.Continent;
 import br.com.itbn.sisdent.model.Country;
+import br.com.itbn.sisdent.model.DocumentType;
 import br.com.itbn.sisdent.model.Gender;
-import br.com.itbn.sisdent.model.IdentificationType;
 import br.com.itbn.sisdent.model.Patient;
-import br.com.itbn.sisdent.model.State;
 import br.com.itbn.sisdent.model.Speciality;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.time.Month;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,73 +22,66 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ResponseMapperTest {
 
     @Test
-    void mapsStateToResponse() {
-        StateResponse response = ResponseMapper.toResponse(new State("Goiás", "GO"));
+    void mapsAdministrativeDivisionWithCountry() {
+        Country country = country();
 
-        assertThat(response.name()).isEqualTo("Goiás");
-        assertThat(response.abbreviation()).isEqualTo("GO");
+        AdministrativeDivisionResponse response = ResponseMapper.toResponse(
+                new AdministrativeDivision("Lisbon", "11", "DISTRICT", country));
+
+        assertThat(response.name()).isEqualTo("Lisbon");
+        assertThat(response.code()).isEqualTo("11");
+        assertThat(response.country().code()).isEqualTo("PT");
     }
 
     @Test
-    void mapsAddressAndItsStateToResponse() {
-        State state = new State("São Paulo", "SP");
+    void mapsInternationalAddress() {
         Country country = country();
         Address address = new Address(
-                "Avenida Paulista",
-                "Bela Vista",
-                "Suite 1204",
-                "B",
-                "01310100",
-                state,
+                "Avenida da Liberdade 100",
+                null,
+                "Lisbon",
+                "Floor 2",
+                null,
+                "1250-096",
+                new AdministrativeDivision("Lisbon", "11", "DISTRICT", country),
                 country);
 
         AddressResponse response = ResponseMapper.toResponse(address);
 
-        assertThat(response.street()).isEqualTo("Avenida Paulista");
-        assertThat(response.postalCode()).isEqualTo("01310100");
-        assertThat(response.state().abbreviation()).isEqualTo("SP");
-        assertThat(response.country().code()).isEqualTo("BR");
+        assertThat(response.city()).isEqualTo("Lisbon");
+        assertThat(response.postalCode()).isEqualTo("1250-096");
+        assertThat(response.administrativeDivision().code()).isEqualTo("11");
     }
 
     @Test
-    void mapsPatientAndNestedRelationshipsToResponse() {
-        State state = new State("Goiás", "GO");
+    void mapsPatientGlobalIdentityAndIssuedDocument() {
         Country country = country();
         Address address = new Address(
-                "Avenida T-10",
-                "Setor Bueno",
-                "Dental clinic",
-                "A",
-                "74223060",
-                state,
-                country);
+                "Rua Augusta 1", null, "Lisbon", null, null, "1100-053", null, country);
         Patient patient = new Patient(
-                "Ana Souza",
-                LocalDate.of(1992, Month.APRIL, 18),
+                "Ana Silva",
+                LocalDate.of(1992, 4, 18),
                 true,
                 Gender.FEMALE,
-                "12345678901",
-                IdentificationType.NATIONAL_ID,
+                null,
+                DocumentType.NATIONAL_ID_CARD,
                 "12345ABC",
                 country,
+                country,
                 address,
-                List.of(new Speciality("Pediatric"), new Speciality("Ortodontia")));
+                List.of(new Speciality("Orthodontics")));
 
         PatientResponse response = ResponseMapper.toResponse(patient);
 
-        assertThat(response.name()).isEqualTo("Ana Souza");
-        assertThat(response.birthDate()).isEqualTo(LocalDate.of(1992, Month.APRIL, 18));
-        assertThat(response.active()).isTrue();
-        assertThat(response.gender()).isEqualTo(Gender.FEMALE);
-        assertThat(response.identificationType()).isEqualTo(IdentificationType.NATIONAL_ID);
-        assertThat(response.nationality().code()).isEqualTo("BR");
-        assertThat(response.address().state().abbreviation()).isEqualTo("GO");
-        assertThat(response.specialities())
-                .extracting(SpecialityResponse::name)
-                .containsExactly("Ortodontia", "Pediatric");
+        assertThat(response.globalId()).isNotNull();
+        assertThat(response.identificationType()).isEqualTo(DocumentType.NATIONAL_ID_CARD);
+        assertThat(response.documentIssuerCountry().code()).isEqualTo("PT");
+        assertThat(response.address().administrativeDivision()).isNull();
+        assertThat(response.specialities()).extracting(SpecialityResponse::name)
+                .containsExactly("Orthodontics");
     }
 
     private Country country() {
-        return new Country("Brazil", "BR", Continent.SOUTH_AMERICA);
+        return new Country("Portugal", "PT", Continent.EUROPE);
     }
 }

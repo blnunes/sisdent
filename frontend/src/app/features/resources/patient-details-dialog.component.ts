@@ -22,9 +22,11 @@ export class PatientDetailsDialog {
     const value = this.patient[key];
     return value && typeof value === 'object' && !Array.isArray(value) ? value as PatientRecord : {};
   }
-  stateName(): string {
-    const state = this.object('address')['state'];
-    return state && typeof state === 'object' ? String((state as PatientRecord)['name'] ?? '—') : '—';
+  administrativeDivisionName(): string {
+    const division = this.object('address')['administrativeDivision'];
+    return division && typeof division === 'object'
+      ? String((division as PatientRecord)['name'] ?? '—')
+      : '—';
   }
   specialities(): PatientRecord[] {
     const value = this.patient['specialities'];

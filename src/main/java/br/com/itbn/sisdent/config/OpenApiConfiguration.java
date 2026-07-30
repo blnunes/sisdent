@@ -40,6 +40,6 @@ public class OpenApiConfiguration {
                         .title("Sisdent API")
                         .version("v1")
                         .description(
-                                "Authenticated REST API for managing patients, users, permissions, countries, addresses, and states."));
+                                "Authenticated REST API for managing patients, users, permissions, countries, addresses, and administrative divisions."));
     }
 }

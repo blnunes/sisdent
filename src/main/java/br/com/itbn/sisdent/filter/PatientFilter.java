@@ -1,7 +1,7 @@
 package br.com.itbn.sisdent.filter;
 
 import br.com.itbn.sisdent.model.Gender;
-import br.com.itbn.sisdent.model.IdentificationType;
+import br.com.itbn.sisdent.model.DocumentType;
 
 import java.time.LocalDate;
 
@@ -13,7 +13,7 @@ public record PatientFilter(
         Boolean active,
         Gender gender,
         String taxId,
-        IdentificationType identificationType,
+        DocumentType identificationType,
         String identificationNumber,
         String nationalityCode,
         Long addressId,

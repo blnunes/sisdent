@@ -82,7 +82,7 @@ public class UserService {
     public UserResponse updatePermissions(Long id, PermissionRequest request) {
         User user = requireActive(id);
         if (user.getRole() == Role.ADMIN) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Não é possível alterar permissões do ADMIN");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Administrator permissions cannot be changed");
         }
         user.setPermissions(request.permissions());
         return toResponse(userRepository.saveAndFlush(user));

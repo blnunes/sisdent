@@ -12,7 +12,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "addresses")
-public class Address {
+public class Address extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,19 +21,22 @@ public class Address {
     @Column(nullable = false)
     private String street;
 
-    @Column(nullable = false)
+    @Column
     private String district;
+
+    @Column(nullable = false)
+    private String city;
 
     private String additionalInfo;
 
     private String block;
 
-    @Column(nullable = false, unique = true, length = 8)
+    @Column(length = 20)
     private String postalCode;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "state_id", nullable = false)
-    private State state;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "administrative_division_id")
+    private AdministrativeDivision administrativeDivision;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "country_id", nullable = false)
@@ -45,17 +48,19 @@ public class Address {
     public Address(
             String street,
             String district,
+            String city,
             String additionalInfo,
             String block,
             String postalCode,
-            State state,
+            AdministrativeDivision administrativeDivision,
             Country country) {
         this.street = street;
         this.district = district;
+        this.city = city;
         this.additionalInfo = additionalInfo;
         this.block = block;
         this.postalCode = postalCode;
-        this.state = state;
+        this.administrativeDivision = administrativeDivision;
         this.country = country;
     }
 
@@ -71,6 +76,10 @@ public class Address {
         return district;
     }
 
+    public String getCity() {
+        return city;
+    }
+
     public String getAdditionalInfo() {
         return additionalInfo;
     }
@@ -83,17 +92,18 @@ public class Address {
         return postalCode;
     }
 
-    public State getState() {
-        return state;
+    public AdministrativeDivision getAdministrativeDivision() {
+        return administrativeDivision;
     }
 
     public Country getCountry() {
         return country;
     }
 
-    public void update(String street, String district, String additionalInfo, String block, String postalCode,
-            State state, Country country) {
-        this.street = street; this.district = district; this.additionalInfo = additionalInfo; this.block = block;
-        this.postalCode = postalCode; this.state = state; this.country = country;
+    public void update(String street, String district, String city, String additionalInfo, String block,
+            String postalCode, AdministrativeDivision administrativeDivision, Country country) {
+        this.street = street; this.district = district; this.city = city; this.additionalInfo = additionalInfo;
+        this.block = block; this.postalCode = postalCode;
+        this.administrativeDivision = administrativeDivision; this.country = country;
     }
 }

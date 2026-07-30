@@ -5,7 +5,6 @@ import br.com.itbn.sisdent.dto.AddressRequest;
 import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.service.AddressService;
 import br.com.itbn.sisdent.pagination.PageQuery;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestParam;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/addresses")
@@ -39,10 +39,10 @@ public class AddressController {
     }
 
     @GetMapping("/postal-code/{postalCode}")
-    public ResponseEntity<AddressResponse> findByPostalCode(@PathVariable String postalCode) {
-        return addressService.findByPostalCode(postalCode)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public List<AddressResponse> findByPostalCode(
+            @PathVariable String postalCode,
+            @RequestParam String countryCode) {
+        return addressService.findByPostalCode(countryCode, postalCode);
     }
 
     @PostMapping @ResponseStatus(HttpStatus.CREATED)

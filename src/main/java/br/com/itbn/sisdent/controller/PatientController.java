@@ -8,7 +8,7 @@ import br.com.itbn.sisdent.service.PatientService;
 import br.com.itbn.sisdent.pagination.PageQuery;
 import br.com.itbn.sisdent.filter.PatientFilter;
 import br.com.itbn.sisdent.model.Gender;
-import br.com.itbn.sisdent.model.IdentificationType;
+import br.com.itbn.sisdent.model.DocumentType;
 import java.time.LocalDate;
 import java.util.List;
 import jakarta.validation.Valid;
@@ -46,7 +46,7 @@ public class PatientController {
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) Gender gender,
             @RequestParam(required = false) String taxId,
-            @RequestParam(required = false) IdentificationType identificationType,
+            @RequestParam(required = false) DocumentType identificationType,
             @RequestParam(required = false) String identificationNumber,
             @RequestParam(required = false) String nationalityCode,
             @RequestParam(required = false) Long addressId,

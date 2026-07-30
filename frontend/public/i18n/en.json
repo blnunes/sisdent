@@ -15,7 +15,7 @@
     "SPECIALITIES": "Specialities", "SPECIALITIES_DESCRIPTION": "View configured specialities.",
     "ADDRESSES": "Addresses", "ADDRESSES_DESCRIPTION": "View registered addresses.",
     "COUNTRIES": "Countries", "COUNTRIES_DESCRIPTION": "View available countries.",
-    "STATES": "States", "STATES_DESCRIPTION": "View available states.",
+    "ADMINISTRATIVE_DIVISIONS": "Administrative divisions", "ADMINISTRATIVE_DIVISIONS_DESCRIPTION": "View country-specific administrative divisions.",
     "EMPTY": "There are no records to show.", "LOAD_ERROR": "Unable to load records."
   },
   "NOT_FOUND": {
@@ -62,8 +62,8 @@
     "MAINTAIN_ADDRESSES": "Manage addresses",
     "READ_COUNTRIES": "View countries",
     "MAINTAIN_COUNTRIES": "Manage countries",
-    "READ_STATES": "View states",
-    "MAINTAIN_STATES": "Manage states",
+    "READ_ADMINISTRATIVE_DIVISIONS": "View administrative divisions",
+    "MAINTAIN_ADMINISTRATIVE_DIVISIONS": "Manage administrative divisions",
     "READ_PERMISSIONS": "View permissions",
     "MAINTAIN_PERMISSIONS": "Manage permissions"
   },
@@ -150,6 +150,6 @@
     }
   },
   "PERMISSION_GROUPS": {
-    "USERS": "Users", "PATIENTS": "Patients", "SPECIALITIES": "Specialities", "ADDRESSES": "Addresses", "COUNTRIES": "Countries", "STATES": "States", "PERMISSIONS": "Permissions"
+    "USERS": "Users", "PATIENTS": "Patients", "SPECIALITIES": "Specialities", "ADDRESSES": "Addresses", "COUNTRIES": "Countries", "ADMINISTRATIVE_DIVISIONS": "Administrative divisions", "PERMISSIONS": "Permissions"
   }
 }

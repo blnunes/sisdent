@@ -32,14 +32,17 @@ test.describe('Patient management', () => {
     await selectOption(page, 'Status', 'Active');
     await selectOption(page, 'Gender', 'Female');
     await page.getByLabel('Tax ID').fill(patient.taxId);
-    await selectOption(page, 'Identification type', 'National ID');
+    await selectOption(page, 'Identification type', 'National ID card');
     await page.getByLabel('Identification number').fill(patient.identificationNumber);
+    await page.getByLabel('Document issuer country code').fill('PT');
     await page.getByLabel('Nationality country code').fill('PT');
     await page.getByLabel('Street').fill('E2E Test Street');
     await page.getByLabel('District').fill('Lisbon');
-    await page.getByLabel('Postal code').fill('10000001');
-    await page.getByLabel('State name').fill('Lisbon');
-    await page.getByLabel('State abbreviation').fill('LX');
+    await page.getByLabel('City').fill('Lisbon');
+    await page.getByLabel('Postal code').fill('1000-001');
+    await page.getByLabel('Administrative division name').fill('Lisbon');
+    await page.getByLabel('Administrative division code').fill('11');
+    await page.getByLabel('Administrative division type').fill('DISTRICT');
     await page.getByLabel('Address country code').fill('PT');
 
     const createResponse = page.waitForResponse(

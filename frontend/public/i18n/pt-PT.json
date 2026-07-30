@@ -15,7 +15,7 @@
     "SPECIALITIES": "Especialidades", "SPECIALITIES_DESCRIPTION": "Consulte as especialidades configuradas.",
     "ADDRESSES": "Endereços", "ADDRESSES_DESCRIPTION": "Consulte os endereços registados.",
     "COUNTRIES": "Países", "COUNTRIES_DESCRIPTION": "Consulte os países disponíveis.",
-    "STATES": "Estados", "STATES_DESCRIPTION": "Consulte os estados disponíveis.",
+    "ADMINISTRATIVE_DIVISIONS": "Divisões administrativas", "ADMINISTRATIVE_DIVISIONS_DESCRIPTION": "Consulte as divisões administrativas específicas de cada país.",
     "EMPTY": "Não existem registos para apresentar.", "LOAD_ERROR": "Não foi possível carregar os registos."
   },
   "NOT_FOUND": {
@@ -62,8 +62,8 @@
     "MAINTAIN_ADDRESSES": "Gerir endereços",
     "READ_COUNTRIES": "Visualizar países",
     "MAINTAIN_COUNTRIES": "Gerir países",
-    "READ_STATES": "Visualizar estados",
-    "MAINTAIN_STATES": "Gerir estados",
+    "READ_ADMINISTRATIVE_DIVISIONS": "Visualizar divisões administrativas",
+    "MAINTAIN_ADMINISTRATIVE_DIVISIONS": "Gerir divisões administrativas",
     "READ_PERMISSIONS": "Visualizar permissões",
     "MAINTAIN_PERMISSIONS": "Gerir permissões"
   },
@@ -150,6 +150,6 @@
     }
   },
   "PERMISSION_GROUPS": {
-    "USERS": "Utilizadores", "PATIENTS": "Pacientes", "SPECIALITIES": "Especialidades", "ADDRESSES": "Endereços", "COUNTRIES": "Países", "STATES": "Estados", "PERMISSIONS": "Permissões"
+    "USERS": "Utilizadores", "PATIENTS": "Pacientes", "SPECIALITIES": "Especialidades", "ADDRESSES": "Endereços", "COUNTRIES": "Países", "ADMINISTRATIVE_DIVISIONS": "Divisões administrativas", "PERMISSIONS": "Permissões"
   }
 }

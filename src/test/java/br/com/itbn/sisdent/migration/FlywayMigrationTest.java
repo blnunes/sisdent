@@ -75,7 +75,7 @@ class FlywayMigrationTest {
             assertThat(result.next()).isTrue();
             assertThat(result.getString("name")).isEqualTo("Legacy Patient");
             assertThat(result.getString("identification_type"))
-                    .isEqualTo("NATIONAL_ID");
+                    .isEqualTo("NATIONAL_ID_CARD");
             assertThat(result.getString("identification_number"))
                     .isEqualTo("US12345678901");
             assertThat(result.getString("code")).isEqualTo("US");
@@ -145,6 +145,56 @@ class FlywayMigrationTest {
                     "READ_STATES",
                     "READ_USERS"
             );
+        }
+    }
+
+    @Test
+    void renamesStatePermissionsWithoutChangingAssignedAccess() throws Exception {
+        String url = databaseUrl("v7");
+        Flyway.configure()
+                .dataSource(url, "sa", "")
+                .locations("classpath:db/migration")
+                .target("6")
+                .load()
+                .migrate();
+
+        try (Connection connection = DriverManager.getConnection(url, "sa", "");
+             Statement statement = connection.createStatement()) {
+            statement.execute("""
+                    INSERT INTO app_users (
+                        id, identification_type, identification_number,
+                        password, role, active, created_at, updated_at,
+                        created_by, updated_by, version
+                    ) VALUES (
+                        100, 'NATIONAL_ID', 'DIVISION_MANAGER',
+                        'password', 'MANAGER', TRUE, CURRENT_TIMESTAMP,
+                        CURRENT_TIMESTAMP, 'migration-test', 'migration-test', 0
+                    )
+                    """);
+            statement.execute("""
+                    INSERT INTO user_permissions (user_id, permission) VALUES
+                        (100, 'READ_STATES'),
+                        (100, 'MAINTAIN_STATES')
+                    """);
+        }
+
+        Flyway.configure()
+                .dataSource(url, "sa", "")
+                .locations("classpath:db/migration")
+                .load()
+                .migrate();
+
+        try (Connection connection = DriverManager.getConnection(url, "sa", "");
+             Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery(
+                     "SELECT permission FROM user_permissions WHERE user_id = 100 ORDER BY permission")) {
+            ArrayList<String> permissions = new ArrayList<>();
+            while (result.next()) {
+                permissions.add(result.getString("permission"));
+            }
+            assertThat(permissions).containsExactlyInAnyOrder(
+                    "MAINTAIN_ADMINISTRATIVE_DIVISIONS",
+                    "READ_ADMINISTRATIVE_DIVISIONS");
         }
     }
 }

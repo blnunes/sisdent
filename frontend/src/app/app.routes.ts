@@ -28,7 +28,7 @@ export const routes: Routes = [
         { key: 'active', label: 'RESOURCE.FILTER.STATUS', type: 'select', options: [{ value: 'true', label: 'RESOURCE.FILTER.ACTIVE' }, { value: 'false', label: 'RESOURCE.FILTER.INACTIVE' }] },
         { key: 'gender', label: 'RESOURCE.FILTER.GENDER', type: 'select', placement: 'advanced', options: [{ value: 'FEMALE', label: 'RESOURCE.FILTER.FEMALE' }, { value: 'MALE', label: 'RESOURCE.FILTER.MALE' }, { value: 'OTHER', label: 'RESOURCE.FILTER.OTHER' }] },
         { key: 'taxId', label: 'RESOURCE.FILTER.TAX_ID', type: 'autocomplete', placement: 'advanced' },
-        { key: 'identificationType', label: 'RESOURCE.FILTER.IDENTIFICATION_TYPE', type: 'select', placement: 'advanced', options: [{ value: 'NATIONAL_ID', label: 'RESOURCE.FILTER.NATIONAL_ID' }, { value: 'PASSPORT', label: 'RESOURCE.FILTER.PASSPORT' }] },
+        { key: 'identificationType', label: 'RESOURCE.FILTER.IDENTIFICATION_TYPE', type: 'select', placement: 'advanced', options: [{ value: 'NATIONAL_ID_CARD', label: 'RESOURCE.FILTER.NATIONAL_ID' }, { value: 'PASSPORT', label: 'RESOURCE.FILTER.PASSPORT' }] },
         { key: 'nationalityCode', label: 'RESOURCE.FILTER.NATIONALITY', type: 'autocomplete', selectionRequired: true, placement: 'advanced' },
         { key: 'addressId', label: 'RESOURCE.FILTER.ADDRESS', type: 'autocomplete', selectionRequired: true, placement: 'advanced' },
         { key: 'specialityId', label: 'RESOURCE.FILTER.SPECIALITY', type: 'autocomplete', selectionRequired: true },
@@ -60,10 +60,10 @@ export const routes: Routes = [
     data: { key: 'countries', endpoint: '/api/countries', title: 'MODULES.COUNTRIES', description: 'MODULES.COUNTRIES_DESCRIPTION', maintainPermission: 'MAINTAIN_COUNTRIES' },
   },
   {
-    path: 'states',
-    canActivate: [authGuard, anyPermissionsGuard('READ_STATES', 'MAINTAIN_STATES')],
+    path: 'administrative-divisions',
+    canActivate: [authGuard, anyPermissionsGuard('READ_ADMINISTRATIVE_DIVISIONS', 'MAINTAIN_ADMINISTRATIVE_DIVISIONS')],
     loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
-    data: { key: 'states', endpoint: '/api/states', title: 'MODULES.STATES', description: 'MODULES.STATES_DESCRIPTION', maintainPermission: 'MAINTAIN_STATES' },
+    data: { key: 'administrativeDivisions', endpoint: '/api/administrative-divisions', title: 'MODULES.ADMINISTRATIVE_DIVISIONS', description: 'MODULES.ADMINISTRATIVE_DIVISIONS_DESCRIPTION', maintainPermission: 'MAINTAIN_ADMINISTRATIVE_DIVISIONS' },
   },
   {
     path: 'permissions',

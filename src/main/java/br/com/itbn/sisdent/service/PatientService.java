@@ -95,7 +95,8 @@ public class PatientService {
         Patient patient = patientRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         Patient source = newPatient(request);
         patient.update(source.getName(), source.getBirthDate(), source.isActive(), source.getGender(), source.getTaxId(),
-                source.getIdentificationType(), source.getIdentificationNumber(), source.getNationality(), source.getAddress(), source.getSpecialities());
+                source.getIdentificationType(), source.getIdentificationNumber(), source.getDocumentIssuerCountry(),
+                source.getNationality(), source.getAddress(), source.getSpecialities());
         return ResponseMapper.toResponse(patientRepository.saveAndFlush(patient));
     }
 
@@ -110,10 +111,16 @@ public class PatientService {
     }
 
     private Patient newPatient(PatientRequest request) {
-        return new Patient(request.name(), request.birthDate(), request.active(), request.gender(), request.taxId(),
+        return new Patient(request.name(), request.birthDate(), request.active(), request.gender(),
+                normalizeNullable(request.taxId()),
                 request.identificationType(), IdentificationNumbers.normalize(request.identificationNumber()),
-                countryService.requireByCode(request.nationalityCode()), addressService.findOrCreate(request.address()),
+                countryService.requireByCode(request.documentIssuerCountryCode()),
+                countryService.requireByCode(request.nationalityCode()),
+                addressService.createPatientAddress(request.address()),
                 specialityService.findAllByIds(request.specialityIds()));
     }
 
+    private String normalizeNullable(String value) {
+        return value == null || value.isBlank() ? null : IdentificationNumbers.normalize(value);
+    }
 }

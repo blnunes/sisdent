@@ -1,6 +1,6 @@
 package br.com.itbn.sisdent.service;
 
-import br.com.itbn.sisdent.dto.ProcedureRequest;
+import br.com.itbn.sisdent.dto.DentalProcedureRequest;
 import br.com.itbn.sisdent.dto.SpecialityRequest;
 import br.com.itbn.sisdent.dto.SpecialityResponse;
 import br.com.itbn.sisdent.dto.PageResponse;
@@ -12,6 +12,7 @@ import br.com.itbn.sisdent.dto.FilterOptionResponse;
 import br.com.itbn.sisdent.filter.SpecialityFilter;
 import br.com.itbn.sisdent.filter.SpecialitySpecifications;
 import br.com.itbn.sisdent.model.Speciality;
+import br.com.itbn.sisdent.model.CatalogStatus;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
@@ -78,7 +79,7 @@ public class SpecialityService {
         Speciality speciality = new Speciality(
                 request.name().trim(),
                 request.procedures().stream()
-                        .map(ProcedureRequest::name)
+                        .map(DentalProcedureRequest::name)
                         .map(String::trim)
                         .toList());
         return ResponseMapper.toResponse(specialityRepository.save(speciality));
@@ -93,11 +94,11 @@ public class SpecialityService {
                         "Speciality not found"));
         ensureNameAvailable(request.name(), specialityId);
 
-        List<ProcedureRequest> existingProcedures = request.procedures().stream()
+        List<DentalProcedureRequest> existingProcedures = request.procedures().stream()
                 .filter(procedure -> procedure.id() != null)
                 .toList();
         Set<Long> retainedIds = existingProcedures.stream()
-                .map(ProcedureRequest::id)
+                .map(DentalProcedureRequest::id)
                 .collect(Collectors.toSet());
         if (retainedIds.size() != existingProcedures.size()) {
             throw new ResponseStatusException(
@@ -114,7 +115,7 @@ public class SpecialityService {
         speciality.retainProcedures(retainedIds);
         request.procedures().stream()
                 .filter(procedure -> procedure.id() == null)
-                .map(ProcedureRequest::name)
+                .map(DentalProcedureRequest::name)
                 .map(String::trim)
                 .forEach(speciality::addProcedure);
         speciality.rename(request.name().trim());
@@ -124,8 +125,10 @@ public class SpecialityService {
 
     @Transactional
     public void delete(Long id) {
-        if (!specialityRepository.existsById(id)) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Speciality not found");
-        specialityRepository.deleteById(id);
+        Speciality speciality = specialityRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Speciality not found"));
+        speciality.deactivate();
+        specialityRepository.save(speciality);
     }
 
     List<Speciality> findAllByIds(Set<Long> ids) {
@@ -135,13 +138,18 @@ public class SpecialityService {
                     HttpStatus.BAD_REQUEST,
                     "One or more specialities do not exist");
         }
+        if (specialities.stream().anyMatch(speciality -> speciality.getStatus() != CatalogStatus.ACTIVE)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Inactive specialities cannot be assigned");
+        }
         return specialities;
     }
 
-    private void validateProcedureNames(List<ProcedureRequest> procedures) {
+    private void validateProcedureNames(List<DentalProcedureRequest> procedures) {
         Set<String> names = new HashSet<>();
         boolean hasDuplicate = procedures.stream()
-                .map(ProcedureRequest::name)
+                .map(DentalProcedureRequest::name)
                 .map(String::trim)
                 .map(name -> name.toLowerCase(Locale.ROOT))
                 .anyMatch(name -> !names.add(name));

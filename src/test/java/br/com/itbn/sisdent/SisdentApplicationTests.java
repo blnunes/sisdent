@@ -2,6 +2,7 @@ package br.com.itbn.sisdent;
 
 import br.com.itbn.sisdent.config.InitialDataLoader;
 import br.com.itbn.sisdent.model.Patient;
+import br.com.itbn.sisdent.model.CatalogStatus;
 import br.com.itbn.sisdent.repository.PatientRepository;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.junit.jupiter.api.Tag;
@@ -15,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -60,10 +62,12 @@ class SisdentApplicationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(40))
                 .andExpect(jsonPath("$.content[0].name").value("Abigail Scott"))
-                .andExpect(jsonPath("$.content[0].address.state.abbreviation").value("IL"))
+                .andExpect(jsonPath("$.content[0].address.administrativeDivision.code").value("IL"))
+                .andExpect(jsonPath("$.content[0].globalId").isString())
                 .andExpect(jsonPath("$.content[0].address.country.code").value("US"))
                 .andExpect(jsonPath("$.content[0].nationality.code").value("US"))
-                .andExpect(jsonPath("$.content[0].identificationType").value("NATIONAL_ID"))
+                .andExpect(jsonPath("$.content[0].identificationType").value("NATIONAL_ID_CARD"))
+                .andExpect(jsonPath("$.content[0].documentIssuerCountry.code").value("US"))
                 .andExpect(jsonPath("$.content[0].identificationNumber").value("US10000000021"))
                 .andExpect(jsonPath("$.content[0].specialities.length()").value(2))
                 .andExpect(jsonPath("$.content[0].specialities[0].name").value("Endodontics"));
@@ -114,10 +118,10 @@ class SisdentApplicationTests {
 
     @Test
     void returnsAddressByPostalCode() throws Exception {
-        mockMvc.perform(get("/api/addresses/postal-code/10000001"))
+        mockMvc.perform(get("/api/addresses/postal-code/10000001").param("countryCode", "US"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.street").value("152 Hudson Square Avenue"))
-                .andExpect(jsonPath("$.state.abbreviation").value("NY"));
+                .andExpect(jsonPath("$[0].street").value("152 Hudson Square Avenue"))
+                .andExpect(jsonPath("$[0].administrativeDivision.code").value("NY"));
     }
 
     @Test
@@ -160,6 +164,11 @@ class SisdentApplicationTests {
                 .filter(procedure -> procedure.getName().equals("Pulpotomy"))
                 .findFirst()
                 .orElseThrow();
+        var removedProcedure = speciality.getProcedures().stream()
+                .filter(procedure -> !procedure.getId().equals(retainedProcedure.getId()))
+                .findFirst()
+                .orElseThrow();
+        long originalVersion = speciality.getVersion();
         String request = """
                 {
                   "name": "Advanced Endodontics",
@@ -179,6 +188,32 @@ class SisdentApplicationTests {
                 .andExpect(jsonPath("$.procedures[0].name").value("Advanced pulpotomy"))
                 .andExpect(jsonPath("$.procedures[1].name").value("Apicoectomy"))
                 .andExpect(jsonPath("$.procedures[1].id").isNumber());
+
+        specialityRepository.flush();
+        var updated = specialityRepository.findById(speciality.getId()).orElseThrow();
+        assertThat(updated.findProcedure(removedProcedure.getId()).orElseThrow().getStatus())
+                .isEqualTo(CatalogStatus.INACTIVE);
+        assertThat(updated.getVersion()).isGreaterThan(originalVersion);
+    }
+
+    @Test
+    void deactivatesSpecialityAndProceduresWithoutDeletingHistory() throws Exception {
+        var speciality = specialityRepository.findByName("Orthodontics and Dentofacial Orthopedics")
+                .orElseThrow();
+        Long specialityId = speciality.getId();
+
+        mockMvc.perform(delete("/api/specialities/{id}", specialityId))
+                .andExpect(status().isNoContent());
+
+        specialityRepository.flush();
+        var deactivated = specialityRepository.findById(specialityId).orElseThrow();
+        assertThat(deactivated.getStatus()).isEqualTo(CatalogStatus.INACTIVE);
+        assertThat(deactivated.getProcedures())
+                .allSatisfy(procedure -> assertThat(procedure.getStatus()).isEqualTo(CatalogStatus.INACTIVE));
+
+        mockMvc.perform(get("/api/specialities").param("name", "Orthodontics"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test
@@ -188,12 +223,13 @@ class SisdentApplicationTests {
     }
 
     @Test
-    void returnsAllSeededStates() throws Exception {
-        mockMvc.perform(get("/api/states").param("size", "100"))
+    void returnsAllSeededAdministrativeDivisions() throws Exception {
+        mockMvc.perform(get("/api/administrative-divisions").param("size", "100"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(8))
-                .andExpect(jsonPath("$.content[0].abbreviation").value("CA"))
-                .andExpect(jsonPath("$.content[7].abbreviation").value("WA"));
+                .andExpect(jsonPath("$.content[0].code").value("CA"))
+                .andExpect(jsonPath("$.content[0].country.code").value("US"))
+                .andExpect(jsonPath("$.content[7].code").value("WA"));
     }
 
     @Test
@@ -225,6 +261,18 @@ class SisdentApplicationTests {
     }
 
     @Test
+    void storesPatientAuditAndGlobalIdentityMetadata() {
+        Patient patient = patientRepository.findById(1L).orElseThrow();
+
+        assertThat(patient.getGlobalId()).isNotNull();
+        assertThat(patient.getCreatedAt()).isNotNull();
+        assertThat(patient.getUpdatedAt()).isNotNull();
+        assertThat(patient.getCreatedBy()).isNotBlank();
+        assertThat(patient.getUpdatedBy()).isNotBlank();
+        assertThat(patient.getVersion()).isNotNegative();
+    }
+
+    @Test
     void returnsNotFoundForUnknownPatient() throws Exception {
         mockMvc.perform(get("/api/patients/999"))
                 .andExpect(status().isNotFound());
@@ -246,17 +294,19 @@ class SisdentApplicationTests {
                                   "active": true,
                                   "gender": "FEMALE",
                                   "taxId": "10000000001",
-                                  "identificationType": "NATIONAL_ID",
+                                  "identificationType": "NATIONAL_ID_CARD",
                                   "identificationNumber": "US10000000001",
+                                  "documentIssuerCountryCode": "US",
                                   "nationalityCode": "US",
                                   "specialityIds": [],
                                   "address": {
                                     "street": "1842 Maple Grove Avenue",
                                     "district": "North Loop",
+                                    "city": "Austin",
                                     "additionalInfo": "Apartment 3B",
                                     "block": "Building A",
                                     "postalCode": "73000001",
-                                    "state": {"name": "Texas", "abbreviation": "TX"},
+                                    "administrativeDivision": {"name": "Texas", "code": "TX", "type": "STATE"},
                                     "countryCode": "US"
                                   }
                                 }
@@ -284,17 +334,18 @@ class SisdentApplicationTests {
                                   "active": true,
                                   "gender": "FEMALE",
                                   "taxId": "10000000001",
-                                  "identificationType": "NATIONAL_ID",
+                                  "identificationType": "NATIONAL_ID_CARD",
                                   "identificationNumber": "US10000000001",
                                   "nationality": {"id": 1, "name": "United States", "code": "US", "continent": "NORTH_AMERICA"},
                                   "address": {
                                     "id": 1,
                                     "street": "1842 Maple Grove Avenue",
                                     "district": "North Loop",
+                                    "city": "Austin",
                                     "additionalInfo": "Apartment 3B",
                                     "block": "Building A",
                                     "postalCode": "73000001",
-                                    "state": {"id": 6, "name": "Texas", "abbreviation": "TX"},
+                                    "administrativeDivision": {"id": 6, "name": "Texas", "code": "TX", "type": "STATE"},
                                     "country": {"id": 1, "name": "United States", "code": "US", "continent": "NORTH_AMERICA"}
                                   },
                                   "specialities": []
@@ -314,16 +365,18 @@ class SisdentApplicationTests {
                                   "active": true,
                                   "gender": "FEMALE",
                                   "taxId": "10000000001",
-                                  "identificationType": "NATIONAL_ID",
+                                  "identificationType": "NATIONAL_ID_CARD",
                                   "identificationNumber": "US10000000001",
+                                  "documentIssuerCountryCode": "US",
                                   "nationalityCode": "US",
                                   "address": {
                                     "street": "1842 Maple Grove Avenue",
                                     "district": "North Loop",
+                                    "city": "Austin",
                                     "additionalInfo": "Apartment 3B",
                                     "block": "Building A",
                                     "postalCode": "73000001",
-                                    "state": {"name": "Texas", "abbreviation": "TX"},
+                                    "administrativeDivision": {"name": "Texas", "code": "TX", "type": "STATE"},
                                     "countryCode": "US"
                                   }
                                 }
@@ -338,7 +391,7 @@ class SisdentApplicationTests {
     }
 
     @Test
-    void createsPatientWithAnExistingAddress() throws Exception {
+    void createsPatientWithoutReusingAnExistingPostalCodeAddress() throws Exception {
         String request = """
                 {
                   "name": "Maria Oliveira",
@@ -348,15 +401,17 @@ class SisdentApplicationTests {
                   "taxId": "98765432100",
                   "identificationType": "PASSPORT",
                   "identificationNumber": "BR 12-345 ABC",
+                  "documentIssuerCountryCode": "BR",
                   "nationalityCode": "BR",
                   "specialityIds": [1, 3],
                   "address": {
                     "street": "152 Hudson Square Avenue",
                     "district": "Chelsea",
+                    "city": "New York",
                     "additionalInfo": "Apartment 11D",
                     "block": "North Tower",
                     "postalCode": "10000001",
-                    "state": {"name": "New York", "abbreviation": "NY"},
+                    "administrativeDivision": {"name": "New York", "code": "NY", "type": "STATE"},
                     "countryCode": "US"
                   }
                 }
@@ -413,17 +468,19 @@ class SisdentApplicationTests {
                   "active": true,
                   "gender": "FEMALE",
                   "taxId": "%s",
-                  "identificationType": "NATIONAL_ID",
+                  "identificationType": "NATIONAL_ID_CARD",
                   "identificationNumber": "%s",
+                  "documentIssuerCountryCode": "PT",
                   "nationalityCode": "PT",
                   "specialityIds": [1],
                   "address": {
                     "street": "152 Hudson Square Avenue",
                     "district": "Chelsea",
+                    "city": "New York",
                     "additionalInfo": "Apartment 11D",
                     "block": "North Tower",
                     "postalCode": "10000001",
-                    "state": {"name": "New York", "abbreviation": "NY"},
+                    "administrativeDivision": {"name": "New York", "code": "NY", "type": "STATE"},
                     "countryCode": "US"
                   }
                 }

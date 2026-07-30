@@ -120,7 +120,8 @@ Angular bindings, events, control flow, and encapsulated styles.
   three locales synchronized.
 - The official language for routes and identifiers is English: use `/home`,
   `/users`, `/permissions`, `/patients`, `/specialities`, `/addresses`,
-  `/countries`, and `/states`. Do not create Portuguese route aliases.
+  `/countries`, and `/administrative-divisions`. Do not create Portuguese
+  route aliases.
 - `/home` requires authentication only and has no dedicated permission. After
   login, `AuthService.destination()` must direct authenticated users to
   `/home`.
@@ -207,5 +208,6 @@ calendar labels rather than visible abbreviated month text.
 
 The patient lifecycle test creates a unique patient, updates it, and
 deactivates it. Keep generated test data valid for the API; notably,
-`postalCode` is eight digits. Filter by the generated patient name before
-creating it so server-side pagination does not hide the new record.
+`city` and the document issuer country are required, while postal-code format
+is country-specific. Filter by the generated patient name before creating it
+so server-side pagination does not hide the new record.

@@ -85,7 +85,7 @@ const TABLE_COLUMNS: Record<string, Column[]> = {
     { key: 'street', label: 'Street', sortable: true },
     { key: 'district', label: 'District', sortable: true },
     { key: 'postalCode', label: 'Postal code', sortable: true },
-    { key: 'state', label: 'State' },
+    { key: 'administrativeDivision', label: 'Administrative division' },
     { key: 'country', label: 'Country' },
     { key: 'actions', label: '' },
   ],
@@ -95,17 +95,21 @@ const TABLE_COLUMNS: Record<string, Column[]> = {
     { key: 'continent', label: 'Continent', sortable: true },
     { key: 'actions', label: '' },
   ],
-  states: [
+  administrativeDivisions: [
     { key: 'name', label: 'Name', sortable: true },
-    { key: 'abbreviation', label: 'Abbreviation', sortable: true },
+    { key: 'code', label: 'Code', sortable: true },
+    { key: 'type', label: 'Type', sortable: true },
+    { key: 'country', label: 'Country' },
     { key: 'actions', label: '' },
   ],
 };
 
 const FIELDS = {
-  state: [
+  administrativeDivision: [
     { key: 'name', label: 'Name', required: true },
-    { key: 'abbreviation', label: 'Abbreviation', required: true },
+    { key: 'code', label: 'Code', required: true },
+    { key: 'type', label: 'Type', required: true },
+    { key: 'countryCode', label: 'Country code', required: true },
   ],
   country: [
     { key: 'name', label: 'Name', required: true },
@@ -114,12 +118,14 @@ const FIELDS = {
   ],
   address: [
     { key: 'street', label: 'Street', required: true },
-    { key: 'district', label: 'District', required: true },
+    { key: 'district', label: 'District' },
+    { key: 'city', label: 'City', required: true },
     { key: 'additionalInfo', label: 'Additional information' },
     { key: 'block', label: 'Block' },
-    { key: 'postalCode', label: 'Postal code', required: true },
-    { key: 'stateName', label: 'State name', required: true },
-    { key: 'stateAbbreviation', label: 'State abbreviation', required: true },
+    { key: 'postalCode', label: 'Postal code' },
+    { key: 'administrativeDivisionName', label: 'Administrative division name' },
+    { key: 'administrativeDivisionCode', label: 'Administrative division code' },
+    { key: 'administrativeDivisionType', label: 'Administrative division type' },
     { key: 'countryCode', label: 'Country code', required: true },
   ],
   speciality: [
@@ -162,14 +168,14 @@ const FIELDS = {
         { value: 'OTHER', label: 'Other' },
       ],
     },
-    { key: 'taxId', label: 'Tax ID', required: true, section: 'Personal details' },
+    { key: 'taxId', label: 'Tax ID', section: 'Personal details' },
     {
       key: 'identificationType',
       label: 'Identification type',
       required: true,
       section: 'Identification',
       options: [
-        { value: 'NATIONAL_ID', label: 'National ID' },
+        { value: 'NATIONAL_ID_CARD', label: 'National ID card' },
         { value: 'PASSPORT', label: 'Passport' },
       ],
     },
@@ -180,34 +186,44 @@ const FIELDS = {
       section: 'Identification',
     },
     {
+      key: 'documentIssuerCountryCode',
+      label: 'Document issuer country code',
+      required: true,
+      section: 'Identification',
+    },
+    {
       key: 'nationalityCode',
       label: 'Nationality country code',
       required: true,
       section: 'Nationality',
     },
     { key: 'street', label: 'Street', required: true, section: 'Address', fullWidth: true },
-    { key: 'district', label: 'District', required: true, section: 'Address' },
+    { key: 'district', label: 'District', section: 'Address' },
+    { key: 'city', label: 'City', required: true, section: 'Address' },
     { key: 'additionalInfo', label: 'Additional information', section: 'Address' },
     { key: 'block', label: 'Block', section: 'Address' },
-    { key: 'postalCode', label: 'Postal code', required: true, section: 'Address' },
-    { key: 'stateName', label: 'State name', required: true, section: 'Address' },
-    { key: 'stateAbbreviation', label: 'State abbreviation', required: true, section: 'Address' },
+    { key: 'postalCode', label: 'Postal code', section: 'Address' },
+    { key: 'administrativeDivisionName', label: 'Administrative division name', section: 'Address' },
+    { key: 'administrativeDivisionCode', label: 'Administrative division code', section: 'Address' },
+    { key: 'administrativeDivisionType', label: 'Administrative division type', section: 'Address' },
     { key: 'countryCode', label: 'Address country code', required: true, section: 'Address' },
     { key: 'specialityIds', label: 'Specialities', section: 'Specialities', fullWidth: true },
   ],
 } as const;
 
 const addressValues = (record: Record<string, unknown>): FormValues => {
-  const state = record['state'] as Record<string, unknown> | undefined;
+  const division = record['administrativeDivision'] as Record<string, unknown> | undefined;
   const country = record['country'] as Record<string, unknown> | undefined;
   return {
     street: String(record['street'] ?? ''),
     district: String(record['district'] ?? ''),
+    city: String(record['city'] ?? ''),
     additionalInfo: String(record['additionalInfo'] ?? ''),
     block: String(record['block'] ?? ''),
     postalCode: String(record['postalCode'] ?? ''),
-    stateName: String(state?.['name'] ?? ''),
-    stateAbbreviation: String(state?.['abbreviation'] ?? ''),
+    administrativeDivisionName: String(division?.['name'] ?? ''),
+    administrativeDivisionCode: String(division?.['code'] ?? ''),
+    administrativeDivisionType: String(division?.['type'] ?? ''),
     countryCode: String(country?.['code'] ?? ''),
   };
 };
@@ -215,10 +231,17 @@ const addressValues = (record: Record<string, unknown>): FormValues => {
 const addressRequest = (value: FormValues) => ({
   street: value['street'],
   district: value['district'],
+  city: value['city'],
   additionalInfo: value['additionalInfo'] || null,
   block: value['block'] || null,
-  postalCode: value['postalCode'],
-  state: { name: value['stateName'], abbreviation: value['stateAbbreviation'] },
+  postalCode: value['postalCode'] || null,
+  administrativeDivision: value['administrativeDivisionCode']
+    ? {
+        name: value['administrativeDivisionName'],
+        code: value['administrativeDivisionCode'],
+        type: value['administrativeDivisionType'],
+      }
+    : null,
   countryCode: value['countryCode'],
 });
 const parseProcedures = (value: string): ProcedureOption[] => {
@@ -237,12 +260,16 @@ const parseProcedures = (value: string): ProcedureOption[] => {
   }
 };
 const SCHEMAS: Record<string, FormSchema> = {
-  states: {
-    fields: [...FIELDS.state],
+  administrativeDivisions: {
+    fields: [...FIELDS.administrativeDivision],
     toRequest: (value) => value,
     fromRecord: (record) => ({
       name: String(record['name'] ?? ''),
-      abbreviation: String(record['abbreviation'] ?? ''),
+      code: String(record['code'] ?? ''),
+      type: String(record['type'] ?? ''),
+      countryCode: String(
+        (record['country'] as Record<string, unknown> | undefined)?.['code'] ?? '',
+      ),
     }),
   },
   countries: {
@@ -273,9 +300,10 @@ const SCHEMAS: Record<string, FormSchema> = {
       birthDate: value['birthDate'],
       active: value['active'] === 'true',
       gender: value['gender'],
-      taxId: value['taxId'],
+      taxId: value['taxId'] || null,
       identificationType: value['identificationType'],
       identificationNumber: value['identificationNumber'],
+      documentIssuerCountryCode: value['documentIssuerCountryCode'],
       nationalityCode: value['nationalityCode'],
       address: addressRequest(value),
       specialityIds: value['specialityIds']
@@ -292,6 +320,9 @@ const SCHEMAS: Record<string, FormSchema> = {
       taxId: String(record['taxId'] ?? ''),
       identificationType: String(record['identificationType'] ?? ''),
       identificationNumber: String(record['identificationNumber'] ?? ''),
+      documentIssuerCountryCode: String(
+        (record['documentIssuerCountry'] as Record<string, unknown> | undefined)?.['code'] ?? '',
+      ),
       nationalityCode: String(
         (record['nationality'] as Record<string, unknown> | undefined)?.['code'] ?? '',
       ),
@@ -595,7 +626,7 @@ export class ResourceListComponent {
   value(record: Record<string, unknown>, key: string): string {
     if (key === 'primary') return this.primary(record);
     if (key === 'secondary') return this.secondary(record);
-    if (key === 'nationality' || key === 'country' || key === 'state')
+    if (key === 'nationality' || key === 'country' || key === 'administrativeDivision')
       return String((record[key] as Record<string, unknown> | undefined)?.['name'] ?? '—');
     if (key === 'address') {
       const address = record[key] as Record<string, unknown> | undefined;

@@ -1,17 +1,17 @@
 package br.com.itbn.sisdent.config;
 
 import br.com.itbn.sisdent.model.Address;
+import br.com.itbn.sisdent.model.AdministrativeDivision;
 import br.com.itbn.sisdent.model.Continent;
 import br.com.itbn.sisdent.model.Country;
+import br.com.itbn.sisdent.model.DocumentType;
 import br.com.itbn.sisdent.model.Gender;
-import br.com.itbn.sisdent.model.IdentificationType;
 import br.com.itbn.sisdent.model.Patient;
-import br.com.itbn.sisdent.model.State;
 import br.com.itbn.sisdent.model.Speciality;
+import br.com.itbn.sisdent.repository.AdministrativeDivisionRepository;
 import br.com.itbn.sisdent.repository.AddressRepository;
 import br.com.itbn.sisdent.repository.CountryRepository;
 import br.com.itbn.sisdent.repository.PatientRepository;
-import br.com.itbn.sisdent.repository.StateRepository;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ public class InitialDataLoader implements ApplicationRunner {
 
     private final JsonMapper jsonMapper;
     private final CountryRepository countryRepository;
-    private final StateRepository stateRepository;
+    private final AdministrativeDivisionRepository administrativeDivisionRepository;
     private final SpecialityRepository specialityRepository;
     private final AddressRepository addressRepository;
     private final PatientRepository patientRepository;
@@ -48,13 +48,13 @@ public class InitialDataLoader implements ApplicationRunner {
     public InitialDataLoader(
             JsonMapper jsonMapper,
             CountryRepository countryRepository,
-            StateRepository stateRepository,
+            AdministrativeDivisionRepository administrativeDivisionRepository,
             SpecialityRepository specialityRepository,
             AddressRepository addressRepository,
             PatientRepository patientRepository) {
         this.jsonMapper = jsonMapper;
         this.countryRepository = countryRepository;
-        this.stateRepository = stateRepository;
+        this.administrativeDivisionRepository = administrativeDivisionRepository;
         this.specialityRepository = specialityRepository;
         this.addressRepository = addressRepository;
         this.patientRepository = patientRepository;
@@ -65,11 +65,14 @@ public class InitialDataLoader implements ApplicationRunner {
     public void run(ApplicationArguments arguments) throws IOException {
         InitialData initialData = readInitialData();
         Map<String, Country> countriesByCode = saveCountries(initialData.countries());
-        Map<String, State> statesByAbbreviation = saveStates(initialData.states());
+        Map<String, AdministrativeDivision> divisionsByCode = saveAdministrativeDivisions(
+                initialData.administrativeDivisions(),
+                countriesByCode,
+                initialData.seedDefaults().addressCountryCode());
         Map<String, Speciality> specialitiesByName = saveSpecialities(initialData.specialities());
         Map<String, Address> addressesByReference = saveAddresses(
                 initialData.addresses(),
-                statesByAbbreviation,
+                divisionsByCode,
                 countriesByCode,
                 initialData.seedDefaults().addressCountryCode());
         savePatients(
@@ -80,10 +83,10 @@ public class InitialDataLoader implements ApplicationRunner {
                 initialData.seedDefaults());
 
         LOGGER.info(
-                "Initial data synchronized from {}: {} countries, {} states, {} specialities, {} addresses and {} patients",
+                "Initial data synchronized from {}: {} countries, {} administrative divisions, {} specialities, {} addresses and {} patients",
                 INITIAL_DATA_PATH,
                 initialData.countries().size(),
-                initialData.states().size(),
+                initialData.administrativeDivisions().size(),
                 initialData.specialities().size(),
                 initialData.addresses().size(),
                 initialData.patients().size());
@@ -106,15 +109,24 @@ public class InitialDataLoader implements ApplicationRunner {
         }
     }
 
-    private Map<String, State> saveStates(List<StateData> states) {
-        List<State> savedStates = states.stream()
-                .map(state -> stateRepository.findByAbbreviation(state.abbreviation())
-                        .orElseGet(() -> stateRepository.save(
-                                new State(state.name(), state.abbreviation()))))
+    private Map<String, AdministrativeDivision> saveAdministrativeDivisions(
+            List<AdministrativeDivisionData> divisions,
+            Map<String, Country> countriesByCode,
+            String countryCode) {
+        Country country = requireReference(countriesByCode, countryCode, "country code");
+        List<AdministrativeDivision> savedDivisions = divisions.stream()
+                .map(division -> administrativeDivisionRepository
+                        .findByCountry_CodeAndCode(countryCode, division.code())
+                        .orElseGet(() -> administrativeDivisionRepository.save(
+                                new AdministrativeDivision(
+                                        division.name(),
+                                        division.code(),
+                                        division.type(),
+                                        country))))
                 .toList();
 
-        return savedStates.stream()
-                .collect(Collectors.toMap(State::getAbbreviation, Function.identity()));
+        return savedDivisions.stream()
+                .collect(Collectors.toMap(AdministrativeDivision::getCode, Function.identity()));
     }
 
     private Map<String, Speciality> saveSpecialities(List<SpecialityData> specialities) {
@@ -130,23 +142,30 @@ public class InitialDataLoader implements ApplicationRunner {
 
     private Map<String, Address> saveAddresses(
             List<AddressData> addresses,
-            Map<String, State> statesByAbbreviation,
+            Map<String, AdministrativeDivision> divisionsByCode,
             Map<String, Country> countriesByCode,
             String addressCountryCode) {
         return addresses.stream()
                 .collect(Collectors.toMap(
                         AddressData::reference,
-                        address -> addressRepository.findByPostalCode(address.postalCode())
+                        address -> addressRepository
+                                .findAllByCountry_CodeAndPostalCodeOrderByStreet(
+                                        addressCountryCode,
+                                        address.postalCode())
+                                .stream()
+                                .filter(existing -> existing.getStreet().equals(address.street()))
+                                .findFirst()
                                 .orElseGet(() -> addressRepository.save(new Address(
                                         address.street(),
                                         address.district(),
+                                        address.city() == null ? address.district() : address.city(),
                                         address.additionalInfo(),
                                         address.block(),
                                         address.postalCode(),
                                         requireReference(
-                                                statesByAbbreviation,
-                                                address.stateAbbreviation(),
-                                                "state abbreviation"),
+                                                divisionsByCode,
+                                                address.administrativeDivisionCode(),
+                                                "administrative division code"),
                                         requireReference(
                                                 countriesByCode,
                                                 addressCountryCode,
@@ -169,6 +188,10 @@ public class InitialDataLoader implements ApplicationRunner {
                         patient.taxId(),
                         seedDefaults.identificationType(),
                         seedDefaults.identificationPrefix() + patient.taxId(),
+                        requireReference(
+                                countriesByCode,
+                                seedDefaults.patientNationalityCode(),
+                                "document issuer country code"),
                         requireReference(
                                 countriesByCode,
                                 seedDefaults.patientNationalityCode(),
@@ -198,7 +221,7 @@ public class InitialDataLoader implements ApplicationRunner {
     public record InitialData(
             List<CountryData> countries,
             SeedDefaults seedDefaults,
-            List<StateData> states,
+            List<AdministrativeDivisionData> administrativeDivisions,
             List<SpecialityData> specialities,
             List<AddressData> addresses,
             List<PatientData> patients) {
@@ -210,11 +233,11 @@ public class InitialDataLoader implements ApplicationRunner {
     public record SeedDefaults(
             String addressCountryCode,
             String patientNationalityCode,
-            IdentificationType identificationType,
+            DocumentType identificationType,
             String identificationPrefix) {
     }
 
-    public record StateData(String name, String abbreviation) {
+    public record AdministrativeDivisionData(String name, String code, String type) {
     }
 
     public record SpecialityData(String name, List<String> procedures) {
@@ -224,10 +247,11 @@ public class InitialDataLoader implements ApplicationRunner {
             String reference,
             String street,
             String district,
+            String city,
             String additionalInfo,
             String block,
             String postalCode,
-            String stateAbbreviation) {
+            String administrativeDivisionCode) {
     }
 
     public record PatientData(

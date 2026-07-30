@@ -45,7 +45,7 @@ export class PermissionsComponent {
     { key: 'SPECIALITIES', permissions: ['READ_SPECIALITIES', 'MAINTAIN_SPECIALITIES'] },
     { key: 'ADDRESSES', permissions: ['READ_ADDRESSES', 'MAINTAIN_ADDRESSES'] },
     { key: 'COUNTRIES', permissions: ['READ_COUNTRIES', 'MAINTAIN_COUNTRIES'] },
-    { key: 'STATES', permissions: ['READ_STATES', 'MAINTAIN_STATES'] },
+    { key: 'ADMINISTRATIVE_DIVISIONS', permissions: ['READ_ADMINISTRATIVE_DIVISIONS', 'MAINTAIN_ADMINISTRATIVE_DIVISIONS'] },
     { key: 'PERMISSIONS', permissions: ['READ_PERMISSIONS', 'MAINTAIN_PERMISSIONS'] },
   ];
   readonly filteredGroups = computed(() => { this.revision(); const q = this.search().trim().toLowerCase();

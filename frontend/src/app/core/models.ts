@@ -1,4 +1,5 @@
 export type IdentificationType = 'NATIONAL_ID' | 'PASSPORT';
+export type PatientDocumentType = 'NATIONAL_ID_CARD' | 'PASSPORT';
 export type Role = 'ADMIN' | 'MANAGER' | 'USER';
 export type Permission =
   | 'READ_USERS'
@@ -11,8 +12,8 @@ export type Permission =
   | 'MAINTAIN_ADDRESSES'
   | 'READ_COUNTRIES'
   | 'MAINTAIN_COUNTRIES'
-  | 'READ_STATES'
-  | 'MAINTAIN_STATES'
+  | 'READ_ADMINISTRATIVE_DIVISIONS'
+  | 'MAINTAIN_ADMINISTRATIVE_DIVISIONS'
   | 'READ_PERMISSIONS'
   | 'MAINTAIN_PERMISSIONS';
 

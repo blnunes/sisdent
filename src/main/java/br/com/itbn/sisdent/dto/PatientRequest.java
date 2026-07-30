@@ -1,7 +1,7 @@
 package br.com.itbn.sisdent.dto;
 
 import br.com.itbn.sisdent.model.Gender;
-import br.com.itbn.sisdent.model.IdentificationType;
+import br.com.itbn.sisdent.model.DocumentType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,10 +16,11 @@ public record PatientRequest(
         @NotNull @Past LocalDate birthDate,
         @NotNull Boolean active,
         @NotNull Gender gender,
-        @NotBlank @Pattern(regexp = "\\d{11}") String taxId,
-        @NotNull IdentificationType identificationType,
+        @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9 -]{2,31}") String taxId,
+        @NotNull DocumentType identificationType,
         @NotBlank @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9 -]{2,63}")
         String identificationNumber,
+        @NotBlank @Pattern(regexp = "[A-Z]{2}") String documentIssuerCountryCode,
         @NotBlank @Pattern(regexp = "[A-Z]{2}") String nationalityCode,
         @NotNull @Valid AddressRequest address,
         @NotNull Set<@NotNull Long> specialityIds) {

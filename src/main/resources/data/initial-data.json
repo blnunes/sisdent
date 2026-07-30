@@ -84,7 +84,7 @@
   "seedDefaults": {
     "addressCountryCode": "US",
     "patientNationalityCode": "US",
-    "identificationType": "NATIONAL_ID",
+    "identificationType": "NATIONAL_ID_CARD",
     "identificationPrefix": "US"
   },
   "specialities": [
@@ -137,15 +137,15 @@
       "procedures": ["Dental crown placement", "Denture fitting"]
     }
   ],
-  "states": [
-    { "name": "California", "abbreviation": "CA" },
-    { "name": "Florida", "abbreviation": "FL" },
-    { "name": "Illinois", "abbreviation": "IL" },
-    { "name": "Massachusetts", "abbreviation": "MA" },
-    { "name": "New York", "abbreviation": "NY" },
-    { "name": "Texas", "abbreviation": "TX" },
-    { "name": "Virginia", "abbreviation": "VA" },
-    { "name": "Washington", "abbreviation": "WA" }
+  "administrativeDivisions": [
+    { "name": "California", "code": "CA", "type": "STATE" },
+    { "name": "Florida", "code": "FL", "type": "STATE" },
+    { "name": "Illinois", "code": "IL", "type": "STATE" },
+    { "name": "Massachusetts", "code": "MA", "type": "STATE" },
+    { "name": "New York", "code": "NY", "type": "STATE" },
+    { "name": "Texas", "code": "TX", "type": "STATE" },
+    { "name": "Virginia", "code": "VA", "type": "STATE" },
+    { "name": "Washington", "code": "WA", "type": "STATE" }
   ],
   "addresses": [
     {
@@ -155,7 +155,7 @@
       "additionalInfo": "Apartment 3B",
       "block": "Building A",
       "postalCode": "73000001",
-      "stateAbbreviation": "TX"
+      "administrativeDivisionCode": "TX"
     },
     {
       "reference": "cedar-park-dallas",
@@ -164,7 +164,7 @@
       "additionalInfo": "Unit 12",
       "block": "Building C",
       "postalCode": "73000002",
-      "stateAbbreviation": "TX"
+      "administrativeDivisionCode": "TX"
     },
     {
       "reference": "sunset-ridge-miami",
@@ -173,7 +173,7 @@
       "additionalInfo": "Apartment 8A",
       "block": "Tower South",
       "postalCode": "33000001",
-      "stateAbbreviation": "FL"
+      "administrativeDivisionCode": "FL"
     },
     {
       "reference": "palm-harbor-orlando",
@@ -182,7 +182,7 @@
       "additionalInfo": "Suite 204",
       "block": "Building B",
       "postalCode": "33000002",
-      "stateAbbreviation": "FL"
+      "administrativeDivisionCode": "FL"
     },
     {
       "reference": "pacific-view-seattle",
@@ -191,7 +191,7 @@
       "additionalInfo": "Apartment 14",
       "block": "West Wing",
       "postalCode": "98000001",
-      "stateAbbreviation": "WA"
+      "administrativeDivisionCode": "WA"
     },
     {
       "reference": "rainier-court-tacoma",
@@ -200,7 +200,7 @@
       "additionalInfo": "Unit 5",
       "block": "Building D",
       "postalCode": "98000002",
-      "stateAbbreviation": "WA"
+      "administrativeDivisionCode": "WA"
     },
     {
       "reference": "harbor-point-boston",
@@ -209,7 +209,7 @@
       "additionalInfo": "Apartment 6C",
       "block": "East Building",
       "postalCode": "02000001",
-      "stateAbbreviation": "MA"
+      "administrativeDivisionCode": "MA"
     },
     {
       "reference": "willow-brook-cambridge",
@@ -218,7 +218,7 @@
       "additionalInfo": "Unit 9",
       "block": "Building A",
       "postalCode": "02000002",
-      "stateAbbreviation": "MA"
+      "administrativeDivisionCode": "MA"
     },
     {
       "reference": "hudson-square-new-york",
@@ -227,7 +227,7 @@
       "additionalInfo": "Apartment 11D",
       "block": "North Tower",
       "postalCode": "10000001",
-      "stateAbbreviation": "NY"
+      "administrativeDivisionCode": "NY"
     },
     {
       "reference": "oak-terrace-brooklyn",
@@ -236,7 +236,7 @@
       "additionalInfo": "Apartment 4F",
       "block": "Building 2",
       "postalCode": "10000002",
-      "stateAbbreviation": "NY"
+      "administrativeDivisionCode": "NY"
     },
     {
       "reference": "lake-shore-chicago",
@@ -245,7 +245,7 @@
       "additionalInfo": "Unit 17B",
       "block": "Tower One",
       "postalCode": "60000001",
-      "stateAbbreviation": "IL"
+      "administrativeDivisionCode": "IL"
     },
     {
       "reference": "prairie-stone-evanston",
@@ -254,7 +254,7 @@
       "additionalInfo": "Apartment 2A",
       "block": "Building F",
       "postalCode": "60000002",
-      "stateAbbreviation": "IL"
+      "administrativeDivisionCode": "IL"
     },
     {
       "reference": "golden-gate-san-francisco",
@@ -263,7 +263,7 @@
       "additionalInfo": "Apartment 7",
       "block": "West Court",
       "postalCode": "90000001",
-      "stateAbbreviation": "CA"
+      "administrativeDivisionCode": "CA"
     },
     {
       "reference": "mission-garden-san-diego",
@@ -272,7 +272,7 @@
       "additionalInfo": "Unit 10C",
       "block": "Building E",
       "postalCode": "90000002",
-      "stateAbbreviation": "CA"
+      "administrativeDivisionCode": "CA"
     },
     {
       "reference": "capitol-oaks-sacramento",
@@ -281,7 +281,7 @@
       "additionalInfo": "Apartment 15A",
       "block": "South Tower",
       "postalCode": "90000003",
-      "stateAbbreviation": "CA"
+      "administrativeDivisionCode": "CA"
     },
     {
       "reference": "bluebonnet-hill-houston",
@@ -290,7 +290,7 @@
       "additionalInfo": "Unit 4",
       "block": "Building B",
       "postalCode": "73000003",
-      "stateAbbreviation": "TX"
+      "administrativeDivisionCode": "TX"
     },
     {
       "reference": "potomac-view-arlington",
@@ -299,7 +299,7 @@
       "additionalInfo": "Apartment 9C",
       "block": "East Tower",
       "postalCode": "22000001",
-      "stateAbbreviation": "VA"
+      "administrativeDivisionCode": "VA"
     },
     {
       "reference": "magnolia-crossing-richmond",
@@ -308,7 +308,7 @@
       "additionalInfo": "Unit 6",
       "block": "Building H",
       "postalCode": "22000002",
-      "stateAbbreviation": "VA"
+      "administrativeDivisionCode": "VA"
     },
     {
       "reference": "atlantic-meadow-buffalo",
@@ -317,7 +317,7 @@
       "additionalInfo": "Apartment 3D",
       "block": "North Building",
       "postalCode": "10000003",
-      "stateAbbreviation": "NY"
+      "administrativeDivisionCode": "NY"
     },
     {
       "reference": "cypress-bend-tampa",
@@ -326,7 +326,7 @@
       "additionalInfo": "Unit 21",
       "block": "Building G",
       "postalCode": "33000003",
-      "stateAbbreviation": "FL"
+      "administrativeDivisionCode": "FL"
     }
   ],
   "patients": [
