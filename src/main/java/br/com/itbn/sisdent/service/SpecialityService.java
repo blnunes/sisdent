@@ -8,9 +8,14 @@ import br.com.itbn.sisdent.mapper.ResponseMapper;
 import br.com.itbn.sisdent.pagination.PageQuery;
 import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.pagination.SortDefinition;
+import br.com.itbn.sisdent.dto.FilterOptionResponse;
+import br.com.itbn.sisdent.filter.SpecialityFilter;
+import br.com.itbn.sisdent.filter.SpecialitySpecifications;
 import br.com.itbn.sisdent.model.Speciality;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,8 +47,22 @@ public class SpecialityService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<SpecialityResponse> findPage(PageQuery query) {
-        return PageResponse.from(specialityRepository.findAll(pageableFactory.create(query, SORT_DEFINITION)), ResponseMapper::toResponse);
+    public PageResponse<SpecialityResponse> findPage(PageQuery query, SpecialityFilter filter) {
+        return PageResponse.from(specialityRepository.findAll(
+                SpecialitySpecifications.matching(filter), pageableFactory.create(query, SORT_DEFINITION)), ResponseMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FilterOptionResponse> findFilterOptions(String field, String query) {
+        Pageable limit = PageRequest.of(0, 10);
+        String term = query == null ? "" : query.trim();
+        return switch (field) {
+            case "name" -> specialityRepository.findNameSuggestions(term, limit).stream()
+                    .map(value -> new FilterOptionResponse(value, value)).toList();
+            case "procedure" -> specialityRepository.findProcedureSuggestions(term, limit).stream()
+                    .map(value -> new FilterOptionResponse(value, value)).toList();
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported filter field");
+        };
     }
 
     @Transactional

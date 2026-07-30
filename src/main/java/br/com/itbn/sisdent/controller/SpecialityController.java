@@ -3,8 +3,11 @@ package br.com.itbn.sisdent.controller;
 import br.com.itbn.sisdent.dto.SpecialityRequest;
 import br.com.itbn.sisdent.dto.SpecialityResponse;
 import br.com.itbn.sisdent.dto.PageResponse;
+import br.com.itbn.sisdent.dto.FilterOptionResponse;
 import br.com.itbn.sisdent.service.SpecialityService;
 import br.com.itbn.sisdent.pagination.PageQuery;
+import br.com.itbn.sisdent.filter.SpecialityFilter;
+import java.util.List;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,8 +36,17 @@ public class SpecialityController {
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String sort,
-            @RequestParam(required = false) String direction) {
-        return specialityService.findPage(new PageQuery(page, size, sort, direction));
+            @RequestParam(required = false) String direction,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String procedure) {
+        return specialityService.findPage(new PageQuery(page, size, sort, direction), new SpecialityFilter(name, procedure));
+    }
+
+    @GetMapping("/filter-options")
+    public List<FilterOptionResponse> findFilterOptions(
+            @RequestParam String field,
+            @RequestParam(required = false) String query) {
+        return specialityService.findFilterOptions(field, query);
     }
 
     @PostMapping

@@ -39,7 +39,13 @@ export const routes: Routes = [
     path: 'specialities',
     canActivate: [authGuard, anyPermissionsGuard('READ_SPECIALITIES', 'MAINTAIN_SPECIALITIES')],
     loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
-    data: { key: 'specialities', endpoint: '/api/specialities', title: 'MODULES.SPECIALITIES', description: 'MODULES.SPECIALITIES_DESCRIPTION', maintainPermission: 'MAINTAIN_SPECIALITIES' },
+    data: {
+      key: 'specialities', endpoint: '/api/specialities', title: 'MODULES.SPECIALITIES', description: 'MODULES.SPECIALITIES_DESCRIPTION', maintainPermission: 'MAINTAIN_SPECIALITIES',
+      filters: [
+        { key: 'name', label: 'RESOURCE.FILTER.NAME', type: 'autocomplete' },
+        { key: 'procedure', label: 'Procedures', type: 'autocomplete' },
+      ],
+    },
   },
   {
     path: 'addresses',

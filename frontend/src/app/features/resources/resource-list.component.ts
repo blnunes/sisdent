@@ -50,6 +50,7 @@ type ResourceConfig = {
 };
 type SelectOption = { value: string; label: string };
 type SpecialityOption = { id: number; name: string };
+type ProcedureOption = { id?: number; name: string };
 type Field = {
   key: string;
   label: string;
@@ -123,7 +124,7 @@ const FIELDS = {
   ],
   speciality: [
     { key: 'name', label: 'Name', required: true },
-    { key: 'procedures', label: 'Procedures (comma-separated)', required: true },
+    { key: 'procedures', label: 'Procedures', required: true, fullWidth: true },
   ],
   patient: [
     {
@@ -220,6 +221,21 @@ const addressRequest = (value: FormValues) => ({
   state: { name: value['stateName'], abbreviation: value['stateAbbreviation'] },
   countryCode: value['countryCode'],
 });
+const parseProcedures = (value: string): ProcedureOption[] => {
+  try {
+    const procedures = JSON.parse(value) as unknown;
+    if (!Array.isArray(procedures)) return [];
+    return procedures.flatMap((procedure) => {
+      if (!procedure || typeof procedure !== 'object') return [];
+      const { id, name } = procedure as Record<string, unknown>;
+      const normalizedName = String(name ?? '').trim();
+      if (!normalizedName) return [];
+      return [{ ...(typeof id === 'number' ? { id } : {}), name: normalizedName }];
+    });
+  } catch {
+    return [];
+  }
+};
 const SCHEMAS: Record<string, FormSchema> = {
   states: {
     fields: [...FIELDS.state],
@@ -243,17 +259,11 @@ const SCHEMAS: Record<string, FormSchema> = {
     fields: [...FIELDS.speciality],
     toRequest: (value) => ({
       name: value['name'],
-      procedures: value['procedures']
-        .split(',')
-        .map((name) => name.trim())
-        .filter(Boolean)
-        .map((name) => ({ name })),
+      procedures: parseProcedures(value['procedures']),
     }),
     fromRecord: (record) => ({
       name: String(record['name'] ?? ''),
-      procedures: ((record['procedures'] as Record<string, unknown>[] | undefined) ?? [])
-        .map((procedure) => String(procedure['name']))
-        .join(', '),
+      procedures: JSON.stringify(record['procedures'] ?? []),
     }),
   },
   patients: {
@@ -595,6 +605,11 @@ export class ResourceListComponent {
       return ((record[key] as Record<string, unknown>[] | undefined) ?? [])
         .map((speciality) => String(speciality['name']))
         .join(', ');
+    if (key === 'procedures')
+      return ((record[key] as Record<string, unknown>[] | undefined) ?? [])
+        .map((procedure) => String(procedure['name'] ?? ''))
+        .filter(Boolean)
+        .join(', ') || '—';
     if (key === 'active') return record[key] ? 'Active' : 'Inactive';
     return String(record[key] ?? '—');
   }
@@ -636,6 +651,8 @@ export class ResourceFormDialog {
   );
   readonly selectedSpecialities = signal<SpecialityOption[]>(this.initialSpecialities());
   readonly specialityToAdd = signal<number | null>(null);
+  readonly selectedProcedures = signal<ProcedureOption[]>(this.initialProcedures());
+  readonly procedureNameToAdd = signal('');
   readonly availableSpecialities = computed(() => {
     const selectedIds = new Set(this.selectedSpecialities().map((speciality) => speciality.id));
     return (this.data.specialities ?? []).filter((speciality) => !selectedIds.has(speciality.id));
@@ -647,7 +664,10 @@ export class ResourceFormDialog {
     return this.data.fields.filter((field) => (field.section ?? 'Record details') === section);
   }
   save(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     const values = Object.fromEntries(
       this.data.fields.map((field) => {
         const value = this.form.get(field.key)?.value;
@@ -657,7 +677,9 @@ export class ResourceFormDialog {
             ? this.selectedSpecialities()
                 .map((speciality) => speciality.id)
                 .join(',')
-            : value instanceof Date
+            : field.key === 'procedures'
+              ? JSON.stringify(this.selectedProcedures())
+              : value instanceof Date
               ? this.toIsoDate(value)
               : String(value ?? ''),
         ];
@@ -694,6 +716,20 @@ export class ResourceFormDialog {
     );
     this.syncSpecialitiesControl();
   }
+  setProcedureName(value: string): void {
+    this.procedureNameToAdd.set(value);
+  }
+  addProcedure(): void {
+    const name = this.procedureNameToAdd().trim();
+    if (!name || this.selectedProcedures().some((procedure) => procedure.name.toLowerCase() === name.toLowerCase())) return;
+    this.selectedProcedures.update((current) => [...current, { name }]);
+    this.procedureNameToAdd.set('');
+    this.syncProceduresControl();
+  }
+  removeProcedure(procedure: ProcedureOption): void {
+    this.selectedProcedures.update((current) => current.filter((item) => item !== procedure));
+    this.syncProceduresControl();
+  }
   private initialSpecialities(): SpecialityOption[] {
     const ids = new Set(
       (this.data.values?.['specialityIds'] ?? '')
@@ -709,6 +745,12 @@ export class ResourceFormDialog {
         .map((speciality) => speciality.id)
         .join(','),
     );
+  }
+  private initialProcedures(): ProcedureOption[] {
+    return parseProcedures(this.data.values?.['procedures'] ?? '');
+  }
+  private syncProceduresControl(): void {
+    this.form.get('procedures')?.setValue(JSON.stringify(this.selectedProcedures()));
   }
   private toIsoDate(value: Date): string {
     return [

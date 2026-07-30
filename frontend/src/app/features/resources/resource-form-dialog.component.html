@@ -85,6 +85,36 @@
                   <p class="empty-specialities">No specialities selected yet.</p>
                 }
               </div>
+            } @else if (field.key === 'procedures') {
+              <div class="procedures-editor full-width">
+                <div class="procedure-add">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Add procedure</mat-label>
+                    <input matInput [value]="procedureNameToAdd()" (input)="setProcedureName($any($event.target).value)" (keydown.enter)="$event.preventDefault(); addProcedure()" />
+                  </mat-form-field>
+                  <button mat-stroked-button type="button" (click)="addProcedure()" [disabled]="!procedureNameToAdd().trim()">
+                    <mat-icon>add</mat-icon>Add procedure
+                  </button>
+                  <p>Add one procedure at a time. You can remove an item before saving.</p>
+                </div>
+                @if (selectedProcedures().length) {
+                  <div class="procedures-table" role="region" aria-label="Selected procedures">
+                    <table>
+                      <thead><tr><th>Procedure</th><th aria-label="Actions"></th></tr></thead>
+                      <tbody>
+                        @for (procedure of selectedProcedures(); track procedure.id ?? procedure.name) {
+                          <tr>
+                            <td><span class="procedure-chip">{{ procedure.name }}</span></td>
+                            <td><button mat-icon-button type="button" class="remove-procedure" [attr.aria-label]="'Remove procedure: ' + procedure.name" matTooltip="Remove procedure" (click)="removeProcedure(procedure)"><mat-icon>delete_outline</mat-icon></button></td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                } @else {
+                  <p class="empty-procedures" [class.validation-error]="form.get('procedures')?.touched">Add at least one procedure.</p>
+                }
+              </div>
             } @else if (field.type === 'date') {
               <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
                 <mat-label>{{ field.label }}</mat-label>
