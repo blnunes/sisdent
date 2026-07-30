@@ -91,10 +91,14 @@ export class AuthService {
     );
   }
 
-  selectMembership(membership: Membership | null): void {
-    if (membership) localStorage.setItem(MEMBERSHIP_KEY, membership.id);
+  selectMembership(membership: Membership | string | null): void {
+    const selectedMembership = typeof membership === 'string'
+      ? (this.sessionState()?.memberships ?? this.payload()?.memberships ?? [])
+          .find(({ id }) => id === membership) ?? null
+      : membership;
+    if (selectedMembership) localStorage.setItem(MEMBERSHIP_KEY, selectedMembership.id);
     else localStorage.removeItem(MEMBERSHIP_KEY);
-    this.activeMembershipId.set(membership?.id ?? null);
+    this.activeMembershipId.set(selectedMembership?.id ?? null);
   }
 
   logout(): void {

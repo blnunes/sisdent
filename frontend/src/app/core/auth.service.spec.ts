@@ -99,6 +99,31 @@ describe('AuthService', () => {
     expect(service.destination()).toBe('/email-enrollment');
   });
 
+  it('selects the requested membership when the header supplies its ID', () => {
+    service.login({ email: 'group.admin@sisdent.demo', password: 'odonto2026@O' }).subscribe();
+    http.expectOne('/api/auth/login').flush({
+      accessToken: jwt({ accountId: 'group-admin', email: 'group.admin@sisdent.demo', platformAdministrator: false, memberships: [], authorities: [], exp: futureExpiration() }),
+      tokenType: 'Bearer',
+      expiresIn: 3600,
+    });
+    http.expectOne('/api/session').flush({
+      accountId: 'group-admin',
+      email: 'group.admin@sisdent.demo',
+      displayName: 'Demo Group Administrator',
+      platformAdministrator: false,
+      emailMigrationRequired: false,
+      memberships: [
+        { id: 'northstar-membership', organizationId: 'northstar', organizationName: 'Northstar Dental Group', role: 'ORGANIZATION_ADMIN' },
+        { id: 'southstart-membership', organizationId: 'southstart', organizationName: 'Southstart Dental Group', role: 'ORGANIZATION_ADMIN' },
+      ],
+    });
+
+    service.selectMembership('southstart-membership');
+
+    expect(service.activeMembership()?.organizationName).toBe('Southstart Dental Group');
+    expect(localStorage.getItem('sisdent.active-membership')).toBe('southstart-membership');
+  });
+
   it('returns the controlled verification outcome without authentication', () => {
     let status = '';
     service.verifyEmail('invalid-token').subscribe((response) => (status = response.status));
