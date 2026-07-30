@@ -4,6 +4,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -18,12 +19,15 @@ import { AuthService } from '../../core/auth.service';
 import { AppHeaderComponent } from '../../shared/app-header.component';
 import { ModuleNavigationComponent } from '../../shared/module-navigation.component';
 
+type ClinicUnit = { id: string; organizationId: string; name: string; active: boolean };
+
 @Component({
   selector: 'app-appointments',
   standalone: true,
   imports: [
     DatePipe,
     FormsModule,
+    MatAutocompleteModule,
     MatButtonModule,
     MatCardModule,
     MatFormFieldModule,
@@ -48,10 +52,12 @@ export class AppointmentsComponent {
   readonly appointments = signal<Appointment[]>([]);
   readonly practitioners = signal<Practitioner[]>([]);
   readonly patients = signal<{ globalId: string; name: string }[]>([]);
+  readonly clinicUnits = signal<ClinicUnit[]>([]);
   readonly loading = signal(false);
   readonly error = signal('');
 
   clinicUnitId = this.membership()?.clinicUnitId ?? '';
+  clinicSearch = '';
   patientId = '';
   practitionerId = '';
   start = '';
@@ -65,6 +71,7 @@ export class AppointmentsComponent {
       )
       .subscribe((membership) => {
         this.clinicUnitId = membership?.clinicUnitId ?? '';
+        this.clinicSearch = '';
         this.patientId = '';
         this.practitionerId = '';
         this.start = '';
@@ -87,6 +94,16 @@ export class AppointmentsComponent {
 
   scrollToSchedule(): void {
     document.querySelector('#schedule-appointment')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  filteredClinicUnits(): ClinicUnit[] {
+    const query = this.clinicSearch.trim().toLowerCase();
+    return this.clinicUnits().filter((clinic) => !query || clinic.name.toLowerCase().includes(query));
+  }
+
+  selectClinicUnit(clinic: ClinicUnit): void {
+    this.clinicUnitId = clinic.id;
+    this.clinicSearch = clinic.name;
   }
 
   load(): void {
@@ -115,6 +132,17 @@ export class AppointmentsComponent {
     this.http.get<PageResponse<{ globalId: string; name: string }>>(`/api/organizations/${membership.organizationId}/patients`).subscribe({
       next: (page) => this.patients.set(page.content),
       error: () => this.error.set('Unable to load the appointment options.'),
+    });
+    const clinicScope = membership.clinicUnitId
+      ? `?clinicUnitId=${encodeURIComponent(membership.clinicUnitId)}`
+      : '';
+    this.http.get<ClinicUnit[]>(`/api/organizations/${membership.organizationId}/clinic-units${clinicScope}`).subscribe({
+      next: (units) => {
+        this.clinicUnits.set(units);
+        const selected = units.find((unit) => unit.id === this.clinicUnitId);
+        if (selected) this.clinicSearch = selected.name;
+      },
+      error: () => this.error.set('Unable to load the available clinic units.'),
     });
   }
 

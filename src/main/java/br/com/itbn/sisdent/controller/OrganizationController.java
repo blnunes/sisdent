@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -36,6 +38,12 @@ public class OrganizationController {
             @Valid @RequestBody ClinicUnitRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(organizationService.createClinicUnit(organizationId, request));
+    }
+
+    @GetMapping("/api/organizations/{organizationId}/clinic-units")
+    public java.util.List<ClinicUnitResponse> listClinicUnits(@PathVariable UUID organizationId,
+            @RequestParam(required = false) UUID clinicUnitId) {
+        return organizationService.listClinicUnits(organizationId, clinicUnitId);
     }
 
     @PostMapping("/api/organizations/{organizationId}/memberships")

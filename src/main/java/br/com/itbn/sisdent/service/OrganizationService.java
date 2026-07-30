@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
+import java.util.List;
 
 @Service
 public class OrganizationService {
@@ -57,6 +58,18 @@ public class OrganizationService {
         Organization organization = requireOrganization(organizationId);
         ClinicUnit unit = clinicUnitRepository.saveAndFlush(new ClinicUnit(organization, request.name()));
         return new ClinicUnitResponse(unit.getGlobalId(), organizationId, unit.getName(), unit.isActive());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClinicUnitResponse> listClinicUnits(UUID organizationId, UUID clinicUnitId) {
+        authorization.requireAppointmentRead(organizationId, clinicUnitId);
+        List<ClinicUnit> units = clinicUnitRepository.findAllByOrganization_GlobalIdAndActiveTrueOrderByName(organizationId);
+        if (clinicUnitId != null) {
+            units = units.stream().filter(unit -> unit.getGlobalId().equals(clinicUnitId)).toList();
+        }
+        return units.stream()
+                .map(unit -> new ClinicUnitResponse(unit.getGlobalId(), organizationId, unit.getName(), unit.isActive()))
+                .toList();
     }
 
     @Transactional

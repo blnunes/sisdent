@@ -15,13 +15,15 @@ test.describe('Operational scheduling', () => {
     const organizationId = session.memberships[0].organizationId;
     const unit = await request.post(`${backendUrl}/api/organizations/${organizationId}/clinic-units`, { headers: { Authorization: `Bearer ${token}` }, data: { name: `E2E Scheduling Unit ${Date.now()}` } });
     expect(unit.status()).toBe(201);
-    const clinicUnitId = (await unit.json()).id;
+    const clinicUnit = await unit.json();
+    const clinicUnitId = clinicUnit.id;
 
     await page.goto('/appointments');
     await expect(page.getByRole('heading', { name: 'Appointments' })).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Patient', exact: true })).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Practitioner', exact: true })).toBeVisible();
-    await page.getByLabel('Clinic unit UUID').fill(clinicUnitId);
+    await page.getByLabel('Clinic unit').fill(clinicUnit.name);
+    await page.getByRole('option', { name: new RegExp(`E2E Scheduling Unit`) }).click();
     await page.getByRole('combobox', { name: 'Patient', exact: true }).click();
     await page.getByRole('option', { name: 'Olivia Bennett', exact: true }).click();
     await page.getByRole('combobox', { name: 'Practitioner', exact: true }).click();
