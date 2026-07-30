@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -31,6 +32,7 @@ type ClinicUnit = { id: string; organizationId: string; name: string; active: bo
     MatAutocompleteModule,
     MatButtonModule,
     MatCardModule,
+    MatDatepickerModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -63,8 +65,14 @@ export class AppointmentsComponent {
   clinicSearch = '';
   patientId = '';
   practitionerId = '';
-  start = '';
-  end = '';
+  appointmentDate: Date | null = null;
+  startTime = '';
+  endTime = '';
+  readonly minimumDate = new Date();
+  readonly timeSlots = Array.from({ length: 21 }, (_, index) => {
+    const minutes = (8 * 60) + (index * 30);
+    return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+  });
 
   constructor() {
     toObservable(this.auth.activeMembership)
@@ -77,8 +85,9 @@ export class AppointmentsComponent {
         this.clinicSearch = '';
         this.patientId = '';
         this.practitionerId = '';
-        this.start = '';
-        this.end = '';
+        this.appointmentDate = null;
+        this.startTime = '';
+        this.endTime = '';
         this.appointments.set([]);
         this.patients.set([]);
         this.practitioners.set([]);
@@ -107,6 +116,15 @@ export class AppointmentsComponent {
   selectClinicUnit(clinic: ClinicUnit): void {
     this.clinicUnitId = clinic.id;
     this.clinicSearch = clinic.name;
+  }
+
+  selectStartTime(): void {
+    const nextTime = this.timeSlots[this.timeSlots.indexOf(this.startTime) + 1] ?? '';
+    if (!this.endTime || this.endTime <= this.startTime) this.endTime = nextTime;
+  }
+
+  endTimeSlots(): string[] {
+    return this.timeSlots.filter((time) => time > this.startTime);
   }
 
   load(): void {
@@ -151,26 +169,34 @@ export class AppointmentsComponent {
 
   create(): void {
     const membership = this.membership();
-    if (!membership) return;
+    if (!membership || !this.appointmentDate || !this.startTime || !this.endTime) return;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     this.http.post<Appointment>(`/api/organizations/${membership.organizationId}/appointments`, {
       clinicUnitId: this.clinicUnitId,
       patientId: this.patientId,
       practitionerId: this.practitionerId,
-      startAt: new Date(this.start).toISOString(),
-      endAt: new Date(this.end).toISOString(),
+      startAt: this.localDateTime(this.startTime).toISOString(),
+      endAt: this.localDateTime(this.endTime).toISOString(),
       schedulingTimezone: timezone,
     }).subscribe({
       next: () => {
         this.patientId = '';
         this.practitionerId = '';
-        this.start = '';
-        this.end = '';
+        this.appointmentDate = null;
+        this.startTime = '';
+        this.endTime = '';
         this.load();
       },
       error: (response) => this.error.set(response.status === 409
         ? this.translate.instant('APPOINTMENTS.ERROR.PRACTITIONER_UNAVAILABLE')
         : this.translate.instant('APPOINTMENTS.ERROR.CREATE')),
     });
+  }
+
+  private localDateTime(time: string): Date {
+    const [hours, minutes] = time.split(':').map(Number);
+    const date = new Date(this.appointmentDate!);
+    date.setHours(hours, minutes, 0, 0);
+    return date;
   }
 }

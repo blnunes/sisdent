@@ -28,18 +28,17 @@ test.describe('Operational scheduling', () => {
     await page.getByRole('option', { name: 'Olivia Bennett', exact: true }).click();
     await page.getByRole('combobox', { name: 'Practitioner', exact: true }).click();
     await page.getByRole('option', { name: 'Dr. Avery Morgan', exact: true }).click();
-    const start = new Date(Date.now() + 86_400_000); start.setMinutes(0, 0, 0);
-    const end = new Date(start.getTime() + 30 * 60_000);
-    await page.getByLabel('Start (local)').fill(localDateTime(start));
-    await page.getByLabel('End (local)').fill(localDateTime(end));
+    const start = new Date(Date.now() + 86_400_000); start.setHours(10, 0, 0, 0);
+    const dateLabel = start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    await page.getByRole('button', { name: 'Open calendar' }).click();
+    await page.locator('mat-calendar').getByRole('button', { name: dateLabel }).click();
+    await page.getByRole('combobox', { name: 'Start time', exact: true }).click();
+    await page.getByRole('option', { name: '10:00', exact: true }).click();
+    await page.getByRole('combobox', { name: 'End time', exact: true }).click();
+    await page.getByRole('option', { name: '10:30', exact: true }).click();
     await page.getByRole('button', { name: 'Schedule' }).click();
     await expect(page.locator('.appointment-row').filter({ hasText: 'Olivia Bennett' })).toBeVisible();
     await page.getByRole('button', { name: 'Schedule' }).click();
     await expect(page.getByRole('alert')).toHaveText('The practitioner is unavailable for this interval.');
   });
 });
-
-function localDateTime(value: Date): string {
-  const offset = value.getTimezoneOffset() * 60_000;
-  return new Date(value.getTime() - offset).toISOString().slice(0, 16);
-}
