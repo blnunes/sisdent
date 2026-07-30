@@ -112,16 +112,16 @@ roles. All demo profile passwords are `odonto2026@O`.
 | --- | --- | --- |
 | `platform.operations@sisdent.demo` | Platform | Platform administration; it does not have tenant clinical access. |
 | `group.admin@sisdent.demo` | Northstar Dental Group and Southstart Dental Group | Organization administrator memberships in both groups; use this account to test a single administrator switching between two organizations. |
-| `northstar.admin@sisdent.demo`, `northstar.manager@sisdent.demo`, `northstar.practitioners@sisdent.demo` | Northstar Dental Group | 12 linked patients, 2 practitioners, one scheduled appointment, and one completed appointment with a performed procedure. |
-| `northstar.scheduler@sisdent.demo`, `northstar.viewer@sisdent.demo`, `northstar.readonly@sisdent.demo` | Northstar Central Clinic | The Northstar clinic scenario above, constrained by their respective roles. |
-| `harbor.admin@sisdent.demo` | Harbor Dental Clinic | 12 different linked patients, 2 practitioners, one scheduled appointment, and one completed appointment with a performed procedure. |
-| `harbor.scheduler@sisdent.demo` | Harbor Riverside Unit | The Harbor clinic scenario, with appointment-management scope. |
-| `southstart.admin@sisdent.demo` | Southstart Dental Group | 12 different linked patients, 2 practitioners, one scheduled appointment, and one completed appointment with a performed procedure. |
-| `southstart.scheduler@sisdent.demo` | Southstart Downtown Clinic | The Southstart clinic scenario, with appointment-management scope. |
+| `northstar.admin@sisdent.demo` | Northstar Dental Group | Northstar Central Clinic and Northstar Lakeside Clinic, each with 6 linked patients, 2 practitioners, and appointment history. |
+| `northstar.manager@sisdent.demo`, `northstar.scheduler@sisdent.demo`, `northstar.readonly@sisdent.demo` | Northstar Central Clinic | Clinic-scoped operational profiles for the Central scenario. |
+| `northstar.practitioners@sisdent.demo`, `northstar.viewer@sisdent.demo` | Northstar Lakeside Clinic | Clinic-scoped practitioner-management and appointment-reader profiles. |
+| `harbor.admin@sisdent.demo`, `harbor.scheduler@sisdent.demo` | Harbor Dental Clinic / Harbor Riverside Unit | Harbor Riverside Unit and Harbor Midtown Clinic, each with 6 linked patients, 2 practitioners, and appointment history. |
+| `southstart.admin@sisdent.demo`, `southstart.scheduler@sisdent.demo` | Southstart Dental Group / Southstart Downtown Clinic | Southstart Downtown Clinic and Southstart Seaside Clinic, each with 6 linked patients, 2 practitioners, and appointment history. |
 
-The Northstar, Harbor, and Southstart patient, practitioner, appointment, and
-procedure records are deliberately separate, so tenant-isolation flows can be
-exercised.
+Organizations and clinic units are explicit seed sections. The Northstar,
+Harbor, and Southstart patient, practitioner, appointment, and procedure
+records are deliberately separate by clinic, so tenant and clinic-isolation
+flows can be exercised.
 
 Local development uses:
 

@@ -134,6 +134,8 @@ public class InitialDataLoader implements ApplicationRunner {
                 specialitiesByName,
                 countriesByCode,
                 initialData.seedDefaults());
+        saveOrganizations(initialData.organizations());
+        saveClinicUnits(initialData.clinicUnits());
         saveDemoProfiles(initialData.demoProfiles());
         saveOperationalDemo(initialData.operationalDemo(), specialitiesByName);
 
@@ -162,7 +164,7 @@ public class InitialDataLoader implements ApplicationRunner {
                     .orElseGet(() -> practitionerRepository.save(new Practitioner(organization, null, practitioner.displayName(),
                             practitioner.registrationNumber(), practitioner.specialityNames().stream().map(specialities::get)
                                     .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)))))).toList();
-            if (!appointmentRepository.existsByOrganization_Id(organization.getId())) {
+            if (!appointmentRepository.existsByClinicUnit_Id(clinic.getId())) {
                 Appointment scheduled = new Appointment(organization, clinic, links.getFirst(), practitioners.getFirst(),
                         Instant.parse(data.scheduledStart()), Instant.parse(data.scheduledEnd()), "Europe/Lisbon");
                 appointmentRepository.save(scheduled);
@@ -190,16 +192,31 @@ public class InitialDataLoader implements ApplicationRunner {
                 return created;
             });
             if (profile.organizationName() == null) continue;
-            Organization organization = organizationRepository.findByName(profile.organizationName())
-                    .orElseGet(() -> organizationRepository.save(new Organization(profile.organizationName())));
+            Organization organization = organizationRepository.findByName(profile.organizationName()).orElseThrow(() ->
+                    new IllegalStateException("Unknown organization in " + INITIAL_DATA_PATH + ": " + profile.organizationName()));
             ClinicUnit clinic = profile.clinicUnitName() == null ? null : clinicUnitRepository
                     .findByOrganization_IdAndName(organization.getId(), profile.clinicUnitName())
-                    .orElseGet(() -> clinicUnitRepository.save(new ClinicUnit(organization, profile.clinicUnitName())));
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Unknown clinic unit in " + INITIAL_DATA_PATH + ": " + profile.clinicUnitName()));
             boolean exists = clinic == null
                     ? membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnitIsNull(account.getId(), organization.getId())
                     : membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnit_Id(account.getId(), organization.getId(), clinic.getId());
             if (!exists) membershipRepository.save(new Membership(account, organization, clinic, profile.membershipRole()));
         }
+    }
+
+    private void saveOrganizations(List<OrganizationData> organizations) {
+        organizations.forEach(data -> organizationRepository.findByName(data.name())
+                .orElseGet(() -> organizationRepository.save(new Organization(data.name()))));
+    }
+
+    private void saveClinicUnits(List<ClinicUnitData> clinicUnits) {
+        clinicUnits.forEach(data -> {
+            Organization organization = organizationRepository.findByName(data.organizationName()).orElseThrow(() ->
+                    new IllegalStateException("Unknown organization in " + INITIAL_DATA_PATH + ": " + data.organizationName()));
+            clinicUnitRepository.findByOrganization_IdAndName(organization.getId(), data.name())
+                    .orElseGet(() -> clinicUnitRepository.save(new ClinicUnit(organization, data.name())));
+        });
     }
 
     private Map<String, Country> saveCountries(List<CountryData> countries) {
@@ -335,6 +352,8 @@ public class InitialDataLoader implements ApplicationRunner {
             List<SpecialityData> specialities,
             List<AddressData> addresses,
             List<PatientData> patients,
+            List<OrganizationData> organizations,
+            List<ClinicUnitData> clinicUnits,
             List<DemoProfileData> demoProfiles,
             List<DemoOrganizationData> operationalDemo) {
     }
@@ -374,6 +393,12 @@ public class InitialDataLoader implements ApplicationRunner {
             String taxId,
             String addressReference,
             List<String> specialityNames) {
+    }
+
+    public record OrganizationData(String name) {
+    }
+
+    public record ClinicUnitData(String organizationName, String name) {
     }
 
     public record DemoProfileData(
