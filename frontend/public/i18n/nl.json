@@ -177,6 +177,14 @@
       "NAME": "Naam patiënt", "BIRTH_DATE": "Geboortedatum", "STATUS": "Status", "GENDER": "Geslacht", "TAX_ID": "Fiscaal nummer", "IDENTIFICATION_TYPE": "Type identificatie", "NATIONALITY": "Nationaliteit", "ADDRESS": "Adres", "SPECIALITY": "Specialisme", "ACTIVE": "Actief", "INACTIVE": "Inactief", "FEMALE": "Vrouw", "MALE": "Man", "OTHER": "Anders", "NATIONAL_ID": "Nationaal identiteitsbewijs", "PASSPORT": "Paspoort"
     }
   },
+  "APPOINTMENTS": {
+    "OVERTITLE": "Operationele planning", "HEADER_DESCRIPTION": "Beheer de komende 31 dagen voor {{organization}}.", "REFRESH": "Vernieuwen", "SCHEDULE": "Afspraak inplannen", "SUMMARY": "Afspraakoverzicht", "UPCOMING": "Aankomende afspraken", "AVAILABLE_PRACTITIONERS": "Beschikbare behandelaars", "UPCOMING_SCHEDULE": "Aankomende planning", "SCOPE_DESCRIPTION": "Afspraken zijn beperkt tot de geselecteerde organisatie en kliniek.", "NEXT_DAYS": "Volgende {{days}} dagen", "LOADING": "Planning laden…", "PATIENT": "Patiënt", "PRACTITIONER": "Behandelaar", "CLINIC_UNIT": "Kliniek",
+    "EMPTY_MEMBERSHIP": { "TITLE": "Selecteer een organisatie", "DESCRIPTION": "Selecteer een actieve organisatiekoppeling om afspraken te bekijken." },
+    "EMPTY": { "TITLE": "Geen afspraken in deze periode", "DESCRIPTION": "Plan een nieuwe afspraak om de agenda te starten." },
+    "FORM": { "DESCRIPTION": "Kies de patiënt, behandelaar en een beschikbaar tijdstip.", "CLINIC_PLACEHOLDER": "Typ een klinieknaam", "CLINIC_AVAILABLE": "Beschikbaar in {{organization}}", "CLINIC_EMPTY": "Geen overeenkomende klinieken in {{organization}}", "CLINIC_HINT": "Typ om een kliniek in {{organization}} te vinden", "SELECT_PATIENT": "Selecteer een patiënt", "SELECT_PRACTITIONER": "Selecteer een behandelaar", "START": "Begin (lokaal)", "END": "Einde (lokaal)" },
+    "STATUS": { "SCHEDULED": "Gepland", "COMPLETED": "Voltooid", "CANCELLED": "Geannuleerd", "NO_SHOW": "Niet verschenen" },
+    "ERROR": { "LOAD_SCHEDULE": "De planning binnen dit bereik kan niet worden geladen.", "LOAD_OPTIONS": "De afspraakopties kunnen niet worden geladen.", "LOAD_CLINICS": "De beschikbare klinieken kunnen niet worden geladen.", "PRACTITIONER_UNAVAILABLE": "De behandelaar is niet beschikbaar in dit tijdvak.", "CREATE": "De afspraak kan niet worden ingepland." }
+  },
   "PERMISSION_GROUPS": {
     "USERS": "Gebruikers", "PATIENTS": "Patiënten", "SPECIALITIES": "Specialismen", "ADDRESSES": "Adressen", "COUNTRIES": "Landen", "ADMINISTRATIVE_DIVISIONS": "Bestuurlijke gebieden", "PERMISSIONS": "Machtigingen"
   }

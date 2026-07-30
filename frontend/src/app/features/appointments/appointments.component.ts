@@ -13,6 +13,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { distinctUntilChanged } from 'rxjs';
 import { Appointment, PageResponse, Practitioner } from '../../core/models';
 import { AuthService } from '../../core/auth.service';
@@ -37,6 +38,7 @@ type ClinicUnit = { id: string; organizationId: string; name: string; active: bo
     MatSelectModule,
     MatSidenavModule,
     MatTooltipModule,
+    TranslatePipe,
     AppHeaderComponent,
     ModuleNavigationComponent,
   ],
@@ -47,6 +49,7 @@ export class AppointmentsComponent {
   readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly translate = inject(TranslateService);
 
   readonly membership = this.auth.activeMembership;
   readonly appointments = signal<Appointment[]>([]);
@@ -89,7 +92,7 @@ export class AppointmentsComponent {
   }
 
   statusLabel(status: Appointment['status']): string {
-    return status.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+    return this.translate.instant(`APPOINTMENTS.STATUS.${status}`);
   }
 
   scrollToSchedule(): void {
@@ -121,17 +124,17 @@ export class AppointmentsComponent {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Unable to load the scoped schedule.');
+        this.error.set(this.translate.instant('APPOINTMENTS.ERROR.LOAD_SCHEDULE'));
         this.loading.set(false);
       },
     });
     this.http.get<Practitioner[]>(`/api/organizations/${membership.organizationId}/practitioners`).subscribe({
       next: (records) => this.practitioners.set(records.filter((practitioner) => practitioner.active)),
-      error: () => this.error.set('Unable to load the appointment options.'),
+      error: () => this.error.set(this.translate.instant('APPOINTMENTS.ERROR.LOAD_OPTIONS')),
     });
     this.http.get<PageResponse<{ globalId: string; name: string }>>(`/api/organizations/${membership.organizationId}/patients`).subscribe({
       next: (page) => this.patients.set(page.content),
-      error: () => this.error.set('Unable to load the appointment options.'),
+      error: () => this.error.set(this.translate.instant('APPOINTMENTS.ERROR.LOAD_OPTIONS')),
     });
     const clinicScope = membership.clinicUnitId
       ? `?clinicUnitId=${encodeURIComponent(membership.clinicUnitId)}`
@@ -142,7 +145,7 @@ export class AppointmentsComponent {
         const selected = units.find((unit) => unit.id === this.clinicUnitId);
         if (selected) this.clinicSearch = selected.name;
       },
-      error: () => this.error.set('Unable to load the available clinic units.'),
+      error: () => this.error.set(this.translate.instant('APPOINTMENTS.ERROR.LOAD_CLINICS')),
     });
   }
 
@@ -166,8 +169,8 @@ export class AppointmentsComponent {
         this.load();
       },
       error: (response) => this.error.set(response.status === 409
-        ? 'The practitioner is unavailable for this interval.'
-        : 'Unable to schedule this appointment.'),
+        ? this.translate.instant('APPOINTMENTS.ERROR.PRACTITIONER_UNAVAILABLE')
+        : this.translate.instant('APPOINTMENTS.ERROR.CREATE')),
     });
   }
 }
