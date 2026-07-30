@@ -19,17 +19,19 @@ test.describe('Operational scheduling', () => {
 
     await page.goto('/appointments');
     await expect(page.getByRole('heading', { name: 'Appointments' })).toBeVisible();
-    await expect(page.locator('select[name="patientId"] option', { hasText: 'Olivia Bennett' })).toHaveCount(1);
-    await expect(page.locator('select[name="practitionerId"] option', { hasText: 'Dr. Avery Morgan' })).toHaveCount(1);
+    await expect(page.getByRole('combobox', { name: 'Patient', exact: true })).toBeVisible();
+    await expect(page.getByRole('combobox', { name: 'Practitioner', exact: true })).toBeVisible();
     await page.getByLabel('Clinic unit UUID').fill(clinicUnitId);
-    await page.getByLabel('Patient').selectOption({ label: 'Olivia Bennett' });
-    await page.getByLabel('Practitioner').selectOption({ label: 'Dr. Avery Morgan' });
+    await page.getByRole('combobox', { name: 'Patient', exact: true }).click();
+    await page.getByRole('option', { name: 'Olivia Bennett', exact: true }).click();
+    await page.getByRole('combobox', { name: 'Practitioner', exact: true }).click();
+    await page.getByRole('option', { name: 'Dr. Avery Morgan', exact: true }).click();
     const start = new Date(Date.now() + 86_400_000); start.setMinutes(0, 0, 0);
     const end = new Date(start.getTime() + 30 * 60_000);
     await page.getByLabel('Start (local)').fill(localDateTime(start));
     await page.getByLabel('End (local)').fill(localDateTime(end));
     await page.getByRole('button', { name: 'Schedule' }).click();
-    await expect(page.getByText('Olivia Bennett with Dr. Avery Morgan')).toBeVisible();
+    await expect(page.locator('.appointment-row').filter({ hasText: 'Olivia Bennett' })).toBeVisible();
     await page.getByRole('button', { name: 'Schedule' }).click();
     await expect(page.getByRole('alert')).toHaveText('The practitioner is unavailable for this interval.');
   });

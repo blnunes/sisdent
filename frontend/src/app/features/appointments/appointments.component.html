@@ -1,0 +1,98 @@
+<div class="appointments-shell">
+  <app-header (menuClick)="drawer.toggle()" />
+  <mat-sidenav-container class="appointments-container">
+    <mat-sidenav #drawer mode="over" class="side-drawer">
+      <div class="drawer-brand"><mat-icon>dentistry</mat-icon><strong>Sisdent</strong></div>
+      <app-module-navigation active="appointments" (navigate)="drawer.close()" />
+    </mat-sidenav>
+    <mat-sidenav-content>
+      <main class="appointments-main">
+        @if (!membership()) {
+          <mat-card appearance="outlined" class="empty-membership">
+            <mat-icon>domain_disabled</mat-icon>
+            <h1>Select an organization</h1>
+            <p>Select an active organization membership to view its appointments.</p>
+          </mat-card>
+        } @else {
+          <header class="page-header">
+            <div>
+              <span class="eyebrow">Operational scheduling</span>
+              <h1>Appointments</h1>
+              <p>Manage the next 31 days for <strong>{{ membership()!.organizationName }}</strong>.</p>
+            </div>
+            <div class="header-actions">
+              <button mat-stroked-button type="button" (click)="load()" [disabled]="loading()" aria-label="Refresh schedule">
+                <mat-icon>refresh</mat-icon>Refresh
+              </button>
+              @if (auth.canManageAppointments()) {
+                <button mat-flat-button class="schedule-button" type="button" (click)="scrollToSchedule()">
+                  <mat-icon>add</mat-icon>Schedule appointment
+                </button>
+              }
+            </div>
+          </header>
+
+          <section class="summary-grid" aria-label="Appointment summary">
+            <mat-card appearance="outlined">
+              <div class="summary-icon upcoming"><mat-icon>calendar_today</mat-icon></div>
+              <div><strong>{{ appointments().length }}</strong><span>Upcoming appointments</span></div>
+            </mat-card>
+            <mat-card appearance="outlined">
+              <div class="summary-icon scheduled"><mat-icon>schedule</mat-icon></div>
+              <div><strong>{{ scheduledCount() }}</strong><span>Scheduled</span></div>
+            </mat-card>
+            <mat-card appearance="outlined">
+              <div class="summary-icon completed"><mat-icon>medical_services</mat-icon></div>
+              <div><strong>{{ practitioners().length }}</strong><span>Available practitioners</span></div>
+            </mat-card>
+          </section>
+
+          @if (error()) {
+            <div class="error-banner" role="alert"><mat-icon>error_outline</mat-icon><span>{{ error() }}</span></div>
+          }
+
+          <section class="schedule-layout">
+            <mat-card appearance="outlined" class="agenda-card">
+              <div class="card-heading">
+                <div><h2>Upcoming schedule</h2><p>Appointments are scoped to the selected organization and clinic.</p></div>
+                <span class="date-range"><mat-icon>date_range</mat-icon>Next 31 days</span>
+              </div>
+              @if (loading()) {
+                <div class="state"><mat-spinner diameter="36" /><span>Loading schedule…</span></div>
+              } @else if (!appointments().length) {
+                <div class="state empty-state"><mat-icon>event_available</mat-icon><h3>No appointments in this period</h3><p>Schedule a new appointment to start the agenda.</p></div>
+              } @else {
+                <div class="agenda-list">
+                  @for (appointment of appointments(); track appointment.globalId) {
+                    <article class="appointment-row">
+                      <div class="appointment-time"><strong>{{ appointment.startAt | date:'EEE, MMM d' }}</strong><span>{{ appointment.startAt | date:'shortTime' }} – {{ appointment.endAt | date:'shortTime' }}</span></div>
+                      <div class="patient"><span class="patient-avatar">{{ appointment.patientName.charAt(0) }}</span><div><strong>{{ appointment.patientName }}</strong><span>Patient</span></div></div>
+                      <div class="practitioner"><mat-icon>medical_services</mat-icon><div><strong>{{ appointment.practitionerName }}</strong><span>Practitioner</span></div></div>
+                      <span class="status" [class]="'status ' + appointment.status.toLowerCase()">{{ statusLabel(appointment.status) }}</span>
+                    </article>
+                  }
+                </div>
+              }
+            </mat-card>
+
+            @if (auth.canManageAppointments()) {
+              <mat-card id="schedule-appointment" appearance="outlined" class="form-card">
+                <div class="card-heading"><div><h2>Schedule appointment</h2><p>Choose the patient, practitioner, and an available time.</p></div><mat-icon>add_circle</mat-icon></div>
+                <form class="appointment-form" (ngSubmit)="create()">
+                  <mat-form-field appearance="outline"><mat-label>Clinic unit UUID</mat-label><input matInput required [(ngModel)]="clinicUnitId" name="clinicUnitId" /><mat-hint>Required for a new appointment</mat-hint></mat-form-field>
+                  <mat-form-field appearance="outline"><mat-label>Patient</mat-label><mat-select required [(ngModel)]="patientId" name="patientId"><mat-option value="">Select a patient</mat-option>@for (patient of patients(); track patient.globalId) {<mat-option [value]="patient.globalId">{{ patient.name }}</mat-option>}</mat-select></mat-form-field>
+                  <mat-form-field appearance="outline"><mat-label>Practitioner</mat-label><mat-select required [(ngModel)]="practitionerId" name="practitionerId"><mat-option value="">Select a practitioner</mat-option>@for (practitioner of practitioners(); track practitioner.globalId) {<mat-option [value]="practitioner.globalId">{{ practitioner.displayName }}</mat-option>}</mat-select></mat-form-field>
+                  <div class="time-grid">
+                    <mat-form-field appearance="outline"><mat-label>Start (local)</mat-label><input matInput required type="datetime-local" [(ngModel)]="start" name="start" /></mat-form-field>
+                    <mat-form-field appearance="outline"><mat-label>End (local)</mat-label><input matInput required type="datetime-local" [(ngModel)]="end" name="end" /></mat-form-field>
+                  </div>
+                  <button mat-flat-button class="schedule-button" type="submit" [disabled]="!clinicUnitId || !patientId || !practitionerId || !start || !end"><mat-icon>event_available</mat-icon>Schedule appointment</button>
+                </form>
+              </mat-card>
+            }
+          </section>
+        }
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
