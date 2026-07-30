@@ -2,6 +2,8 @@ package br.com.itbn.sisdent;
 
 import br.com.itbn.sisdent.config.InitialDataLoader;
 import br.com.itbn.sisdent.model.Patient;
+import br.com.itbn.sisdent.repository.AccountRepository;
+import br.com.itbn.sisdent.repository.MembershipRepository;
 import br.com.itbn.sisdent.model.CatalogStatus;
 import br.com.itbn.sisdent.repository.PatientRepository;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
@@ -40,6 +42,21 @@ class SisdentApplicationTests {
 
     @Autowired
     private SpecialityRepository specialityRepository;
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private MembershipRepository membershipRepository;
+
+    @Test
+    void grantsTheTrainingAdministratorAccessToEverySeededOrganization() {
+        var administrator = accountRepository.findByEmail("admin@sisdent.local").orElseThrow();
+
+        assertThat(membershipRepository.findAllByAccount_IdAndActiveTrue(administrator.getId()))
+                .extracting(membership -> membership.getOrganization().getName())
+                .contains("Northstar Dental Group", "Southstart Dental Group", "Harbor Dental Clinic");
+    }
 
     @Test
     void exposesOpenApiDocumentation() throws Exception {

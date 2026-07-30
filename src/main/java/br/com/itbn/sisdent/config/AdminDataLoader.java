@@ -90,17 +90,24 @@ public class AdminDataLoader implements ApplicationRunner {
     }
 
     private void ensureGlobalAccount(User user) {
-        if (accountRepository.findByLegacyUser_IdentificationTypeAndLegacyUser_IdentificationNumber(
-                user.getIdentificationType(), user.getIdentificationNumber()).isPresent()) {
-            return;
+        Account account = accountRepository.findByLegacyUser_IdentificationTypeAndLegacyUser_IdentificationNumber(
+                user.getIdentificationType(), user.getIdentificationNumber()).orElseGet(() -> {
+            Person person = personRepository.save(new Person("Sisdent Administrator"));
+            Account created = accountRepository.save(new Account(
+                    person, user, email, user.getPassword(), true, false));
+            emailClaimRepository.save(new AccountEmailClaim(created, email, EmailClaimType.VERIFIED));
+            return created;
+        });
+        if (organizationRepository.findAll().isEmpty()) {
+            organizationRepository.save(new Organization("Sisdent Training Organization"));
         }
-        Person person = personRepository.save(new Person("Sisdent Administrator"));
-        Account account = accountRepository.save(new Account(
-                person, user, email, user.getPassword(), true, false));
-        emailClaimRepository.save(new AccountEmailClaim(account, email, EmailClaimType.VERIFIED));
-        Organization organization = organizationRepository.findAll().stream().findFirst()
-                .orElseGet(() -> organizationRepository.save(new Organization("Sisdent Training Organization")));
-        membershipRepository.save(new Membership(
-                account, organization, null, MembershipRole.ORGANIZATION_ADMIN));
+        organizationRepository.findAll().forEach(organization -> {
+            boolean membershipExists = membershipRepository
+                    .existsByAccount_IdAndOrganization_IdAndClinicUnitIsNull(account.getId(), organization.getId());
+            if (!membershipExists) {
+                membershipRepository.save(new Membership(
+                        account, organization, null, MembershipRole.ORGANIZATION_ADMIN));
+            }
+        });
     }
 }
