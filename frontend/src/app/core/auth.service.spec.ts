@@ -22,16 +22,19 @@ describe('AuthService', () => {
   it('stores a valid admin token after login', () => {
     service
       .login({
-        identificationType: 'NATIONAL_ID',
-        identificationNumber: 'admin',
+        email: 'admin@sisdent.local',
         password: 'admin',
       })
       .subscribe();
 
     const request = http.expectOne('/api/auth/login');
     expect(request.request.method).toBe('POST');
-    const token = jwt({ userId: 1, authorities: ['ROLE_ADMIN', 'READ_USERS'], exp: futureExpiration() });
+    const token = jwt({ accountId: 'account-1', email: 'admin@sisdent.local', platformAdministrator: true, memberships: [], authorities: ['ROLE_ADMIN', 'READ_USERS'], exp: futureExpiration() });
     request.flush({ accessToken: token, tokenType: 'Bearer', expiresIn: 3600 });
+    http.expectOne('/api/session').flush({
+      accountId: 'account-1', email: 'admin@sisdent.local', displayName: 'Administrator',
+      platformAdministrator: true, emailMigrationRequired: false, memberships: [],
+    });
 
     expect(service.authenticated()).toBe(true);
     expect(service.isAdmin()).toBe(true);
@@ -42,17 +45,20 @@ describe('AuthService', () => {
   it('sends a non-admin user to the friendly restricted page', () => {
     service
       .login({
-        identificationType: 'PASSPORT',
-        identificationNumber: 'USER',
+        email: 'user@example.com',
         password: 'password',
       })
       .subscribe();
 
     const request = http.expectOne('/api/auth/login');
     request.flush({
-      accessToken: jwt({ userId: 2, authorities: ['ROLE_USER', 'READ_USERS'], exp: futureExpiration() }),
+      accessToken: jwt({ accountId: 'account-2', email: 'user@example.com', platformAdministrator: false, memberships: [], authorities: ['ROLE_USER', 'READ_USERS'], exp: futureExpiration() }),
       tokenType: 'Bearer',
       expiresIn: 3600,
+    });
+    http.expectOne('/api/session').flush({
+      accountId: 'account-2', email: 'user@example.com', displayName: 'User',
+      platformAdministrator: false, emailMigrationRequired: false, memberships: [],
     });
 
     expect(service.isAdmin()).toBe(false);

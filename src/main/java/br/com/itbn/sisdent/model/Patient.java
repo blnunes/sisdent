@@ -32,6 +32,10 @@ public class Patient extends AuditableEntity {
     @Column(name = "global_id", nullable = false, unique = true, updatable = false)
     private UUID globalId = UUID.randomUUID();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "person_id")
+    private Person person;
+
     @Column(nullable = false)
     private String name;
 
@@ -109,6 +113,10 @@ public class Patient extends AuditableEntity {
 
     public UUID getGlobalId() {
         return globalId;
+    }
+
+    public Person getPerson() {
+        return person;
     }
 
     public String getName() {

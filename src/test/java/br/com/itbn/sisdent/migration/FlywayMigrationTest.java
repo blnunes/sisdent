@@ -197,4 +197,53 @@ class FlywayMigrationTest {
                     "READ_ADMINISTRATIVE_DIVISIONS");
         }
     }
+
+    @Test
+    void migratesLegacyUsersToUniqueGlobalAccountsWithoutRemovingLegacyLoginData() throws Exception {
+        String url = databaseUrl("v8-accounts");
+        Flyway.configure()
+                .dataSource(url, "sa", "")
+                .locations("classpath:db/migration")
+                .target("7")
+                .load()
+                .migrate();
+
+        try (Connection connection = DriverManager.getConnection(url, "sa", "");
+             Statement statement = connection.createStatement()) {
+            statement.execute("""
+                    INSERT INTO app_users (
+                        id, identification_type, identification_number, password, role, active,
+                        created_at, created_by, updated_at, updated_by, version
+                    ) VALUES
+                        (201, 'NATIONAL_ID', 'LEGACY-ONE', 'encoded-one', 'ADMIN', TRUE,
+                         CURRENT_TIMESTAMP, 'test', CURRENT_TIMESTAMP, 'test', 0),
+                        (202, 'PASSPORT', 'LEGACY-TWO', 'encoded-two', 'USER', TRUE,
+                         CURRENT_TIMESTAMP, 'test', CURRENT_TIMESTAMP, 'test', 0)
+                    """);
+        }
+
+        Flyway.configure()
+                .dataSource(url, "sa", "")
+                .locations("classpath:db/migration")
+                .load()
+                .migrate();
+
+        try (Connection connection = DriverManager.getConnection(url, "sa", "");
+             Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery("""
+                     SELECT a.email, a.password, a.email_migration_required,
+                            u.identification_number
+                     FROM accounts a
+                     JOIN app_users u ON u.id = a.legacy_user_id
+                     ORDER BY u.id
+                     """)) {
+            assertThat(result.next()).isTrue();
+            assertThat(result.getString("email")).isEqualTo("national_id.legacy-one@legacy.sisdent.invalid");
+            assertThat(result.getString("password")).isEqualTo("encoded-one");
+            assertThat(result.getBoolean("email_migration_required")).isTrue();
+            assertThat(result.getString("identification_number")).isEqualTo("LEGACY-ONE");
+            assertThat(result.next()).isTrue();
+            assertThat(result.getString("email")).isEqualTo("passport.legacy-two@legacy.sisdent.invalid");
+        }
+    }
 }

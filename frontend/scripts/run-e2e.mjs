@@ -3,20 +3,22 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const frontendDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const repositoryDirectory = resolve(frontendDirectory, '..');
 const healthUrl = process.env.BACKEND_HEALTH_URL ?? 'http://localhost:8080/actuator/health';
 let backend;
 
 try {
   if (await isHealthy()) {
-    console.log(`Backend already running at ${healthUrl}.`);
-  } else {
-    console.log(`Backend unavailable at ${healthUrl}; starting Spring Boot...`);
-    backend = spawn('../mvnw', ['-q', 'spring-boot:run'], {
-      cwd: frontendDirectory,
-      stdio: 'inherit',
-    });
-    await waitForHealth();
+    throw new Error(
+      `A backend is already running at ${healthUrl}. Stop it before E2E so the suite cannot use stale code.`,
+    );
   }
+  console.log(`Starting a fresh Spring Boot backend for Playwright...`);
+  backend = spawn('./mvnw', ['-q', 'spring-boot:run'], {
+    cwd: repositoryDirectory,
+    stdio: 'inherit',
+  });
+  await waitForHealth();
 
   const exitCode = await runPlaywright(process.argv.slice(2));
   process.exitCode = exitCode;

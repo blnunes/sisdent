@@ -74,6 +74,9 @@ public class SecurityConfiguration {
                                 "/i18n/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/api/users/me/password")
                         .authenticated()
+                        // The unscoped Phase 1 patient API is intentionally closed. Patient
+                        // access now goes through /api/organizations/{organizationId}/patients.
+                        .requestMatchers(PATIENT_RESOURCE).denyAll()
                         .requestMatchers(HttpMethod.GET, USER_RESOURCE)
                         .access(hasAnyPermission(
                                 READ_USERS_PERMISSION,
@@ -90,14 +93,6 @@ public class SecurityConfiguration {
                         .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
                         .requestMatchers(HttpMethod.DELETE, USER_RESOURCE)
                         .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
-                        .requestMatchers(HttpMethod.GET, PATIENT_RESOURCE)
-                        .access(hasAnyPermission(READ_PATIENTS_PERMISSION, MAINTAIN_PATIENTS_PERMISSION))
-                        .requestMatchers(HttpMethod.POST, PATIENT_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_PATIENTS_PERMISSION))
-                        .requestMatchers(HttpMethod.PUT, PATIENT_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_PATIENTS_PERMISSION))
-                        .requestMatchers(HttpMethod.DELETE, PATIENT_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_PATIENTS_PERMISSION))
                         .requestMatchers(HttpMethod.GET, SPECIALITY_RESOURCE)
                         .access(hasAnyPermission("READ_SPECIALITIES", MAINTAIN_SPECIALITIES_PERMISSION))
                         .requestMatchers(HttpMethod.POST, SPECIALITY_RESOURCE)
