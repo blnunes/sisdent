@@ -765,6 +765,8 @@
   ],
   "demoProfiles": [
     { "displayName": "Platform Operations", "email": "platform.operations@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": true, "organizationName": null, "clinicUnitName": null, "membershipRole": null },
+    { "displayName": "Demo Group Administrator", "email": "group.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
+    { "displayName": "Demo Group Administrator", "email": "group.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Southstart Dental Group", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
     { "displayName": "Northstar Administrator", "email": "northstar.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
     { "displayName": "Northstar Operations Manager", "email": "northstar.manager@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": null, "membershipRole": "MANAGER" },
     { "displayName": "Northstar Practitioner Manager", "email": "northstar.practitioners@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": null, "membershipRole": "PRACTITIONER_MANAGER" },
@@ -772,7 +774,9 @@
     { "displayName": "Northstar Appointment Reader", "email": "northstar.viewer@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": "Northstar Central Clinic", "membershipRole": "APPOINTMENT_READER" },
     { "displayName": "Northstar Read Only Staff", "email": "northstar.readonly@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": "Northstar Central Clinic", "membershipRole": "READ_ONLY" },
     { "displayName": "Harbor Administrator", "email": "harbor.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Harbor Dental Clinic", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
-    { "displayName": "Harbor Scheduler", "email": "harbor.scheduler@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Harbor Dental Clinic", "clinicUnitName": "Harbor Riverside Unit", "membershipRole": "APPOINTMENT_MANAGER" }
+    { "displayName": "Harbor Scheduler", "email": "harbor.scheduler@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Harbor Dental Clinic", "clinicUnitName": "Harbor Riverside Unit", "membershipRole": "APPOINTMENT_MANAGER" },
+    { "displayName": "Southstart Administrator", "email": "southstart.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Southstart Dental Group", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
+    { "displayName": "Southstart Scheduler", "email": "southstart.scheduler@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Southstart Dental Group", "clinicUnitName": "Southstart Downtown Clinic", "membershipRole": "APPOINTMENT_MANAGER" }
   ],
   "operationalDemo": [
     {
@@ -796,6 +800,17 @@
       ],
       "scheduledStart": "2030-01-16T10:00:00Z", "scheduledEnd": "2030-01-16T10:30:00Z",
       "completedStart": "2025-01-16T10:00:00Z", "completedEnd": "2025-01-16T10:30:00Z"
+    },
+    {
+      "organizationName": "Southstart Dental Group",
+      "clinicUnitName": "Southstart Downtown Clinic",
+      "patientTaxIds": ["10000000025", "10000000026", "10000000027", "10000000028", "10000000029", "10000000030", "10000000031", "10000000032", "10000000033", "10000000034", "10000000035", "10000000036"],
+      "practitioners": [
+        { "displayName": "Dr. Morgan Avery", "registrationNumber": "SS-3001", "specialityNames": ["Dental Anesthesiology", "Oral Medicine"] },
+        { "displayName": "Dr. Cameron Reed", "registrationNumber": "SS-3002", "specialityNames": ["Dental Public Health", "Pediatric Dentistry"] }
+      ],
+      "scheduledStart": "2030-01-17T11:00:00Z", "scheduledEnd": "2030-01-17T11:30:00Z",
+      "completedStart": "2025-01-17T11:00:00Z", "completedEnd": "2025-01-17T11:30:00Z"
     }
   ]
 }
