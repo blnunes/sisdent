@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+const backendUrl = process.env['E2E_BACKEND_URL'] ?? 'http://localhost:8081';
+
 test.describe('Operational scheduling', () => {
   test('schedules a patient-linked appointment and shows a private conflict', async ({ page, request }) => {
     await page.addInitScript(() => localStorage.setItem('sisdent.language', 'en'));
@@ -11,14 +13,14 @@ test.describe('Operational scheduling', () => {
     const token = await page.evaluate(() => localStorage.getItem('sisdent.access-token'));
     const session = await page.evaluate(async () => (await fetch('/api/session', { headers: { Authorization: `Bearer ${localStorage.getItem('sisdent.access-token')}` } })).json());
     const organizationId = session.memberships[0].organizationId;
-    const unit = await request.post(`http://localhost:8080/api/organizations/${organizationId}/clinic-units`, { headers: { Authorization: `Bearer ${token}` }, data: { name: `E2E Scheduling Unit ${Date.now()}` } });
+    const unit = await request.post(`${backendUrl}/api/organizations/${organizationId}/clinic-units`, { headers: { Authorization: `Bearer ${token}` }, data: { name: `E2E Scheduling Unit ${Date.now()}` } });
     expect(unit.status()).toBe(201);
-    const clinicUnitId = (await unit.json()).globalId;
+    const clinicUnitId = (await unit.json()).id;
 
     await page.goto('/appointments');
     await expect(page.getByRole('heading', { name: 'Appointments' })).toBeVisible();
-    await expect(page.getByRole('option', { name: 'Olivia Bennett' })).toBeVisible();
-    await expect(page.getByRole('option', { name: 'Dr. Avery Morgan' })).toBeVisible();
+    await expect(page.locator('select[name="patientId"] option', { hasText: 'Olivia Bennett' })).toHaveCount(1);
+    await expect(page.locator('select[name="practitionerId"] option', { hasText: 'Dr. Avery Morgan' })).toHaveCount(1);
     await page.getByLabel('Clinic unit UUID').fill(clinicUnitId);
     await page.getByLabel('Patient').selectOption({ label: 'Olivia Bennett' });
     await page.getByLabel('Practitioner').selectOption({ label: 'Dr. Avery Morgan' });

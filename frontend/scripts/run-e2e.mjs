@@ -4,19 +4,19 @@ import { dirname, resolve } from 'node:path';
 
 const frontendDirectory = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repositoryDirectory = resolve(frontendDirectory, '..');
-const healthUrl = process.env.BACKEND_HEALTH_URL ?? 'http://localhost:8080/actuator/health';
+const backendPort = process.env.E2E_BACKEND_PORT ?? '8081';
+const backendUrl = `http://localhost:${backendPort}`;
+const healthUrl = `${backendUrl}/actuator/health`;
 let backend;
 
 try {
   if (await isHealthy()) {
-    throw new Error(
-      `A backend is already running at ${healthUrl}. Stop it before E2E so the suite cannot use stale code.`,
-    );
+    throw new Error(`The dedicated E2E backend port ${backendPort} is already in use. Stop that E2E process and retry.`);
   }
   console.log(`Starting a fresh Spring Boot backend for Playwright...`);
   backend = spawn(
     './mvnw',
-    ['-q', 'spring-boot:run', '-Dspring-boot.run.profiles=e2e'],
+    ['-q', 'spring-boot:run', '-Dspring-boot.run.profiles=e2e', `-Dspring-boot.run.arguments=--server.port=${backendPort}`],
     {
     cwd: repositoryDirectory,
     stdio: 'inherit',
@@ -58,6 +58,7 @@ function runPlaywright(args) {
   const child = spawn(command, ['playwright', 'test', ...args], {
     cwd: frontendDirectory,
     stdio: 'inherit',
+    env: { ...process.env, E2E_BACKEND_URL: backendUrl },
   });
   return new Promise((resolvePromise, reject) => {
     child.once('error', reject);
