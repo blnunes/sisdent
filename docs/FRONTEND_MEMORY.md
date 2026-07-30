@@ -182,3 +182,30 @@ npm test -- --watch=false
 If installation is already prepared, `npm run build` is the minimum check.
 Fix CSS budget, binding, import, or template failures before delivering the
 change.
+
+## End-to-end tests
+
+Playwright end-to-end tests live in `frontend/e2e/` and run with Chromium. Use
+the following commands from `frontend/`:
+
+```bash
+npx playwright install chromium  # once per machine
+npm run test:e2e
+npm run test:e2e:ui
+```
+
+`test:e2e` runs `scripts/run-e2e.mjs`. The runner checks
+`http://localhost:8080/actuator/health`, reuses a healthy API when one is
+already running, or starts Spring Boot and waits for the health endpoint before
+executing Playwright. It stops only the backend process it started itself.
+
+E2E tests must set `sisdent.language` to `en` with `page.addInitScript` before
+the first navigation. This prevents a persisted browser preference from
+changing text locators. `LanguageService` also keeps the Angular Material date
+adapter locale synchronized with the selected UI language; use accessible
+calendar labels rather than visible abbreviated month text.
+
+The patient lifecycle test creates a unique patient, updates it, and
+deactivates it. Keep generated test data valid for the API; notably,
+`postalCode` is eight digits. Filter by the generated patient name before
+creating it so server-side pagination does not hide the new record.
