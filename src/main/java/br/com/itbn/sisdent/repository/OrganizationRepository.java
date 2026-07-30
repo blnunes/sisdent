@@ -8,4 +8,5 @@ import java.util.UUID;
 
 public interface OrganizationRepository extends JpaRepository<Organization, Long> {
     Optional<Organization> findByGlobalId(UUID globalId);
+    Optional<Organization> findByName(String name);
 }

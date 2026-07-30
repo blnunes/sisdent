@@ -8,6 +8,20 @@ import br.com.itbn.sisdent.model.DocumentType;
 import br.com.itbn.sisdent.model.Gender;
 import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.model.Speciality;
+import br.com.itbn.sisdent.model.Account;
+import br.com.itbn.sisdent.model.AccountEmailClaim;
+import br.com.itbn.sisdent.model.EmailClaimType;
+import br.com.itbn.sisdent.model.ClinicUnit;
+import br.com.itbn.sisdent.model.Membership;
+import br.com.itbn.sisdent.model.MembershipRole;
+import br.com.itbn.sisdent.model.Organization;
+import br.com.itbn.sisdent.model.Person;
+import br.com.itbn.sisdent.repository.AccountEmailClaimRepository;
+import br.com.itbn.sisdent.repository.AccountRepository;
+import br.com.itbn.sisdent.repository.ClinicUnitRepository;
+import br.com.itbn.sisdent.repository.MembershipRepository;
+import br.com.itbn.sisdent.repository.OrganizationRepository;
+import br.com.itbn.sisdent.repository.PersonRepository;
 import br.com.itbn.sisdent.repository.AdministrativeDivisionRepository;
 import br.com.itbn.sisdent.repository.AddressRepository;
 import br.com.itbn.sisdent.repository.CountryRepository;
@@ -21,6 +35,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -46,6 +61,13 @@ public class InitialDataLoader implements ApplicationRunner {
     private final SpecialityRepository specialityRepository;
     private final AddressRepository addressRepository;
     private final PatientRepository patientRepository;
+    private final OrganizationRepository organizationRepository;
+    private final ClinicUnitRepository clinicUnitRepository;
+    private final AccountRepository accountRepository;
+    private final AccountEmailClaimRepository emailClaimRepository;
+    private final PersonRepository personRepository;
+    private final MembershipRepository membershipRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public InitialDataLoader(
             JsonMapper jsonMapper,
@@ -53,13 +75,20 @@ public class InitialDataLoader implements ApplicationRunner {
             AdministrativeDivisionRepository administrativeDivisionRepository,
             SpecialityRepository specialityRepository,
             AddressRepository addressRepository,
-            PatientRepository patientRepository) {
+            PatientRepository patientRepository, OrganizationRepository organizationRepository,
+            ClinicUnitRepository clinicUnitRepository, AccountRepository accountRepository,
+            AccountEmailClaimRepository emailClaimRepository, PersonRepository personRepository,
+            MembershipRepository membershipRepository, PasswordEncoder passwordEncoder) {
         this.jsonMapper = jsonMapper;
         this.countryRepository = countryRepository;
         this.administrativeDivisionRepository = administrativeDivisionRepository;
         this.specialityRepository = specialityRepository;
         this.addressRepository = addressRepository;
         this.patientRepository = patientRepository;
+        this.organizationRepository = organizationRepository; this.clinicUnitRepository = clinicUnitRepository;
+        this.accountRepository = accountRepository; this.emailClaimRepository = emailClaimRepository;
+        this.personRepository = personRepository; this.membershipRepository = membershipRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -83,6 +112,7 @@ public class InitialDataLoader implements ApplicationRunner {
                 specialitiesByName,
                 countriesByCode,
                 initialData.seedDefaults());
+        saveDemoProfiles(initialData.demoProfiles());
 
         LOGGER.info(
                 "Initial data synchronized from {}: {} countries, {} administrative divisions, {} specialities, {} addresses and {} patients",
@@ -92,6 +122,28 @@ public class InitialDataLoader implements ApplicationRunner {
                 initialData.specialities().size(),
                 initialData.addresses().size(),
                 initialData.patients().size());
+    }
+
+    private void saveDemoProfiles(List<DemoProfileData> profiles) {
+        for (DemoProfileData profile : profiles) {
+            Account account = accountRepository.findByEmail(Account.normalizeEmail(profile.email())).orElseGet(() -> {
+                Person person = personRepository.save(new Person(profile.displayName()));
+                Account created = accountRepository.save(new Account(person, null, profile.email(),
+                        passwordEncoder.encode(profile.password()), profile.platformAdministrator(), false));
+                emailClaimRepository.save(new AccountEmailClaim(created, profile.email(), EmailClaimType.VERIFIED));
+                return created;
+            });
+            if (profile.organizationName() == null) continue;
+            Organization organization = organizationRepository.findByName(profile.organizationName())
+                    .orElseGet(() -> organizationRepository.save(new Organization(profile.organizationName())));
+            ClinicUnit clinic = profile.clinicUnitName() == null ? null : clinicUnitRepository
+                    .findByOrganization_IdAndName(organization.getId(), profile.clinicUnitName())
+                    .orElseGet(() -> clinicUnitRepository.save(new ClinicUnit(organization, profile.clinicUnitName())));
+            boolean exists = clinic == null
+                    ? membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnitIsNull(account.getId(), organization.getId())
+                    : membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnit_Id(account.getId(), organization.getId(), clinic.getId());
+            if (!exists) membershipRepository.save(new Membership(account, organization, clinic, profile.membershipRole()));
+        }
     }
 
     private Map<String, Country> saveCountries(List<CountryData> countries) {
@@ -226,7 +278,8 @@ public class InitialDataLoader implements ApplicationRunner {
             List<AdministrativeDivisionData> administrativeDivisions,
             List<SpecialityData> specialities,
             List<AddressData> addresses,
-            List<PatientData> patients) {
+            List<PatientData> patients,
+            List<DemoProfileData> demoProfiles) {
     }
 
     public record CountryData(String name, String code, Continent continent) {
@@ -264,5 +317,10 @@ public class InitialDataLoader implements ApplicationRunner {
             String taxId,
             String addressReference,
             List<String> specialityNames) {
+    }
+
+    public record DemoProfileData(
+            String displayName, String email, String password, boolean platformAdministrator,
+            String organizationName, String clinicUnitName, MembershipRole membershipRole) {
     }
 }
