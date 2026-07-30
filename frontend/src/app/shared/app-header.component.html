@@ -2,8 +2,23 @@
   <button #menuButton mat-icon-button class="menu-button" type="button" (click)="menuClick.emit()" [attr.aria-label]="'HOME.OPEN_MENU' | translate"><mat-icon>menu</mat-icon></button>
   <a class="brand" routerLink="/home"><mat-icon>dentistry</mat-icon><span>Sisdent</span></a>
   <span class="spacer"></span>
+  @if (auth.session()?.memberships?.length) {
+    <mat-select
+      class="membership-select"
+      [value]="auth.activeMembership()?.id"
+      (selectionChange)="auth.selectMembership($event.value)"
+      [attr.aria-label]="'USERS.ACTIVE_ORGANIZATION' | translate"
+    >
+      @for (membership of auth.session()!.memberships; track membership.id) {
+        <mat-option [value]="membership.id">
+          {{ membership.organizationName }}{{ membership.clinicUnitName ? ' · ' + membership.clinicUnitName : '' }}
+        </mat-option>
+      }
+    </mat-select>
+  }
   <app-language-selector class="header-language" />
   <app-theme-toggle />
   @if (auth.isAdmin()) {<span class="admin-badge"><mat-icon>shield_person</mat-icon>{{ 'USERS.ADMIN' | translate }}</span>}
+  @if (auth.isPlatformAdministrator()) {<span class="admin-badge"><mat-icon>admin_panel_settings</mat-icon>{{ 'USERS.PLATFORM_ADMIN' | translate }}</span>}
   <button mat-icon-button type="button" (click)="auth.logout()" [attr.aria-label]="'USERS.LOGOUT' | translate" [title]="'USERS.LOGOUT' | translate"><mat-icon>logout</mat-icon></button>
 </mat-toolbar>

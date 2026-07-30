@@ -144,7 +144,7 @@ class SecurityIntegrationTests {
 
         mockMvc.perform(get("/api/patients")
                         .header("Authorization", bearer(token)))
-                .andExpect(status().isOk());
+                .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/users")
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isForbidden());
@@ -169,7 +169,7 @@ class SecurityIntegrationTests {
 
         mockMvc.perform(get("/api/patients")
                         .header("Authorization", bearer(token)))
-                .andExpect(status().isOk());
+                .andExpect(status().isForbidden());
 
         mockMvc.perform(get("/api/specialities")
                         .header("Authorization", bearer(token)))

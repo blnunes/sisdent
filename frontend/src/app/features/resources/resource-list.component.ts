@@ -551,7 +551,7 @@ export class ResourceListComponent {
   remove(record: Record<string, unknown>): void {
     if (!confirm(`Delete ${this.primary(record)}?`)) return;
     this.http
-      .delete(`${this.config.endpoint}/${record['id']}`)
+      .delete(`${this.config.endpoint}/${this.resourceIdentifier(record)}`)
       .subscribe({ next: () => this.load(), error: () => this.error.set(true) });
   }
 
@@ -602,10 +602,14 @@ export class ResourceListComponent {
       .subscribe((value?: FormValues) => {
         if (!value) return;
         const request = record
-          ? this.http.put(`${this.config.endpoint}/${record['id']}`, schema.toRequest(value))
+          ? this.http.put(`${this.config.endpoint}/${this.resourceIdentifier(record)}`, schema.toRequest(value))
           : this.http.post(this.config.endpoint, schema.toRequest(value));
         request.subscribe({ next: () => this.load(), error: () => this.error.set(true) });
       });
+  }
+
+  private resourceIdentifier(record: Record<string, unknown>): unknown {
+    return this.config.key === 'patients' ? record['globalId'] : record['id'];
   }
 
   closeMenu(drawer: MatSidenav): void {

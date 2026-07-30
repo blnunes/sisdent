@@ -3,9 +3,9 @@
 ## Scope
 
 Sisdent is a modular monolith composed of a Spring Boot REST API and an Angular
-web application. It is currently an MVP for dental administration. Clinical
-records, appointments, organizations, clinic units, patient portal access, and
-billing are not implemented yet.
+web application. It is currently an MVP for dental administration and global
+account/tenant foundations. Clinical records, appointments, patient portal
+access, and billing are not implemented yet.
 
 The present domain foundation is international. Portugal and other European
 countries are supported alongside the existing demonstration data. Language,
@@ -63,7 +63,14 @@ erDiagram
     ADDRESS ||--o{ PATIENT : assigned_to
     PATIENT }o--o{ SPECIALITY : associated_with
     SPECIALITY ||--o{ DENTAL_PROCEDURE : owns
-    APP_USER ||--o{ USER_PERMISSION : grants
+    PERSON ||--o| ACCOUNT : authenticates_as
+    PERSON o|--o| PATIENT : may_represent
+    ACCOUNT ||--o{ MEMBERSHIP : holds
+    ORGANIZATION ||--o{ CLINIC_UNIT : owns
+    ORGANIZATION ||--o{ MEMBERSHIP : scopes
+    CLINIC_UNIT o|--o{ MEMBERSHIP : optionally_scopes
+    PATIENT ||--o{ PATIENT_ORGANIZATION_LINK : linked_by
+    ORGANIZATION ||--o{ PATIENT_ORGANIZATION_LINK : receives
 
     PATIENT {
         bigint id PK
@@ -112,15 +119,20 @@ erDiagram
 Every core entity contains `created_at`, `created_by`, `updated_at`,
 `updated_by`, and an optimistic-lock `version`.
 
-### Identity rules
+### Identity and tenancy rules
 
 - A patient has a stable, platform-global UUID independent of database IDs.
 - A document is identified by document type, issuing country, and normalized
   number. Supported MVP types are `PASSPORT` and `NATIONAL_ID_CARD`.
 - Tax ID is optional and is not used as a global identity key.
-- User accounts still authenticate with the legacy identification-type flow.
-  Global email authentication and separation of person, account, and
-  organization memberships are deliberately deferred to the identity phase.
+- Accounts authenticate with one normalized, globally unique email address.
+- Account, person, and patient are separate so a future patient login does not
+  need administrative impersonation.
+- A compatibility link retains identification/password login for migrated
+  legacy users until verified-email enrollment is implemented.
+- Membership roles are scoped to an organization or clinic unit. Revoking one
+  membership preserves the account and every unrelated membership.
+- Platform administration is separate and grants no patient access.
 
 ### Address rules
 
@@ -157,20 +169,25 @@ records:
 - legacy audit metadata is backfilled;
 - state permissions are renamed to administrative-division permissions.
 
+V8 creates persons, global accounts, organizations, clinic units, scoped
+memberships, and patient-organization links. It maps every legacy user to a
+unique synthetic email without removing the legacy credential and assigns
+existing patients to explicit `LEGACY_MIGRATION` links.
+
 `/api/states` remains a temporary backend alias for
 `/api/administrative-divisions`. New clients use only the new route.
 
 ## Security boundary
 
-Permissions currently apply by feature. Patients see no portal yet; the USER
-role is a read-only staff role in this MVP. Platform technical administration
-must not imply future access to clinical content. Organization-scoped roles,
-patient self-access, temporary support access, and immutable access-event audit
-belong to later phases.
+Patient repositories are reached through organization-scoped services. Name
+search only traverses explicit patient-organization links. Exact intake
+matching returns one boolean. Platform technical administration does not grant
+clinical access. See `docs/PHASE_2_IMPLEMENTATION.md` for the authorization
+matrix, migration strategy, and compatibility risks.
 
 ## Known limitations
 
-- No organization, clinic-unit, or cross-clinic consent model exists yet.
+- No cross-organization clinical sharing or temporary support-access workflow exists.
 - No clinical note, odontogram, appointment, or performed-procedure model exists.
 - No digital signature, retention, export, anonymization, or legal-hold workflow exists.
 - JWT revocation is not persisted.
@@ -180,8 +197,8 @@ belong to later phases.
 
 ## Evolution order
 
-1. Global account identity and organization/clinic memberships.
-2. Organization-scoped authorization and patient-clinic links.
+1. Global account identity, memberships, scoped authorization, and patient links (implemented).
+2. Verified-email enrollment and retirement of legacy identification login.
 3. Practitioner, appointment, and performed-procedure model.
 4. Clinical records and odontogram.
 5. Treatment plans, unit pricing, acceptance, and billing.

@@ -18,8 +18,9 @@ export type Permission =
   | 'MAINTAIN_PERMISSIONS';
 
 export interface LoginRequest {
-  identificationType: IdentificationType;
-  identificationNumber: string;
+  email?: string;
+  identificationType?: IdentificationType;
+  identificationNumber?: string;
   password: string;
 }
 
@@ -47,9 +48,33 @@ export interface UserWrite {
 
 export interface JwtPayload {
   sub: string;
-  userId: number;
+  accountId: string;
+  userId?: number;
+  email: string;
+  platformAdministrator: boolean;
+  memberships: Membership[];
   authorities: string[];
   exp: number;
+}
+
+export type MembershipRole = 'ORGANIZATION_ADMIN' | 'MANAGER' | 'READ_ONLY';
+
+export interface Membership {
+  id: string;
+  organizationId: string;
+  organizationName: string;
+  clinicUnitId?: string;
+  clinicUnitName?: string;
+  role: MembershipRole;
+}
+
+export interface Session {
+  accountId: string;
+  email: string;
+  displayName: string;
+  platformAdministrator: boolean;
+  emailMigrationRequired: boolean;
+  memberships: Membership[];
 }
 
 export interface PageResponse<T> {

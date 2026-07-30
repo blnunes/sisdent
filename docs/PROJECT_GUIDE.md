@@ -4,12 +4,11 @@
 
 Sisdent is an early dental-management platform. The implemented MVP covers
 patients, international addresses, countries, administrative divisions,
-specialities, dental procedures, JWT authentication, users, roles, and
-permissions.
+specialities, dental procedures, global email accounts, organizations, clinic
+units, scoped memberships, and JWT authentication.
 
-Scheduling, practitioners, organizations, clinic units, clinical records,
-odontograms, treatment plans, billing, and patient portal access are future
-work.
+Scheduling, practitioners, clinical records, odontograms, treatment plans,
+billing, and patient portal access are future work.
 
 ## Current behavior
 
@@ -38,11 +37,16 @@ work.
 | `GET` | `/api/countries/continents` | List supported continent values |
 | `GET` | `/api/addresses` | List addresses |
 | `GET` | `/api/addresses/postal-code/{postalCode}?countryCode=PT` | Country-scoped postal lookup |
-| `GET/POST` | `/api/patients` | List or create patients |
-| `GET/PUT/DELETE` | `/api/patients/{id}` | Read, replace, or deactivate a patient |
+| `GET` | `/api/organizations/{organizationId}/patients` | Search linked patients in the selected scope |
+| `POST` | `/api/organizations/{organizationId}/patient-intake/exact-match` | Return only whether an exact possible match exists |
+| `POST` | `/api/organizations/{organizationId}/patient-links` | Create an explicit audited patient link |
+| `POST` | `/api/platform/organizations` | Platform administrator creates an organization |
+| `POST` | `/api/organizations/{organizationId}/clinic-units` | Organization administrator creates a unit |
+| `POST/DELETE` | `/api/organizations/{organizationId}/memberships` | Add or revoke scoped membership |
+| `GET` | `/api/session` | Current account and memberships |
 | `GET/POST` | `/api/specialities` | List or create specialities |
 | `PUT/DELETE` | `/api/specialities/{id}` | Replace or deactivate a speciality |
-| `POST` | `/api/auth/login` | Authenticate and issue a JWT |
+| `POST` | `/api/auth/login` | Authenticate by email/password; legacy identification is transitional |
 | `PATCH` | `/api/users/me/password` | Change the current password |
 
 All collection endpoints accept `page`, `size`, `sort`, and `direction`.
@@ -127,16 +131,17 @@ npm ci
 npm start
 ```
 
-The local training administrator is `NATIONAL_ID / ADMIN` with password
-`admin`. These credentials are deliberately weak and must never be used in a
-deployed environment.
+The local training administrator is `admin@sisdent.local` with password
+`admin`. Transitional `NATIONAL_ID / ADMIN / admin` login remains available.
+These credentials are deliberately weak and must never be used in a deployed
+environment.
 
 Login example:
 
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"identificationType":"NATIONAL_ID","identificationNumber":"ADMIN","password":"admin"}'
+  -d '{"email":"admin@sisdent.local","password":"admin"}'
 ```
 
 Use the returned token as `Authorization: Bearer <accessToken>`.
@@ -166,4 +171,5 @@ Flyway upgrade tests. Frontend browser journeys are in `frontend/e2e`.
 - Do not physically delete catalog or future clinical-history records.
 
 See `docs/ARCHITECTURE.md` for the model, compatibility decisions, security
-boundary, and planned evolution.
+boundary, and planned evolution. See `docs/PHASE_2_IMPLEMENTATION.md` for the
+authorization matrix and legacy migration strategy.

@@ -11,7 +11,7 @@ test.describe('Patient management', () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('sisdent.language', 'en'));
     await page.goto('/login');
-    await page.getByLabel('Identification', { exact: true }).fill('ADMIN');
+    await page.getByLabel('Email address', { exact: true }).fill('admin@sisdent.local');
     await page.getByLabel('Password', { exact: true }).fill('admin');
     await page.getByRole('button', { name: 'Sign in' }).click();
     await expect(page).toHaveURL(/\/home$/);
@@ -47,7 +47,7 @@ test.describe('Patient management', () => {
 
     const createResponse = page.waitForResponse(
       (response) =>
-        response.url().includes('/api/patients') && response.request().method() === 'POST',
+        response.url().includes('/patients') && response.request().method() === 'POST',
     );
     await page.getByRole('button', { name: 'Save changes' }).click();
     const create = await createResponse;
@@ -61,7 +61,7 @@ test.describe('Patient management', () => {
 
     const updateResponse = page.waitForResponse(
       (response) =>
-        response.url().match(/\/api\/patients\/\d+$/) !== null &&
+        response.url().match(/\/patients\/[0-9a-f-]+(?:\?.*)?$/) !== null &&
         response.request().method() === 'PUT' &&
         response.ok(),
     );
@@ -72,7 +72,7 @@ test.describe('Patient management', () => {
     page.once('dialog', (dialog) => dialog.accept());
     const deleteResponse = page.waitForResponse(
       (response) =>
-        response.url().match(/\/api\/patients\/\d+$/) !== null &&
+        response.url().match(/\/patients\/[0-9a-f-]+(?:\?.*)?$/) !== null &&
         response.request().method() === 'DELETE' &&
         response.status() === 204,
     );
