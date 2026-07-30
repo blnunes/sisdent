@@ -4,8 +4,8 @@
 
 Sisdent is a modular monolith composed of a Spring Boot REST API and an Angular
 web application. It is currently an MVP for dental administration and global
-account/tenant foundations. Clinical records, appointments, patient portal
-access, and billing are not implemented yet.
+account/tenant foundations. Clinical records, patient portal access, and
+billing are not implemented yet.
 
 The present domain foundation is international. Portugal and other European
 countries are supported alongside the existing demonstration data. Language,
@@ -216,6 +216,23 @@ that claim with current account state. A pre-verification token is rejected
 after cutover, so the user must start a fresh verified-email session.
 
 ## Security boundary
+
+## Operational scheduling
+
+Practitioners are organization-owned profiles with public UUIDs, optional
+account association and logically deactivated lifecycle. Appointment reads and
+writes are organization and optionally clinic-unit scoped; platform
+administration confers no operational access. An appointment binds one active
+organization patient link, one same-organization active practitioner, and one
+same-organization clinic unit. Its lifecycle is `SCHEDULED` followed by one
+terminal state: `CANCELLED`, `COMPLETED`, or `NO_SHOW`.
+
+Scheduling stores UTC instants plus the validated IANA scheduling timezone.
+Competing create/reschedule requests acquire a pessimistic lock on the
+practitioner before checking interval overlap. This is portable to H2 and
+PostgreSQL, though PostgreSQL may later gain an additional native exclusion
+constraint. Performed procedures exist only under completed appointments,
+snapshot catalog names, and are corrected only through audited logical voiding.
 
 Patient repositories are reached through organization-scoped services. Name
 search only traverses explicit patient-organization links. Exact intake

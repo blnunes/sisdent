@@ -3,6 +3,11 @@ import { anyPermissionsGuard, authGuard, permissionsGuard } from './core/auth.gu
 
 export const routes: Routes = [
   {
+    path: 'appointments',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/appointments/appointments.component').then((m) => m.AppointmentsComponent),
+  },
+  {
     path: 'login',
     loadComponent: () => import('./features/login/login.component').then((m) => m.LoginComponent),
   },

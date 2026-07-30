@@ -61,6 +61,15 @@ export class AuthService {
     return permissions.some((permission) => this.hasPermission(permission));
   }
 
+  canReadAppointments(): boolean {
+    return !!this.activeMembership();
+  }
+
+  canManageAppointments(): boolean {
+    const role = this.activeMembership()?.role;
+    return role === 'ORGANIZATION_ADMIN' || role === 'MANAGER' || role === 'APPOINTMENT_MANAGER';
+  }
+
   login(request: LoginRequest) {
     return this.http.post<TokenResponse>('/api/auth/login', request).pipe(
       tap(({ accessToken }) => {

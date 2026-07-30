@@ -7,8 +7,8 @@ patients, international addresses, countries, administrative divisions,
 specialities, dental procedures, global email accounts, organizations, clinic
 units, scoped memberships, verified-email enrollment, and JWT authentication.
 
-Scheduling, practitioners, clinical records, odontograms, treatment plans,
-billing, and patient portal access are future work.
+Clinical records, odontograms, treatment plans, billing, and patient portal
+access are future work.
 
 ## Current behavior
 
@@ -50,6 +50,10 @@ billing, and patient portal access are future work.
 | `GET/POST` | `/api/specialities` | List or create specialities |
 | `PUT/DELETE` | `/api/specialities/{id}` | Replace or deactivate a speciality |
 | `POST` | `/api/auth/login` | Authenticate by email/password; legacy identification is transitional |
+| `GET/POST/PUT/DELETE` | `/api/organizations/{organizationId}/practitioners` | Scoped practitioner management (DELETE deactivates) |
+| `GET/POST` | `/api/organizations/{organizationId}/appointments` | Bounded schedule list and appointment creation |
+| `POST` | `/api/organizations/{organizationId}/appointments/{id}/cancel|complete|no-show` | Terminal lifecycle transitions |
+| `POST` | `/api/organizations/{organizationId}/appointments/{id}/performed-procedures` | Record catalog procedures after completion |
 | `PATCH` | `/api/users/me/password` | Change the current password |
 
 All collection endpoints accept `page`, `size`, `sort`, and `direction`.
@@ -165,6 +169,15 @@ npm run build
 
 The backend suite includes service, security, HTTP integration, seed-data, and
 Flyway upgrade tests. Frontend browser journeys are in `frontend/e2e`.
+
+## Operational scheduling
+
+Appointment requests require `startAt` and `endAt` ISO-8601 instants and a
+valid IANA `schedulingTimezone`; end must be later than start. The API returns
+a generic scheduling conflict if an active practitioner already has a scheduled
+overlap, without returning the other appointment or patient. Cancellation,
+completion and no-show are terminal. Performed procedures snapshot the active
+catalog name and can only be logically voided with a reason.
 
 For the isolated enrollment delivery seam, start with an explicit profile:
 

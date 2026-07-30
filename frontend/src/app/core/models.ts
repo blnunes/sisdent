@@ -69,7 +69,10 @@ export interface JwtPayload {
   exp: number;
 }
 
-export type MembershipRole = 'ORGANIZATION_ADMIN' | 'MANAGER' | 'READ_ONLY';
+export type MembershipRole = 'ORGANIZATION_ADMIN' | 'MANAGER' | 'READ_ONLY' | 'PRACTITIONER_MANAGER' | 'APPOINTMENT_MANAGER' | 'APPOINTMENT_READER';
+
+export interface Practitioner { globalId: string; displayName: string; registrationNumber?: string; active: boolean; }
+export interface Appointment { globalId: string; clinicUnitId: string; patientId: string; patientName: string; practitionerId: string; practitionerName: string; startAt: string; endAt: string; schedulingTimezone: string; status: string; }
 
 export interface Membership {
   id: string;

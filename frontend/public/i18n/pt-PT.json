@@ -12,6 +12,7 @@
   },
   "MODULES": {
     "PATIENTS": "Pacientes", "PATIENTS_DESCRIPTION": "Consulte os pacientes aos quais tem acesso.",
+    "APPOINTMENTS": "Marcações",
     "SPECIALITIES": "Especialidades", "SPECIALITIES_DESCRIPTION": "Consulte as especialidades configuradas.",
     "ADDRESSES": "Endereços", "ADDRESSES_DESCRIPTION": "Consulte os endereços registados.",
     "COUNTRIES": "Países", "COUNTRIES_DESCRIPTION": "Consulte os países disponíveis.",

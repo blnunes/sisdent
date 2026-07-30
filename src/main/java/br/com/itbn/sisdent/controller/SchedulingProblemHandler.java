@@ -1,0 +1,2 @@
+package br.com.itbn.sisdent.controller; import br.com.itbn.sisdent.service.SchedulingConflictException; import org.springframework.http.*; import org.springframework.web.bind.annotation.*;
+@RestControllerAdvice public class SchedulingProblemHandler {@ExceptionHandler(SchedulingConflictException.class) ProblemDetail conflict(){ProblemDetail p=ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,"The requested practitioner is unavailable in the requested interval");p.setTitle("Scheduling conflict");p.setType(java.net.URI.create("urn:sisdent:scheduling-conflict"));return p;}}

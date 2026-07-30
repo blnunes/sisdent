@@ -47,6 +47,26 @@ public class ScopeAuthorizationService {
         }
     }
 
+    public void requirePractitionerManagement(UUID organizationId, UUID clinicUnitId) {
+        requireRole(organizationId, clinicUnitId, MembershipRole.PRACTITIONER_MANAGER);
+    }
+
+    public void requireAppointmentRead(UUID organizationId, UUID clinicUnitId) {
+        if (matchingMemberships(organizationId, clinicUnitId).stream().noneMatch(m -> m.getRole() != MembershipRole.PRACTITIONER_MANAGER)) {
+            throw new AccessDeniedException("No active membership grants appointment read access");
+        }
+    }
+
+    public void requireAppointmentManagement(UUID organizationId, UUID clinicUnitId) {
+        requireRole(organizationId, clinicUnitId, MembershipRole.APPOINTMENT_MANAGER);
+    }
+
+    private void requireRole(UUID organizationId, UUID clinicUnitId, MembershipRole role) {
+        boolean allowed = matchingMemberships(organizationId, clinicUnitId).stream().anyMatch(m ->
+                m.getRole() == MembershipRole.ORGANIZATION_ADMIN || m.getRole() == MembershipRole.MANAGER || m.getRole() == role);
+        if (!allowed) throw new AccessDeniedException("No active membership grants this operational access");
+    }
+
     public void requireOrganizationAdministration(UUID organizationId) {
         boolean allowed = membershipRepository.findAllByAccount_IdAndOrganization_GlobalIdAndActiveTrue(
                         currentAccountService.require().getId(), organizationId).stream()

@@ -12,6 +12,7 @@
   },
   "MODULES": {
     "PATIENTS": "Patients", "PATIENTS_DESCRIPTION": "View the patients you are allowed to access.",
+    "APPOINTMENTS": "Appointments",
     "SPECIALITIES": "Specialities", "SPECIALITIES_DESCRIPTION": "View configured specialities.",
     "ADDRESSES": "Addresses", "ADDRESSES_DESCRIPTION": "View registered addresses.",
     "COUNTRIES": "Countries", "COUNTRIES_DESCRIPTION": "View available countries.",

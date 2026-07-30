@@ -12,6 +12,7 @@
   },
   "MODULES": {
     "PATIENTS": "Patiënten", "PATIENTS_DESCRIPTION": "Bekijk de patiënten waartoe u toegang hebt.",
+    "APPOINTMENTS": "Afspraken",
     "SPECIALITIES": "Specialismen", "SPECIALITIES_DESCRIPTION": "Bekijk geconfigureerde specialismen.",
     "ADDRESSES": "Adressen", "ADDRESSES_DESCRIPTION": "Bekijk geregistreerde adressen.",
     "COUNTRIES": "Landen", "COUNTRIES_DESCRIPTION": "Bekijk beschikbare landen.",

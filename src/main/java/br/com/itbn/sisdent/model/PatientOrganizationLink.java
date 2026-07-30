@@ -34,6 +34,8 @@ public class PatientOrganizationLink extends AuditableEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "operational_basis", nullable = false, length = 32)
     private PatientLinkBasis operationalBasis;
+    @Column(nullable = false)
+    private boolean active = true;
 
     protected PatientOrganizationLink() {}
     public PatientOrganizationLink(Patient patient, Organization organization, ClinicUnit clinicUnit,
@@ -46,4 +48,5 @@ public class PatientOrganizationLink extends AuditableEntity {
     public Organization getOrganization() { return organization; }
     public ClinicUnit getClinicUnit() { return clinicUnit; }
     public PatientLinkBasis getOperationalBasis() { return operationalBasis; }
+    public boolean isActive() { return active; }
 }
