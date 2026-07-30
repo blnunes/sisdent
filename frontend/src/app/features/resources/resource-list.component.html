@@ -7,11 +7,47 @@
     </mat-sidenav>
     <mat-sidenav-content><main class="resource-main">
       <header class="page-header"><div><span class="eyebrow">{{ 'HOME.TITLE' | translate }}</span><h1>{{ config.title | translate }}</h1><p>{{ config.description | translate }}</p></div>@if (canManage() && fields().length) {<button mat-flat-button (click)="create()"><mat-icon>add</mat-icon>New</button>}</header>
+      @if (filters().length) {
+        <section class="filter-section" aria-label="Patient filters">
+          <mat-card appearance="outlined" class="filter-card">
+            <form class="filters" (submit)="$event.preventDefault(); applyFilters()">
+            <div class="filter-bar">
+              <div class="filter-heading"><h2>{{ 'RESOURCE.FILTER.TITLE' | translate }}</h2><p>{{ 'RESOURCE.FILTER.DESCRIPTION' | translate }}</p></div>
+              <div class="filter-grid primary-filters">
+                @for (filter of primaryFilters(); track filter.key) {
+                  <mat-form-field appearance="outline"><mat-label>{{ filter.label | translate }}</mat-label>
+                    @if (filter.type === 'select') {
+                      <mat-select [value]="filterValues()[filter.key] ?? ''" (valueChange)="updateSelectFilter(filter.key, $event)"><mat-option value="">{{ 'RESOURCE.FILTER.ALL' | translate }}</mat-option>@for (option of filter.options ?? []; track option.value) { <mat-option [value]="option.value">{{ option.label | translate }}</mat-option> }</mat-select>
+                    } @else if (filter.type === 'autocomplete') {
+                      <input matInput [value]="filterDisplayValues()[filter.key] ?? ''" [matAutocomplete]="autocomplete" (input)="updateAutocomplete(filter, $any($event.target).value)" />
+                      <mat-autocomplete #autocomplete="matAutocomplete" (optionSelected)="selectFilterOption(filter.key, $event.option.value)">@for (option of filterOptions()[filter.key] ?? []; track option.value) { <mat-option [value]="option">{{ option.label }}</mat-option> }</mat-autocomplete>
+                    } @else { <input matInput [type]="filter.type" [value]="filterValues()[filter.key] ?? ''" (input)="updateFilter(filter.key, $any($event.target).value)" /> } @if (hasFilterValue(filter.key)) {<button class="clear-filter" mat-icon-button matSuffix type="button" [attr.aria-label]="('RESOURCE.FILTER.CLEAR_FIELD' | translate) + ': ' + (filter.label | translate)" (click)="clearFilter(filter.key)"><mat-icon>close</mat-icon></button>}</mat-form-field>
+                }
+              </div>
+              <div class="filter-actions"><button mat-flat-button type="submit"><mat-icon>search</mat-icon>{{ 'RESOURCE.FILTER.APPLY' | translate }}</button>@if (advancedFilters().length) {<button mat-stroked-button type="button" (click)="toggleAdvancedFilters()" [attr.aria-expanded]="showAdvancedFilters()"><mat-icon>{{ showAdvancedFilters() ? 'expand_less' : 'tune' }}</mat-icon>{{ (showAdvancedFilters() ? 'RESOURCE.FILTER.LESS' : 'RESOURCE.FILTER.MORE') | translate }}</button>}<button mat-button type="button" (click)="clearFilters()">{{ 'RESOURCE.FILTER.CLEAR' | translate }}</button></div>
+            </div>
+            @if (showAdvancedFilters()) {
+              <div class="advanced-filters"><p>{{ 'RESOURCE.FILTER.ADDITIONAL' | translate }}</p><div class="filter-grid">
+                @for (filter of advancedFilters(); track filter.key) {
+                  @if (filter.type === 'date') {
+                    <mat-form-field appearance="outline"><mat-label>{{ filter.label | translate }}</mat-label><input matInput readonly [attr.aria-label]="'RESOURCE.FILTER.BIRTH_DATE_ARIA' | translate" [matDatepicker]="picker" [value]="dateValue(filterValues()[filter.key])" (dateChange)="updateDateFilter(filter.key, $event.value)" /><span matSuffix class="date-actions">@if (hasFilterValue(filter.key)) {<button class="clear-filter" mat-icon-button type="button" [attr.aria-label]="('RESOURCE.FILTER.CLEAR_FIELD' | translate) + ': ' + (filter.label | translate)" (click)="clearFilter(filter.key)"><mat-icon>close</mat-icon></button>}<mat-datepicker-toggle [for]="picker"></mat-datepicker-toggle></span><mat-datepicker #picker></mat-datepicker></mat-form-field>
+                  } @else {<mat-form-field appearance="outline"><mat-label>{{ filter.label | translate }}</mat-label>
+                    @if (filter.type === 'select') {<mat-select [value]="filterValues()[filter.key] ?? ''" (valueChange)="updateSelectFilter(filter.key, $event)"><mat-option value="">{{ 'RESOURCE.FILTER.ALL' | translate }}</mat-option>@for (option of filter.options ?? []; track option.value) { <mat-option [value]="option.value">{{ option.label | translate }}</mat-option> }</mat-select>
+                    } @else if (filter.type === 'autocomplete') {<input matInput [value]="filterDisplayValues()[filter.key] ?? ''" [matAutocomplete]="autocomplete" (input)="updateAutocomplete(filter, $any($event.target).value)" /><mat-autocomplete #autocomplete="matAutocomplete" (optionSelected)="selectFilterOption(filter.key, $event.option.value)">@for (option of filterOptions()[filter.key] ?? []; track option.value) { <mat-option [value]="option">{{ option.label }}</mat-option> }</mat-autocomplete>
+                    } @else {<input matInput [type]="filter.type" [value]="filterValues()[filter.key] ?? ''" (input)="updateFilter(filter.key, $any($event.target).value)" />} @if (hasFilterValue(filter.key)) {<button class="clear-filter" mat-icon-button matSuffix type="button" [attr.aria-label]="('RESOURCE.FILTER.CLEAR_FIELD' | translate) + ': ' + (filter.label | translate)" (click)="clearFilter(filter.key)"><mat-icon>close</mat-icon></button>}
+                  </mat-form-field>}
+                }
+              </div></div>
+            }
+            </form>
+          </mat-card>
+        </section>
+      }
       <mat-card appearance="outlined" class="table-card">
         @if (loading()) {<div class="resource-state"><mat-spinner diameter="38" /></div>}
         @else if (error()) {<div class="resource-state error"><mat-icon>cloud_off</mat-icon><p>{{ 'MODULES.LOAD_ERROR' | translate }}</p><button type="button" (click)="load()">{{ 'USERS.TRY_AGAIN' | translate }}</button></div>}
         @else if (!records().length) {<div class="resource-state"><mat-icon>inbox</mat-icon><p>{{ 'MODULES.EMPTY' | translate }}</p></div>}
-        @else {<div class="table-scroll"><table mat-table [dataSource]="records()" matSort [matSortActive]="sort() === 'id' ? '' : sort()" [matSortDirection]="sort() === 'id' ? '' : sortDirection()" (matSortChange)="changeSort($event)">@for (column of columns(); track column.key) {<ng-container [matColumnDef]="column.key"><th mat-header-cell *matHeaderCellDef [mat-sort-header]="column.key" [disabled]="!column.sortable">{{ column.label }}</th><td mat-cell *matCellDef="let record">@if (column.key === 'actions') {@if (canManage() && fields().length) {<div class="actions"><button mat-icon-button (click)="edit(record)"><mat-icon>edit</mat-icon></button><button mat-icon-button class="delete" (click)="remove(record)"><mat-icon>delete_outline</mat-icon></button></div>}} @else { {{ value(record, column.key) }} }</td></ng-container>}<tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr><tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr></table></div>
+        @else {<div class="table-scroll"><table mat-table [dataSource]="records()" matSort [matSortActive]="sort() === 'id' ? '' : sort()" [matSortDirection]="sort() === 'id' ? '' : sortDirection()" (matSortChange)="changeSort($event)">@for (column of columns(); track column.key) {<ng-container [matColumnDef]="column.key"><th mat-header-cell *matHeaderCellDef [mat-sort-header]="column.key" [disabled]="!column.sortable" [matTooltip]="column.key === 'actions' ? ('RESOURCE.ACTIONS' | translate) : (column.label | translate)" [attr.aria-label]="column.key === 'actions' ? ('RESOURCE.ACTIONS' | translate) : (column.label | translate)">{{ column.key === 'actions' ? ('RESOURCE.ACTIONS' | translate) : (column.label | translate) }}</th><td mat-cell *matCellDef="let record">@if (column.key === 'actions') {@if (canView() || (canManage() && fields().length)) {<div class="actions">@if (canView()) {<button mat-icon-button [attr.aria-label]="'RESOURCE.VIEW' | translate" [matTooltip]="'RESOURCE.VIEW' | translate" (click)="view(record)"><mat-icon>visibility</mat-icon></button>}@if (canManage() && fields().length) {<button mat-icon-button [attr.aria-label]="'RESOURCE.EDIT' | translate" [matTooltip]="'RESOURCE.EDIT' | translate" (click)="edit(record)"><mat-icon>edit</mat-icon></button>@if (canDelete(record)) {<button mat-icon-button class="delete" [attr.aria-label]="'RESOURCE.DELETE' | translate" [matTooltip]="'RESOURCE.DELETE' | translate" (click)="remove(record)"><mat-icon>delete_outline</mat-icon></button>}}</div>}} @else { {{ value(record, column.key) }} }</td></ng-container>}<tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr><tr mat-row *matRowDef="let row; columns: displayedColumns()"></tr></table></div>
           <mat-paginator [length]="totalElements()" [pageIndex]="page()" [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons (page)="changePage($event)" [attr.aria-label]="'USERS.PAGINATION' | translate" />}
       </mat-card>
     </main></mat-sidenav-content>

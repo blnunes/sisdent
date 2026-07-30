@@ -70,6 +70,36 @@ class SisdentApplicationTests {
     }
 
     @Test
+    void filtersPatientsOnTheServerBeforePaginating() throws Exception {
+        mockMvc.perform(get("/api/patients")
+                        .param("identificationNumber", "US10000000021")
+                        .param("active", "true")
+                        .param("gender", "FEMALE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].name").value("Abigail Scott"))
+                .andExpect(jsonPath("$.content[0].active").value(true))
+                .andExpect(jsonPath("$.content[0].gender").value("FEMALE"));
+    }
+
+    @Test
+    void suggestsAndFiltersPatientsByAssignedSpeciality() throws Exception {
+        Long specialityId = specialityRepository.findByName("Endodontics").orElseThrow().getId();
+
+        mockMvc.perform(get("/api/patients/filter-options")
+                        .param("field", "specialityId")
+                        .param("query", "endo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].value").value(specialityId.toString()))
+                .andExpect(jsonPath("$[0].label").value("Endodontics"));
+
+        mockMvc.perform(get("/api/patients").param("specialityId", specialityId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(org.hamcrest.Matchers.greaterThan(0)))
+                .andExpect(jsonPath("$.content[0].specialities[0].id").value(specialityId));
+    }
+
+    @Test
     void restoresMissingInitialDataWithoutDuplicatingExistingData() throws Exception {
         Patient patient = patientRepository.findByTaxId("10000000001").orElseThrow();
         patientRepository.delete(patient);

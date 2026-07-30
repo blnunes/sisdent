@@ -136,6 +136,19 @@
     "LOAD_ERROR": "Machtigingen kunnen niet worden geladen.",
     "LOADING": "Machtigingen laden…", "USERS": "Gebruikers", "USERS_HELP": "Selecteer een gebruiker om toegang in te stellen.", "SEARCH": "Machtigingen zoeken", "EDITING": "Bewerken", "CHANGES": "wijzigingen", "AVAILABLE": "Beschikbare acties", "CLEAR_SEARCH": "Zoeken wissen", "ACTIONS": "acties", "ALL": "Alle acties", "SELECT_USER": "Selecteer een gebruiker om machtigingen te bekijken.", "ADMIN_LOCKED": "De beheerdersrol heeft volledige toegang en kan niet worden gewijzigd.", "READ_ONLY": "U hebt alleen leestoegang tot machtigingen.", "UNSAVED": "niet-opgeslagen wijzigingen", "DISCARD": "Verwerpen", "UNSAVED_WARNING": "Er zijn niet-opgeslagen wijzigingen. Sla ze op voordat u van gebruiker wisselt."
   },
+  "RESOURCE": {
+    "ACTIONS": "Acties",
+    "VIEW": "Details bekijken",
+    "EDIT": "Record bewerken",
+    "DELETE": "Patiënt deactiveren",
+    "REMOVE_SPECIALITY": "Specialisme verwijderen",
+    "CLOSE": "Sluiten",
+    "TABLE": { "NAME": "Naam", "NATIONAL_ID": "Nationaal identiteitsbewijs", "GENDER": "Geslacht", "STATUS": "Status" },
+    "FILTER": {
+      "TITLE": "Patiënten zoeken", "DESCRIPTION": "Zoek op naam en verfijn de resultaten alleen wanneer nodig.", "APPLY": "Filteren", "MORE": "Meer filters", "LESS": "Minder filters", "CLEAR": "Wissen", "CLEAR_FIELD": "Wissen", "ADDITIONAL": "Aanvullende criteria", "ALL": "Alle", "BIRTH_DATE_ARIA": "Geboortedatum kiezen in de kalender",
+      "NAME": "Naam patiënt", "BIRTH_DATE": "Geboortedatum", "STATUS": "Status", "GENDER": "Geslacht", "TAX_ID": "Fiscaal nummer", "IDENTIFICATION_TYPE": "Type identificatie", "NATIONALITY": "Nationaliteit", "ADDRESS": "Adres", "SPECIALITY": "Specialisme", "ACTIVE": "Actief", "INACTIVE": "Inactief", "FEMALE": "Vrouw", "MALE": "Man", "OTHER": "Anders", "NATIONAL_ID": "Nationaal identiteitsbewijs", "PASSPORT": "Paspoort"
+    }
+  },
   "PERMISSION_GROUPS": {
     "USERS": "Gebruikers", "PATIENTS": "Patiënten", "SPECIALITIES": "Specialismen", "ADDRESSES": "Adressen", "COUNTRIES": "Landen", "STATES": "Staten", "PERMISSIONS": "Machtigingen"
   }

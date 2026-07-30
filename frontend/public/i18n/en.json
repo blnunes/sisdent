@@ -136,6 +136,19 @@
     "LOAD_ERROR": "Unable to load permissions.",
     "LOADING": "Loading permissions…", "USERS": "Users", "USERS_HELP": "Select a user to configure access.", "SEARCH": "Search permissions", "EDITING": "Editing", "CHANGES": "changes", "AVAILABLE": "Available actions", "CLEAR_SEARCH": "Clear search", "ACTIONS": "actions", "ALL": "All actions", "SELECT_USER": "Select a user to view permissions.", "ADMIN_LOCKED": "The Administrator role has full access and cannot be changed.", "READ_ONLY": "You have read-only access to permissions.", "UNSAVED": "unsaved changes", "DISCARD": "Discard", "UNSAVED_WARNING": "There are unsaved changes. Save them before changing users."
   },
+  "RESOURCE": {
+    "ACTIONS": "Actions",
+    "VIEW": "View details",
+    "EDIT": "Edit record",
+    "DELETE": "Deactivate patient",
+    "REMOVE_SPECIALITY": "Remove speciality",
+    "CLOSE": "Close",
+    "TABLE": { "NAME": "Name", "NATIONAL_ID": "National ID", "GENDER": "Gender", "STATUS": "Status" },
+    "FILTER": {
+      "TITLE": "Find patients", "DESCRIPTION": "Search by name, then refine the results only when needed.", "APPLY": "Filter", "MORE": "More filters", "LESS": "Less filters", "CLEAR": "Clear", "CLEAR_FIELD": "Clear", "ADDITIONAL": "Additional criteria", "ALL": "All", "BIRTH_DATE_ARIA": "Choose birth date from calendar",
+      "NAME": "Patient name", "BIRTH_DATE": "Birth date", "STATUS": "Status", "GENDER": "Gender", "TAX_ID": "Tax ID", "IDENTIFICATION_TYPE": "Identification type", "NATIONALITY": "Nationality", "ADDRESS": "Address", "SPECIALITY": "Speciality", "ACTIVE": "Active", "INACTIVE": "Inactive", "FEMALE": "Female", "MALE": "Male", "OTHER": "Other", "NATIONAL_ID": "National ID", "PASSPORT": "Passport"
+    }
+  },
   "PERMISSION_GROUPS": {
     "USERS": "Users", "PATIENTS": "Patients", "SPECIALITIES": "Specialities", "ADDRESSES": "Addresses", "COUNTRIES": "Countries", "STATES": "States", "PERMISSIONS": "Permissions"
   }

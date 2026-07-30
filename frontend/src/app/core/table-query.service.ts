@@ -9,6 +9,7 @@ export interface TableQuery {
   size: number;
   sort: string;
   direction: SortDirection;
+  filters?: Record<string, string | boolean | null | undefined>;
 }
 
 /** Shared server-side paging and three-state ordering for every Material table. */
@@ -17,11 +18,17 @@ export class TableQueryService {
   readonly defaultQuery: TableQuery = { page: 0, size: 10, sort: 'id', direction: 'asc' };
 
   toHttpParams(query: TableQuery): HttpParams {
-    return new HttpParams()
+    let params = new HttpParams()
       .set('page', query.page)
       .set('size', query.size)
       .set('sort', query.sort)
       .set('direction', query.direction);
+    for (const [key, value] of Object.entries(query.filters ?? {})) {
+      if (value !== null && value !== undefined && value !== '') {
+        params = params.set(key, value);
+      }
+    }
+    return params;
   }
 
   nextSort(current: TableQuery, change: Sort): TableQuery {

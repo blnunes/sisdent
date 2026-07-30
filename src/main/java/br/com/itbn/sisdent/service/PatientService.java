@@ -2,16 +2,20 @@ package br.com.itbn.sisdent.service;
 
 import br.com.itbn.sisdent.dto.PatientRequest;
 import br.com.itbn.sisdent.dto.PatientResponse;
+import br.com.itbn.sisdent.dto.FilterOptionResponse;
 import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.mapper.ResponseMapper;
 import br.com.itbn.sisdent.pagination.PageQuery;
 import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.pagination.SortDefinition;
+import br.com.itbn.sisdent.filter.PatientFilter;
+import br.com.itbn.sisdent.filter.PatientSpecifications;
 import br.com.itbn.sisdent.model.Address;
 import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.repository.PatientRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -53,8 +57,25 @@ public class PatientService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<PatientResponse> findPage(PageQuery query) {
-        return PageResponse.from(patientRepository.findAll(pageableFactory.create(query, SORT_DEFINITION)), ResponseMapper::toResponse);
+    public PageResponse<PatientResponse> findPage(PageQuery query, PatientFilter filter) {
+        return PageResponse.from(
+                patientRepository.findAll(PatientSpecifications.matching(filter), pageableFactory.create(query, SORT_DEFINITION)),
+                ResponseMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FilterOptionResponse> findFilterOptions(String field, String query) {
+        Pageable limit = PageRequest.of(0, 10);
+        String term = query == null ? "" : query.trim();
+        return switch (field) {
+            case "name" -> patientRepository.findNameSuggestions(term, limit).stream().map(value -> new FilterOptionResponse(value, value)).toList();
+            case "taxId" -> patientRepository.findTaxIdSuggestions(term, limit).stream().map(value -> new FilterOptionResponse(value, value)).toList();
+            case "identificationNumber" -> patientRepository.findIdentificationNumberSuggestions(term, limit).stream().map(value -> new FilterOptionResponse(value, value)).toList();
+            case "nationalityCode" -> patientRepository.findNationalitySuggestions(term, limit).stream().map(row -> new FilterOptionResponse((String) row[0], row[1] + " (" + row[0] + ")")).toList();
+            case "addressId" -> patientRepository.findAddressSuggestions(term, limit).stream().map(row -> new FilterOptionResponse(String.valueOf(row[0]), row[1] + " · " + row[2] + " · " + row[3])).toList();
+            case "specialityId" -> patientRepository.findSpecialitySuggestions(term, limit).stream().map(row -> new FilterOptionResponse(String.valueOf(row[0]), (String) row[1])).toList();
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported filter field");
+        };
     }
 
     @Transactional(readOnly = true)
@@ -81,6 +102,9 @@ public class PatientService {
     @Transactional
     public void delete(Long id) {
         Patient patient = patientRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (!patient.isActive()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Inactive patients cannot be deleted");
+        }
         patient.deactivate();
         patientRepository.save(patient);
     }

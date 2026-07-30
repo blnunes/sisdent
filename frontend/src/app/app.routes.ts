@@ -20,7 +20,20 @@ export const routes: Routes = [
     path: 'patients',
     canActivate: [authGuard, anyPermissionsGuard('READ_PATIENTS', 'MAINTAIN_PATIENTS')],
     loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
-    data: { key: 'patients', endpoint: '/api/patients', title: 'MODULES.PATIENTS', description: 'MODULES.PATIENTS_DESCRIPTION', maintainPermission: 'MAINTAIN_PATIENTS' },
+    data: {
+      key: 'patients', endpoint: '/api/patients', title: 'MODULES.PATIENTS', description: 'MODULES.PATIENTS_DESCRIPTION', maintainPermission: 'MAINTAIN_PATIENTS',
+      filters: [
+        { key: 'name', label: 'RESOURCE.FILTER.NAME', type: 'autocomplete' },
+        { key: 'birthDate', label: 'RESOURCE.FILTER.BIRTH_DATE', type: 'date', placement: 'advanced' },
+        { key: 'active', label: 'RESOURCE.FILTER.STATUS', type: 'select', options: [{ value: 'true', label: 'RESOURCE.FILTER.ACTIVE' }, { value: 'false', label: 'RESOURCE.FILTER.INACTIVE' }] },
+        { key: 'gender', label: 'RESOURCE.FILTER.GENDER', type: 'select', placement: 'advanced', options: [{ value: 'FEMALE', label: 'RESOURCE.FILTER.FEMALE' }, { value: 'MALE', label: 'RESOURCE.FILTER.MALE' }, { value: 'OTHER', label: 'RESOURCE.FILTER.OTHER' }] },
+        { key: 'taxId', label: 'RESOURCE.FILTER.TAX_ID', type: 'autocomplete', placement: 'advanced' },
+        { key: 'identificationType', label: 'RESOURCE.FILTER.IDENTIFICATION_TYPE', type: 'select', placement: 'advanced', options: [{ value: 'NATIONAL_ID', label: 'RESOURCE.FILTER.NATIONAL_ID' }, { value: 'PASSPORT', label: 'RESOURCE.FILTER.PASSPORT' }] },
+        { key: 'nationalityCode', label: 'RESOURCE.FILTER.NATIONALITY', type: 'autocomplete', selectionRequired: true, placement: 'advanced' },
+        { key: 'addressId', label: 'RESOURCE.FILTER.ADDRESS', type: 'autocomplete', selectionRequired: true, placement: 'advanced' },
+        { key: 'specialityId', label: 'RESOURCE.FILTER.SPECIALITY', type: 'autocomplete', selectionRequired: true },
+      ],
+    },
   },
   {
     path: 'specialities',

@@ -136,6 +136,19 @@
     "LOAD_ERROR": "Não foi possível carregar as permissões.",
     "LOADING": "A carregar permissões…", "USERS": "Utilizadores", "USERS_HELP": "Selecione para configurar o acesso.", "SEARCH": "Pesquisar permissões", "EDITING": "A editar", "CHANGES": "alterações", "AVAILABLE": "Ações disponíveis", "CLEAR_SEARCH": "Limpar pesquisa", "ACTIONS": "ações", "ALL": "Todas as ações", "SELECT_USER": "Selecione um utilizador para consultar as permissões.", "ADMIN_LOCKED": "O perfil Administrador possui acesso integral e não pode ser alterado.", "READ_ONLY": "Tem acesso apenas de consulta às permissões.", "UNSAVED": "alterações não guardadas", "DISCARD": "Descartar", "UNSAVED_WARNING": "Existem alterações não guardadas. Guarde-as antes de mudar de utilizador."
   },
+  "RESOURCE": {
+    "ACTIONS": "Ações",
+    "VIEW": "Ver detalhes",
+    "EDIT": "Editar registo",
+    "DELETE": "Desativar paciente",
+    "REMOVE_SPECIALITY": "Remover especialidade",
+    "CLOSE": "Fechar",
+    "TABLE": { "NAME": "Nome", "NATIONAL_ID": "Documento nacional", "GENDER": "Género", "STATUS": "Estado" },
+    "FILTER": {
+      "TITLE": "Encontrar pacientes", "DESCRIPTION": "Pesquise pelo nome e refine os resultados apenas quando necessário.", "APPLY": "Filtrar", "MORE": "Mais filtros", "LESS": "Menos filtros", "CLEAR": "Limpar", "CLEAR_FIELD": "Limpar", "ADDITIONAL": "Critérios adicionais", "ALL": "Todos", "BIRTH_DATE_ARIA": "Escolher data de nascimento no calendário",
+      "NAME": "Nome do paciente", "BIRTH_DATE": "Data de nascimento", "STATUS": "Estado", "GENDER": "Género", "TAX_ID": "NIF", "IDENTIFICATION_TYPE": "Tipo de identificação", "NATIONALITY": "Nacionalidade", "ADDRESS": "Endereço", "SPECIALITY": "Especialidade", "ACTIVE": "Ativo", "INACTIVE": "Inativo", "FEMALE": "Feminino", "MALE": "Masculino", "OTHER": "Outro", "NATIONAL_ID": "Documento nacional", "PASSPORT": "Passaporte"
+    }
+  },
   "PERMISSION_GROUPS": {
     "USERS": "Utilizadores", "PATIENTS": "Pacientes", "SPECIALITIES": "Especialidades", "ADDRESSES": "Endereços", "COUNTRIES": "Países", "STATES": "Estados", "PERMISSIONS": "Permissões"
   }
