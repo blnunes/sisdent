@@ -3,7 +3,11 @@ package br.com.itbn.sisdent.service;
 import br.com.itbn.sisdent.dto.ProcedureRequest;
 import br.com.itbn.sisdent.dto.SpecialityRequest;
 import br.com.itbn.sisdent.dto.SpecialityResponse;
+import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.mapper.ResponseMapper;
+import br.com.itbn.sisdent.pagination.PageQuery;
+import br.com.itbn.sisdent.pagination.PageableFactory;
+import br.com.itbn.sisdent.pagination.SortDefinition;
 import br.com.itbn.sisdent.model.Speciality;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.springframework.data.domain.Sort;
@@ -20,11 +24,14 @@ import java.util.stream.Collectors;
 
 @Service
 public class SpecialityService {
+    private static final SortDefinition SORT_DEFINITION = new SortDefinition("name", java.util.Set.of("id", "name"));
 
     private final SpecialityRepository specialityRepository;
+    private final PageableFactory pageableFactory;
 
-    public SpecialityService(SpecialityRepository specialityRepository) {
+    public SpecialityService(SpecialityRepository specialityRepository, PageableFactory pageableFactory) {
         this.specialityRepository = specialityRepository;
+        this.pageableFactory = pageableFactory;
     }
 
     @Transactional(readOnly = true)
@@ -32,6 +39,11 @@ public class SpecialityService {
         return specialityRepository.findAll(Sort.by("name")).stream()
                 .map(ResponseMapper::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<SpecialityResponse> findPage(PageQuery query) {
+        return PageResponse.from(specialityRepository.findAll(pageableFactory.create(query, SORT_DEFINITION)), ResponseMapper::toResponse);
     }
 
     @Transactional
@@ -89,6 +101,12 @@ public class SpecialityService {
         speciality.rename(request.name().trim());
 
         return ResponseMapper.toResponse(specialityRepository.saveAndFlush(speciality));
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        if (!specialityRepository.existsById(id)) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Speciality not found");
+        specialityRepository.deleteById(id);
     }
 
     List<Speciality> findAllByIds(Set<Long> ids) {

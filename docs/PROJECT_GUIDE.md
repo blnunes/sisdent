@@ -38,18 +38,19 @@ Related documents:
 
 | Method | Path | Result |
 | --- | --- | --- |
-| `GET` | `/api/states` | List states |
-| `GET` | `/api/countries` | List countries ordered by name |
-| `GET` | `/api/addresses` | List addresses |
+| `GET` | `/api/states?page=0&size=10` | List states in pages |
+| `GET` | `/api/countries?page=0&size=10` | List countries ordered by name in pages |
+| `GET` | `/api/countries/continents` | List valid country continent enum values |
+| `GET` | `/api/addresses?page=0&size=10` | List addresses in pages |
 | `GET` | `/api/addresses/postal-code/{postalCode}` | Find address by postal code |
-| `GET` | `/api/patients` | List patients |
+| `GET` | `/api/patients?page=0&size=10` | List patients in pages |
 | `GET` | `/api/patients/{id}` | Find patient by ID |
 | `POST` | `/api/patients` | Create patient and missing address/state |
-| `GET` | `/api/specialities` | List specialities with their procedures |
+| `GET` | `/api/specialities?page=0&size=10` | List specialities with their procedures in pages |
 | `POST` | `/api/specialities` | Create a speciality and its procedures |
 | `PUT` | `/api/specialities/{id}` | Replace a speciality and its nested procedures |
 | `POST` | `/api/auth/login` | Authenticate and issue a JWT |
-| `GET` | `/api/users` | List active users (admin only) |
+| `GET` | `/api/users?page=0&size=10` | List active users in pages (admin only) |
 | `GET` | `/api/users/{id}` | Find an active user (admin only) |
 | `POST` | `/api/users` | Create a user (admin only) |
 | `PUT` | `/api/users/{id}` | Update a user (admin only) |
@@ -169,6 +170,25 @@ must use a persistent database to retain data between service replacements.
 
 The H2 console is available locally at `/h2-console` and disabled on Render by
 `H2_CONSOLE_ENABLED=false`.
+
+## Pagination and ordering
+
+Every collection endpoint accepts optional `page`, `size`, `sort`, and
+`direction` query parameters. Results use the common `PageResponse` contract
+with `content`, page metadata, and totals. Ordering is executed in the database
+through Spring Data `Pageable`, before the requested page is returned.
+
+The application-wide `PageableFactory` accepts a transport-neutral `PageQuery`
+and a resource `SortDefinition`. This makes the same validation and SQL-backed
+pagination available to HTTP controllers, scheduled work, message consumers,
+and other Java callers. Each resource explicitly whitelists its orderable
+fields; invalid fields, directions, or page values return HTTP 400 for HTTP
+callers.
+
+Countries use the `Continent` enum (`EUROPE`, `NORTH_AMERICA`, and
+`SOUTH_AMERICA`). The API exposes its values at
+`GET /api/countries/continents`; malformed enum values are rejected before
+persistence and a missing value is rejected by validation.
 
 ## Local setup
 

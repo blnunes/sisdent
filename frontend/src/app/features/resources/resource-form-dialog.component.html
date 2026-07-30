@@ -1,0 +1,3 @@
+<h2 mat-dialog-title>{{ data.values ? 'Edit record' : 'New record' }}</h2>
+<mat-dialog-content><form [formGroup]="form">@for (field of data.fields; track field.key) {<mat-form-field appearance="outline"><mat-label>{{ field.label }}</mat-label>@if (field.options) {<mat-select [formControlName]="field.key">@for (option of field.options; track option) {<mat-option [value]="option">{{ option }}</mat-option>}</mat-select>} @else {<input matInput [formControlName]="field.key" />}</mat-form-field>}</form></mat-dialog-content>
+<mat-dialog-actions align="end"><button mat-button mat-dialog-close>Cancel</button><button mat-flat-button (click)="save()">Save</button></mat-dialog-actions>

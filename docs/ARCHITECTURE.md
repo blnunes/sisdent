@@ -87,6 +87,14 @@ identity is based on abbreviation.
 Spring Data JPA interfaces. `@EntityGraph` loads address and state relationships
 for response mapping while `open-in-view=false`, also reducing N+1 queries.
 
+### Collection queries
+
+Collection services receive a transport-neutral `PageQuery` and delegate page,
+size, field, and direction validation to `PageableFactory`. A per-resource
+`SortDefinition` whitelists persistent fields and establishes the default
+order. The resulting Spring Data `Pageable` reaches the repository, so sorting
+and pagination are performed by the database rather than in application memory.
+
 ### Mapper and configuration
 
 `ResponseMapper` converts entities into API DTOs. `InitialDataLoader` seeds JSON
@@ -226,7 +234,7 @@ Schema changes must be added as immutable, forward-only Flyway migrations.
   effect on the next login or after the current token expires.
 - Tax IDs and other personal data are returned in full.
 - There is no audit history, backup, or recovery strategy.
-- List endpoints have no pagination.
+- Collection endpoints return an explicit paged response (`content`, page and total metadata).
 - Concurrent `find-or-create` calls may race. Constraints prevent duplicates,
   but conflict responses are not handled cleanly.
 - Domain errors do not have a standardized representation.

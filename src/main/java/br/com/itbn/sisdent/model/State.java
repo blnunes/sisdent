@@ -40,4 +40,6 @@ public class State {
     public String getAbbreviation() {
         return abbreviation;
     }
+
+    public void update(String name, String abbreviation) { this.name = name; this.abbreviation = abbreviation; }
 }

@@ -136,4 +136,15 @@ public class Patient {
     public Set<Speciality> getSpecialities() {
         return Set.copyOf(specialities);
     }
+
+    public void update(String name, LocalDate birthDate, boolean active, Gender gender, String taxId,
+            IdentificationType identificationType, String identificationNumber, Country nationality,
+            Address address, Collection<Speciality> specialities) {
+        this.name = name; this.birthDate = birthDate; this.active = active; this.gender = gender;
+        this.taxId = taxId; this.identificationType = identificationType;
+        this.identificationNumber = identificationNumber; this.nationality = nationality; this.address = address;
+        this.specialities.clear(); this.specialities.addAll(specialities);
+    }
+
+    public void deactivate() { this.active = false; }
 }

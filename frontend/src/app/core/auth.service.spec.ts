@@ -35,7 +35,7 @@ describe('AuthService', () => {
 
     expect(service.authenticated()).toBe(true);
     expect(service.isAdmin()).toBe(true);
-    expect(service.destination()).toBe('/users');
+    expect(service.destination()).toBe('/home');
     expect(localStorage.getItem('sisdent.access-token')).toBe(token);
   });
 
@@ -56,7 +56,7 @@ describe('AuthService', () => {
     });
 
     expect(service.isAdmin()).toBe(false);
-    expect(service.destination()).toBe('/not-found');
+    expect(service.destination()).toBe('/home');
   });
 });
 

@@ -51,4 +51,8 @@ public class Country {
     public Continent getContinent() {
         return continent;
     }
+
+    public void update(String name, String code, Continent continent) {
+        this.name = name; this.code = code; this.continent = continent;
+    }
 }

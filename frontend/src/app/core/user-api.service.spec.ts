@@ -26,7 +26,10 @@ describe('UserApiService', () => {
     };
 
     service.list().subscribe();
-    expect(http.expectOne('/api/users').request.method).toBe('GET');
+    const list = http.expectOne((request) => request.url === '/api/users');
+    expect(list.request.method).toBe('GET');
+    expect(list.request.params.get('page')).toBe('0');
+    expect(list.request.params.get('size')).toBe('10');
 
     service.create(user).subscribe();
     expect(http.expectOne('/api/users').request.method).toBe('POST');

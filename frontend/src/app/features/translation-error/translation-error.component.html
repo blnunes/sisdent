@@ -1,0 +1,8 @@
+<main class="translation-error">
+  <mat-icon>translate</mat-icon>
+  <span class="code">I18N_LOAD_ERROR</span>
+  <h1>Não foi possível carregar as traduções</h1>
+  <p>O sistema não conseguiu carregar o ficheiro de idioma. Verifique se o asset foi publicado no servidor.</p>
+  <dl><dt>Idioma</dt><dd>{{ language }}</dd><dt>Recurso esperado</dt><dd><code>{{ resource }}</code></dd><dt>Detalhe técnico</dt><dd><code>{{ message }}</code></dd></dl>
+  <div class="actions"><button mat-flat-button (click)="retry()"><mat-icon>refresh</mat-icon>Tentar novamente</button><a mat-button routerLink="/login">Voltar ao login</a></div>
+</main>

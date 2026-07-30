@@ -24,7 +24,7 @@ frontend/
             |-- login/
             |-- not-found/
             |-- permissions/
-            |-- resources/       # read-only module listings
+            |-- resources/       # paged resource tables and management dialogs
             `-- users/
 ```
 
@@ -144,6 +144,30 @@ Angular bindings, events, control flow, and encapsulated styles.
   standalone component.
 - Place tests next to the implementation when a feature has non-trivial
   behavior.
+
+## Paged tables and ordering
+
+All collection screens use server-side pagination and the shared
+`core/table-query.service.ts`. `TableQueryService` owns the HTTP query
+parameters (`page`, `size`, `sort`, and `direction`) and the three-state header
+cycle: ascending, descending, then the resource default (`id ASC`). Do not
+reimplement this state machine in individual components.
+
+Resource tables must expose scalar fields in distinct columns and sort only on
+fields permitted by the backend. Related or nested records may be rendered as
+one concise cell. Use `mat-table`, `matSort`, and `mat-sort-header`; the sorted
+header arrow must remain visible without hover. Long cell values must wrap
+instead of changing column widths: use a fixed table layout and
+`overflow-wrap: anywhere`.
+
+The generic resource table configuration is in
+`features/resources/resource-list.component.ts`. Add an explicit column
+definition for every resource; never fall back to generic “record” or
+“details” columns when scalar fields are available.
+
+Country continents are an authoritative backend enum. The Country form loads
+the allowed values from `GET /api/countries/continents` and presents them with
+`mat-select`; do not duplicate enum values in the frontend or allow free text.
 
 ## Verification
 

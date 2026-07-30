@@ -55,17 +55,17 @@ class SisdentApplicationTests {
 
     @Test
     void loadsStaticJsonDataAndReturnsPatients() throws Exception {
-        mockMvc.perform(get("/api/patients"))
+        mockMvc.perform(get("/api/patients").param("size", "100").param("sort", "name"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(40))
-                .andExpect(jsonPath("$[0].name").value("Abigail Scott"))
-                .andExpect(jsonPath("$[0].address.state.abbreviation").value("IL"))
-                .andExpect(jsonPath("$[0].address.country.code").value("US"))
-                .andExpect(jsonPath("$[0].nationality.code").value("US"))
-                .andExpect(jsonPath("$[0].identificationType").value("NATIONAL_ID"))
-                .andExpect(jsonPath("$[0].identificationNumber").value("US10000000021"))
-                .andExpect(jsonPath("$[0].specialities.length()").value(2))
-                .andExpect(jsonPath("$[0].specialities[0].name").value("Endodontics"));
+                .andExpect(jsonPath("$.totalElements").value(40))
+                .andExpect(jsonPath("$.content[0].name").value("Abigail Scott"))
+                .andExpect(jsonPath("$.content[0].address.state.abbreviation").value("IL"))
+                .andExpect(jsonPath("$.content[0].address.country.code").value("US"))
+                .andExpect(jsonPath("$.content[0].nationality.code").value("US"))
+                .andExpect(jsonPath("$.content[0].identificationType").value("NATIONAL_ID"))
+                .andExpect(jsonPath("$.content[0].identificationNumber").value("US10000000021"))
+                .andExpect(jsonPath("$.content[0].specialities.length()").value(2))
+                .andExpect(jsonPath("$.content[0].specialities[0].name").value("Endodontics"));
     }
 
     @Test
@@ -78,7 +78,7 @@ class SisdentApplicationTests {
 
         mockMvc.perform(get("/api/patients"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(40));
+                .andExpect(jsonPath("$.totalElements").value(40));
     }
 
     @Test
@@ -91,13 +91,13 @@ class SisdentApplicationTests {
 
     @Test
     void returnsAllSeededSpecialities() throws Exception {
-        mockMvc.perform(get("/api/specialities"))
+        mockMvc.perform(get("/api/specialities").param("size", "100"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(12))
-                .andExpect(jsonPath("$[0].name").value("Dental Anesthesiology"))
-                .andExpect(jsonPath("$[0].procedures.length()").value(2))
-                .andExpect(jsonPath("$[0].procedures[0].name").value("Local anesthesia"))
-                .andExpect(jsonPath("$[11].name").value("Prosthodontics"));
+                .andExpect(jsonPath("$.totalElements").value(12))
+                .andExpect(jsonPath("$.content[0].name").value("Dental Anesthesiology"))
+                .andExpect(jsonPath("$.content[0].procedures.length()").value(2))
+                .andExpect(jsonPath("$.content[0].procedures[0].name").value("Local anesthesia"))
+                .andExpect(jsonPath("$.content[11].name").value("Prosthodontics"));
     }
 
     @Test
@@ -158,23 +158,23 @@ class SisdentApplicationTests {
 
     @Test
     void returnsAllSeededStates() throws Exception {
-        mockMvc.perform(get("/api/states"))
+        mockMvc.perform(get("/api/states").param("size", "100"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(8))
-                .andExpect(jsonPath("$[0].abbreviation").value("CA"))
-                .andExpect(jsonPath("$[7].abbreviation").value("WA"));
+                .andExpect(jsonPath("$.totalElements").value(8))
+                .andExpect(jsonPath("$.content[0].abbreviation").value("CA"))
+                .andExpect(jsonPath("$.content[7].abbreviation").value("WA"));
     }
 
     @Test
     void returnsCountriesFromEuropeAndTheAmericas() throws Exception {
-        mockMvc.perform(get("/api/countries"))
+        mockMvc.perform(get("/api/countries").param("size", "100"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(80))
-                .andExpect(jsonPath("$[?(@.code == 'BR')].continent")
+                .andExpect(jsonPath("$.totalElements").value(80))
+                .andExpect(jsonPath("$.content[?(@.code == 'BR')].continent")
                         .value("SOUTH_AMERICA"))
-                .andExpect(jsonPath("$[?(@.code == 'PT')].continent")
+                .andExpect(jsonPath("$.content[?(@.code == 'PT')].continent")
                         .value("EUROPE"))
-                .andExpect(jsonPath("$[?(@.code == 'US')].continent")
+                .andExpect(jsonPath("$.content[?(@.code == 'US')].continent")
                         .value("NORTH_AMERICA"));
     }
 
@@ -182,7 +182,7 @@ class SisdentApplicationTests {
     void returnsAllSeededAddresses() throws Exception {
         mockMvc.perform(get("/api/addresses"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(20));
+                .andExpect(jsonPath("$.totalElements").value(20));
     }
 
     @Test

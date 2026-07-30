@@ -1,0 +1,4 @@
+:host { display: block; min-height: 100%; background: #f4f9f9; color: #173e4b; }
+.translation-error { box-sizing: border-box; width: min(680px, calc(100% - 32px)); margin: 0 auto; padding: 12vh 0; }
+mat-icon { width: 56px; height: 56px; font-size: 56px; color: #b34250; }.code { display: block; margin-top: 22px; color: #b34250; font-size: .78rem; font-weight: 800; letter-spacing: .12em; } h1 { margin: 10px 0; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.05; } p { color: #627b83; line-height: 1.6; }
+dl { margin: 26px 0; padding: 18px; border: 1px solid #dbe9e9; border-radius: 14px; background: #fff; } dt { margin-top: 10px; color: #6b8188; font-size: .78rem; font-weight: 700; } dt:first-child { margin-top: 0; } dd { margin: 4px 0 0; overflow-wrap: anywhere; } code { font-size: .85rem; }.actions { display: flex; gap: 10px; align-items: center; }

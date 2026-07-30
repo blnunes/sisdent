@@ -90,4 +90,10 @@ public class Address {
     public Country getCountry() {
         return country;
     }
+
+    public void update(String street, String district, String additionalInfo, String block, String postalCode,
+            State state, Country country) {
+        this.street = street; this.district = district; this.additionalInfo = additionalInfo; this.block = block;
+        this.postalCode = postalCode; this.state = state; this.country = country;
+    }
 }

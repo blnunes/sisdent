@@ -67,6 +67,9 @@ public class SecurityConfiguration {
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
+                                "/swagger-resources/**",
+                                "/webjars/**",
+                                "/configuration/**",
                                 "/h2-console/**",
                                 "/i18n/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/api/users/me/password")
@@ -105,10 +108,28 @@ public class SecurityConfiguration {
                         .access(hasAnyPermission(MAINTAIN_SPECIALITIES_PERMISSION))
                         .requestMatchers(HttpMethod.GET, "/api/addresses/**")
                         .access(hasAnyPermission("READ_ADDRESSES", "MAINTAIN_ADDRESSES"))
+                        .requestMatchers(HttpMethod.POST, "/api/addresses/**")
+                        .access(hasAnyPermission("MAINTAIN_ADDRESSES"))
+                        .requestMatchers(HttpMethod.PUT, "/api/addresses/**")
+                        .access(hasAnyPermission("MAINTAIN_ADDRESSES"))
+                        .requestMatchers(HttpMethod.DELETE, "/api/addresses/**")
+                        .access(hasAnyPermission("MAINTAIN_ADDRESSES"))
                         .requestMatchers(HttpMethod.GET, "/api/countries/**")
                         .access(hasAnyPermission("READ_COUNTRIES", "MAINTAIN_COUNTRIES"))
+                        .requestMatchers(HttpMethod.POST, "/api/countries/**")
+                        .access(hasAnyPermission("MAINTAIN_COUNTRIES"))
+                        .requestMatchers(HttpMethod.PUT, "/api/countries/**")
+                        .access(hasAnyPermission("MAINTAIN_COUNTRIES"))
+                        .requestMatchers(HttpMethod.DELETE, "/api/countries/**")
+                        .access(hasAnyPermission("MAINTAIN_COUNTRIES"))
                         .requestMatchers(HttpMethod.GET, "/api/states/**")
                         .access(hasAnyPermission("READ_STATES", "MAINTAIN_STATES"))
+                        .requestMatchers(HttpMethod.POST, "/api/states/**")
+                        .access(hasAnyPermission("MAINTAIN_STATES"))
+                        .requestMatchers(HttpMethod.PUT, "/api/states/**")
+                        .access(hasAnyPermission("MAINTAIN_STATES"))
+                        .requestMatchers(HttpMethod.DELETE, "/api/states/**")
+                        .access(hasAnyPermission("MAINTAIN_STATES"))
                         // Single-page application shell, static assets, and client-side routes.
                         // The SPA bundle contains no secrets; data authorization is enforced on
                         // the /api/** matchers above. Client-side route protection is handled by

@@ -2,6 +2,8 @@ package br.com.itbn.sisdent.repository;
 
 import br.com.itbn.sisdent.model.Speciality;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,6 +15,10 @@ public interface SpecialityRepository extends JpaRepository<Speciality, Long> {
     @Override
     @EntityGraph(attributePaths = "procedures")
     List<Speciality> findAll(Sort sort);
+
+    @Override
+    @EntityGraph(attributePaths = "procedures")
+    Page<Speciality> findAll(Pageable pageable);
 
     @Override
     @EntityGraph(attributePaths = "procedures")

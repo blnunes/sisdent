@@ -1,4 +1,4 @@
-import { Component, inject, signal, ViewChild } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -13,18 +13,20 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatListModule } from '@angular/material/list';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Permission, Role, User, UserWrite } from '../../core/models';
 import { UserApiService } from '../../core/user-api.service';
 import { AppHeaderComponent } from '../../shared/app-header.component';
 import { ModuleNavigationComponent } from '../../shared/module-navigation.component';
+import { TableQueryService } from '../../core/table-query.service';
 
 @Component({
   selector: 'app-users',
@@ -41,6 +43,7 @@ import { ModuleNavigationComponent } from '../../shared/module-navigation.compon
     MatTableModule,
     MatSidenavModule,
     MatListModule,
+    MatSortModule,
     TranslatePipe,
     AppHeaderComponent,
     ModuleNavigationComponent,
@@ -53,15 +56,17 @@ export class UsersComponent {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
+  private readonly tableQuery = inject(TableQueryService);
 
   readonly loading = signal(true);
   readonly error = signal('');
+  readonly page = signal(0);
+  readonly pageSize = signal(5);
+  readonly totalElements = signal(0);
+  readonly sort = signal('id');
+  readonly sortDirection = signal<'asc' | 'desc'>('asc');
   readonly dataSource = new MatTableDataSource<User>([]);
   readonly displayedColumns = ['identification', 'role', 'permissions', 'status', 'actions'];
-
-  @ViewChild(MatPaginator) set paginator(paginator: MatPaginator) {
-    this.dataSource.paginator = paginator;
-  }
 
   constructor() {
     this.load();
@@ -73,9 +78,10 @@ export class UsersComponent {
 
   load(): void {
     this.loading.set(true);
-    this.api.list().subscribe({
-      next: (users) => {
-        this.dataSource.data = users;
+    this.api.list({ page: this.page(), size: this.pageSize(), sort: this.sort(), direction: this.sortDirection() }).subscribe({
+      next: (response) => {
+        this.dataSource.data = response.content;
+        this.totalElements.set(response.totalElements);
         this.loading.set(false);
       },
       error: () => {
@@ -85,9 +91,20 @@ export class UsersComponent {
     });
   }
 
+  changePage(event: PageEvent): void {
+    this.page.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+    this.load();
+  }
+
+  changeSort(change: Sort): void {
+    const next = this.tableQuery.nextSort({ page: this.page(), size: this.pageSize(), sort: this.sort(), direction: this.sortDirection() }, change);
+    this.page.set(next.page); this.sort.set(next.sort); this.sortDirection.set(next.direction);
+    this.load();
+  }
+
   filter(value: string): void {
     this.dataSource.filter = value.trim().toLowerCase();
-    this.dataSource.paginator?.firstPage();
   }
 
   create(): void {

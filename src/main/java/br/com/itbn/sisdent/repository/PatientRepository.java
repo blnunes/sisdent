@@ -3,6 +3,8 @@ package br.com.itbn.sisdent.repository;
 import br.com.itbn.sisdent.model.Patient;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -21,6 +23,11 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
             "specialities",
             "specialities.procedures"})
     List<Patient> findAll(Sort sort);
+
+    @Override
+    @EntityGraph(attributePaths = {
+            "address", "address.state", "address.country", "nationality", "specialities", "specialities.procedures"})
+    Page<Patient> findAll(Pageable pageable);
 
     @Override
     @EntityGraph(attributePaths = {
