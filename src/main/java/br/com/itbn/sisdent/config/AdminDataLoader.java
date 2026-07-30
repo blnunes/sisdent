@@ -5,6 +5,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.core.annotation.Order;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.itbn.sisdent.model.IdentificationType;
@@ -26,6 +27,7 @@ import br.com.itbn.sisdent.repository.UserRepository;
 import br.com.itbn.sisdent.service.IdentificationNumbers;
 
 @Component
+@Order(2)
 public class AdminDataLoader implements ApplicationRunner {
 
     private final UserRepository userRepository;

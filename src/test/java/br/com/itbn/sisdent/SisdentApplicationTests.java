@@ -60,7 +60,7 @@ class SisdentApplicationTests {
     void loadsStaticJsonDataAndReturnsPatients() throws Exception {
         mockMvc.perform(get("/api/patients").param("size", "100").param("sort", "name"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(40))
+                .andExpect(jsonPath("$.totalElements").value(48))
                 .andExpect(jsonPath("$.content[0].name").value("Abigail Scott"))
                 .andExpect(jsonPath("$.content[0].address.administrativeDivision.code").value("IL"))
                 .andExpect(jsonPath("$.content[0].globalId").isString())
@@ -113,7 +113,7 @@ class SisdentApplicationTests {
 
         mockMvc.perform(get("/api/patients"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(40));
+                .andExpect(jsonPath("$.totalElements").value(48));
     }
 
     @Test

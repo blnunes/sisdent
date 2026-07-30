@@ -689,6 +689,78 @@
       "taxId": "10000000040",
       "addressReference": "cypress-bend-tampa",
       "specialityNames": ["Periodontics"]
+    },
+    {
+      "name": "Claire Sullivan",
+      "birthDate": "1993-05-12",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000041",
+      "addressReference": "maple-grove-austin",
+      "specialityNames": ["Endodontics", "Periodontics"]
+    },
+    {
+      "name": "Owen Price",
+      "birthDate": "1981-08-24",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000042",
+      "addressReference": "sunset-ridge-miami",
+      "specialityNames": ["Oral Medicine"]
+    },
+    {
+      "name": "Ruby Evans",
+      "birthDate": "2006-02-08",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000043",
+      "addressReference": "harbor-point-boston",
+      "specialityNames": ["Pediatric Dentistry"]
+    },
+    {
+      "name": "Theo Barnes",
+      "birthDate": "1974-11-19",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000044",
+      "addressReference": "lake-shore-chicago",
+      "specialityNames": ["Prosthodontics"]
+    },
+    {
+      "name": "Nora Phillips",
+      "birthDate": "1991-01-30",
+      "active": false,
+      "gender": "OTHER",
+      "taxId": "10000000045",
+      "addressReference": "golden-gate-san-francisco",
+      "specialityNames": ["Orofacial Pain"]
+    },
+    {
+      "name": "Caleb Foster",
+      "birthDate": "1986-06-16",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000046",
+      "addressReference": "bluebonnet-hill-houston",
+      "specialityNames": ["Oral and Maxillofacial Surgery"]
+    },
+    {
+      "name": "Maya Reynolds",
+      "birthDate": "1998-09-05",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000047",
+      "addressReference": "potomac-view-arlington",
+      "specialityNames": ["Orthodontics and Dentofacial Orthopedics"]
+    },
+    {
+      "name": "Leo Grant",
+      "birthDate": "1967-03-22",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000048",
+      "addressReference": "cypress-bend-tampa",
+      "specialityNames": ["Dental Public Health"]
     }
   ]
 }

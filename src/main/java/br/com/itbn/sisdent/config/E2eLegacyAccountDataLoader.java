@@ -22,10 +22,12 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.core.annotation.Order;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Profile("e2e")
+@Order(3)
 public class E2eLegacyAccountDataLoader implements ApplicationRunner {
     public static final String IDENTIFICATION_NUMBER = "E2ELEGACY";
     public static final String PASSWORD = "e2e-password";
