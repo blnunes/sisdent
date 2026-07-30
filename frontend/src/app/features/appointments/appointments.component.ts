@@ -1,7 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
+import { distinctUntilChanged } from 'rxjs';
 import { Appointment, PageResponse, Practitioner } from '../../core/models';
 import { AuthService } from '../../core/auth.service';
 
@@ -20,10 +22,26 @@ import { AuthService } from '../../core/auth.service';
   }</main>`,
 })
 export class AppointmentsComponent {
-  readonly auth = inject(AuthService); private readonly http = inject(HttpClient);
+  readonly auth = inject(AuthService); private readonly http = inject(HttpClient); private readonly destroyRef = inject(DestroyRef);
   readonly membership = this.auth.activeMembership; readonly appointments = signal<Appointment[]>([]); readonly practitioners = signal<Practitioner[]>([]); readonly patients = signal<{globalId: string; name: string}[]>([]); readonly error = signal('');
   clinicUnitId = this.membership()?.clinicUnitId ?? ''; patientId = ''; practitionerId = ''; start = ''; end = '';
-  constructor() { this.load(); }
+  constructor() {
+    toObservable(this.auth.activeMembership)
+      .pipe(
+        distinctUntilChanged((previous, current) => previous?.id === current?.id),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((membership) => {
+        this.clinicUnitId = membership?.clinicUnitId ?? '';
+        this.patientId = '';
+        this.practitionerId = '';
+        this.appointments.set([]);
+        this.patients.set([]);
+        this.practitioners.set([]);
+        this.error.set('');
+        this.load();
+      });
+  }
   load(): void { const membership = this.membership(); if (!membership) return; const now = new Date(); const to = new Date(now.getTime() + 31 * 86400000); const query = `from=${encodeURIComponent(now.toISOString())}&to=${encodeURIComponent(to.toISOString())}` + (membership.clinicUnitId ? `&clinicUnitId=${membership.clinicUnitId}` : ''); this.http.get<PageResponse<Appointment>>(`/api/organizations/${membership.organizationId}/appointments?${query}`).subscribe({next: page => this.appointments.set(page.content), error: () => this.error.set('Unable to load the scoped schedule.')}); this.http.get<Practitioner[]>(`/api/organizations/${membership.organizationId}/practitioners`).subscribe({next: records => this.practitioners.set(records.filter(p => p.active))}); this.http.get<PageResponse<{globalId: string; name: string}>>(`/api/organizations/${membership.organizationId}/patients`).subscribe({next: page => this.patients.set(page.content)}); }
   create(): void { const membership = this.membership(); if (!membership) return; const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone; this.http.post<Appointment>(`/api/organizations/${membership.organizationId}/appointments`, {clinicUnitId:this.clinicUnitId, patientId:this.patientId, practitionerId:this.practitionerId, startAt:new Date(this.start).toISOString(), endAt:new Date(this.end).toISOString(), schedulingTimezone:timezone}).subscribe({next: () => { this.error.set(''); this.load(); }, error: response => this.error.set(response.status === 409 ? 'The practitioner is unavailable for this interval.' : 'Unable to schedule this appointment.')}); }
 }

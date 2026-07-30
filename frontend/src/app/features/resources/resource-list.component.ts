@@ -1,6 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -27,6 +28,7 @@ import { PageResponse, Permission } from '../../core/models';
 import { AuthService } from '../../core/auth.service';
 import { TableQueryService } from '../../core/table-query.service';
 import { TranslatePipe } from '@ngx-translate/core';
+import { distinctUntilChanged } from 'rxjs';
 import { AppHeaderComponent } from '../../shared/app-header.component';
 import { ModuleNavigationComponent } from '../../shared/module-navigation.component';
 import { PatientDetailsDialog } from './patient-details-dialog.component';
@@ -363,6 +365,7 @@ export class ResourceListComponent {
   private readonly http = inject(HttpClient);
   private readonly dialog = inject(MatDialog);
   private readonly tableQuery = inject(TableQueryService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly auth = inject(AuthService);
   readonly config = this.route.snapshot.data as ResourceConfig;
   readonly loading = signal(true);
@@ -400,7 +403,16 @@ export class ResourceListComponent {
   );
 
   constructor() {
-    this.load();
+    if (this.config.key !== 'patients') {
+      this.load();
+      return;
+    }
+    toObservable(this.auth.activeMembership)
+      .pipe(
+        distinctUntilChanged((previous, current) => previous?.id === current?.id),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => this.load());
   }
 
   load(): void {
