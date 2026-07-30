@@ -156,20 +156,21 @@ npm ci
 npm start
 ```
 
-The local training administrator is `admin@sisdent.local` with password
-`admin`. Its legacy `NATIONAL_ID / ADMIN / admin` data remains for
-compatibility, but the bootstrap email is already verified and therefore only
-email/password login is accepted for that account. Identification/password
-remains available only to migrated accounts that require enrollment.
-These credentials are deliberately weak and must never be used in a deployed
-environment.
+The pre-filled local demonstration account is `group.admin@sisdent.demo` with
+password `odonto2026@O`. It has organization-administrator memberships in both
+Northstar and Southstart, so it is the preferred account for testing tenant
+switching. The legacy local training administrator remains
+`admin@sisdent.local` with password `admin` for compatibility only; its legacy
+`NATIONAL_ID / ADMIN / admin` data remains available only to migrated accounts
+that require enrollment. These credentials are deliberately weak and must
+never be used in a deployed environment.
 
 Login example:
 
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"email":"admin@sisdent.local","password":"admin"}'
+  -d '{"email":"group.admin@sisdent.demo","password":"odonto2026@O"}'
 ```
 
 Use the returned token as `Authorization: Bearer <accessToken>`.
