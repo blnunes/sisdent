@@ -5,7 +5,7 @@
 Sisdent is an early dental-management platform. The implemented MVP covers
 patients, international addresses, countries, administrative divisions,
 specialities, dental procedures, global email accounts, organizations, clinic
-units, scoped memberships, and JWT authentication.
+units, scoped memberships, verified-email enrollment, and JWT authentication.
 
 Scheduling, practitioners, clinical records, odontograms, treatment plans,
 billing, and patient portal access are future work.
@@ -44,6 +44,9 @@ billing, and patient portal access are future work.
 | `POST` | `/api/organizations/{organizationId}/clinic-units` | Organization administrator creates a unit |
 | `POST/DELETE` | `/api/organizations/{organizationId}/memberships` | Add or revoke scoped membership |
 | `GET` | `/api/session` | Current account and memberships |
+| `POST` | `/api/account/email-enrollment` | Reserve and send verification for the current migrating account |
+| `POST` | `/api/account/email-enrollment/resend` | Supersede and resend the current account's challenge |
+| `POST` | `/api/auth/email-verification` | Consume an opaque token with a generic verification outcome |
 | `GET/POST` | `/api/specialities` | List or create specialities |
 | `PUT/DELETE` | `/api/specialities/{id}` | Replace or deactivate a speciality |
 | `POST` | `/api/auth/login` | Authenticate by email/password; legacy identification is transitional |
@@ -132,7 +135,10 @@ npm start
 ```
 
 The local training administrator is `admin@sisdent.local` with password
-`admin`. Transitional `NATIONAL_ID / ADMIN / admin` login remains available.
+`admin`. Its legacy `NATIONAL_ID / ADMIN / admin` data remains for
+compatibility, but the bootstrap email is already verified and therefore only
+email/password login is accepted for that account. Identification/password
+remains available only to migrated accounts that require enrollment.
 These credentials are deliberately weak and must never be used in a deployed
 environment.
 
@@ -160,6 +166,18 @@ npm run build
 The backend suite includes service, security, HTTP integration, seed-data, and
 Flyway upgrade tests. Frontend browser journeys are in `frontend/e2e`.
 
+For the isolated enrollment delivery seam, start with an explicit profile:
+
+```bash
+SPRING_PROFILES_ACTIVE=development ./mvnw spring-boot:run
+```
+
+The development provider keeps messages in memory and does not send real email.
+The `e2e` profile additionally enables an authenticated current-account-only
+test-support endpoint used by Playwright. Neither implementation exposes a
+production HTTP route. With no explicit development/test provider, enrollment
+delivery fails closed until a production provider is configured.
+
 ## Engineering boundaries
 
 - Source code, API names, migrations, and engineering documentation use English.
@@ -172,4 +190,6 @@ Flyway upgrade tests. Frontend browser journeys are in `frontend/e2e`.
 
 See `docs/ARCHITECTURE.md` for the model, compatibility decisions, security
 boundary, and planned evolution. See `docs/PHASE_2_IMPLEMENTATION.md` for the
-authorization matrix and legacy migration strategy.
+authorization matrix and legacy migration strategy, and
+`docs/PHASE_3_IMPLEMENTATION.md` for the account cutover, token lifecycle,
+delivery isolation, and privacy-preserving errors.

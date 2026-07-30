@@ -66,6 +66,8 @@ erDiagram
     PERSON ||--o| ACCOUNT : authenticates_as
     PERSON o|--o| PATIENT : may_represent
     ACCOUNT ||--o{ MEMBERSHIP : holds
+    ACCOUNT ||--o{ ACCOUNT_EMAIL_CLAIM : reserves
+    ACCOUNT ||--o{ EMAIL_VERIFICATION_CHALLENGE : receives
     ORGANIZATION ||--o{ CLINIC_UNIT : owns
     ORGANIZATION ||--o{ MEMBERSHIP : scopes
     CLINIC_UNIT o|--o{ MEMBERSHIP : optionally_scopes
@@ -125,11 +127,13 @@ Every core entity contains `created_at`, `created_by`, `updated_at`,
 - A document is identified by document type, issuing country, and normalized
   number. Supported MVP types are `PASSPORT` and `NATIONAL_ID_CARD`.
 - Tax ID is optional and is not used as a global identity key.
-- Accounts authenticate with one normalized, globally unique email address.
+- Verified accounts authenticate with one normalized, globally unique email
+  address. Canonical email claims prevent a pending enrollment address from
+  colliding with either another pending address or an authoritative address.
 - Account, person, and patient are separate so a future patient login does not
   need administrative impersonation.
-- A compatibility link retains identification/password login for migrated
-  legacy users until verified-email enrollment is implemented.
+- A compatibility link retains identification/password login only while the
+  migrated account has `email_migration_required=true`.
 - Membership roles are scoped to an organization or clinic unit. Revoking one
   membership preserves the account and every unrelated membership.
 - Platform administration is separate and grants no patient access.
@@ -174,8 +178,42 @@ memberships, and patient-organization links. It maps every legacy user to a
 unique synthetic email without removing the legacy credential and assigns
 existing patients to explicit `LEGACY_MIGRATION` links.
 
+V9 adds explicit email-verification state, a separately stored pending email,
+canonical email claims, and auditable verification challenges. Existing
+non-migrating bootstrap accounts are backfilled as verified. Migrated accounts
+retain their synthetic email and legacy login until their own verification
+succeeds.
+
 `/api/states` remains a temporary backend alias for
 `/api/administrative-divisions`. New clients use only the new route.
+
+## Verified-email enrollment
+
+```mermaid
+stateDiagram-v2
+    [*] --> MigrationRequired: V8 migrated account
+    MigrationRequired --> ChallengeActive: authenticated enrollment
+    ChallengeActive --> ChallengeActive: resend supersedes old challenge
+    ChallengeActive --> MigrationRequired: expiry or invalid token
+    ChallengeActive --> Verified: atomic valid-token consumption
+    Verified --> [*]: email/password only
+```
+
+The raw 256-bit challenge secret exists only while being passed to the delivery
+interface. Persistence stores its SHA-256 hash, target email, expiry,
+consumption/revocation state, provider metadata, and normal audit fields.
+Successful verification promotes the pending email, marks it verified, clears
+the pending claim, retires legacy login, consumes the token, and invalidates
+other active challenges in one transaction.
+
+The default/production delivery implementation fails closed until a real
+provider is configured. Explicit `development`, `test`, and `e2e` profiles may
+use an in-memory provider. Only `e2e` exposes an authenticated, current-account
+test-support seam; that controller cannot be instantiated in production.
+
+JWTs include `emailMigrationRequired`. Every authenticated request compares
+that claim with current account state. A pre-verification token is rejected
+after cutover, so the user must start a fresh verified-email session.
 
 ## Security boundary
 
@@ -198,10 +236,10 @@ matrix, migration strategy, and compatibility risks.
 ## Evolution order
 
 1. Global account identity, memberships, scoped authorization, and patient links (implemented).
-2. Verified-email enrollment and retirement of legacy identification login.
+2. Verified-email enrollment and retirement of legacy identification login (implemented).
 3. Practitioner, appointment, and performed-procedure model.
 4. Clinical records and odontogram.
 5. Treatment plans, unit pricing, acceptance, and billing.
-6. Production persistence, attachment storage, observability, backup, and
+6. Production persistence, attachment storage, email delivery, observability, backup, and
    recovery.
 7. RGPD workflows validated with Portuguese and EU legal/compliance specialists.

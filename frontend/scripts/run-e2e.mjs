@@ -14,10 +14,14 @@ try {
     );
   }
   console.log(`Starting a fresh Spring Boot backend for Playwright...`);
-  backend = spawn('./mvnw', ['-q', 'spring-boot:run'], {
+  backend = spawn(
+    './mvnw',
+    ['-q', 'spring-boot:run', '-Dspring-boot.run.profiles=e2e'],
+    {
     cwd: repositoryDirectory,
     stdio: 'inherit',
-  });
+    },
+  );
   await waitForHealth();
 
   const exitCode = await runPlaywright(process.argv.slice(2));

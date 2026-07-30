@@ -30,6 +30,17 @@ export interface TokenResponse {
   expiresIn: number;
 }
 
+export type EmailEnrollmentStatus = 'CHALLENGE_SENT';
+export type EmailVerificationStatus = 'VERIFIED' | 'INVALID_OR_EXPIRED';
+
+export interface EmailEnrollmentResponse {
+  status: EmailEnrollmentStatus;
+}
+
+export interface EmailVerificationResponse {
+  status: EmailVerificationStatus;
+}
+
 export interface User {
   id: number;
   identificationType: IdentificationType;
@@ -52,6 +63,7 @@ export interface JwtPayload {
   userId?: number;
   email: string;
   platformAdministrator: boolean;
+  emailMigrationRequired: boolean;
   memberships: Membership[];
   authorities: string[];
   exp: number;

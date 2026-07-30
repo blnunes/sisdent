@@ -87,7 +87,31 @@
     "HIDE_PASSWORD": "Wachtwoord verbergen",
     "INVALID": "Ongeldig e-mailadres of wachtwoord. Controleer uw gegevens en probeer opnieuw.",
     "ENTER": "Aanmelden",
-    "TRAINING": "Lokale training:"
+    "TRAINING": "Lokale training:",
+    "USE_LEGACY": "Oude identificatie gebruiken",
+    "USE_EMAIL": "E-mail gebruiken"
+  },
+  "EMAIL_ENROLLMENT": {
+    "TITLE": "Verifieer uw e-mail",
+    "DESCRIPTION": "Voeg uw echte e-mailadres toe om uw account te beveiligen. Uw huidige aanmelding blijft beschikbaar tot de verificatie slaagt.",
+    "EMAIL": "E-mailadres",
+    "SEND": "Verificatie-e-mail verzenden",
+    "SENT_TITLE": "Controleer uw inbox",
+    "SENT_DESCRIPTION": "We hebben een kort geldige verificatielink verzonden. Volg deze en meld u daarna opnieuw aan met uw e-mail.",
+    "RESEND": "Nogmaals verzenden",
+    "RESENT": "Er is een nieuwe verificatie-e-mail verzonden. Eerdere links werken niet meer.",
+    "THROTTLED": "Wacht voordat u nog een verificatie-e-mail aanvraagt.",
+    "ERROR": "E-mailregistratie kon niet worden gestart. Controleer het adres of probeer het later opnieuw.",
+    "LOGOUT": "Afmelden"
+  },
+  "EMAIL_VERIFICATION": {
+    "CHECKING": "Verificatielink controleren…",
+    "SUCCESS_TITLE": "E-mail geverifieerd",
+    "SUCCESS_DESCRIPTION": "Aanmelden met de oude identificatie is nu uitgeschakeld. Meld u aan met uw geverifieerde e-mail en wachtwoord.",
+    "LOGIN": "Aanmelden met e-mail",
+    "FAILURE_TITLE": "Deze link kan niet worden gebruikt",
+    "FAILURE_DESCRIPTION": "De link is ongeldig, verlopen of al gebruikt. Meld u aan met uw huidige methode om een nieuwe aan te vragen.",
+    "BACK": "Terug naar aanmelden"
   },
   "USERS": {
     "MENU": "Navigatiemenu openen",

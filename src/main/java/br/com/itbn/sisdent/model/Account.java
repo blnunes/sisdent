@@ -48,6 +48,12 @@ public class Account extends AuditableEntity {
     @Column(name = "email_migration_required", nullable = false)
     private boolean emailMigrationRequired;
 
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified;
+
+    @Column(name = "pending_email", unique = true, length = 320)
+    private String pendingEmail;
+
     protected Account() {
     }
 
@@ -59,6 +65,7 @@ public class Account extends AuditableEntity {
         this.password = password;
         this.platformAdministrator = platformAdministrator;
         this.emailMigrationRequired = emailMigrationRequired;
+        this.emailVerified = !emailMigrationRequired;
     }
 
     public static String normalizeEmail(String email) {
@@ -74,4 +81,24 @@ public class Account extends AuditableEntity {
     public boolean isActive() { return active; }
     public boolean isPlatformAdministrator() { return platformAdministrator; }
     public boolean isEmailMigrationRequired() { return emailMigrationRequired; }
+    public boolean isEmailVerified() { return emailVerified; }
+    public String getPendingEmail() { return pendingEmail; }
+
+    public void beginEmailEnrollment(String pendingEmail) {
+        if (!emailMigrationRequired || emailVerified) {
+            throw new IllegalStateException("Verified email replacement is not supported");
+        }
+        this.pendingEmail = normalizeEmail(pendingEmail);
+    }
+
+    public void completeEmailVerification(String verifiedEmail) {
+        String normalizedEmail = normalizeEmail(verifiedEmail);
+        if (!emailMigrationRequired || emailVerified || !normalizedEmail.equals(pendingEmail)) {
+            throw new IllegalStateException("Email verification state is no longer valid");
+        }
+        this.email = normalizedEmail;
+        this.emailVerified = true;
+        this.emailMigrationRequired = false;
+        this.pendingEmail = null;
+    }
 }

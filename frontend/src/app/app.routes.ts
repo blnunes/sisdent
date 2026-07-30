@@ -12,6 +12,21 @@ export const routes: Routes = [
     loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
   },
   {
+    path: 'email-enrollment',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/email-enrollment/email-enrollment.component').then(
+        (m) => m.EmailEnrollmentComponent,
+      ),
+  },
+  {
+    path: 'verify-email',
+    loadComponent: () =>
+      import('./features/email-verification/email-verification.component').then(
+        (m) => m.EmailVerificationComponent,
+      ),
+  },
+  {
     path: 'users',
     canActivate: [authGuard, permissionsGuard('MAINTAIN_USERS')],
     loadComponent: () => import('./features/users/users.component').then((m) => m.UsersComponent),

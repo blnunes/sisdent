@@ -27,7 +27,9 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -53,7 +55,8 @@ public class SecurityConfiguration {
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationConverter jwtAuthenticationConverter) {
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            AccountStateJwtFilter accountStateJwtFilter) {
         http
                 // This API is stateless and uses JWT Bearer tokens for auth, so CSRF protection is not required.
                 // Keep CSRF disabled only while authentication relies on Authorization headers rather than cookies/sessions.
@@ -63,6 +66,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/api/auth/login",
+                                "/api/auth/email-verification",
                                 "/actuator/health",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
@@ -141,6 +145,7 @@ public class SecurityConfiguration {
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
+                .addFilterAfter(accountStateJwtFilter, BearerTokenAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
         return http.build();
     }
@@ -148,6 +153,15 @@ public class SecurityConfiguration {
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    FilterRegistrationBean<AccountStateJwtFilter> disableContainerRegistration(
+            AccountStateJwtFilter filter) {
+        FilterRegistrationBean<AccountStateJwtFilter> registration =
+                new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean

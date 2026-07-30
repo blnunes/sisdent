@@ -2,7 +2,16 @@ import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { switchMap, tap } from 'rxjs';
-import { JwtPayload, LoginRequest, Membership, Permission, Session, TokenResponse } from './models';
+import {
+  EmailEnrollmentResponse,
+  EmailVerificationResponse,
+  JwtPayload,
+  LoginRequest,
+  Membership,
+  Permission,
+  Session,
+  TokenResponse,
+} from './models';
 
 const TOKEN_KEY = 'sisdent.access-token';
 const MEMBERSHIP_KEY = 'sisdent.active-membership';
@@ -80,15 +89,31 @@ export class AuthService {
   }
 
   logout(): void {
+    this.clearSession();
+    void this.router.navigateByUrl('/login');
+  }
+
+  clearSession(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(MEMBERSHIP_KEY);
     this.tokenState.set(null);
     this.sessionState.set(null);
-    void this.router.navigateByUrl('/login');
   }
 
   destination(): string {
-    return '/home';
+    return this.sessionState()?.emailMigrationRequired ? '/email-enrollment' : '/home';
+  }
+
+  startEmailEnrollment(email: string) {
+    return this.http.post<EmailEnrollmentResponse>('/api/account/email-enrollment', { email });
+  }
+
+  resendEmailEnrollment() {
+    return this.http.post<EmailEnrollmentResponse>('/api/account/email-enrollment/resend', {});
+  }
+
+  verifyEmail(token: string) {
+    return this.http.post<EmailVerificationResponse>('/api/auth/email-verification', { token });
   }
 
   private decode(token: string | null): JwtPayload | null {

@@ -87,7 +87,31 @@
     "HIDE_PASSWORD": "Hide password",
     "INVALID": "Invalid email or password. Check your details and try again.",
     "ENTER": "Sign in",
-    "TRAINING": "Local training:"
+    "TRAINING": "Local training:",
+    "USE_LEGACY": "Use legacy identification",
+    "USE_EMAIL": "Use email instead"
+  },
+  "EMAIL_ENROLLMENT": {
+    "TITLE": "Verify your email",
+    "DESCRIPTION": "Add your real email address to finish securing your account. Your current login remains available until verification succeeds.",
+    "EMAIL": "Email address",
+    "SEND": "Send verification email",
+    "SENT_TITLE": "Check your inbox",
+    "SENT_DESCRIPTION": "We sent a short-lived verification link. Follow it to complete enrollment, then sign in again with your email.",
+    "RESEND": "Send another email",
+    "RESENT": "A new verification email was sent. Earlier links no longer work.",
+    "THROTTLED": "Please wait before requesting another verification email.",
+    "ERROR": "Email enrollment could not be started. Check the address or try again later.",
+    "LOGOUT": "Sign out"
+  },
+  "EMAIL_VERIFICATION": {
+    "CHECKING": "Checking your verification link…",
+    "SUCCESS_TITLE": "Email verified",
+    "SUCCESS_DESCRIPTION": "Your legacy identification login is now disabled. Sign in with your verified email and password.",
+    "LOGIN": "Sign in with email",
+    "FAILURE_TITLE": "This link cannot be used",
+    "FAILURE_DESCRIPTION": "The verification link is invalid, expired, or was already used. Sign in with your current method to request a new one.",
+    "BACK": "Back to sign in"
   },
   "USERS": {
     "MENU": "Open navigation menu",

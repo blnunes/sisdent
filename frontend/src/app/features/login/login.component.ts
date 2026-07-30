@@ -36,23 +36,35 @@ export class LoginComponent {
   private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
+  readonly legacyLogin = signal(false);
   readonly hidePassword = signal(true);
   readonly error = signal('');
-  readonly form = this.fb.nonNullable.group({
+  readonly emailForm = this.fb.nonNullable.group({
     email: ['admin@sisdent.local', [Validators.required, Validators.email]],
     password: ['admin', Validators.required],
   });
+  readonly legacyForm = this.fb.nonNullable.group({
+    identificationType: ['NATIONAL_ID' as const, Validators.required],
+    identificationNumber: ['', Validators.required],
+    password: ['', Validators.required],
+  });
 
   submit(): void {
-    if (this.form.invalid || this.loading()) return;
+    const form = this.legacyLogin() ? this.legacyForm : this.emailForm;
+    if (form.invalid || this.loading()) return;
     this.error.set('');
     this.loading.set(true);
-    this.auth.login(this.form.getRawValue()).subscribe({
+    this.auth.login(form.getRawValue()).subscribe({
       next: () => void this.router.navigateByUrl(this.auth.destination()),
       error: () => {
         this.error.set(this.translate.instant('LOGIN.INVALID'));
         this.loading.set(false);
       },
     });
+  }
+
+  changeLoginMode(): void {
+    this.legacyLogin.update((value) => !value);
+    this.error.set('');
   }
 }

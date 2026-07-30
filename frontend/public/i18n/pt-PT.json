@@ -87,7 +87,31 @@
     "HIDE_PASSWORD": "Ocultar password",
     "INVALID": "Email ou password inválido. Verifique os dados e tente novamente.",
     "ENTER": "Entrar",
-    "TRAINING": "Treino local:"
+    "TRAINING": "Treino local:",
+    "USE_LEGACY": "Usar identificação antiga",
+    "USE_EMAIL": "Usar email"
+  },
+  "EMAIL_ENROLLMENT": {
+    "TITLE": "Verifique o seu email",
+    "DESCRIPTION": "Adicione o seu email real para concluir a proteção da conta. O acesso atual continua disponível até à verificação.",
+    "EMAIL": "Endereço de email",
+    "SEND": "Enviar email de verificação",
+    "SENT_TITLE": "Consulte a sua caixa de entrada",
+    "SENT_DESCRIPTION": "Enviámos uma ligação de verificação de curta duração. Siga-a para concluir o registo e volte a entrar com o email.",
+    "RESEND": "Enviar outro email",
+    "RESENT": "Foi enviado um novo email de verificação. As ligações anteriores deixaram de funcionar.",
+    "THROTTLED": "Aguarde antes de pedir outro email de verificação.",
+    "ERROR": "Não foi possível iniciar o registo do email. Verifique o endereço ou tente mais tarde.",
+    "LOGOUT": "Terminar sessão"
+  },
+  "EMAIL_VERIFICATION": {
+    "CHECKING": "A verificar a ligação…",
+    "SUCCESS_TITLE": "Email verificado",
+    "SUCCESS_DESCRIPTION": "O acesso pela identificação antiga foi desativado. Entre com o email verificado e a password.",
+    "LOGIN": "Entrar com email",
+    "FAILURE_TITLE": "Esta ligação não pode ser utilizada",
+    "FAILURE_DESCRIPTION": "A ligação é inválida, expirou ou já foi utilizada. Entre com o método atual para pedir uma nova.",
+    "BACK": "Voltar ao login"
   },
   "USERS": {
     "MENU": "Abrir menu de navegação",

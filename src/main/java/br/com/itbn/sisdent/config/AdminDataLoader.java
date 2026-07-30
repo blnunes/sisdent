@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.itbn.sisdent.model.IdentificationType;
 import br.com.itbn.sisdent.model.Account;
+import br.com.itbn.sisdent.model.AccountEmailClaim;
+import br.com.itbn.sisdent.model.EmailClaimType;
 import br.com.itbn.sisdent.model.Membership;
 import br.com.itbn.sisdent.model.MembershipRole;
 import br.com.itbn.sisdent.model.Organization;
@@ -16,6 +18,7 @@ import br.com.itbn.sisdent.model.Person;
 import br.com.itbn.sisdent.model.Role;
 import br.com.itbn.sisdent.model.User;
 import br.com.itbn.sisdent.repository.AccountRepository;
+import br.com.itbn.sisdent.repository.AccountEmailClaimRepository;
 import br.com.itbn.sisdent.repository.MembershipRepository;
 import br.com.itbn.sisdent.repository.OrganizationRepository;
 import br.com.itbn.sisdent.repository.PersonRepository;
@@ -28,6 +31,7 @@ public class AdminDataLoader implements ApplicationRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AccountRepository accountRepository;
+    private final AccountEmailClaimRepository emailClaimRepository;
     private final PersonRepository personRepository;
     private final OrganizationRepository organizationRepository;
     private final MembershipRepository membershipRepository;
@@ -39,6 +43,7 @@ public class AdminDataLoader implements ApplicationRunner {
     public AdminDataLoader(
             UserRepository userRepository,
             AccountRepository accountRepository,
+            AccountEmailClaimRepository emailClaimRepository,
             PersonRepository personRepository,
             OrganizationRepository organizationRepository,
             MembershipRepository membershipRepository,
@@ -49,6 +54,7 @@ public class AdminDataLoader implements ApplicationRunner {
             @Value("${sisdent.bootstrap-admin.email}") String email) {
         this.userRepository = userRepository;
         this.accountRepository = accountRepository;
+        this.emailClaimRepository = emailClaimRepository;
         this.personRepository = personRepository;
         this.organizationRepository = organizationRepository;
         this.membershipRepository = membershipRepository;
@@ -89,6 +95,7 @@ public class AdminDataLoader implements ApplicationRunner {
         Person person = personRepository.save(new Person("Sisdent Administrator"));
         Account account = accountRepository.save(new Account(
                 person, user, email, user.getPassword(), true, false));
+        emailClaimRepository.save(new AccountEmailClaim(account, email, EmailClaimType.VERIFIED));
         Organization organization = organizationRepository.findAll().stream().findFirst()
                 .orElseGet(() -> organizationRepository.save(new Organization("Sisdent Training Organization")));
         membershipRepository.save(new Membership(

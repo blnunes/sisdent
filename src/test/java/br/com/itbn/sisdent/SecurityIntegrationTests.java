@@ -66,7 +66,7 @@ class SecurityIntegrationTests {
 
     @Test
     void adminCanManageUsersAndPermissionsWithSoftDelete() throws Exception {
-        String adminToken = login("NATIONAL_ID", "aDmIn", "admin");
+        String adminToken = emailLogin("admin@sisdent.local", "admin");
         String createRequest = """
                 {
                   "identificationType": "PASSPORT",
@@ -300,6 +300,21 @@ class SecurityIntegrationTests {
                 .andReturn().getResponse().getContentAsString();
         JsonNode json = jsonMapper.readTree(response);
         return json.get("accessToken").asText();
+    }
+
+    private String emailLogin(String email, String password) throws Exception {
+        String response = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "%s",
+                                  "password": "%s"
+                                }
+                                """.formatted(email, password)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andReturn().getResponse().getContentAsString();
+        return jsonMapper.readTree(response).get("accessToken").asText();
     }
 
     private String bearer(String token) {

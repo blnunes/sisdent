@@ -3,6 +3,8 @@ package br.com.itbn.sisdent.service;
 import br.com.itbn.sisdent.dto.LoginRequest;
 import br.com.itbn.sisdent.dto.TokenResponse;
 import br.com.itbn.sisdent.model.Account;
+import br.com.itbn.sisdent.model.AccountEmailClaim;
+import br.com.itbn.sisdent.model.EmailClaimType;
 import br.com.itbn.sisdent.model.Membership;
 import br.com.itbn.sisdent.model.MembershipRole;
 import br.com.itbn.sisdent.model.Organization;
@@ -10,6 +12,7 @@ import br.com.itbn.sisdent.model.Person;
 import br.com.itbn.sisdent.model.Role;
 import br.com.itbn.sisdent.model.User;
 import br.com.itbn.sisdent.repository.AccountRepository;
+import br.com.itbn.sisdent.repository.AccountEmailClaimRepository;
 import br.com.itbn.sisdent.repository.MembershipRepository;
 import br.com.itbn.sisdent.repository.OrganizationRepository;
 import br.com.itbn.sisdent.repository.PersonRepository;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthenticationService {
 
     private final AccountRepository accountRepository;
+    private final AccountEmailClaimRepository emailClaimRepository;
     private final UserRepository userRepository;
     private final PersonRepository personRepository;
     private final OrganizationRepository organizationRepository;
@@ -32,6 +36,7 @@ public class AuthenticationService {
 
     public AuthenticationService(
             AccountRepository accountRepository,
+            AccountEmailClaimRepository emailClaimRepository,
             UserRepository userRepository,
             PersonRepository personRepository,
             OrganizationRepository organizationRepository,
@@ -39,6 +44,7 @@ public class AuthenticationService {
             PasswordEncoder passwordEncoder,
             JwtService jwtService) {
         this.accountRepository = accountRepository;
+        this.emailClaimRepository = emailClaimRepository;
         this.userRepository = userRepository;
         this.personRepository = personRepository;
         this.organizationRepository = organizationRepository;
@@ -52,6 +58,9 @@ public class AuthenticationService {
         boolean emailLogin = request.email() != null && !request.email().isBlank();
         Account account = findAccount(request)
                 .filter(Account::isActive)
+                .filter(candidate -> emailLogin
+                        ? candidate.isEmailVerified()
+                        : candidate.isEmailMigrationRequired())
                 .filter(candidate -> passwordEncoder.matches(request.password(),
                         emailLogin || candidate.getLegacyUser() == null
                                 ? candidate.getPassword()
@@ -90,6 +99,7 @@ public class AuthenticationService {
                 + "@legacy.sisdent.invalid").toLowerCase(java.util.Locale.ROOT);
         Account account = accountRepository.save(new Account(person, user, email,
                 user.getPassword(), user.getRole() == Role.ADMIN, true));
+        emailClaimRepository.save(new AccountEmailClaim(account, email, EmailClaimType.VERIFIED));
         Organization organization = organizationRepository.findAll().stream().findFirst()
                 .orElseGet(() -> organizationRepository.save(new Organization("Legacy Sisdent Organization")));
         MembershipRole membershipRole = switch (user.getRole()) {
