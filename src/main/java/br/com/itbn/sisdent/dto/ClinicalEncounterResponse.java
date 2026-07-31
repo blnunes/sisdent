@@ -1,0 +1,2 @@
+package br.com.itbn.sisdent.dto; import br.com.itbn.sisdent.model.*; import java.time.*; import java.util.*;
+public record ClinicalEncounterResponse(UUID globalId,UUID clinicUnitId,UUID patientId,UUID appointmentId,UUID practitionerId,Instant careAt,String careTimezone,String narrative,String administrativeNote,EncounterStatus status,Instant finalizedAt,String finalizedBy,UUID originalEncounterId,String amendmentReason,long version) {}

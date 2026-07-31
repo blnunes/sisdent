@@ -1,0 +1,2 @@
+package br.com.itbn.sisdent.dto; import jakarta.validation.constraints.*; import java.time.*; import java.util.*;
+public record AmendEncounterRequest(@NotNull UUID clinicUnitId,UUID appointmentId,UUID practitionerId,@NotNull Instant careAt,@NotBlank @Size(max=64) String careTimezone,@NotBlank @Size(max=4000) String narrative,@Size(max=500) String administrativeNote,@NotBlank @Size(max=500) String reason) {}

@@ -4,8 +4,8 @@
 
 Sisdent is a modular monolith composed of a Spring Boot REST API and an Angular
 web application. It is currently an MVP for dental administration and global
-account/tenant foundations. Clinical records, patient portal access, and
-billing are not implemented yet.
+account/tenant foundations. Scoped clinical records and odontograms are
+implemented; patient portal access and billing are not.
 
 The present domain foundation is international. Portugal and other European
 countries are supported alongside the existing demonstration data. Language,
@@ -255,8 +255,7 @@ matrix, migration strategy, and compatibility risks.
 1. Global account identity, memberships, scoped authorization, and patient links (implemented).
 2. Verified-email enrollment and retirement of legacy identification login (implemented).
 3. Practitioner, appointment, and performed-procedure model.
-4. Clinical records and odontogram.
-5. Treatment plans, unit pricing, acceptance, and billing.
-6. Production persistence, attachment storage, email delivery, observability, backup, and
+4. Treatment plans, unit pricing, acceptance, and billing.
+5. Production persistence, attachment storage, email delivery, observability, backup, and
    recovery.
 7. RGPD workflows validated with Portuguese and EU legal/compliance specialists.

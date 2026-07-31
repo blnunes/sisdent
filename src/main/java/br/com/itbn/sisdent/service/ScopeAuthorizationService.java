@@ -61,6 +61,27 @@ public class ScopeAuthorizationService {
         requireRole(organizationId, clinicUnitId, MembershipRole.APPOINTMENT_MANAGER);
     }
 
+    public void requireClinicalRead(UUID organizationId, UUID clinicUnitId) {
+        boolean allowed = matchingMemberships(organizationId, clinicUnitId).stream().anyMatch(m ->
+                m.getRole() == MembershipRole.ORGANIZATION_ADMIN || m.getRole() == MembershipRole.CLINICAL_READER
+                        || m.getRole() == MembershipRole.CLINICAL_AUTHOR || m.getRole() == MembershipRole.CLINICAL_MANAGER);
+        if (!allowed) throw new AccessDeniedException("No active membership grants clinical read access");
+    }
+
+    public void requireClinicalAuthor(UUID organizationId, UUID clinicUnitId) {
+        requireClinicalRole(organizationId, clinicUnitId, MembershipRole.CLINICAL_AUTHOR);
+    }
+
+    public void requireClinicalManagement(UUID organizationId, UUID clinicUnitId) {
+        requireClinicalRole(organizationId, clinicUnitId, MembershipRole.CLINICAL_MANAGER);
+    }
+
+    private void requireClinicalRole(UUID organizationId, UUID clinicUnitId, MembershipRole role) {
+        boolean allowed = matchingMemberships(organizationId, clinicUnitId).stream().anyMatch(m ->
+                m.getRole() == MembershipRole.ORGANIZATION_ADMIN || m.getRole() == role || (role == MembershipRole.CLINICAL_AUTHOR && m.getRole() == MembershipRole.CLINICAL_MANAGER));
+        if (!allowed) throw new AccessDeniedException("No active membership grants this clinical access");
+    }
+
     private void requireRole(UUID organizationId, UUID clinicUnitId, MembershipRole role) {
         boolean allowed = matchingMemberships(organizationId, clinicUnitId).stream().anyMatch(m ->
                 m.getRole() == MembershipRole.ORGANIZATION_ADMIN || m.getRole() == MembershipRole.MANAGER || m.getRole() == role);

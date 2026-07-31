@@ -43,6 +43,7 @@ public class PatientOrganizationLink extends AuditableEntity {
         this.patient = patient; this.organization = organization; this.clinicUnit = clinicUnit;
         this.operationalBasis = operationalBasis;
     }
+    public Long getId() { return id; }
     public UUID getGlobalId() { return globalId; }
     public Patient getPatient() { return patient; }
     public Organization getOrganization() { return organization; }

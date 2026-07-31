@@ -7,8 +7,9 @@ patients, international addresses, countries, administrative divisions,
 specialities, dental procedures, global email accounts, organizations, clinic
 units, scoped memberships, verified-email enrollment, and JWT authentication.
 
-Clinical records, odontograms, treatment plans, billing, and patient portal
-access are future work.
+Scoped clinical encounters and odontograms are available to explicitly granted
+clinical memberships. Treatment plans, billing, and patient portal access are
+future work.
 
 ## Current behavior
 
@@ -54,6 +55,8 @@ access are future work.
 | `GET/POST` | `/api/organizations/{organizationId}/appointments` | Bounded schedule list and appointment creation |
 | `POST` | `/api/organizations/{organizationId}/appointments/{id}/cancel|complete|no-show` | Terminal lifecycle transitions |
 | `POST` | `/api/organizations/{organizationId}/appointments/{id}/performed-procedures` | Record catalog procedures after completion |
+| `GET/POST/PUT` | `/api/organizations/{organizationId}/clinical/encounters` | Scoped encounter list, drafts, and updates |
+| `GET/POST` | `/api/organizations/{organizationId}/clinical/odontogram/*` | Read chart/history and record findings |
 | `PATCH` | `/api/users/me/password` | Change the current password |
 
 All collection endpoints accept `page`, `size`, `sort`, and `direction`.
