@@ -40,7 +40,7 @@ export class LoginComponent {
   readonly hidePassword = signal(true);
   readonly error = signal('');
   readonly emailForm = this.fb.nonNullable.group({
-    email: ['group.admin@sisdent.demo', [Validators.required, Validators.email]],
+    email: ['admin@sisdent.local', [Validators.required, Validators.email]],
     password: ['odonto2026@O', Validators.required],
   });
   readonly legacyForm = this.fb.nonNullable.group({
