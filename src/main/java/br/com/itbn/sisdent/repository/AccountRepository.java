@@ -29,6 +29,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Optional<Account> findLockedByGlobalId(UUID globalId);
 
     boolean existsByEmail(String email);
+    long countByPlatformAdministratorTrueAndActiveTrue();
 
     @EntityGraph(attributePaths = "person")
     @Query("select a from Account a where (:filter is null or lower(a.person.displayName) like lower(concat('%', :filter, '%')) or lower(a.email) like lower(concat('%', :filter, '%')))")

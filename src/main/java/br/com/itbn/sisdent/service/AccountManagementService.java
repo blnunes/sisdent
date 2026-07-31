@@ -75,6 +75,20 @@ public class AccountManagementService {
         return response(accounts.saveAndFlush(account), null, true);
     }
 
+    @Transactional
+    public AccountResponse changePlatformAdministrator(UUID accountId, AccountPlatformAdministratorRequest request) {
+        authorization.requirePlatformAdministrator();
+        Account account = accounts.findLockedByGlobalId(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        requireVersion(account.getVersion(), request.version());
+        if (!request.platformAdministrator() && account.isPlatformAdministrator() && account.isActive()
+                && accounts.countByPlatformAdministratorTrueAndActiveTrue() <= 1) {
+            throw conflict("At least one active platform administrator is required");
+        }
+        try { account.changePlatformAdministrator(request.platformAdministrator()); }
+        catch (IllegalStateException exception) { throw conflict("The requested platform-administrator transition is unavailable"); }
+        return response(accounts.saveAndFlush(account), null, true);
+    }
+
     @Transactional(readOnly = true)
     public AccountResponse currentAccount() { return response(current.require(), null, false); }
 

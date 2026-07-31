@@ -305,6 +305,7 @@
     "LOADING": "A carregar contas…",
     "LOAD_ERROR": "Não foi possível carregar as contas.",
     "CHANGE_ERROR": "Não foi possível alterar o estado da conta.",
+    "PLATFORM_ADMIN_ERROR": "Não foi possível alterar a administração de plataforma. Tem de existir pelo menos um administrador de plataforma ativo.",
     "CREATE_ERROR": "Não foi possível criar a conta.",
     "GRANT_ERROR": "Não foi possível atribuir o acesso.",
     "ACCESS_DENIED": "A sua conta não pode gerir acessos nesta organização.",
@@ -342,6 +343,9 @@
     "MIGRATION_REQUIRED": "Migração de e-mail necessária",
     "ACTIVATE": "Ativar",
     "DEACTIVATE": "Desativar",
+    "PLATFORM_ADMINISTRATOR": "Administrador de plataforma",
+    "MAKE_PLATFORM_ADMIN": "Tornar administrador de plataforma",
+    "REVOKE_PLATFORM_ADMIN": "Remover administração de plataforma",
     "NO_ACCESS": "Sem acesso de organização",
     "EMPTY": "Não foram encontradas contas.",
     "ROLES": {

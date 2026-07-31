@@ -108,4 +108,11 @@ public class Account extends AuditableEntity {
         }
         this.active = active;
     }
+
+    public void changePlatformAdministrator(boolean platformAdministrator) {
+        if (this.platformAdministrator == platformAdministrator) {
+            throw new IllegalStateException("Account already has the requested platform-administrator state");
+        }
+        this.platformAdministrator = platformAdministrator;
+    }
 }

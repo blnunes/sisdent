@@ -13,6 +13,9 @@ export class AccountApiService {
   changeLifecycle(account: AccountSummary, active: boolean) {
     return this.http.patch<AccountSummary>(`/api/platform/accounts/${account.id}/lifecycle`, { active, version: account.version });
   }
+  changePlatformAdministrator(account: AccountSummary, platformAdministrator: boolean) {
+    return this.http.patch<AccountSummary>(`/api/platform/accounts/${account.id}/platform-administrator`, { platformAdministrator, version: account.version });
+  }
   create(request: { displayName: string; email: string; password: string }) {
     return this.http.post<AccountSummary>('/api/platform/accounts', request);
   }

@@ -307,6 +307,7 @@
     "LOADING": "Loading accounts…",
     "LOAD_ERROR": "Unable to load accounts.",
     "CHANGE_ERROR": "Unable to change the account state.",
+    "PLATFORM_ADMIN_ERROR": "Unable to change platform administration. At least one active platform administrator is required.",
     "CREATE_ERROR": "Unable to create the account.",
     "GRANT_ERROR": "Unable to grant access.",
     "ACCESS_DENIED": "Your account cannot manage access in this organization.",
@@ -342,6 +343,9 @@
     "MIGRATION_REQUIRED": "Email migration required",
     "ACTIVATE": "Activate",
     "DEACTIVATE": "Deactivate",
+    "PLATFORM_ADMINISTRATOR": "Platform administrator",
+    "MAKE_PLATFORM_ADMIN": "Make platform administrator",
+    "REVOKE_PLATFORM_ADMIN": "Remove platform administration",
     "NO_ACCESS": "No tenant access",
     "EMPTY": "No accounts found.",
     "ROLES": {

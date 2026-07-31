@@ -35,6 +35,7 @@ versions, email conflicts, and invalid transitions.
 | --- | --- | --- |
 | New account | Platform administrator creates | New `Person` and verified email/password `Account`; it has no tenant access |
 | Account | Activate/deactivate | Logical active flag changes; memberships and history remain intact |
+| Account | Grant/revoke platform administration | Platform administrators may transfer platform-wide authority; at least one active platform administrator is retained |
 | Migration-pending account | Verify its reserved email through the Phase 3 flow | Authoritative email is promoted; migration flag is permanently cleared; legacy login retires |
 | Membership | Authorized access administrator grants | A new active membership in the selected organization/unit and controlled Phase 2--5 role |
 | Membership | Organization administrator revokes | Logical revocation; account, other memberships and authorship remain |

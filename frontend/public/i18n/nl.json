@@ -307,6 +307,7 @@
     "LOADING": "Accounts laden…",
     "LOAD_ERROR": "Accounts kunnen niet worden geladen.",
     "CHANGE_ERROR": "De accountstatus kan niet worden gewijzigd.",
+    "PLATFORM_ADMIN_ERROR": "Platformbeheer kan niet worden gewijzigd. Er moet minstens één actieve platformbeheerder zijn.",
     "CREATE_ERROR": "Het account kan niet worden aangemaakt.",
     "GRANT_ERROR": "Toegang kan niet worden toegekend.",
     "ACCESS_DENIED": "Uw account kan geen toegang beheren in deze organisatie.",
@@ -342,6 +343,9 @@
     "MIGRATION_REQUIRED": "E-mailmigratie vereist",
     "ACTIVATE": "Activeren",
     "DEACTIVATE": "Deactiveren",
+    "PLATFORM_ADMINISTRATOR": "Platformbeheerder",
+    "MAKE_PLATFORM_ADMIN": "Platformbeheerder maken",
+    "REVOKE_PLATFORM_ADMIN": "Platformbeheer verwijderen",
     "NO_ACCESS": "Geen organisatie-toegang",
     "EMPTY": "Geen accounts gevonden.",
     "ROLES": {

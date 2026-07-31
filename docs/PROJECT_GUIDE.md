@@ -84,6 +84,11 @@ The access dialog lets an organization administrator select any organization
 where it has organization-wide administration, while the platform administrator
 may select any active organization and its clinic units.
 
+Platform administration is an account-level authority, separate from organization
+memberships. A platform administrator can promote another account and then be
+demoted, provided at least one active platform administrator remains. Demotion
+does not revoke the account's organization memberships.
+
 Account lists include only display name, authoritative email, active state,
 verification/migration state, platform-administrator state, and bounded
 membership summaries. Password hashes, pending addresses, enrollment secrets,
