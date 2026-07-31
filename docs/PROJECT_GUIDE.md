@@ -27,6 +27,10 @@ future work.
 - Removing catalog records deactivates them instead of deleting history.
 - Core entities carry author/timestamp audit metadata and optimistic versions.
 - Collection filtering, sorting, and pagination execute in the database.
+- **Accounts and Access** presents the canonical account/person identity,
+  authentication state, and only the caller-authorized membership scope.
+- Legacy `app_users` data is compatibility-only and is not shown as a normal
+  administrative identifier.
 
 ## Main endpoints
 
@@ -45,6 +49,12 @@ future work.
 | `POST` | `/api/organizations/{organizationId}/clinic-units` | Organization administrator creates a unit |
 | `POST/DELETE` | `/api/organizations/{organizationId}/memberships` | Add or revoke scoped membership |
 | `GET` | `/api/session` | Current account and memberships |
+| `GET/POST` | `/api/platform/accounts` | Platform-only canonical account list and creation |
+| `GET/PATCH` | `/api/platform/accounts/{accountId}` | Platform account read and lifecycle state (PATCH uses `/lifecycle`) |
+| `GET` | `/api/account` | Current canonical account summary without enrollment secrets |
+| `GET` | `/api/organizations/{organizationId}/accounts` | Organization-scoped account list without cross-tenant membership disclosure |
+| `POST` | `/api/organizations/{organizationId}/account-memberships` | Grant a controlled role to an existing account by exact email in that organization |
+| `GET` | `/api/platform/organizations` | Active organization choices for platform-wide access administration |
 | `POST` | `/api/account/email-enrollment` | Reserve and send verification for the current migrating account |
 | `POST` | `/api/account/email-enrollment/resend` | Supersede and resend the current account's challenge |
 | `POST` | `/api/auth/email-verification` | Consume an opaque token with a generic verification outcome |
@@ -62,6 +72,24 @@ future work.
 All collection endpoints accept `page`, `size`, `sort`, and `direction`.
 Resource-specific filters are documented in OpenAPI. `/api/states` is retained
 as a compatibility alias only.
+
+## Account and access management
+
+Platform administrators can create, read, paginate, activate, and deactivate
+canonical accounts. This does not grant organization, patient, appointment, or
+clinical access. Organization administrators can list historical/current
+member accounts within their own organization and grant or logically revoke
+membership by public UUID; they never receive other-organization memberships.
+The access dialog lets an organization administrator select any organization
+where it has organization-wide administration, while the platform administrator
+may select any active organization and its clinic units.
+
+Account lists include only display name, authoritative email, active state,
+verification/migration state, platform-administrator state, and bounded
+membership summaries. Password hashes, pending addresses, enrollment secrets,
+legacy credentials, and patient/clinical/scheduling data are never included.
+See `docs/PHASE_6_IMPLEMENTATION.md` for the complete authorization and
+lifecycle matrices.
 
 Dental procedures are nested under speciality requests and responses. There is
 no standalone procedure endpoint.
@@ -114,7 +142,7 @@ roles. All demo profile passwords are `odonto2026@O`.
 | Profile | Tenant scope | Demonstration data |
 | --- | --- | --- |
 | `platform.operations@sisdent.demo` | Platform | Platform administration; it does not have tenant clinical access. |
-| `group.admin@sisdent.demo` | Northstar Dental Group and Southstart Dental Group | Organization administrator memberships in both groups; use this account to test a single administrator switching between two organizations. |
+| `group.admin@sisdent.demo` | Northstar Dental Group, Harbor Dental Clinic and Southstart Dental Group | Organization administrator memberships in all demonstration organizations; use this account to test cross-organization access management. |
 | `northstar.admin@sisdent.demo` | Northstar Dental Group | Northstar Central Clinic and Northstar Lakeside Clinic, each with 6 linked patients, 2 practitioners, and appointment history. |
 | `northstar.manager@sisdent.demo`, `northstar.scheduler@sisdent.demo`, `northstar.readonly@sisdent.demo` | Northstar Central Clinic | Clinic-scoped operational profiles for the Central scenario. |
 | `northstar.practitioners@sisdent.demo`, `northstar.viewer@sisdent.demo` | Northstar Lakeside Clinic | Clinic-scoped practitioner-management and appointment-reader profiles. |

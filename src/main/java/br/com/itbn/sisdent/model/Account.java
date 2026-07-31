@@ -101,4 +101,11 @@ public class Account extends AuditableEntity {
         this.emailMigrationRequired = false;
         this.pendingEmail = null;
     }
+
+    public void changeActive(boolean active) {
+        if (this.active == active) {
+            throw new IllegalStateException("Account is already in the requested lifecycle state");
+        }
+        this.active = active;
+    }
 }

@@ -49,4 +49,5 @@ public class Membership extends AuditableEntity {
     public MembershipRole getRole() { return role; }
     public boolean isActive() { return active; }
     public void revoke() { active = false; }
+    public void changeRole(MembershipRole role) { this.role = role; }
 }

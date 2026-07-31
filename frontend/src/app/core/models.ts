@@ -83,6 +83,20 @@ export interface Membership {
   clinicUnitId?: string;
   clinicUnitName?: string;
   role: MembershipRole;
+  version: number;
+}
+
+export interface OrganizationOption {
+  id: string;
+  name: string;
+  active: boolean;
+}
+
+export interface ClinicUnit {
+  id: string;
+  organizationId: string;
+  name: string;
+  active: boolean;
 }
 
 export interface Session {
@@ -100,4 +114,10 @@ export interface PageResponse<T> {
   size: number;
   totalElements: number;
   totalPages: number;
+}
+
+export interface AccountSummary {
+  id: string; displayName: string; email: string; active: boolean; emailVerified: boolean;
+  emailMigrationRequired: boolean; platformAdministrator: boolean; version: number;
+  legacyCompatibilityPresent?: boolean; memberships: Membership[];
 }

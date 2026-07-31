@@ -215,6 +215,23 @@ JWTs include `emailMigrationRequired`. Every authenticated request compares
 that claim with current account state. A pre-verification token is rejected
 after cutover, so the user must start a fresh verified-email session.
 
+## Identity-management evolution
+
+`Account` is the canonical global authentication identity and `Person` is its
+display identity. Memberships are the sole source of organization and clinic
+access. The Phase 1 `app_users` record remains a temporary, audited
+compatibility link for accounts that still require verified-email enrollment;
+it is not the primary administrative identity and must not be used to grant
+tenant or clinical authority.
+
+Phase 6 consolidates the administrative UI and APIs around Account, Person,
+and Membership while retaining legacy records read-only until a future,
+explicitly approved retirement phase. Platform administrators use paged global
+account management; organization administrators use organization-scoped account
+and membership operations, with no evidence of access in other organizations.
+The current-account response and Accounts and Access UI use only public UUIDs,
+display names, authentication state, and authorized membership summaries.
+
 ## Security boundary
 
 ## Operational scheduling
@@ -243,7 +260,8 @@ matrix, migration strategy, and compatibility risks.
 ## Known limitations
 
 - No cross-organization clinical sharing or temporary support-access workflow exists.
-- No clinical note, odontogram, appointment, or performed-procedure model exists.
+- No treatment-plan, billing, patient-portal, or cross-organization clinical
+  sharing model exists.
 - No digital signature, retention, export, anonymization, or legal-hold workflow exists.
 - JWT revocation is not persisted.
 - H2 is not the production persistence target.
@@ -254,8 +272,10 @@ matrix, migration strategy, and compatibility risks.
 
 1. Global account identity, memberships, scoped authorization, and patient links (implemented).
 2. Verified-email enrollment and retirement of legacy identification login (implemented).
-3. Practitioner, appointment, and performed-procedure model.
-4. Treatment plans, unit pricing, acceptance, and billing.
-5. Production persistence, attachment storage, email delivery, observability, backup, and
+3. Practitioner, appointment, and performed-procedure model (implemented).
+4. Protected clinical encounters and odontogram (implemented).
+5. Account and access-management consolidation; legacy identity compatibility (implemented).
+6. Treatment plans, unit pricing, acceptance, and billing.
+7. Production persistence, attachment storage, email delivery, observability, backup, and
    recovery.
-7. RGPD workflows validated with Portuguese and EU legal/compliance specialists.
+8. RGPD workflows validated with Portuguese and EU legal/compliance specialists.

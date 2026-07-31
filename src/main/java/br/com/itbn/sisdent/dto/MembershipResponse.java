@@ -10,5 +10,6 @@ public record MembershipResponse(
         String organizationName,
         UUID clinicUnitId,
         String clinicUnitName,
-        MembershipRole role) {
+        MembershipRole role,
+        long version) {
 }

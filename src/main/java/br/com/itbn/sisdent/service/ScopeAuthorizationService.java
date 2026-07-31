@@ -32,6 +32,10 @@ public class ScopeAuthorizationService {
         }
     }
 
+    public boolean isPlatformAdministrator() {
+        return currentAccountService.require().isPlatformAdministrator();
+    }
+
     public void requireRead(UUID organizationId, UUID clinicUnitId) {
         if (matchingMemberships(organizationId, clinicUnitId).isEmpty()) {
             throw new AccessDeniedException("No active membership grants access to this scope");
@@ -89,6 +93,9 @@ public class ScopeAuthorizationService {
     }
 
     public void requireOrganizationAdministration(UUID organizationId) {
+        if (currentAccountService.require().isPlatformAdministrator()) {
+            return;
+        }
         boolean allowed = membershipRepository.findAllByAccount_IdAndOrganization_GlobalIdAndActiveTrue(
                         currentAccountService.require().getId(), organizationId).stream()
                 .anyMatch(membership -> membership.getClinicUnit() == null
