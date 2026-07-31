@@ -70,6 +70,21 @@ export class AuthService {
     return role === 'ORGANIZATION_ADMIN' || role === 'MANAGER' || role === 'APPOINTMENT_MANAGER';
   }
 
+  canReadClinical(): boolean {
+    const role = this.activeMembership()?.role;
+    return role === 'ORGANIZATION_ADMIN' || role === 'CLINICAL_READER' || role === 'CLINICAL_AUTHOR' || role === 'CLINICAL_MANAGER';
+  }
+
+  canAuthorClinical(): boolean {
+    const role = this.activeMembership()?.role;
+    return role === 'ORGANIZATION_ADMIN' || role === 'CLINICAL_AUTHOR' || role === 'CLINICAL_MANAGER';
+  }
+
+  canManageClinical(): boolean {
+    const role = this.activeMembership()?.role;
+    return role === 'ORGANIZATION_ADMIN' || role === 'CLINICAL_MANAGER';
+  }
+
   login(request: LoginRequest) {
     return this.http.post<TokenResponse>('/api/auth/login', request).pipe(
       tap(({ accessToken }) => {

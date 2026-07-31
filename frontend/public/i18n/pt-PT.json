@@ -185,6 +185,7 @@
     "STATUS": { "SCHEDULED": "Agendada", "COMPLETED": "Concluída", "CANCELLED": "Cancelada", "NO_SHOW": "Faltou" },
     "ERROR": { "LOAD_SCHEDULE": "Não foi possível carregar a agenda no âmbito selecionado.", "LOAD_OPTIONS": "Não foi possível carregar as opções da consulta.", "LOAD_CLINICS": "Não foi possível carregar as clínicas disponíveis.", "PRACTITIONER_UNAVAILABLE": "O profissional não está disponível neste intervalo.", "CREATE": "Não foi possível agendar a consulta." }
   },
+  "CLINICAL": {"TITLE":"Área clínica","OVERTITLE":"Registo clínico protegido","DESCRIPTION":"A informação clínica está disponível apenas na organização e clínica selecionadas.","NO_ACCESS":"A sua adesão ativa não concede acesso clínico.","PATIENT":"Paciente","ENCOUNTERS":"Consultas","NARRATIVE":"Narrativa clínica","SAVE_DRAFT":"Guardar rascunho","FINALIZE":"Finalizar","ODONTOGRAM":"Odontograma","TOOTH":"Dente FDI","CONDITION":"Condição","RECORD_FINDING":"Registar observação","VOID":"Anular","ERROR":{"LOAD":"Não foi possível carregar o registo clínico no âmbito selecionado.","SAVE":"Não foi possível guardar o registo clínico."}},
   "PERMISSION_GROUPS": {
     "USERS": "Utilizadores", "PATIENTS": "Pacientes", "SPECIALITIES": "Especialidades", "ADDRESSES": "Endereços", "COUNTRIES": "Países", "ADMINISTRATIVE_DIVISIONS": "Divisões administrativas", "PERMISSIONS": "Permissões"
   }

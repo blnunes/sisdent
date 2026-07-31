@@ -185,6 +185,7 @@
     "STATUS": { "SCHEDULED": "Scheduled", "COMPLETED": "Completed", "CANCELLED": "Cancelled", "NO_SHOW": "No show" },
     "ERROR": { "LOAD_SCHEDULE": "Unable to load the scoped schedule.", "LOAD_OPTIONS": "Unable to load the appointment options.", "LOAD_CLINICS": "Unable to load the available clinic units.", "PRACTITIONER_UNAVAILABLE": "The practitioner is unavailable for this interval.", "CREATE": "Unable to schedule this appointment." }
   },
+  "CLINICAL": {"TITLE":"Clinical workspace","OVERTITLE":"Protected clinical record","DESCRIPTION":"Clinical information is available only in the selected organization and clinic.","NO_ACCESS":"Your active membership does not grant clinical access.","PATIENT":"Patient","ENCOUNTERS":"Encounters","NARRATIVE":"Clinical narrative","SAVE_DRAFT":"Save draft","FINALIZE":"Finalize","ODONTOGRAM":"Odontogram","TOOTH":"FDI tooth","CONDITION":"Condition","RECORD_FINDING":"Record finding","VOID":"Void","ERROR":{"LOAD":"Unable to load the scoped clinical record.","SAVE":"Unable to save the clinical record."}},
   "PERMISSION_GROUPS": {
     "USERS": "Users", "PATIENTS": "Patients", "SPECIALITIES": "Specialities", "ADDRESSES": "Addresses", "COUNTRIES": "Countries", "ADMINISTRATIVE_DIVISIONS": "Administrative divisions", "PERMISSIONS": "Permissions"
   }

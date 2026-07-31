@@ -185,6 +185,7 @@
     "STATUS": { "SCHEDULED": "Gepland", "COMPLETED": "Voltooid", "CANCELLED": "Geannuleerd", "NO_SHOW": "Niet verschenen" },
     "ERROR": { "LOAD_SCHEDULE": "De planning binnen dit bereik kan niet worden geladen.", "LOAD_OPTIONS": "De afspraakopties kunnen niet worden geladen.", "LOAD_CLINICS": "De beschikbare klinieken kunnen niet worden geladen.", "PRACTITIONER_UNAVAILABLE": "De behandelaar is niet beschikbaar in dit tijdvak.", "CREATE": "De afspraak kan niet worden ingepland." }
   },
+  "CLINICAL": {"TITLE":"Klinische werkruimte","OVERTITLE":"Beschermd klinisch dossier","DESCRIPTION":"Klinische informatie is alleen beschikbaar in de geselecteerde organisatie en kliniek.","NO_ACCESS":"Uw actieve lidmaatschap geeft geen klinische toegang.","PATIENT":"Patiënt","ENCOUNTERS":"Consulten","NARRATIVE":"Klinische beschrijving","SAVE_DRAFT":"Concept opslaan","FINALIZE":"Afronden","ODONTOGRAM":"Odontogram","TOOTH":"FDI-tand","CONDITION":"Aandoening","RECORD_FINDING":"Bevinding vastleggen","VOID":"Ongeldig maken","ERROR":{"LOAD":"Het klinische dossier binnen dit bereik kan niet worden geladen.","SAVE":"Het klinische dossier kan niet worden opgeslagen."}},
   "PERMISSION_GROUPS": {
     "USERS": "Gebruikers", "PATIENTS": "Patiënten", "SPECIALITIES": "Specialismen", "ADDRESSES": "Adressen", "COUNTRIES": "Landen", "ADMINISTRATIVE_DIVISIONS": "Bestuurlijke gebieden", "PERMISSIONS": "Machtigingen"
   }

@@ -8,6 +8,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/appointments/appointments.component').then((m) => m.AppointmentsComponent),
   },
   {
+    path: 'clinical',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/clinical/clinical-workspace.component').then((m) => m.ClinicalWorkspaceComponent),
+  },
+  {
     path: 'login',
     loadComponent: () => import('./features/login/login.component').then((m) => m.LoginComponent),
   },
