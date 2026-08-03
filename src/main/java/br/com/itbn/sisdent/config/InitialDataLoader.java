@@ -35,6 +35,7 @@ import br.com.itbn.sisdent.repository.CountryRepository;
 import br.com.itbn.sisdent.repository.PatientRepository;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -51,7 +52,6 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.Instant;
 import java.util.LinkedHashSet;
-import java.util.Set;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -211,8 +211,9 @@ public class InitialDataLoader implements ApplicationRunner {
         clinicUnits.forEach(data -> {
             Organization organization = organizationRepository.findByName(data.organizationName()).orElseThrow(() ->
                     new IllegalStateException("Unknown organization in " + INITIAL_DATA_PATH + ": " + data.organizationName()));
-            clinicUnitRepository.findByOrganization_IdAndName(organization.getId(), data.name())
-                    .orElseGet(() -> clinicUnitRepository.save(new ClinicUnit(organization, data.name())));
+            if (clinicUnitRepository.findByOrganization_IdAndName(organization.getId(), data.name()).isEmpty()) {
+                clinicUnitRepository.save(new ClinicUnit(organization, data.name()));
+            }
         });
     }
 
@@ -354,7 +355,7 @@ public class InitialDataLoader implements ApplicationRunner {
         return value;
     }
 
-    private String countryCode(String value, String defaultCountryCode) {
+    private String countryCode(@Nullable String value, String defaultCountryCode) {
         return value == null || value.isBlank() ? defaultCountryCode : value;
     }
 
@@ -418,7 +419,8 @@ public class InitialDataLoader implements ApplicationRunner {
 
     public record DemoProfileData(
             String displayName, String email, String password, boolean platformAdministrator,
-            String organizationName, String clinicUnitName, MembershipRole membershipRole) {
+            @Nullable String organizationName, @Nullable String clinicUnitName,
+            @Nullable MembershipRole membershipRole) {
     }
 
     public record DemoOrganizationData(String organizationName, String clinicUnitName, List<String> patientTaxIds,
