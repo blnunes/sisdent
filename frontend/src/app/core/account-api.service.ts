@@ -49,6 +49,9 @@ export class AccountApiService {
   changeMembershipRole(organizationId: string, membershipId: string, request: { role: string; version: number }) {
     return this.http.patch(`/api/organizations/${organizationId}/memberships/${membershipId}`, request);
   }
+  revokeMembership(organizationId: string, membershipId: string, version: number) {
+    return this.http.post<void>(`/api/organizations/${organizationId}/memberships/${membershipId}/revoke`, { version });
+  }
 }
 
 export interface PractitionerWrite {

@@ -22,4 +22,9 @@ describe('AccountApiService organization administration requests', () => {
     service.updatePractitioner('northstar', 'practitioner-1', practitioner).subscribe(); expect(http.expectOne('/api/organizations/northstar/practitioners/practitioner-1').request.method).toBe('PUT');
     service.deactivatePractitioner('northstar', 'practitioner-1').subscribe(); expect(http.expectOne('/api/organizations/northstar/practitioners/practitioner-1').request.method).toBe('DELETE');
   });
+  it('revokes a membership through its organization-scoped, versioned endpoint', () => {
+    service.revokeMembership('northstar', 'membership-1', 3).subscribe();
+    const request = http.expectOne('/api/organizations/northstar/memberships/membership-1/revoke').request;
+    expect(request.method).toBe('POST'); expect(request.body).toEqual({ version: 3 });
+  });
 });
