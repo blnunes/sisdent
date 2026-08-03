@@ -36,21 +36,15 @@ export class LoginComponent {
   private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
-  readonly legacyLogin = signal(false);
   readonly hidePassword = signal(true);
   readonly error = signal('');
   readonly emailForm = this.fb.nonNullable.group({
     email: ['admin@sisdent.local', [Validators.required, Validators.email]],
     password: ['admin', Validators.required],
   });
-  readonly legacyForm = this.fb.nonNullable.group({
-    identificationType: ['NATIONAL_ID' as const, Validators.required],
-    identificationNumber: ['', Validators.required],
-    password: ['', Validators.required],
-  });
 
   submit(): void {
-    const form = this.legacyLogin() ? this.legacyForm : this.emailForm;
+    const form = this.emailForm;
     if (form.invalid || this.loading()) return;
     this.error.set('');
     this.loading.set(true);
@@ -61,10 +55,5 @@ export class LoginComponent {
         this.loading.set(false);
       },
     });
-  }
-
-  changeLoginMode(): void {
-    this.legacyLogin.update((value) => !value);
-    this.error.set('');
   }
 }

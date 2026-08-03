@@ -1,7 +1,17 @@
 import { Routes } from '@angular/router';
-import { anyPermissionsGuard, authGuard } from './core/auth.guard';
+import { anyPermissionsGuard, authGuard, organizationAdministrationGuard, practitionerManagementGuard } from './core/auth.guard';
 
 export const routes: Routes = [
+  {
+    path: 'clinic-units',
+    canActivate: [authGuard, organizationAdministrationGuard],
+    loadComponent: () => import('./features/organization/clinic-units.component').then((m) => m.ClinicUnitsComponent),
+  },
+  {
+    path: 'practitioners',
+    canActivate: [authGuard, practitionerManagementGuard],
+    loadComponent: () => import('./features/organization/practitioners.component').then((m) => m.PractitionersComponent),
+  },
   {
     path: 'appointments',
     canActivate: [authGuard],
@@ -22,23 +32,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
   },
   {
-    path: 'email-enrollment',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/email-enrollment/email-enrollment.component').then(
-        (m) => m.EmailEnrollmentComponent,
-      ),
-  },
-  {
-    path: 'verify-email',
-    loadComponent: () =>
-      import('./features/email-verification/email-verification.component').then(
-        (m) => m.EmailVerificationComponent,
-      ),
-  },
-  // The former legacy-user URL is kept only as a client-side compatibility redirect.
-  { path: 'users', pathMatch: 'full', redirectTo: 'accounts' },
-  {
     path: 'accounts',
     canActivate: [authGuard],
     loadComponent: () => import('./features/accounts/accounts.component').then((m) => m.AccountsComponent),
@@ -48,7 +41,7 @@ export const routes: Routes = [
     canActivate: [authGuard, anyPermissionsGuard('READ_PATIENTS', 'MAINTAIN_PATIENTS')],
     loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
     data: {
-      key: 'patients', endpoint: '/api/patients', title: 'MODULES.PATIENTS', description: 'MODULES.PATIENTS_DESCRIPTION', maintainPermission: 'MAINTAIN_PATIENTS',
+      key: 'patients', endpoint: '', title: 'MODULES.PATIENTS', description: 'MODULES.PATIENTS_DESCRIPTION', maintainPermission: 'MAINTAIN_PATIENTS',
       filters: [
         { key: 'name', label: 'RESOURCE.FILTER.NAME', type: 'autocomplete' },
         { key: 'birthDate', label: 'RESOURCE.FILTER.BIRTH_DATE', type: 'date', placement: 'advanced' },
@@ -92,8 +85,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
     data: { key: 'administrativeDivisions', endpoint: '/api/administrative-divisions', title: 'MODULES.ADMINISTRATIVE_DIVISIONS', description: 'MODULES.ADMINISTRATIVE_DIVISIONS_DESCRIPTION', maintainPermission: 'MAINTAIN_ADMINISTRATIVE_DIVISIONS' },
   },
-  // Phase 6 deliberately has no generic legacy permission editor.
-  { path: 'permissions', pathMatch: 'full', redirectTo: 'accounts' },
   {
     path: 'not-found',
     loadComponent: () =>

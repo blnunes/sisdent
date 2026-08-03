@@ -69,6 +69,14 @@
                       <div class="patient"><span class="patient-avatar">{{ appointment.patientName.charAt(0) }}</span><div><strong>{{ appointment.patientName }}</strong><span>{{ 'APPOINTMENTS.PATIENT' | translate }}</span></div></div>
                       <div class="practitioner"><mat-icon>medical_services</mat-icon><div><strong>{{ appointment.practitionerName }}</strong><span>{{ 'APPOINTMENTS.PRACTITIONER' | translate }}</span></div></div>
                       <span class="status" [class]="'status ' + appointment.status.toLowerCase()">{{ statusLabel(appointment.status) }}</span>
+                      @if (auth.canManageAppointments() && appointment.status === 'SCHEDULED') {
+                        <div class="appointment-actions" [attr.aria-label]="'APPOINTMENTS.ACTIONS' | translate">
+                          <button mat-icon-button type="button" (click)="reschedule(appointment)" [matTooltip]="'APPOINTMENTS.RESCHEDULE' | translate"><mat-icon>edit_calendar</mat-icon></button>
+                          <button mat-icon-button type="button" (click)="transition(appointment, 'complete')" [matTooltip]="'APPOINTMENTS.COMPLETE' | translate"><mat-icon>task_alt</mat-icon></button>
+                          <button mat-icon-button type="button" (click)="transition(appointment, 'no-show')" [matTooltip]="'APPOINTMENTS.NO_SHOW' | translate"><mat-icon>person_off</mat-icon></button>
+                          <button mat-icon-button type="button" color="warn" (click)="transition(appointment, 'cancel')" [matTooltip]="'APPOINTMENTS.CANCEL' | translate"><mat-icon>event_busy</mat-icon></button>
+                        </div>
+                      }
                     </article>
                   }
                 </div>
@@ -77,7 +85,7 @@
 
             @if (auth.canManageAppointments()) {
               <mat-card id="schedule-appointment" appearance="outlined" class="form-card">
-                <div class="card-heading"><div><h2>{{ 'APPOINTMENTS.SCHEDULE' | translate }}</h2><p>{{ 'APPOINTMENTS.FORM.DESCRIPTION' | translate }}</p></div><mat-icon>add_circle</mat-icon></div>
+                <div class="card-heading"><div><h2>{{ (editingAppointment ? 'APPOINTMENTS.RESCHEDULE' : 'APPOINTMENTS.SCHEDULE') | translate }}</h2><p>{{ 'APPOINTMENTS.FORM.DESCRIPTION' | translate }}</p></div><mat-icon>{{ editingAppointment ? 'edit_calendar' : 'add_circle' }}</mat-icon></div>
                 <form class="appointment-form" (ngSubmit)="create()">
                   <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.CLINIC_UNIT' | translate }}</mat-label><mat-icon matPrefix>location_city</mat-icon><input matInput required [(ngModel)]="clinicSearch" (input)="clinicUnitId = ''" [matAutocomplete]="clinicUnitOptions" name="clinicUnitSearch" [placeholder]="'APPOINTMENTS.FORM.CLINIC_PLACEHOLDER' | translate" /><mat-autocomplete #clinicUnitOptions="matAutocomplete" (optionSelected)="selectClinicUnit($event.option.value)">@for (clinic of filteredClinicUnits(); track clinic.id) {<mat-option [value]="clinic"><div class="clinic-option"><strong>{{ clinic.name }}</strong><span>{{ 'APPOINTMENTS.FORM.CLINIC_AVAILABLE' | translate:{ organization: membership()!.organizationName } }}</span></div></mat-option>} @empty {<mat-option disabled>{{ 'APPOINTMENTS.FORM.CLINIC_EMPTY' | translate:{ organization: membership()!.organizationName } }}</mat-option>}</mat-autocomplete><mat-hint>{{ 'APPOINTMENTS.FORM.CLINIC_HINT' | translate:{ organization: membership()!.organizationName } }}</mat-hint></mat-form-field>
                   <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.PATIENT' | translate }}</mat-label><mat-select required [(ngModel)]="patientId" name="patientId"><mat-option value="">{{ 'APPOINTMENTS.FORM.SELECT_PATIENT' | translate }}</mat-option>@for (patient of patients(); track patient.globalId) {<mat-option [value]="patient.globalId">{{ patient.name }}</mat-option>}</mat-select></mat-form-field>
@@ -87,7 +95,7 @@
                     <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.FORM.START_TIME' | translate }}</mat-label><mat-select required [(ngModel)]="startTime" name="startTime" (selectionChange)="selectStartTime()"><mat-option value="">{{ 'APPOINTMENTS.FORM.SELECT_TIME' | translate }}</mat-option>@for (time of timeSlots; track time) {<mat-option [value]="time">{{ time }}</mat-option>}</mat-select></mat-form-field>
                     <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.FORM.END_TIME' | translate }}</mat-label><mat-select required [(ngModel)]="endTime" name="endTime" [disabled]="!startTime"><mat-option value="">{{ 'APPOINTMENTS.FORM.SELECT_TIME' | translate }}</mat-option>@for (time of endTimeSlots(); track time) {<mat-option [value]="time">{{ time }}</mat-option>}</mat-select><mat-hint>{{ 'APPOINTMENTS.FORM.TIME_INCREMENT' | translate }}</mat-hint></mat-form-field>
                   </div>
-                  <button mat-flat-button class="schedule-button" type="submit" [disabled]="!clinicUnitId || !patientId || !practitionerId || !appointmentDate || !startTime || !endTime"><mat-icon>event_available</mat-icon>{{ 'APPOINTMENTS.SCHEDULE' | translate }}</button>
+                  <div class="form-actions"><button mat-flat-button class="schedule-button" type="submit" [disabled]="!clinicUnitId || !patientId || !practitionerId || !appointmentDate || !startTime || !endTime"><mat-icon>event_available</mat-icon>{{ (editingAppointment ? 'APPOINTMENTS.SAVE_RESCHEDULE' : 'APPOINTMENTS.SCHEDULE') | translate }}</button>@if (editingAppointment) {<button mat-button type="button" (click)="cancelEdit()">{{ 'APPOINTMENTS.CANCEL_EDIT' | translate }}</button>}</div>
                 </form>
               </mat-card>
             }

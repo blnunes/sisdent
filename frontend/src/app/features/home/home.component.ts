@@ -30,7 +30,7 @@ export class HomeComponent {
 
   hasAccessibleModules(): boolean {
     return this.auth.hasAnyPermission(
-      'READ_PATIENTS', 'MAINTAIN_PATIENTS', 'READ_SPECIALITIES', 'MAINTAIN_SPECIALITIES',
+      'READ_SPECIALITIES', 'MAINTAIN_SPECIALITIES',
       'READ_ADDRESSES', 'MAINTAIN_ADDRESSES', 'READ_COUNTRIES', 'MAINTAIN_COUNTRIES',
       'READ_ADMINISTRATIVE_DIVISIONS', 'MAINTAIN_ADMINISTRATIVE_DIVISIONS',
     ) || this.auth.canReadClinical();

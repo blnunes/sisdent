@@ -234,6 +234,13 @@
     "HEADER_DESCRIPTION": "Beheer de komende 31 dagen voor {{organization}}.",
     "REFRESH": "Vernieuwen",
     "SCHEDULE": "Afspraak inplannen",
+    "RESCHEDULE": "Afspraak verzetten",
+    "SAVE_RESCHEDULE": "Nieuwe tijd opslaan",
+    "CANCEL_EDIT": "Bewerken annuleren",
+    "COMPLETE": "Voltooien",
+    "NO_SHOW": "Niet verschenen markeren",
+    "CANCEL": "Afspraak annuleren",
+    "ACTIONS": "Afspraakacties",
     "SUMMARY": "Afspraakoverzicht",
     "UPCOMING": "Aankomende afspraken",
     "AVAILABLE_PRACTITIONERS": "Beschikbare behandelaars",
@@ -277,17 +284,27 @@
       "LOAD_OPTIONS": "De afspraakopties kunnen niet worden geladen.",
       "LOAD_CLINICS": "De beschikbare klinieken kunnen niet worden geladen.",
       "PRACTITIONER_UNAVAILABLE": "De behandelaar is niet beschikbaar in dit tijdvak.",
-      "CREATE": "De afspraak kan niet worden ingepland."
+      "CREATE": "De afspraak kan niet worden ingepland.",
+      "RESCHEDULE": "Kan de afspraak niet verzetten.",
+      "TRANSITION": "Kan de afspraakstatus niet bijwerken.",
+      "CONFLICT": "Deze afspraak is gewijzigd of het gekozen tijdstip is niet meer beschikbaar. Vernieuw en probeer opnieuw."
     }
   },
   "CLINICAL": {
     "TITLE": "Klinische werkruimte",
     "OVERTITLE": "Beschermd klinisch dossier",
     "DESCRIPTION": "Klinische informatie is alleen beschikbaar in de geselecteerde organisatie en kliniek.",
+    "CLINIC": "Kliniek",
+    "NO_CLINIC": "Selecteer een kliniek om klinische dossiers te openen.",
+    "NO_PATIENT": "Er zijn geen patiënten in de geselecteerde kliniek.",
     "NO_ACCESS": "Uw actieve lidmaatschap geeft geen klinische toegang.",
     "PATIENT": "Patiënt",
     "ENCOUNTERS": "Consulten",
     "NARRATIVE": "Klinische beschrijving",
+    "ADMIN_NOTE": "Administratieve notitie",
+    "DRAFT": "Concept",
+    "EDIT_DRAFT": "Concept bewerken",
+    "CANCEL": "Annuleren",
     "SAVE_DRAFT": "Concept opslaan",
     "FINALIZE": "Afronden",
     "ODONTOGRAM": "Odontogram",
@@ -295,9 +312,20 @@
     "CONDITION": "Aandoening",
     "RECORD_FINDING": "Bevinding vastleggen",
     "VOID": "Ongeldig maken",
+    "VOID_REASON": "Reden voor ongeldig maken",
+    "VOIDED": "Ongeldig gemaakt",
+    "HISTORY": "Geschiedenis",
+    "AMEND": "Aanvulling maken",
+    "AMEND_REASON": "Reden voor aanvulling",
+    "CREATE_AMENDMENT": "Definitieve aanvulling maken",
+    "AMENDMENT_HISTORY": "Geschiedenis van aanvullingen",
+    "CORRECT": "Corrigeren na ongeldig maken",
     "ERROR": {
       "LOAD": "Het klinische dossier binnen dit bereik kan niet worden geladen.",
-      "SAVE": "Het klinische dossier kan niet worden opgeslagen."
+      "SAVE": "Het klinische dossier kan niet worden opgeslagen.",
+      "FORBIDDEN": "Uw actieve lidmaatschap staat deze klinische handeling niet toe.",
+      "SCOPE": "De geselecteerde patiënt of kliniek valt niet meer binnen uw bereik.",
+      "STALE_OR_FINAL": "Dit dossier is gewijzigd, definitief of al ongeldig gemaakt. Vernieuw en probeer opnieuw."
     }
   },
   "ACCOUNTS": {
@@ -312,6 +340,7 @@
     "GRANT_ERROR": "Toegang kan niet worden toegekend.",
     "ACCESS_DENIED": "Uw account kan geen toegang beheren in deze organisatie.",
     "MEMBERSHIP_EXISTS": "Dit account heeft al toegang met hetzelfde bereik.",
+    "STALE_MEMBERSHIP": "Dit lidmaatschap is door een andere gebruiker gewijzigd. Vernieuw en probeer opnieuw.",
     "ACCOUNT_OR_SCOPE_NOT_FOUND": "Het account of het gekozen bereik is niet meer beschikbaar.",
     "NO_MANAGEMENT_ACCESS": "Uw account kan geen toegang beheren.",
     "MANAGING_SCOPE": "Gebruikers beheren: {{organization}}",
@@ -331,6 +360,8 @@
     "CHANGE_ROLE": "Rol wijzigen",
     "SAVE_ROLE": "Rol opslaan",
     "ROLE": "Rol",
+    "ORGANIZATION": "Organisatie",
+    "SCOPE": "Bereik",
     "ALL_UNITS": "Alle eenheden",
     "COPY_ID": "Account-ID kopiëren",
     "DISPLAY_NAME": "Weergavenaam",
@@ -349,6 +380,8 @@
     "PLATFORM_ADMINISTRATOR": "Platformbeheerder",
     "MAKE_PLATFORM_ADMIN": "Platformbeheerder maken",
     "REVOKE_PLATFORM_ADMIN": "Platformbeheer verwijderen",
+    "REVOKE": "Toegang intrekken",
+    "REVOKE_CONFIRM": "Toegang van dit account in {{organization}} intrekken?",
     "NO_ACCESS": "Geen organisatie-toegang",
     "EMPTY": "Geen accounts gevonden.",
     "ROLES": {
@@ -361,6 +394,42 @@
       "CLINICAL_READER": "Klinische lezer",
       "CLINICAL_AUTHOR": "Klinische auteur",
       "CLINICAL_MANAGER": "Klinische beheerder"
+    }
+  },
+  "ORGANIZATION": {
+    "OVERTITLE": "Organisatiebeheer",
+    "REFRESH": "Vernieuwen",
+    "EDIT": "Bewerken",
+    "DEACTIVATE": "Deactiveren",
+    "ACTIVE": "Actief",
+    "INACTIVE": "Inactief",
+    "CANCEL": "Annuleren",
+    "SAVE": "Opslaan",
+    "VALIDATION": { "REQUIRED": "Dit veld is verplicht." },
+    "ERROR": {
+      "LOAD_UNITS": "Kan klinieken niet laden.",
+      "CREATE_UNIT": "Kan kliniek niet maken.",
+      "LOAD_PRACTITIONERS": "Kan behandelaars niet laden.",
+      "SAVE_PRACTITIONER": "Kan behandelaar niet opslaan.",
+      "DEACTIVATE_PRACTITIONER": "Kan behandelaar niet deactiveren."
+    },
+    "CLINIC_UNITS": {
+      "TITLE": "Klinieken",
+      "DESCRIPTION": "Beheer de klinieken in {{organization}}.",
+      "LIST_TITLE": "Huidige klinieken",
+      "EMPTY": "Er zijn geen klinieken in deze organisatie.",
+      "CREATE": "Kliniek toevoegen",
+      "NAME": "Naam kliniek"
+    },
+    "PRACTITIONERS": {
+      "TITLE": "Behandelaars",
+      "DESCRIPTION": "Beheer organisatiebrede behandelaars in {{organization}}.",
+      "NEW": "Nieuwe behandelaar",
+      "EDIT": "Behandelaar bewerken",
+      "EMPTY": "Er zijn geen behandelaars in deze organisatie.",
+      "DISPLAY_NAME": "Weergavenaam",
+      "REGISTRATION": "Registratienummer",
+      "NO_REGISTRATION": "Geen registratienummer"
     }
   },
   "PERMISSION_GROUPS": {

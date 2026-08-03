@@ -12,17 +12,5 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   ) {
     return next(request);
   }
-  let scopedRequest = request;
-  const membership = auth.activeMembership();
-  if (membership && request.url.startsWith('/api/patients')) {
-    const suffix = request.url.slice('/api/patients'.length);
-    const separator = suffix.includes('?') ? '&' : '?';
-    const clinic = membership.clinicUnitId
-      ? `${separator}clinicUnitId=${encodeURIComponent(membership.clinicUnitId)}`
-      : '';
-    scopedRequest = request.clone({
-      url: `/api/organizations/${membership.organizationId}/patients${suffix}${clinic}`,
-    });
-  }
-  return next(scopedRequest.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
+  return next(request.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
 };

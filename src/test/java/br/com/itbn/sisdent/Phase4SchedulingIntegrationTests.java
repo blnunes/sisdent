@@ -25,7 +25,7 @@ class Phase4SchedulingIntegrationTests {
     @Test void scopesSchedulingAndPreservesTerminalLifecycle() throws Exception {
         Organization organization = organizations.save(new Organization("Scheduling organization"));
         ClinicUnit clinic = clinics.save(new ClinicUnit(organization, "Main"));
-        Account account = accounts.save(new Account(persons.save(new Person("Scheduler")), null, "scheduler@example.com", encoder.encode("phase4-password"), false, false));
+        Account account = accounts.save(new Account(persons.save(new Person("Scheduler")), "scheduler@example.com", encoder.encode("phase4-password"), false));
         memberships.save(new Membership(account, organization, null, MembershipRole.MANAGER));
         Patient patient = patients.findAll().getFirst();
         links.save(new PatientOrganizationLink(patient, organization, clinic, PatientLinkBasis.ATTENDANCE));
@@ -39,6 +39,11 @@ class Phase4SchedulingIntegrationTests {
                 {"clinicUnitId":"%s","patientId":"%s","practitionerId":"%s",
                  "startAt":"2030-01-01T09:00:00Z","endAt":"2030-01-01T10:00:00Z","schedulingTimezone":"Europe/Lisbon"}
                 """.formatted(clinic.getGlobalId(), patient.getGlobalId(), practitionerId);
+        ClinicUnit otherClinic = clinics.save(new ClinicUnit(organization, "Other"));
+        String otherClinicRequest = request.replace(clinic.getGlobalId().toString(), otherClinic.getGlobalId().toString());
+        mvc.perform(post("/api/organizations/{organizationId}/appointments", organization.getGlobalId())
+                        .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(otherClinicRequest))
+                .andExpect(status().isNotFound());
         String appointment = mvc.perform(post("/api/organizations/{organizationId}/appointments", organization.getGlobalId())
                         .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(request))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();

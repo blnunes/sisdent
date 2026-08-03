@@ -65,40 +65,6 @@ describe('AuthService', () => {
     expect(service.destination()).toBe('/home');
   });
 
-  it('routes a legacy login to required email enrollment', () => {
-    service
-      .login({
-        identificationType: 'PASSPORT',
-        identificationNumber: 'LEGACY-USER',
-        password: 'password',
-      })
-      .subscribe();
-
-    http.expectOne('/api/auth/login').flush({
-      accessToken: jwt({
-        accountId: 'account-legacy',
-        email: 'passport.legacy-user@legacy.sisdent.invalid',
-        emailMigrationRequired: true,
-        platformAdministrator: false,
-        memberships: [],
-        authorities: ['ROLE_USER'],
-        exp: futureExpiration(),
-      }),
-      tokenType: 'Bearer',
-      expiresIn: 3600,
-    });
-    http.expectOne('/api/session').flush({
-      accountId: 'account-legacy',
-      email: 'passport.legacy-user@legacy.sisdent.invalid',
-      displayName: 'Legacy user',
-      platformAdministrator: false,
-      emailMigrationRequired: true,
-      memberships: [],
-    });
-
-    expect(service.destination()).toBe('/email-enrollment');
-  });
-
   it('selects the requested membership when the header supplies its ID', () => {
     service.login({ email: 'group.admin@sisdent.demo', password: 'odonto2026@O' }).subscribe();
     http.expectOne('/api/auth/login').flush({
@@ -124,16 +90,83 @@ describe('AuthService', () => {
     expect(localStorage.getItem('sisdent.active-membership')).toBe('southstart-membership');
   });
 
-  it('returns the controlled verification outcome without authentication', () => {
-    let status = '';
-    service.verifyEmail('invalid-token').subscribe((response) => (status = response.status));
+  it('matches appointment visibility to the server role matrix', () => {
+    service.login({ email: 'clinical@example.com', password: 'password' }).subscribe();
+    http.expectOne('/api/auth/login').flush({
+      accessToken: jwt({ accountId: 'clinical', email: 'clinical@example.com', platformAdministrator: false, memberships: [], authorities: [], exp: futureExpiration() }),
+      tokenType: 'Bearer', expiresIn: 3600,
+    });
+    http.expectOne('/api/session').flush({
+      accountId: 'clinical', email: 'clinical@example.com', displayName: 'Clinical',
+      platformAdministrator: false, emailMigrationRequired: false,
+      memberships: [{ id: 'clinical-membership', organizationId: 'northstar', organizationName: 'Northstar', role: 'CLINICAL_READER' }],
+    });
 
-    const request = http.expectOne('/api/auth/email-verification');
-    expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({ token: 'invalid-token' });
-    request.flush({ status: 'INVALID_OR_EXPIRED' });
+    expect(service.canReadAppointments()).toBe(false);
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({
+      accountId: 'clinical', email: 'clinical@example.com', displayName: 'Clinical',
+      platformAdministrator: false, emailMigrationRequired: false,
+      memberships: [{ id: 'appointment-reader', organizationId: 'northstar', organizationName: 'Northstar', role: 'APPOINTMENT_READER' }],
+    });
+    expect(service.canReadAppointments()).toBe(true);
+  });
 
-    expect(status).toBe('INVALID_OR_EXPIRED');
+  it('matches clinical reader, author, and manager visibility to the server role matrix', () => {
+    service.login({ email: 'reader@example.com', password: 'password' }).subscribe();
+    http.expectOne('/api/auth/login').flush({ accessToken: jwt({ accountId: 'reader', email: 'reader@example.com', platformAdministrator: false, memberships: [], authorities: [], exp: futureExpiration() }), tokenType: 'Bearer', expiresIn: 3600 });
+    http.expectOne('/api/session').flush({ accountId: 'reader', email: 'reader@example.com', displayName: 'Reader', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'reader', organizationId: 'northstar', organizationName: 'Northstar', role: 'CLINICAL_READER' }] });
+    expect(service.canReadClinical()).toBe(true); expect(service.canAuthorClinical()).toBe(false); expect(service.canManageClinical()).toBe(false);
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({ accountId: 'author', email: 'author@example.com', displayName: 'Author', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'author', organizationId: 'northstar', organizationName: 'Northstar', role: 'CLINICAL_AUTHOR' }] });
+    expect(service.canReadClinical()).toBe(true); expect(service.canAuthorClinical()).toBe(true); expect(service.canManageClinical()).toBe(false);
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({ accountId: 'manager', email: 'manager@example.com', displayName: 'Manager', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'manager', organizationId: 'northstar', organizationName: 'Northstar', role: 'CLINICAL_MANAGER' }] });
+    expect(service.canReadClinical()).toBe(true); expect(service.canAuthorClinical()).toBe(true); expect(service.canManageClinical()).toBe(true);
+  });
+
+  it('only exposes practitioner management for organization-wide approved roles', () => {
+    service.login({ email: 'practitioner@example.com', password: 'password' }).subscribe();
+    http.expectOne('/api/auth/login').flush({
+      accessToken: jwt({ accountId: 'practitioner', email: 'practitioner@example.com', platformAdministrator: false, memberships: [], authorities: [], exp: futureExpiration() }),
+      tokenType: 'Bearer', expiresIn: 3600,
+    });
+    http.expectOne('/api/session').flush({
+      accountId: 'practitioner', email: 'practitioner@example.com', displayName: 'Practitioner manager',
+      platformAdministrator: false, emailMigrationRequired: false,
+      memberships: [{ id: 'clinic-practitioner-manager', organizationId: 'northstar', organizationName: 'Northstar', clinicUnitId: 'central', role: 'PRACTITIONER_MANAGER' }],
+    });
+
+    expect(service.canManagePractitioners()).toBe(false);
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({
+      accountId: 'practitioner', email: 'practitioner@example.com', displayName: 'Practitioner manager',
+      platformAdministrator: false, emailMigrationRequired: false,
+      memberships: [{ id: 'organization-practitioner-manager', organizationId: 'northstar', organizationName: 'Northstar', role: 'PRACTITIONER_MANAGER' }],
+    });
+    expect(service.canManagePractitioners()).toBe(true);
+  });
+
+  it('exposes organization administration only to an organization-wide administrator', () => {
+    service.login({ email: 'admin@example.com', password: 'password' }).subscribe();
+    http.expectOne('/api/auth/login').flush({ accessToken: jwt({ accountId: 'admin', email: 'admin@example.com', platformAdministrator: false, memberships: [], authorities: [], exp: futureExpiration() }), tokenType: 'Bearer', expiresIn: 3600 });
+    http.expectOne('/api/session').flush({ accountId: 'admin', email: 'admin@example.com', displayName: 'Admin', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'clinic-admin', organizationId: 'northstar', organizationName: 'Northstar', clinicUnitId: 'central', role: 'ORGANIZATION_ADMIN' }] });
+    expect(service.canAdministerOrganization()).toBe(false);
+    expect(service.canManagePractitioners()).toBe(false);
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({ accountId: 'admin', email: 'admin@example.com', displayName: 'Admin', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'organization-admin', organizationId: 'northstar', organizationName: 'Northstar', role: 'ORGANIZATION_ADMIN' }] });
+    expect(service.canAdministerOrganization()).toBe(true);
+    expect(service.canManagePractitioners()).toBe(true);
+  });
+
+  it('matches practitioner management visibility to the organization-owned policy', () => {
+    service.login({ email: 'manager@example.com', password: 'password' }).subscribe();
+    http.expectOne('/api/auth/login').flush({ accessToken: jwt({ accountId: 'manager', email: 'manager@example.com', platformAdministrator: false, memberships: [], authorities: [], exp: futureExpiration() }), tokenType: 'Bearer', expiresIn: 3600 });
+    http.expectOne('/api/session').flush({ accountId: 'manager', email: 'manager@example.com', displayName: 'Manager', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'manager', organizationId: 'northstar', organizationName: 'Northstar', role: 'MANAGER' }] });
+    expect(service.canManagePractitioners()).toBe(true);
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({ accountId: 'manager', email: 'manager@example.com', displayName: 'Manager', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'practitioner-manager', organizationId: 'northstar', organizationName: 'Northstar', role: 'PRACTITIONER_MANAGER' }] });
+    expect(service.canManagePractitioners()).toBe(true);
   });
 });
 
