@@ -146,6 +146,28 @@ describe('AuthService', () => {
     expect(service.canReadAppointments()).toBe(true);
   });
 
+  it('only exposes practitioner management for organization-wide approved roles', () => {
+    service.login({ email: 'practitioner@example.com', password: 'password' }).subscribe();
+    http.expectOne('/api/auth/login').flush({
+      accessToken: jwt({ accountId: 'practitioner', email: 'practitioner@example.com', platformAdministrator: false, memberships: [], authorities: [], exp: futureExpiration() }),
+      tokenType: 'Bearer', expiresIn: 3600,
+    });
+    http.expectOne('/api/session').flush({
+      accountId: 'practitioner', email: 'practitioner@example.com', displayName: 'Practitioner manager',
+      platformAdministrator: false, emailMigrationRequired: false,
+      memberships: [{ id: 'clinic-practitioner-manager', organizationId: 'northstar', organizationName: 'Northstar', clinicUnitId: 'central', role: 'PRACTITIONER_MANAGER' }],
+    });
+
+    expect(service.canManagePractitioners()).toBe(false);
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({
+      accountId: 'practitioner', email: 'practitioner@example.com', displayName: 'Practitioner manager',
+      platformAdministrator: false, emailMigrationRequired: false,
+      memberships: [{ id: 'organization-practitioner-manager', organizationId: 'northstar', organizationName: 'Northstar', role: 'PRACTITIONER_MANAGER' }],
+    });
+    expect(service.canManagePractitioners()).toBe(true);
+  });
+
   it('returns the controlled verification outcome without authentication', () => {
     let status = '';
     service.verifyEmail('invalid-token').subscribe((response) => (status = response.status));

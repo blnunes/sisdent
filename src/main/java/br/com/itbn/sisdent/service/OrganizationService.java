@@ -93,10 +93,7 @@ public class OrganizationService {
         Organization organization = requireOrganization(organizationId);
         ClinicUnit clinicUnit = request.clinicUnitId() == null ? null
                 : authorization.requireClinicInOrganization(organizationId, request.clinicUnitId());
-        if (request.role() == MembershipRole.ORGANIZATION_ADMIN && clinicUnit != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Organization administrators must have organization-wide scope");
-        }
+        requireOrganizationWideRole(request.role(), clinicUnit);
         String email = Account.normalizeEmail(request.email());
         Account account = accountRepository.findByEmail(email).orElseGet(() -> {
             Person person = personRepository.save(new Person(request.displayName()));
@@ -123,9 +120,7 @@ public class OrganizationService {
         Organization organization = requireOrganization(organizationId);
         ClinicUnit clinicUnit = request.clinicUnitId() == null ? null
                 : authorization.requireClinicInOrganization(organizationId, request.clinicUnitId());
-        if (request.role() == MembershipRole.ORGANIZATION_ADMIN && clinicUnit != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization administrators must have organization-wide scope");
-        }
+        requireOrganizationWideRole(request.role(), clinicUnit);
         Account account = accountRepository.findByEmail(Account.normalizeEmail(request.email()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         boolean duplicate = clinicUnit == null
@@ -177,9 +172,7 @@ public class OrganizationService {
         if (!membership.isActive() || membership.getVersion() != request.version()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "The membership was changed by another request");
         }
-        if (request.role() == MembershipRole.ORGANIZATION_ADMIN && membership.getClinicUnit() != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization administrators must have organization-wide scope");
-        }
+        requireOrganizationWideRole(request.role(), membership.getClinicUnit());
         membership.changeRole(request.role());
         return toResponse(membershipRepository.saveAndFlush(membership));
     }
@@ -188,6 +181,14 @@ public class OrganizationService {
         return organizationRepository.findByGlobalId(id)
                 .filter(Organization::isActive)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+    }
+
+    private void requireOrganizationWideRole(MembershipRole role, ClinicUnit clinicUnit) {
+        if (clinicUnit != null && (role == MembershipRole.ORGANIZATION_ADMIN
+                || role == MembershipRole.PRACTITIONER_MANAGER)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "This role requires organization-wide scope");
+        }
     }
 
     private void assignAccountManagementOrganization(Account account, Organization organization, ClinicUnit clinicUnit,
