@@ -77,6 +77,7 @@ Cannot:
 - Manage accounts in another organization through Accounts and Access, even if
   the person has an operational assignment there.
 - Grant Platform Administrator access.
+- Change or revoke a Platform Administrator's organization memberships.
 
 For account management, each non-platform administrator has one persisted
 account-management organization. Switching the header to another operational
