@@ -91,8 +91,17 @@ The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
 ## Test
 
 ```bash
-mvn test
+./mvnw test
+cd frontend && npm ci
+npm test -- --watch=false
+npm run check:i18n
+npm run build
+npm run test:e2e
 ```
+
+Backend code follows the existing Spring service/controller boundaries; keep
+authorization checks in the server-side scope services. Angular components must
+present translated, user-safe error messages rather than server error details.
 
 ## Deployment
 
