@@ -25,6 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -162,7 +163,8 @@ public class SpecialityService {
 
     private void ensureNameAvailable(String name, Long currentSpecialityId) {
         specialityRepository.findByName(name.trim())
-                .filter(speciality -> !speciality.getId().equals(currentSpecialityId))
+                .filter(speciality -> currentSpecialityId == null
+                        || !Objects.equals(speciality.getId(), currentSpecialityId))
                 .ifPresent(speciality -> {
                     throw new ResponseStatusException(
                             HttpStatus.CONFLICT,
