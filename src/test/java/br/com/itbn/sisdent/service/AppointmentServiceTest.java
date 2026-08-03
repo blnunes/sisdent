@@ -19,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.Page;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -105,6 +106,37 @@ class AppointmentServiceTest {
         assertThat(service.transition(organizationId, clinicId, appointment.getGlobalId(), AppointmentStatus.COMPLETED).status())
                 .isEqualTo(AppointmentStatus.COMPLETED);
         assertThatThrownBy(() -> service.transition(organizationId, clinicId, appointment.getGlobalId(), AppointmentStatus.CANCELLED))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void listsAndReschedulesAppointmentsWithinTheAuthorizedClinic() {
+        Appointment appointment = new Appointment(new Organization("Alpha"), clinic, link, practitioner, start, end, "Europe/Lisbon");
+        when(appointments.findScoped(any(), any(), any(), any(), any())).thenReturn(Page.empty());
+        when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
+        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointment.getGlobalId(), organizationId)).thenReturn(Optional.of(appointment));
+        when(links.findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(patientId, organizationId, clinicId))
+                .thenReturn(Optional.of(link));
+        when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
+        when(appointments.hasOverlap(1L, start, end, null)).thenReturn(false);
+
+        assertThat(service.list(organizationId, clinicId, start, end, 0, 200).content()).isEmpty();
+        assertThat(service.reschedule(organizationId, appointment.getGlobalId(), request).status()).isEqualTo(AppointmentStatus.SCHEDULED);
+    }
+
+    @Test
+    void rejectsInactivePractitionersAndAppointmentsOutsideTheClinicScope() {
+        when(practitioner.isActive()).thenReturn(false);
+        when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
+        when(organizations.findByGlobalId(organizationId)).thenReturn(Optional.of(new Organization("Alpha")));
+        when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
+
+        assertThatThrownBy(() -> service.create(organizationId, request)).isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("inactive");
+
+        Appointment appointment = new Appointment(new Organization("Alpha"), clinic, link, practitioner, start, end, "Europe/Lisbon");
+        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointment.getGlobalId(), organizationId)).thenReturn(Optional.of(appointment));
+        assertThatThrownBy(() -> service.get(organizationId, UUID.randomUUID(), appointment.getGlobalId()))
                 .isInstanceOf(ResponseStatusException.class);
     }
 }
