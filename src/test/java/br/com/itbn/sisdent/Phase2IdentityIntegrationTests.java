@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -126,6 +127,37 @@ class Phase2IdentityIntegrationTests {
                         management.getGlobalId(), managed.getGlobalId()).header("Authorization", bearer(token))
                         .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void organizationAdministratorCannotChangePlatformAdministratorMemberships() throws Exception {
+        Organization organization = organizationRepository.save(new Organization("Protected platform account organization"));
+        Account organizationAdministrator = saveAccount("organization-administrator@example.com", false);
+        organizationAdministrator.assignAccountManagementOrganizationIfAbsent(organization);
+        accountRepository.saveAndFlush(organizationAdministrator);
+        membershipRepository.saveAndFlush(new Membership(organizationAdministrator, organization, null,
+                MembershipRole.ORGANIZATION_ADMIN));
+        Account platformAdministrator = saveAccount("protected-platform@example.com", true);
+        Membership protectedMembership = membershipRepository.saveAndFlush(new Membership(platformAdministrator,
+                organization, null, MembershipRole.READ_ONLY));
+        String token = login("organization-administrator@example.com", "phase2-password");
+
+        mockMvc.perform(patch("/api/organizations/{organizationId}/memberships/{membershipId}",
+                        organization.getGlobalId(), protectedMembership.getGlobalId())
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"role\":\"MANAGER\",\"version\":0}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/organizations/{organizationId}/memberships/{membershipId}/revoke",
+                        organization.getGlobalId(), protectedMembership.getGlobalId())
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"version\":0}"))
+                .andExpect(status().isForbidden());
+
+        assertThat(membershipRepository.findById(protectedMembership.getId()).orElseThrow().getRole())
+                .isEqualTo(MembershipRole.READ_ONLY);
+        assertThat(membershipRepository.findById(protectedMembership.getId()).orElseThrow().isActive()).isTrue();
     }
 
     @Test

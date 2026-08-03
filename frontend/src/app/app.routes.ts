@@ -46,8 +46,6 @@ export const routes: Routes = [
         (m) => m.EmailVerificationComponent,
       ),
   },
-  // The former legacy-user URL is kept only as a client-side compatibility redirect.
-  { path: 'users', pathMatch: 'full', redirectTo: 'accounts' },
   {
     path: 'accounts',
     canActivate: [authGuard],
@@ -102,8 +100,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
     data: { key: 'administrativeDivisions', endpoint: '/api/administrative-divisions', title: 'MODULES.ADMINISTRATIVE_DIVISIONS', description: 'MODULES.ADMINISTRATIVE_DIVISIONS_DESCRIPTION', maintainPermission: 'MAINTAIN_ADMINISTRATIVE_DIVISIONS' },
   },
-  // Phase 6 deliberately has no generic legacy permission editor.
-  { path: 'permissions', pathMatch: 'full', redirectTo: 'accounts' },
   {
     path: 'not-found',
     loadComponent: () =>

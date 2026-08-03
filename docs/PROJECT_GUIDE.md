@@ -74,7 +74,6 @@ description is in [`ROLE_GUIDE.md`](ROLE_GUIDE.md).
 | `POST` | `/api/organizations/{organizationId}/appointments/performed-procedures/{procedureId}/void` | Audit-void a performed procedure in appointment scope |
 | `GET/POST/PUT` | `/api/organizations/{organizationId}/clinical/encounters` | Scoped encounter list, drafts, and updates |
 | `GET/POST` | `/api/organizations/{organizationId}/clinical/odontogram/*` | Read chart/history and record findings |
-| `PATCH` | `/api/users/me/password` | Change the current password |
 
 All collection endpoints accept `page`, `size`, `sort`, and `direction`.
 Resource-specific filters are documented in OpenAPI. `/api/states` is retained

@@ -13,7 +13,6 @@ import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +35,9 @@ public class JwtService {
 
     public TokenResponse issue(Account account) {
         Instant issuedAt = Instant.now();
-        List<String> authorities = new ArrayList<>();
+        List<String> authorities = new java.util.ArrayList<>();
         if (account.isPlatformAdministrator()) {
             authorities.add("ROLE_PLATFORM_ADMIN");
-        }
-        if (account.getLegacyUser() != null) {
-            authorities.add("ROLE_" + account.getLegacyUser().getRole().name());
-            account.getLegacyUser().getPermissions().stream()
-                    .map(Enum::name)
-                    .forEach(authorities::add);
         }
         List<Map<String, Object>> memberships = membershipRepository
                 .findAllByAccount_IdAndActiveTrue(account.getId()).stream()
@@ -62,9 +55,6 @@ public class JwtService {
                 .claim("platformAdministrator", account.isPlatformAdministrator())
                 .claim("memberships", memberships)
                 .claim("authorities", authorities);
-        if (account.getLegacyUser() != null) {
-            claimsBuilder.claim("userId", account.getLegacyUser().getId());
-        }
         JwtClaimsSet claims = claimsBuilder.build();
 
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
