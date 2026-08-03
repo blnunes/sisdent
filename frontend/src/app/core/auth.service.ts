@@ -31,7 +31,7 @@ export class AuthService {
     const payload = this.payload();
     return !!payload && payload.exp * 1000 > Date.now();
   });
-  readonly isAdmin = computed(() => this.payload()?.authorities.includes('ROLE_ADMIN') ?? false);
+  readonly isAdmin = computed(() => this.payload()?.platformAdministrator ?? false);
   readonly isPlatformAdministrator = computed(
     () => this.sessionState()?.platformAdministrator ?? this.payload()?.platformAdministrator ?? false,
   );

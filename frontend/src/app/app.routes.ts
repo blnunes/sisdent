@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { anyPermissionsGuard, authGuard, organizationAdministrationGuard, practitionerManagementGuard } from './core/auth.guard';
+import { authGuard, organizationAdministrationGuard, practitionerManagementGuard } from './core/auth.guard';
 
 export const routes: Routes = [
   {
@@ -46,31 +46,10 @@ export const routes: Routes = [
         (m) => m.EmailVerificationComponent,
       ),
   },
-  // The former legacy-user URL is kept only as a client-side compatibility redirect.
-  { path: 'users', pathMatch: 'full', redirectTo: 'accounts' },
   {
     path: 'accounts',
     canActivate: [authGuard],
     loadComponent: () => import('./features/accounts/accounts.component').then((m) => m.AccountsComponent),
-  },
-  {
-    path: 'patients',
-    canActivate: [authGuard, anyPermissionsGuard('READ_PATIENTS', 'MAINTAIN_PATIENTS')],
-    loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
-    data: {
-      key: 'patients', endpoint: '/api/patients', title: 'MODULES.PATIENTS', description: 'MODULES.PATIENTS_DESCRIPTION', maintainPermission: 'MAINTAIN_PATIENTS',
-      filters: [
-        { key: 'name', label: 'RESOURCE.FILTER.NAME', type: 'autocomplete' },
-        { key: 'birthDate', label: 'RESOURCE.FILTER.BIRTH_DATE', type: 'date', placement: 'advanced' },
-        { key: 'active', label: 'RESOURCE.FILTER.STATUS', type: 'select', options: [{ value: 'true', label: 'RESOURCE.FILTER.ACTIVE' }, { value: 'false', label: 'RESOURCE.FILTER.INACTIVE' }] },
-        { key: 'gender', label: 'RESOURCE.FILTER.GENDER', type: 'select', placement: 'advanced', options: [{ value: 'FEMALE', label: 'RESOURCE.FILTER.FEMALE' }, { value: 'MALE', label: 'RESOURCE.FILTER.MALE' }, { value: 'OTHER', label: 'RESOURCE.FILTER.OTHER' }] },
-        { key: 'taxId', label: 'RESOURCE.FILTER.TAX_ID', type: 'autocomplete', placement: 'advanced' },
-        { key: 'identificationType', label: 'RESOURCE.FILTER.IDENTIFICATION_TYPE', type: 'select', placement: 'advanced', options: [{ value: 'NATIONAL_ID_CARD', label: 'RESOURCE.FILTER.NATIONAL_ID' }, { value: 'PASSPORT', label: 'RESOURCE.FILTER.PASSPORT' }] },
-        { key: 'nationalityCode', label: 'RESOURCE.FILTER.NATIONALITY', type: 'autocomplete', selectionRequired: true, placement: 'advanced' },
-        { key: 'addressId', label: 'RESOURCE.FILTER.ADDRESS', type: 'autocomplete', selectionRequired: true, placement: 'advanced' },
-        { key: 'specialityId', label: 'RESOURCE.FILTER.SPECIALITY', type: 'autocomplete', selectionRequired: true },
-      ],
-    },
   },
   {
     path: 'specialities',
@@ -102,8 +81,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
     data: { key: 'administrativeDivisions', endpoint: '/api/administrative-divisions', title: 'MODULES.ADMINISTRATIVE_DIVISIONS', description: 'MODULES.ADMINISTRATIVE_DIVISIONS_DESCRIPTION', maintainPermission: 'MAINTAIN_ADMINISTRATIVE_DIVISIONS' },
   },
-  // Phase 6 deliberately has no generic legacy permission editor.
-  { path: 'permissions', pathMatch: 'full', redirectTo: 'accounts' },
   {
     path: 'not-found',
     loadComponent: () =>
