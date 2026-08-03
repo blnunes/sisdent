@@ -124,6 +124,28 @@ describe('AuthService', () => {
     expect(localStorage.getItem('sisdent.active-membership')).toBe('southstart-membership');
   });
 
+  it('matches appointment visibility to the server role matrix', () => {
+    service.login({ email: 'clinical@example.com', password: 'password' }).subscribe();
+    http.expectOne('/api/auth/login').flush({
+      accessToken: jwt({ accountId: 'clinical', email: 'clinical@example.com', platformAdministrator: false, memberships: [], authorities: [], exp: futureExpiration() }),
+      tokenType: 'Bearer', expiresIn: 3600,
+    });
+    http.expectOne('/api/session').flush({
+      accountId: 'clinical', email: 'clinical@example.com', displayName: 'Clinical',
+      platformAdministrator: false, emailMigrationRequired: false,
+      memberships: [{ id: 'clinical-membership', organizationId: 'northstar', organizationName: 'Northstar', role: 'CLINICAL_READER' }],
+    });
+
+    expect(service.canReadAppointments()).toBe(false);
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({
+      accountId: 'clinical', email: 'clinical@example.com', displayName: 'Clinical',
+      platformAdministrator: false, emailMigrationRequired: false,
+      memberships: [{ id: 'appointment-reader', organizationId: 'northstar', organizationName: 'Northstar', role: 'APPOINTMENT_READER' }],
+    });
+    expect(service.canReadAppointments()).toBe(true);
+  });
+
   it('returns the controlled verification outcome without authentication', () => {
     let status = '';
     service.verifyEmail('invalid-token').subscribe((response) => (status = response.status));
