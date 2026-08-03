@@ -9,7 +9,7 @@ test.describe('Clinical workspace', () => {
     const session = await apiJson(request, '/api/session', adminToken);
     const organizationId = session.memberships[0].organizationId;
     const clinics = await apiJson(request, `/api/organizations/${organizationId}/clinic-units`, adminToken);
-    const clinicUnitId = clinics[0].id;
+    const clinicUnitId = await clinicWithPatients(request, organizationId, clinics, adminToken);
     const email = `e2e-clinical-manager-${Date.now()}@example.test`;
     const created = await request.post(`${backendUrl}/api/platform/accounts`, {
       headers: bearer(adminToken), data: { displayName: 'E2E Clinical Manager', email, password },
@@ -73,6 +73,15 @@ async function apiJson(request: APIRequestContext, path: string, token: string):
   const response = await request.get(`${backendUrl}${path}`, { headers: bearer(token) });
   expect(response.ok(), path).toBeTruthy();
   return response.json();
+}
+
+async function clinicWithPatients(request: APIRequestContext, organizationId: string, clinics: any[], token: string): Promise<string> {
+  for (const clinic of clinics) {
+    const patients = await apiJson(request,
+      `/api/organizations/${organizationId}/patients?clinicUnitId=${clinic.id}&size=1`, token);
+    if (patients.content.length > 0) return clinic.id;
+  }
+  throw new Error(`No seeded patient is available in organization ${organizationId}`);
 }
 
 function bearer(token: string): { Authorization: string } { return { Authorization: `Bearer ${token}` }; }

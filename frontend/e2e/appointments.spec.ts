@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type APIRequestContext } from '@playwright/test';
 
 const backendUrl = process.env['E2E_BACKEND_URL'] ?? 'http://localhost:8081';
 
@@ -13,17 +13,18 @@ test.describe('Operational scheduling', () => {
     const token = await page.evaluate(() => localStorage.getItem('sisdent.access-token'));
     const session = await page.evaluate(async () => (await fetch('/api/session', { headers: { Authorization: `Bearer ${localStorage.getItem('sisdent.access-token')}` } })).json());
     const organizationId = session.memberships[0].organizationId;
-    const unit = await request.post(`${backendUrl}/api/organizations/${organizationId}/clinic-units`, { headers: { Authorization: `Bearer ${token}` }, data: { name: `E2E Scheduling Unit ${Date.now()}` } });
-    expect(unit.status()).toBe(201);
-    const clinicUnit = await unit.json();
-    const clinicUnitId = clinicUnit.id;
+    const clinics = await request.get(`${backendUrl}/api/organizations/${organizationId}/clinic-units`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(clinics.status()).toBe(200);
+    const clinicUnit = await clinicWithPatients(request, organizationId, await clinics.json(), token);
 
     await page.goto('/appointments');
-    await expect(page.getByRole('heading', { name: 'Appointments' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Appointments', exact: true })).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Patient', exact: true })).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Practitioner', exact: true })).toBeVisible();
     await page.getByLabel('Clinic unit').fill(clinicUnit.name);
-    await page.getByRole('option', { name: new RegExp(`E2E Scheduling Unit`) }).click();
+    await page.getByRole('option', { name: clinicUnit.name, exact: true }).click();
     await page.getByRole('combobox', { name: 'Patient', exact: true }).click();
     await page.getByRole('option', { name: 'Olivia Bennett', exact: true }).click();
     await page.getByRole('combobox', { name: 'Practitioner', exact: true }).click();
@@ -42,3 +43,16 @@ test.describe('Operational scheduling', () => {
     await expect(page.getByRole('alert')).toHaveText('The practitioner is unavailable for this interval.');
   });
 });
+
+async function clinicWithPatients(
+  request: APIRequestContext, organizationId: string, clinics: { id: string; name: string }[], token: string,
+): Promise<{ id: string; name: string }> {
+  for (const clinic of clinics) {
+    const patients = await request.get(
+      `${backendUrl}/api/organizations/${organizationId}/patients?clinicUnitId=${clinic.id}&size=1`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (patients.ok() && (await patients.json()).content.length > 0) return clinic;
+  }
+  throw new Error(`No seeded patient is available in organization ${organizationId}`);
+}
