@@ -37,10 +37,12 @@ GET /api/administrative-divisions
 GET /api/countries
 GET /api/addresses
 GET /api/addresses/postal-code/{postalCode}?countryCode=PT
-GET /api/patients
-GET /api/patients/{id}
-POST /api/patients
-PUT /api/patients/{id}
+GET /api/organizations/{organizationId}/patients
+POST /api/organizations/{organizationId}/patients
+PUT /api/organizations/{organizationId}/patients/{patientId}
+DELETE /api/organizations/{organizationId}/patients/{patientId}
+GET /api/organizations/{organizationId}/appointments
+GET /api/organizations/{organizationId}/clinical/encounters
 GET /api/specialities
 POST /api/specialities
 PUT /api/specialities/{id}
@@ -54,7 +56,8 @@ administrative division.
 Example:
 
 ```bash
-curl http://localhost:8080/api/patients
+curl -H 'Authorization: Bearer <token>' \
+  'http://localhost:8080/api/organizations/{organizationId}/patients'
 ```
 
 Dental procedures are nested resources owned by a speciality. They are
