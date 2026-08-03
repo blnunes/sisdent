@@ -102,6 +102,33 @@ class Phase2IdentityIntegrationTests {
     }
 
     @Test
+    void membershipChangesRequireTheCurrentVersionAndCannotCrossOrganizationScope() throws Exception {
+        Organization management = organizationRepository.save(new Organization("Membership management"));
+        Organization other = organizationRepository.save(new Organization("Other membership scope"));
+        Account administrator = saveAccount("membership-admin@example.com", false);
+        administrator.assignAccountManagementOrganizationIfAbsent(management);
+        accountRepository.saveAndFlush(administrator);
+        membershipRepository.saveAndFlush(new Membership(administrator, management, null, MembershipRole.ORGANIZATION_ADMIN));
+        Account colleague = saveAccount("membership-colleague@example.com", false);
+        Membership managed = membershipRepository.saveAndFlush(new Membership(colleague, management, null, MembershipRole.READ_ONLY));
+        Membership outsideScope = membershipRepository.saveAndFlush(new Membership(colleague, other, null, MembershipRole.READ_ONLY));
+        String token = login("membership-admin@example.com", "phase2-password");
+
+        mockMvc.perform(post("/api/organizations/{organizationId}/memberships/{membershipId}/revoke",
+                        management.getGlobalId(), managed.getGlobalId()).header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":99}"))
+                .andExpect(status().isConflict());
+        mockMvc.perform(post("/api/organizations/{organizationId}/memberships/{membershipId}/revoke",
+                        management.getGlobalId(), outsideScope.getGlobalId()).header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/organizations/{organizationId}/memberships/{membershipId}/revoke",
+                        management.getGlobalId(), managed.getGlobalId()).header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
     void patientSearchAndExactIntakeAreTenantScoped() throws Exception {
         Patient patient = patientRepository.findAll().getFirst();
         Organization linkedOrganization = organizationRepository.save(new Organization("Linked clinic"));

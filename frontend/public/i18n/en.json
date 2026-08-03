@@ -234,6 +234,7 @@
     "HEADER_DESCRIPTION": "Manage the next 31 days for {{organization}}.",
     "REFRESH": "Refresh",
     "SCHEDULE": "Schedule appointment",
+    "RESCHEDULE": "Reschedule appointment", "SAVE_RESCHEDULE": "Save new time", "CANCEL_EDIT": "Cancel editing", "COMPLETE": "Complete", "NO_SHOW": "Mark no show", "CANCEL": "Cancel appointment", "ACTIONS": "Appointment actions",
     "SUMMARY": "Appointment summary",
     "UPCOMING": "Upcoming appointments",
     "AVAILABLE_PRACTITIONERS": "Available practitioners",
@@ -277,7 +278,7 @@
       "LOAD_OPTIONS": "Unable to load the appointment options.",
       "LOAD_CLINICS": "Unable to load the available clinic units.",
       "PRACTITIONER_UNAVAILABLE": "The practitioner is unavailable for this interval.",
-      "CREATE": "Unable to schedule this appointment."
+      "CREATE": "Unable to schedule this appointment.", "RESCHEDULE": "Unable to reschedule this appointment.", "TRANSITION": "Unable to update the appointment status.", "CONFLICT": "This appointment was changed or the selected time is no longer available. Refresh and try again."
     }
   },
   "CLINICAL": {
@@ -312,6 +313,7 @@
     "GRANT_ERROR": "Unable to grant access.",
     "ACCESS_DENIED": "Your account cannot manage access in this organization.",
     "MEMBERSHIP_EXISTS": "This account already has access with the same scope.",
+    "STALE_MEMBERSHIP": "This membership was changed by another user. Refresh and try again.",
     "ACCOUNT_OR_SCOPE_NOT_FOUND": "The account or selected scope is no longer available.",
     "NO_MANAGEMENT_ACCESS": "Your account cannot manage access.",
     "MANAGING_SCOPE": "Managing users: {{organization}}",
@@ -349,6 +351,7 @@
     "PLATFORM_ADMINISTRATOR": "Platform administrator",
     "MAKE_PLATFORM_ADMIN": "Make platform administrator",
     "REVOKE_PLATFORM_ADMIN": "Remove platform administration",
+    "REVOKE": "Revoke access", "REVOKE_CONFIRM": "Revoke this account's access in {{organization}}?",
     "NO_ACCESS": "No tenant access",
     "EMPTY": "No accounts found.",
     "ROLES": {

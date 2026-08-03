@@ -232,6 +232,7 @@
     "HEADER_DESCRIPTION": "Faça a gestão dos próximos 31 dias de {{organization}}.",
     "REFRESH": "Atualizar",
     "SCHEDULE": "Agendar consulta",
+    "RESCHEDULE": "Reagendar consulta", "SAVE_RESCHEDULE": "Guardar novo horário", "CANCEL_EDIT": "Cancelar edição", "COMPLETE": "Concluir", "NO_SHOW": "Marcar falta", "CANCEL": "Cancelar consulta", "ACTIONS": "Ações da consulta",
     "SUMMARY": "Resumo de consultas",
     "UPCOMING": "Consultas futuras",
     "AVAILABLE_PRACTITIONERS": "Profissionais disponíveis",
@@ -275,7 +276,7 @@
       "LOAD_OPTIONS": "Não foi possível carregar as opções da consulta.",
       "LOAD_CLINICS": "Não foi possível carregar as clínicas disponíveis.",
       "PRACTITIONER_UNAVAILABLE": "O profissional não está disponível neste intervalo.",
-      "CREATE": "Não foi possível agendar a consulta."
+      "CREATE": "Não foi possível agendar a consulta.", "RESCHEDULE": "Não foi possível reagendar a consulta.", "TRANSITION": "Não foi possível atualizar o estado da consulta.", "CONFLICT": "Esta consulta foi alterada ou o horário selecionado já não está disponível. Atualize e tente novamente."
     }
   },
   "CLINICAL": {
@@ -310,6 +311,7 @@
     "GRANT_ERROR": "Não foi possível atribuir o acesso.",
     "ACCESS_DENIED": "A sua conta não pode gerir acessos nesta organização.",
     "MEMBERSHIP_EXISTS": "Esta conta já tem um acesso com o mesmo âmbito.",
+    "STALE_MEMBERSHIP": "Esta associação foi alterada por outro utilizador. Atualize e tente novamente.",
     "ACCOUNT_OR_SCOPE_NOT_FOUND": "A conta ou o âmbito selecionado já não está disponível.",
     "NO_MANAGEMENT_ACCESS": "A sua conta não tem autoridade para gerir acessos.",
     "MANAGING_SCOPE": "A gerir utilizadores: {{organization}}",
@@ -349,6 +351,7 @@
     "PLATFORM_ADMINISTRATOR": "Administrador de plataforma",
     "MAKE_PLATFORM_ADMIN": "Tornar administrador de plataforma",
     "REVOKE_PLATFORM_ADMIN": "Remover administração de plataforma",
+    "REVOKE": "Revogar acesso", "REVOKE_CONFIRM": "Revogar o acesso desta conta em {{organization}}?",
     "NO_ACCESS": "Sem acesso de organização",
     "EMPTY": "Não foram encontradas contas.",
     "ROLES": {

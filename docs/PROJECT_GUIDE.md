@@ -58,6 +58,7 @@ description is in [`ROLE_GUIDE.md`](ROLE_GUIDE.md).
 | `GET` | `/api/account` | Current canonical account summary without enrollment secrets |
 | `GET` | `/api/organizations/{organizationId}/accounts` | Organization-scoped account list without cross-tenant membership disclosure |
 | `POST` | `/api/organizations/{organizationId}/account-memberships` | Grant a controlled role to an existing account by exact email in that organization |
+| `PATCH/POST` | `/api/organizations/{organizationId}/memberships/{membershipId}` and `/revoke` | Change a role or revoke a membership using its current version |
 | `GET` | `/api/platform/organizations` | Active organization choices for platform-wide access administration |
 | `POST` | `/api/account/email-enrollment` | Reserve and send verification for the current migrating account |
 | `POST` | `/api/account/email-enrollment/resend` | Supersede and resend the current account's challenge |
@@ -67,6 +68,7 @@ description is in [`ROLE_GUIDE.md`](ROLE_GUIDE.md).
 | `POST` | `/api/auth/login` | Authenticate by email/password; legacy identification is transitional |
 | `GET/POST/PUT/DELETE` | `/api/organizations/{organizationId}/practitioners` | Scoped practitioner management (DELETE deactivates) |
 | `GET/POST` | `/api/organizations/{organizationId}/appointments` | Bounded schedule list and appointment creation |
+| `PUT` | `/api/organizations/{organizationId}/appointments/{id}/reschedule` | Reschedule a still-scheduled appointment in its current clinic scope |
 | `POST` | `/api/organizations/{organizationId}/appointments/{id}/cancel|complete|no-show` | Terminal lifecycle transitions |
 | `GET/POST` | `/api/organizations/{organizationId}/appointments/{id}/performed-procedures` | Read or record catalog procedures in appointment scope |
 | `POST` | `/api/organizations/{organizationId}/appointments/performed-procedures/{procedureId}/void` | Audit-void a performed procedure in appointment scope |
@@ -240,6 +242,13 @@ other appointment or patient. Cancellation, completion and no-show are
 terminal. Appointment Managers can record and void procedures only in their
 authorized appointment scope; voiding snapshots the audit reason and preserves
 the immutable clinical history. Appointment Readers may view those records.
+
+The appointment workspace exposes lifecycle actions only for scheduled
+appointments and appointment-management roles. Its patient choices are loaded
+with the selected clinic scope. In **Accounts and Access**, organization
+administrators see and manage memberships only while their active organization
+is their persisted account-management organization; role changes and revocation
+send the membership version so stale changes can be refreshed and retried.
 
 For the isolated enrollment delivery seam, start with an explicit profile:
 

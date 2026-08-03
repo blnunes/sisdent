@@ -234,6 +234,7 @@
     "HEADER_DESCRIPTION": "Beheer de komende 31 dagen voor {{organization}}.",
     "REFRESH": "Vernieuwen",
     "SCHEDULE": "Afspraak inplannen",
+    "RESCHEDULE": "Afspraak verzetten", "SAVE_RESCHEDULE": "Nieuwe tijd opslaan", "CANCEL_EDIT": "Bewerken annuleren", "COMPLETE": "Voltooien", "NO_SHOW": "Niet verschenen markeren", "CANCEL": "Afspraak annuleren", "ACTIONS": "Afspraakacties",
     "SUMMARY": "Afspraakoverzicht",
     "UPCOMING": "Aankomende afspraken",
     "AVAILABLE_PRACTITIONERS": "Beschikbare behandelaars",
@@ -277,7 +278,7 @@
       "LOAD_OPTIONS": "De afspraakopties kunnen niet worden geladen.",
       "LOAD_CLINICS": "De beschikbare klinieken kunnen niet worden geladen.",
       "PRACTITIONER_UNAVAILABLE": "De behandelaar is niet beschikbaar in dit tijdvak.",
-      "CREATE": "De afspraak kan niet worden ingepland."
+      "CREATE": "De afspraak kan niet worden ingepland.", "RESCHEDULE": "Kan de afspraak niet verzetten.", "TRANSITION": "Kan de afspraakstatus niet bijwerken.", "CONFLICT": "Deze afspraak is gewijzigd of het gekozen tijdstip is niet meer beschikbaar. Vernieuw en probeer opnieuw."
     }
   },
   "CLINICAL": {
@@ -312,6 +313,7 @@
     "GRANT_ERROR": "Toegang kan niet worden toegekend.",
     "ACCESS_DENIED": "Uw account kan geen toegang beheren in deze organisatie.",
     "MEMBERSHIP_EXISTS": "Dit account heeft al toegang met hetzelfde bereik.",
+    "STALE_MEMBERSHIP": "Dit lidmaatschap is door een andere gebruiker gewijzigd. Vernieuw en probeer opnieuw.",
     "ACCOUNT_OR_SCOPE_NOT_FOUND": "Het account of het gekozen bereik is niet meer beschikbaar.",
     "NO_MANAGEMENT_ACCESS": "Uw account kan geen toegang beheren.",
     "MANAGING_SCOPE": "Gebruikers beheren: {{organization}}",
@@ -349,6 +351,7 @@
     "PLATFORM_ADMINISTRATOR": "Platformbeheerder",
     "MAKE_PLATFORM_ADMIN": "Platformbeheerder maken",
     "REVOKE_PLATFORM_ADMIN": "Platformbeheer verwijderen",
+    "REVOKE": "Toegang intrekken", "REVOKE_CONFIRM": "Toegang van dit account in {{organization}} intrekken?",
     "NO_ACCESS": "Geen organisatie-toegang",
     "EMPTY": "Geen accounts gevonden.",
     "ROLES": {
