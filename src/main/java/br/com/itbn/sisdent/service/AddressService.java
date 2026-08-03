@@ -57,6 +57,18 @@ public class AddressService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<AddressResponse> suggestByPostalCode(String countryCode, String query) {
+        if (countryCode == null || !countryCode.matches("[A-Za-z]{2}") || query == null || query.trim().length() < 2) {
+            return List.of();
+        }
+        return addressRepository.findTop10ByCountry_CodeAndPostalCodeStartingWithOrderByPostalCodeAscStreetAsc(
+                        countryCode.trim().toUpperCase(java.util.Locale.ROOT), query.trim())
+                .stream()
+                .map(ResponseMapper::toResponse)
+                .toList();
+    }
+
     @Transactional
     public AddressResponse create(AddressRequest request) {
         return ResponseMapper.toResponse(addressRepository.saveAndFlush(newAddress(request)));
@@ -77,8 +89,36 @@ public class AddressService {
         addressRepository.deleteById(id);
     }
 
-    Address createPatientAddress(AddressRequest request) {
-        return addressRepository.save(newAddress(request));
+    Address resolvePatientAddress(Long addressId, AddressRequest request) {
+        if (addressId != null && request != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Provide either addressId or address, not both");
+        }
+        if (addressId != null) {
+            return addressRepository.findById(addressId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Address not found"));
+        }
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "An address or addressId is required");
+        }
+        Address candidate = newAddress(request);
+        return addressRepository.findAllByCountry_CodeAndPostalCodeOrderByStreet(
+                        candidate.getCountry().getCode(), candidate.getPostalCode())
+                .stream()
+                .filter(address -> sameAddress(address, candidate))
+                .findFirst()
+                .orElseGet(() -> addressRepository.save(candidate));
+    }
+
+    private boolean sameAddress(Address left, Address right) {
+        return java.util.Objects.equals(left.getStreet(), right.getStreet())
+                && java.util.Objects.equals(left.getDistrict(), right.getDistrict())
+                && java.util.Objects.equals(left.getCity(), right.getCity())
+                && java.util.Objects.equals(left.getAdditionalInfo(), right.getAdditionalInfo())
+                && java.util.Objects.equals(left.getBlock(), right.getBlock())
+                && java.util.Objects.equals(left.getPostalCode(), right.getPostalCode())
+                && java.util.Objects.equals(
+                        left.getAdministrativeDivision() == null ? null : left.getAdministrativeDivision().getId(),
+                        right.getAdministrativeDivision() == null ? null : right.getAdministrativeDivision().getId());
     }
 
     private Address newAddress(AddressRequest request) {

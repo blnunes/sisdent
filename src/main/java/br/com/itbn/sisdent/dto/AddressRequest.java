@@ -11,7 +11,7 @@ public record AddressRequest(
         @NotBlank String city,
         String additionalInfo,
         String block,
-        @Size(max = 20) String postalCode,
+        @NotBlank @Size(max = 20) String postalCode,
         @Valid AdministrativeDivisionReference administrativeDivision,
         @NotBlank @Pattern(regexp = "[A-Z]{2}") String countryCode) {
 

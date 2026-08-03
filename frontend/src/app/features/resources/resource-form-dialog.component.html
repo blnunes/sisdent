@@ -29,7 +29,55 @@
         }
         <div class="form-grid">
           @for (field of fieldsIn(section); track field.key) {
-            @if (field.key === 'specialityIds') {
+            @if (isHiddenPatientAddressField(field)) {
+            } @else if (field.key === 'countryCode' && isPatientForm()) {
+              <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
+                <mat-label>{{ field.label }}</mat-label>
+                <mat-select [formControlName]="field.key" (selectionChange)="onCountrySelected($event.value)">
+                  @for (country of countriesWithAdministrativeDivisions(); track country.code) {
+                    <mat-option [value]="country.code">{{ country.name }} ({{ country.code }})</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            } @else if ((field.key === 'nationalityCode' || field.key === 'documentIssuerCountryCode') && isPatientForm()) {
+              <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
+                <mat-label>{{ field.label }}</mat-label>
+                <mat-select [formControlName]="field.key">
+                  @for (country of data.countries ?? []; track country.code) {
+                    <mat-option [value]="country.code">{{ country.name }} ({{ country.code }})</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            } @else if (field.key === 'administrativeDivisionCode' && isPatientForm()) {
+              <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
+                <mat-label>Administrative division</mat-label>
+                <mat-select [formControlName]="field.key" (selectionChange)="onAdministrativeDivisionSelected($event.value)">
+                  @for (division of availableAdministrativeDivisions(); track division.id) {
+                    <mat-option [value]="division.code">{{ division.name }} ({{ division.code }})</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            } @else if (field.key === 'postalCode' && isPatientForm()) {
+              <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
+                <mat-label>{{ field.label }}</mat-label>
+                <input matInput [formControlName]="field.key" [required]="field.required ?? false" [matAutocomplete]="postalCodeAddresses" (input)="onPostalCodeInput($any($event.target).value)" />
+                @if (isAddressLocked()) {
+                  <mat-hint>Address details are locked. Change the country or postal code to select another address.</mat-hint>
+                } @else {
+                  <mat-hint>Select a country, then enter at least 2 characters to reuse a registered address.</mat-hint>
+                }
+                <mat-autocomplete #postalCodeAddresses="matAutocomplete" [displayWith]="postalCodeDisplayValue" (optionSelected)="selectPostalCodeAddress($event.option.value)">
+                  @for (address of postalCodeSuggestions(); track address.id) {
+                    <mat-option [value]="address">
+                      {{ postalCodeAddressLabel(address) }}
+                    </mat-option>
+                  }
+                </mat-autocomplete>
+                @if (form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
+                  <mat-error>{{ field.label }} is required</mat-error>
+                }
+              </mat-form-field>
+            } @else if (field.key === 'specialityIds') {
               <div class="specialities-editor full-width">
                 <div class="speciality-add">
                   <mat-form-field appearance="outline">
@@ -135,7 +183,7 @@
                     }
                   </mat-select>
                 } @else {
-                  <input matInput [formControlName]="field.key" />
+                  <input matInput [formControlName]="field.key" [readonly]="isPatientAddressField(field) && isAddressLocked()" (input)="isPatientForm() && field.section === 'Address' ? onAddressFieldInput(field.key) : undefined" />
                 }
                 @if (form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
                   <mat-error>{{ field.label }} is required</mat-error>

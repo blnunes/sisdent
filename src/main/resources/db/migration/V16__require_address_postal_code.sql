@@ -1,0 +1,1 @@
+ALTER TABLE addresses ALTER COLUMN postal_code SET NOT NULL;

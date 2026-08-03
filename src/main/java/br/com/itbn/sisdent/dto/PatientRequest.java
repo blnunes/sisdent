@@ -22,6 +22,7 @@ public record PatientRequest(
         String identificationNumber,
         @NotBlank @Pattern(regexp = "[A-Z]{2}") String documentIssuerCountryCode,
         @NotBlank @Pattern(regexp = "[A-Z]{2}") String nationalityCode,
-        @NotNull @Valid AddressRequest address,
+        Long addressId,
+        @Valid AddressRequest address,
         @NotNull Set<@NotNull Long> specialityIds) {
 }
