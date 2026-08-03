@@ -1,0 +1,87 @@
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+
+const backendUrl = process.env['E2E_BACKEND_URL'] ?? 'http://localhost:8081';
+const password = 'e2e-clinical-password';
+
+test.describe('Clinical workspace', () => {
+  test('a clinical manager drafts, finalizes, amends, and corrects an odontogram finding', async ({ page, request }) => {
+    const adminToken = await loginApi(request, 'admin@sisdent.local', 'admin');
+    const session = await apiJson(request, '/api/session', adminToken);
+    const organizationId = session.memberships[0].organizationId;
+    const clinics = await apiJson(request, `/api/organizations/${organizationId}/clinic-units`, adminToken);
+    const clinicUnitId = clinics[0].id;
+    const email = `e2e-clinical-manager-${Date.now()}@example.test`;
+    const created = await request.post(`${backendUrl}/api/platform/accounts`, {
+      headers: bearer(adminToken), data: { displayName: 'E2E Clinical Manager', email, password },
+    });
+    expect(created.status()).toBe(201);
+    const membership = await request.post(`${backendUrl}/api/organizations/${organizationId}/account-memberships`, {
+      headers: bearer(adminToken), data: { email, clinicUnitId, role: 'CLINICAL_MANAGER' },
+    });
+    expect(membership.status()).toBe(201);
+
+    const managerToken = await loginApi(request, email, password);
+    const patients = await apiJson(request, `/api/organizations/${organizationId}/patients?clinicUnitId=${clinicUnitId}&size=1`, managerToken);
+    expect(patients.content.length).toBeGreaterThan(0);
+    const patient = patients.content[0];
+
+    await loginThroughUi(page, email, password);
+    await page.goto('/clinical');
+    await expect(page.getByRole('heading', { name: 'Clinical workspace' })).toBeVisible();
+    await page.getByRole('combobox', { name: 'Patient', exact: true }).click();
+    await page.getByRole('option', { name: patient.name, exact: true }).click();
+
+    await page.getByRole('textbox', { name: 'Clinical narrative', exact: true }).fill('Initial E2E clinical note');
+    await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+    await expect(page.getByText('Initial E2E clinical note', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Edit draft', exact: true }).click();
+    await page.getByRole('textbox', { name: 'Clinical narrative', exact: true }).fill('Updated E2E clinical note');
+    await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+    await page.getByRole('button', { name: 'Finalize', exact: true }).click();
+    await expect(page.getByText('FINAL', { exact: true })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Create amendment', exact: true }).click();
+    await page.getByRole('textbox', { name: 'Clinical narrative', exact: true }).fill('E2E traceable amendment');
+    await page.getByRole('textbox', { name: 'Reason for amendment', exact: true }).fill('Correcting the finalized note');
+    await page.getByRole('button', { name: 'Create final amendment', exact: true }).click();
+    await expect(page.getByText('E2E traceable amendment', { exact: true })).toBeVisible();
+
+    await page.getByRole('textbox', { name: 'FDI tooth', exact: true }).fill('11');
+    await page.getByRole('combobox', { name: 'Condition', exact: true }).click();
+    await page.getByRole('option', { name: 'CARIES', exact: true }).click();
+    await page.getByRole('button', { name: 'Record finding', exact: true }).click();
+    await expect(page.getByText('CARIES', { exact: true })).toBeVisible();
+    await page.getByRole('textbox', { name: 'Reason for voiding', exact: true }).fill('E2E correction');
+    await page.getByRole('button', { name: 'Void 11', exact: true }).click();
+    await page.getByRole('combobox', { name: 'Condition', exact: true }).click();
+    await page.getByRole('option', { name: 'RESTORATION', exact: true }).click();
+    await page.getByRole('button', { name: 'Record finding', exact: true }).click();
+    await expect(page.getByText('RESTORATION', { exact: true })).toBeVisible();
+
+    const history = await apiJson(request, `/api/organizations/${organizationId}/clinical/odontogram/history?clinicUnitId=${clinicUnitId}&patientId=${patient.globalId}`, managerToken);
+    expect(history.content.some((finding: { voidReason?: string }) => finding.voidReason === 'E2E correction')).toBeTruthy();
+  });
+});
+
+async function loginApi(request: APIRequestContext, email: string, userPassword: string): Promise<string> {
+  const response = await request.post(`${backendUrl}/api/auth/login`, { data: { email, password: userPassword } });
+  expect(response.status(), `login for ${email}`).toBe(200);
+  return (await response.json()).accessToken as string;
+}
+
+async function apiJson(request: APIRequestContext, path: string, token: string): Promise<any> {
+  const response = await request.get(`${backendUrl}${path}`, { headers: bearer(token) });
+  expect(response.ok(), path).toBeTruthy();
+  return response.json();
+}
+
+function bearer(token: string): { Authorization: string } { return { Authorization: `Bearer ${token}` }; }
+
+async function loginThroughUi(page: Page, email: string, userPassword: string): Promise<void> {
+  await page.addInitScript(() => localStorage.setItem('sisdent.language', 'en'));
+  await page.goto('/login');
+  await page.getByLabel('Email address', { exact: true }).fill(email);
+  await page.getByLabel('Password', { exact: true }).fill(userPassword);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page).toHaveURL(/\/home$/);
+}
