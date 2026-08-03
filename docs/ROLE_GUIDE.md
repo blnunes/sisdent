@@ -91,8 +91,11 @@ administration.
 Can, within the assigned organization or clinic unit:
 
 - Read and update patient information.
-- Manage practitioners.
 - Manage appointments.
+
+With an organization-wide membership, can also manage organization-owned
+practitioners. A clinic-unit Manager membership does not grant practitioner
+management.
 
 Cannot:
 
@@ -128,6 +131,8 @@ Can:
 - Create, reschedule, cancel, complete, and mark appointments as no-show in
   the assigned scope.
 - View patient lists needed for appointment work.
+- Record and void performed procedures for completed appointments in the
+  assigned scope. Voiding preserves the audited procedure history.
 
 Cannot:
 
@@ -143,6 +148,7 @@ not change it.
 Can:
 
 - View appointments and the relevant patient lists in the assigned scope.
+- View performed procedures for appointments in the assigned scope.
 
 Cannot:
 
@@ -218,8 +224,8 @@ Cannot:
 | Organization Administrator | Read and update | Manage | Manage | Manage | Assigned account-management organization |
 | Manager | Read and update | Manage | Manage | No | No |
 | Practitioner Manager | Read lists | Manage (organization-wide only) | No | No | No |
-| Appointment Manager | Read lists | No | Manage | No | No |
-| Appointment Reader | Read lists | No | View | No | No |
+| Appointment Manager | Read lists | No | Manage (including performed procedures) | No | No |
+| Appointment Reader | Read lists | No | View (including performed procedures) | No | No |
 | Clinical Reader | Read lists | No | No | View | No |
 | Clinical Author | Read lists | No | No | Create and read | No |
 | Clinical Manager | Read lists | No | No | Manage | No |

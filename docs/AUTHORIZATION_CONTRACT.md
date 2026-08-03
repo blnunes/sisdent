@@ -42,3 +42,11 @@ Practitioners are organization-owned. Therefore practitioner list/create/update/
 deactivate endpoints require an organization-wide Organization Administrator,
 Manager, or Practitioner Manager membership; clinic-unit memberships cannot
 manage practitioners.
+
+Appointments and their performed procedures share the same organization and
+clinic-unit scope. Appointment Readers may read both; Organization
+Administrators, Managers, and Appointment Managers may create, reschedule, and
+transition appointments, and record or void procedures only for a completed
+appointment in that scope. Cross-scope resources resolve as not found. A
+scheduling conflict is deliberately generic and never exposes the conflicting
+appointment or patient.

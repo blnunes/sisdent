@@ -75,6 +75,14 @@ export class AuthService {
     return role === 'ORGANIZATION_ADMIN' || role === 'MANAGER' || role === 'APPOINTMENT_MANAGER';
   }
 
+  canManagePractitioners(): boolean {
+    const membership = this.activeMembership();
+    if (!membership || membership.clinicUnitId) return false;
+    return membership.role === 'ORGANIZATION_ADMIN'
+      || membership.role === 'MANAGER'
+      || membership.role === 'PRACTITIONER_MANAGER';
+  }
+
   canReadClinical(): boolean {
     const role = this.activeMembership()?.role;
     return role === 'ORGANIZATION_ADMIN' || role === 'CLINICAL_READER' || role === 'CLINICAL_AUTHOR' || role === 'CLINICAL_MANAGER';

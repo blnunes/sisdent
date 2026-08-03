@@ -39,6 +39,11 @@ class Phase4SchedulingIntegrationTests {
                 {"clinicUnitId":"%s","patientId":"%s","practitionerId":"%s",
                  "startAt":"2030-01-01T09:00:00Z","endAt":"2030-01-01T10:00:00Z","schedulingTimezone":"Europe/Lisbon"}
                 """.formatted(clinic.getGlobalId(), patient.getGlobalId(), practitionerId);
+        ClinicUnit otherClinic = clinics.save(new ClinicUnit(organization, "Other"));
+        String otherClinicRequest = request.replace(clinic.getGlobalId().toString(), otherClinic.getGlobalId().toString());
+        mvc.perform(post("/api/organizations/{organizationId}/appointments", organization.getGlobalId())
+                        .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(otherClinicRequest))
+                .andExpect(status().isNotFound());
         String appointment = mvc.perform(post("/api/organizations/{organizationId}/appointments", organization.getGlobalId())
                         .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(request))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
