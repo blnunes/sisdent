@@ -363,6 +363,20 @@
       "CLINICAL_MANAGER": "Gestor clínico"
     }
   },
+  "ORGANIZATION": {
+    "OVERTITLE": "Administração da organização",
+    "REFRESH": "Atualizar",
+    "EDIT": "Editar",
+    "DEACTIVATE": "Desativar",
+    "ACTIVE": "Ativo",
+    "INACTIVE": "Inativo",
+    "CANCEL": "Cancelar",
+    "SAVE": "Guardar",
+    "VALIDATION": { "REQUIRED": "Este campo é obrigatório." },
+    "ERROR": { "LOAD_UNITS": "Não foi possível carregar as clínicas.", "CREATE_UNIT": "Não foi possível criar a clínica.", "LOAD_PRACTITIONERS": "Não foi possível carregar os profissionais.", "SAVE_PRACTITIONER": "Não foi possível guardar o profissional.", "DEACTIVATE_PRACTITIONER": "Não foi possível desativar o profissional." },
+    "CLINIC_UNITS": { "TITLE": "Clínicas", "DESCRIPTION": "Faça a gestão das clínicas em {{organization}}.", "LIST_TITLE": "Clínicas atuais", "EMPTY": "Não existem clínicas nesta organização.", "CREATE": "Adicionar clínica", "NAME": "Nome da clínica" },
+    "PRACTITIONERS": { "TITLE": "Profissionais", "DESCRIPTION": "Faça a gestão dos profissionais da organização em {{organization}}.", "NEW": "Novo profissional", "EDIT": "Editar profissional", "EMPTY": "Não existem profissionais nesta organização.", "DISPLAY_NAME": "Nome", "REGISTRATION": "Número de cédula", "NO_REGISTRATION": "Sem número de cédula" }
+  },
   "PERMISSION_GROUPS": {
     "USERS": "Utilizadores",
     "PATIENTS": "Pacientes",

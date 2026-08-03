@@ -157,6 +157,28 @@ describe('AuthService', () => {
 
     expect(status).toBe('INVALID_OR_EXPIRED');
   });
+
+  it('exposes organization administration only to an organization-wide administrator', () => {
+    service.login({ email: 'admin@example.com', password: 'password' }).subscribe();
+    http.expectOne('/api/auth/login').flush({ accessToken: jwt({ accountId: 'admin', email: 'admin@example.com', platformAdministrator: false, memberships: [], authorities: [], exp: futureExpiration() }), tokenType: 'Bearer', expiresIn: 3600 });
+    http.expectOne('/api/session').flush({ accountId: 'admin', email: 'admin@example.com', displayName: 'Admin', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'clinic-admin', organizationId: 'northstar', organizationName: 'Northstar', clinicUnitId: 'central', role: 'ORGANIZATION_ADMIN' }] });
+    expect(service.canAdministerOrganization()).toBe(false);
+    expect(service.canManagePractitioners()).toBe(false);
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({ accountId: 'admin', email: 'admin@example.com', displayName: 'Admin', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'organization-admin', organizationId: 'northstar', organizationName: 'Northstar', role: 'ORGANIZATION_ADMIN' }] });
+    expect(service.canAdministerOrganization()).toBe(true);
+    expect(service.canManagePractitioners()).toBe(true);
+  });
+
+  it('matches practitioner management visibility to the organization-owned policy', () => {
+    service.login({ email: 'manager@example.com', password: 'password' }).subscribe();
+    http.expectOne('/api/auth/login').flush({ accessToken: jwt({ accountId: 'manager', email: 'manager@example.com', platformAdministrator: false, memberships: [], authorities: [], exp: futureExpiration() }), tokenType: 'Bearer', expiresIn: 3600 });
+    http.expectOne('/api/session').flush({ accountId: 'manager', email: 'manager@example.com', displayName: 'Manager', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'manager', organizationId: 'northstar', organizationName: 'Northstar', role: 'MANAGER' }] });
+    expect(service.canManagePractitioners()).toBe(true);
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({ accountId: 'manager', email: 'manager@example.com', displayName: 'Manager', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'practitioner-manager', organizationId: 'northstar', organizationName: 'Northstar', role: 'PRACTITIONER_MANAGER' }] });
+    expect(service.canManagePractitioners()).toBe(true);
+  });
 });
 
 function futureExpiration(): number {

@@ -91,8 +91,11 @@ administration.
 Can, within the assigned organization or clinic unit:
 
 - Read and update patient information.
-- Manage practitioners.
 - Manage appointments.
+
+With an organization-wide membership, can also manage the organization-owned
+practitioner catalogue. A clinic-unit Manager membership does not grant
+practitioner management.
 
 Cannot:
 

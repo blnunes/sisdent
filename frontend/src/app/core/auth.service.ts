@@ -91,7 +91,21 @@ export class AuthService {
   }
 
   canManageOrganizationAccess(): boolean {
-    return this.activeMembership()?.role === 'ORGANIZATION_ADMIN';
+    return this.canAdministerOrganization();
+  }
+
+  /** Organization administration is deliberately restricted to organization-wide administrators. */
+  canAdministerOrganization(): boolean {
+    const membership = this.activeMembership();
+    return membership?.role === 'ORGANIZATION_ADMIN' && !membership.clinicUnitId;
+  }
+
+  /** Practitioners are organization-owned, so clinic-scoped memberships cannot manage them. */
+  canManagePractitioners(): boolean {
+    const membership = this.activeMembership();
+    return !!membership && !membership.clinicUnitId && [
+      'ORGANIZATION_ADMIN', 'MANAGER', 'PRACTITIONER_MANAGER',
+    ].includes(membership.role);
   }
 
   login(request: LoginRequest) {
