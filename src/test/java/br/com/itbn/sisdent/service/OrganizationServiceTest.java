@@ -1,7 +1,9 @@
 package br.com.itbn.sisdent.service;
 
 import br.com.itbn.sisdent.dto.ClinicUnitRequest;
+import br.com.itbn.sisdent.dto.AccountMembershipRequest;
 import br.com.itbn.sisdent.dto.MembershipRequest;
+import br.com.itbn.sisdent.dto.MembershipRoleUpdateRequest;
 import br.com.itbn.sisdent.dto.OrganizationRequest;
 import br.com.itbn.sisdent.model.Account;
 import br.com.itbn.sisdent.model.ClinicUnit;
@@ -21,6 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 import java.util.Optional;
@@ -108,5 +111,77 @@ class OrganizationServiceTest {
         assertThatThrownBy(() -> service.addMembership(organizationId, request))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("already exists");
+    }
+
+    @Test
+    void listsClinicUnitsForPlatformAndRestrictsARegularUserToItsClinic() {
+        Organization organization = new Organization("Alpha");
+        ClinicUnit first = new ClinicUnit(organization, "Central");
+        ClinicUnit second = new ClinicUnit(organization, "North");
+        UUID organizationId = organization.getGlobalId();
+        when(clinics.findAllByOrganization_GlobalIdAndActiveTrueOrderByName(organizationId))
+                .thenReturn(List.of(first, second));
+        when(authorization.isPlatformAdministrator()).thenReturn(false, true);
+
+        assertThat(service.listClinicUnits(organizationId, first.getGlobalId())).extracting(response -> response.name())
+                .containsExactly("Central");
+        assertThat(service.listClinicUnits(organizationId, null)).extracting(response -> response.name())
+                .containsExactly("Central", "North");
+        verify(authorization).requireAppointmentRead(organizationId, first.getGlobalId());
+    }
+
+    @Test
+    void grantsExistingAccountMembershipAndRejectsOrganizationWideRolesForClinicScopes() {
+        Organization organization = new Organization("Alpha");
+        ClinicUnit clinic = new ClinicUnit(organization, "Central");
+        Account account = new Account(new Person("Member"), "member@example.com", "encoded", false);
+        UUID organizationId = organization.getGlobalId();
+        when(organizations.findByGlobalId(organizationId)).thenReturn(Optional.of(organization));
+        when(authorization.requireClinicInOrganization(organizationId, clinic.getGlobalId())).thenReturn(clinic);
+        when(accounts.findByEmail("member@example.com")).thenReturn(Optional.of(account));
+        when(memberships.existsByAccount_IdAndOrganization_IdAndClinicUnit_Id(any(), any(), any())).thenReturn(false);
+        when(memberships.saveAndFlush(any(Membership.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var response = service.grantMembership(organizationId,
+                new AccountMembershipRequest("Member@example.com", clinic.getGlobalId(), MembershipRole.READ_ONLY));
+        assertThat(response.clinicUnitId()).isEqualTo(clinic.getGlobalId());
+
+        assertThatThrownBy(() -> service.grantMembership(organizationId,
+                new AccountMembershipRequest("member@example.com", clinic.getGlobalId(), MembershipRole.ORGANIZATION_ADMIN)))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("organization-wide");
+    }
+
+    @Test
+    void revokesAndChangesOnlyCurrentOrganizationMemberships() {
+        Organization organization = new Organization("Alpha");
+        Account account = new Account(new Person("Member"), "member@example.com", "encoded", false);
+        Membership membership = new Membership(account, organization, null, MembershipRole.READ_ONLY);
+        UUID organizationId = organization.getGlobalId();
+        when(memberships.findByGlobalId(membership.getGlobalId())).thenReturn(Optional.of(membership));
+        when(memberships.saveAndFlush(any(Membership.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertThat(service.changeMembershipRole(organizationId, membership.getGlobalId(),
+                new MembershipRoleUpdateRequest(MembershipRole.MANAGER, 0L)).role()).isEqualTo(MembershipRole.MANAGER);
+        service.revokeMembership(organizationId, membership.getGlobalId());
+        assertThat(membership.isActive()).isFalse();
+        verify(memberships).save(membership);
+
+        assertThatThrownBy(() -> service.changeMembershipRole(organizationId, membership.getGlobalId(),
+                new MembershipRoleUpdateRequest(MembershipRole.READ_ONLY, 0L)))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("changed by another request");
+    }
+
+    @Test
+    void doesNotAllowOrganizationAdministratorsToChangePlatformAccounts() {
+        Organization organization = new Organization("Alpha");
+        Account platformAccount = new Account(new Person("Platform"), "platform@example.com", "encoded", true);
+        UUID organizationId = organization.getGlobalId();
+        when(organizations.findByGlobalId(organizationId)).thenReturn(Optional.of(organization));
+        when(accounts.findByEmail("platform@example.com")).thenReturn(Optional.of(platformAccount));
+        when(authorization.isPlatformAdministrator()).thenReturn(false);
+
+        assertThatThrownBy(() -> service.grantMembership(organizationId,
+                new AccountMembershipRequest("platform@example.com", null, MembershipRole.READ_ONLY)))
+                .isInstanceOf(AccessDeniedException.class);
     }
 }
