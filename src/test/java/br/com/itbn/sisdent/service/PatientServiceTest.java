@@ -10,19 +10,24 @@ import br.com.itbn.sisdent.model.DocumentType;
 import br.com.itbn.sisdent.model.Gender;
 import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.model.Speciality;
+import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.repository.PatientRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,6 +45,9 @@ class PatientServiceTest {
 
     @Mock
     private CountryService countryService;
+
+    @Mock
+    private PageableFactory pageableFactory;
 
     @InjectMocks
     private PatientService patientService;
@@ -63,6 +71,60 @@ class PatientServiceTest {
         assertThat(response.documentIssuerCountry().code()).isEqualTo("PT");
         assertThat(response.address().postalCode()).isEqualTo("1250-096");
         verify(addressService).resolvePatientAddress(request.addressId(), request.address());
+    }
+
+    @Test
+    void updatesAndDeactivatesAnActivePatient() {
+        PatientRequest request = patientRequest();
+        Country portugal = country();
+        Patient patient = patient(portugal);
+        when(patientRepository.findById(1L)).thenReturn(Optional.of(patient));
+        when(addressService.resolvePatientAddress(request.addressId(), request.address())).thenReturn(address(portugal));
+        when(specialityService.findAllByIds(request.specialityIds())).thenReturn(List.of(new Speciality("Orthodontics")));
+        when(countryService.requireByCode("PT")).thenReturn(portugal);
+        when(patientRepository.saveAndFlush(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertThat(patientService.update(1L, request).name()).isEqualTo("Ana Silva");
+        patientService.delete(1L);
+
+        assertThat(patient.isActive()).isFalse();
+        verify(patientRepository).save(patient);
+    }
+
+    @Test
+    void rejectsMissingAndInactivePatientsDuringMutations() {
+        when(patientRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> patientService.update(1L, patientRequest()))
+                .isInstanceOf(ResponseStatusException.class);
+
+        Country portugal = country();
+        Patient inactive = patient(portugal);
+        inactive.deactivate();
+        when(patientRepository.findById(2L)).thenReturn(Optional.of(inactive));
+        assertThatThrownBy(() -> patientService.delete(2L))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("Inactive patients");
+    }
+
+    @Test
+    void returnsOptionsForEverySupportedFilterFieldAndRejectsUnknownFields() {
+        when(patientRepository.findNameSuggestions(eq("ana"), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.of("Ana Silva"));
+        when(patientRepository.findTaxIdSuggestions(eq("ana"), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.of("12345"));
+        when(patientRepository.findIdentificationNumberSuggestions(eq("ana"), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.of("AB123"));
+        when(patientRepository.findNationalitySuggestions(eq("ana"), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.<Object[]>of(new Object[] {"PT", "Portugal"}));
+        when(patientRepository.findAddressSuggestions(eq("ana"), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.<Object[]>of(new Object[] {4L, "Rua A", "Lisbon", "PT"}));
+        when(patientRepository.findSpecialitySuggestions(eq("ana"), org.mockito.ArgumentMatchers.any()))
+                .thenReturn(List.<Object[]>of(new Object[] {5L, "Orthodontics"}));
+
+        for (String field : List.of("name", "taxId", "identificationNumber", "nationalityCode", "addressId", "specialityId")) {
+            assertThat(patientService.findFilterOptions(field, " ana ")).hasSize(1);
+        }
+        assertThatThrownBy(() -> patientService.findFilterOptions("unknown", null))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("Unsupported");
     }
 
     private PatientRequest patientRequest() {
@@ -99,6 +161,11 @@ class PatientServiceTest {
                 "1250-096",
                 null,
                 country);
+    }
+
+    private Patient patient(Country country) {
+        return new Patient("Original", LocalDate.of(1990, 1, 1), true, Gender.FEMALE, "111 222",
+                DocumentType.NATIONAL_ID_CARD, "AB 123", country, country, address(country), List.of());
     }
 
     private Country country() {
