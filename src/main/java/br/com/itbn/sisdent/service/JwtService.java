@@ -51,7 +51,6 @@ public class JwtService {
                 .subject(account.getGlobalId().toString())
                 .claim("accountId", account.getGlobalId().toString())
                 .claim("email", account.getEmail())
-                .claim("emailMigrationRequired", account.isEmailMigrationRequired())
                 .claim("platformAdministrator", account.isPlatformAdministrator())
                 .claim("memberships", memberships)
                 .claim("authorities", authorities);

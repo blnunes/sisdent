@@ -97,8 +97,8 @@ public class OrganizationService {
         String email = Account.normalizeEmail(request.email());
         Account account = accountRepository.findByEmail(email).orElseGet(() -> {
             Person person = personRepository.save(new Person(request.displayName()));
-            return accountRepository.save(new Account(person, null, email,
-                    passwordEncoder.encode(request.password()), false, false));
+            return accountRepository.save(new Account(person, email,
+                    passwordEncoder.encode(request.password()), false));
         });
         requirePlatformAccountManagementAllowed(account);
         boolean duplicate = clinicUnit == null

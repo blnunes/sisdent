@@ -80,7 +80,7 @@ organization endpoints and surfaces forbidden scope, stale-version, finalized
 record, and unavailable-patient errors to the user.
 
 To replace a patient's speciality assignments, send their IDs in
-`specialityIds` to `PUT /api/patients/{id}`. Send an empty array
+`specialityIds` to `PUT /api/organizations/{organizationId}/patients/{patientId}`. Send an empty array
 (`"specialityIds": []`) to remove every assignment from that patient; this
 does not delete the speciality records. Catalog removal is logical so existing
 history remains valid.

@@ -3,8 +3,6 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { switchMap, tap } from 'rxjs';
 import {
-  EmailEnrollmentResponse,
-  EmailVerificationResponse,
   JwtPayload,
   LoginRequest,
   Membership,
@@ -152,19 +150,7 @@ export class AuthService {
   }
 
   destination(): string {
-    return this.sessionState()?.emailMigrationRequired ? '/email-enrollment' : '/home';
-  }
-
-  startEmailEnrollment(email: string) {
-    return this.http.post<EmailEnrollmentResponse>('/api/account/email-enrollment', { email });
-  }
-
-  resendEmailEnrollment() {
-    return this.http.post<EmailEnrollmentResponse>('/api/account/email-enrollment/resend', {});
-  }
-
-  verifyEmail(token: string) {
-    return this.http.post<EmailVerificationResponse>('/api/auth/email-verification', { token });
+    return '/home';
   }
 
   private decode(token: string | null): JwtPayload | null {
