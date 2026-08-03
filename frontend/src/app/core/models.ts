@@ -74,7 +74,7 @@ export type MembershipRole = 'ORGANIZATION_ADMIN' | 'MANAGER' | 'READ_ONLY' | 'P
 export interface Practitioner { globalId: string; displayName: string; registrationNumber?: string; accountId?: string; active: boolean; specialityIds: number[]; }
 export interface Appointment { globalId: string; clinicUnitId: string; patientId: string; patientName: string; practitionerId: string; practitionerName: string; startAt: string; endAt: string; schedulingTimezone: string; status: 'SCHEDULED' | 'CANCELLED' | 'COMPLETED' | 'NO_SHOW'; }
 export interface ClinicalEncounter { globalId: string; clinicUnitId: string; patientId: string; appointmentId?: string; practitionerId?: string; careAt: string; careTimezone: string; narrative: string; administrativeNote?: string; status: 'DRAFT' | 'FINAL'; finalizedAt?: string; originalEncounterId?: string; amendmentReason?: string; version: number; }
-export interface OdontogramFinding { globalId: string; toothCode: string; surface: string; condition: string; observedAt: string; clinicalNote?: string; voidedAt?: string; version: number; }
+export interface OdontogramFinding { globalId: string; clinicUnitId: string; patientId: string; replacementForId?: string; toothCode: string; surface: string; condition: string; observedAt: string; clinicalNote?: string; voidedAt?: string; voidReason?: string; version: number; }
 
 export interface Membership {
   id: string;

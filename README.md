@@ -61,6 +61,21 @@ Dental procedures are nested resources owned by a speciality. They are
 returned, created, updated, and deactivated through the speciality endpoints;
 there is no standalone `/api/procedures` endpoint.
 
+## Clinical workspace
+
+Clinical records are always addressed below the active organization and clinic
+scope: `/api/organizations/{organizationId}/clinical`. A clinical reader can
+read encounters and odontogram history; a clinical author can create and edit
+only their draft encounters; a clinical manager (and an organization
+administrator) can finalize encounters and create amendments. Final encounters
+are never edited in place. Odontogram findings are likewise preserved: a
+correction first voids the finding with a reason and version, then creates a
+replacement that references the voided finding.
+
+The workspace loads clinic units and patients only through the scoped
+organization endpoints and surfaces forbidden scope, stale-version, finalized
+record, and unavailable-patient errors to the user.
+
 To replace a patient's speciality assignments, send their IDs in
 `specialityIds` to `PUT /api/patients/{id}`. Send an empty array
 (`"specialityIds": []`) to remove every assignment from that patient; this

@@ -146,6 +146,19 @@ describe('AuthService', () => {
     expect(service.canReadAppointments()).toBe(true);
   });
 
+  it('matches clinical reader, author, and manager visibility to the server role matrix', () => {
+    service.login({ email: 'reader@example.com', password: 'password' }).subscribe();
+    http.expectOne('/api/auth/login').flush({ accessToken: jwt({ accountId: 'reader', email: 'reader@example.com', platformAdministrator: false, memberships: [], authorities: [], exp: futureExpiration() }), tokenType: 'Bearer', expiresIn: 3600 });
+    http.expectOne('/api/session').flush({ accountId: 'reader', email: 'reader@example.com', displayName: 'Reader', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'reader', organizationId: 'northstar', organizationName: 'Northstar', role: 'CLINICAL_READER' }] });
+    expect(service.canReadClinical()).toBe(true); expect(service.canAuthorClinical()).toBe(false); expect(service.canManageClinical()).toBe(false);
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({ accountId: 'author', email: 'author@example.com', displayName: 'Author', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'author', organizationId: 'northstar', organizationName: 'Northstar', role: 'CLINICAL_AUTHOR' }] });
+    expect(service.canReadClinical()).toBe(true); expect(service.canAuthorClinical()).toBe(true); expect(service.canManageClinical()).toBe(false);
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({ accountId: 'manager', email: 'manager@example.com', displayName: 'Manager', platformAdministrator: false, emailMigrationRequired: false, memberships: [{ id: 'manager', organizationId: 'northstar', organizationName: 'Northstar', role: 'CLINICAL_MANAGER' }] });
+    expect(service.canReadClinical()).toBe(true); expect(service.canAuthorClinical()).toBe(true); expect(service.canManageClinical()).toBe(true);
+  });
+
   it('only exposes practitioner management for organization-wide approved roles', () => {
     service.login({ email: 'practitioner@example.com', password: 'password' }).subscribe();
     http.expectOne('/api/auth/login').flush({
