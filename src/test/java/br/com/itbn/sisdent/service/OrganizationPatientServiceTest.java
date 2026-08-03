@@ -10,6 +10,7 @@ import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.model.PatientLinkBasis;
 import br.com.itbn.sisdent.model.PatientOrganizationLink;
 import br.com.itbn.sisdent.pagination.PageableFactory;
+import br.com.itbn.sisdent.pagination.PageQuery;
 import br.com.itbn.sisdent.repository.OrganizationRepository;
 import br.com.itbn.sisdent.repository.PatientOrganizationLinkRepository;
 import br.com.itbn.sisdent.repository.PatientRepository;
@@ -26,6 +27,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -66,6 +70,20 @@ class OrganizationPatientServiceTest {
     }
 
     @Test
+    void searchesNamesWithinTheOrganizationScope() {
+        when(pageableFactory.create(any(), any())).thenReturn(PageRequest.of(0, 10));
+        when(links.findAll(org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<PatientOrganizationLink>>any(),
+                org.mockito.ArgumentMatchers.<Pageable>any()))
+                .thenReturn(Page.empty());
+
+        assertThat(service.filterOptions(organization.getGlobalId(), null, "name", "Ana")).isEmpty();
+        assertThat(service.search(organization.getGlobalId(), null,
+                new PageQuery(0, 10, "name", "asc"),
+                new br.com.itbn.sisdent.filter.PatientFilter(null, null, null, null, null, null,
+                        null, null, null, null, null)).content()).isEmpty();
+    }
+
+    @Test
     void createsPatientAndOrganizationLinkInTheRequestedClinic() {
         PatientResponse response = response();
         when(patientService.create(any())).thenReturn(response);
@@ -101,6 +119,27 @@ class OrganizationPatientServiceTest {
         when(patientService.update(eq(10L), any())).thenReturn(response);
 
         assertThat(service.update(organization.getGlobalId(), null, patientId, null)).isSameAs(response);
+    }
+
+    @Test
+    void refusesClinicUpdatesWhenThePatientIsAlsoSharedOrganizationWide() {
+        PatientOrganizationLink clinicLink = new PatientOrganizationLink(patient, organization, clinic, PatientLinkBasis.INTAKE);
+        PatientOrganizationLink organizationLink = new PatientOrganizationLink(patient, organization, null, PatientLinkBasis.INTAKE);
+        when(links.findAllByPatient_GlobalIdAndOrganization_GlobalIdAndActiveTrue(patientId, organization.getGlobalId()))
+                .thenReturn(List.of(clinicLink, organizationLink));
+        when(links.existsByPatient_IdAndOrganization_GlobalIdNotAndActiveTrue(10L, organization.getGlobalId())).thenReturn(false);
+
+        assertThatThrownBy(() -> service.update(organization.getGlobalId(), clinic.getGlobalId(), patientId, null))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("another clinic unit");
+    }
+
+    @Test
+    void reportsMissingOrganizationsBeforeCreatingPatientLinks() {
+        UUID missingOrganization = UUID.randomUUID();
+        when(organizations.findByGlobalId(missingOrganization)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.create(missingOrganization, null, null))
+                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("Organization not found");
     }
 
     @Test
