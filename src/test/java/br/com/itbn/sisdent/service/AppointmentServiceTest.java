@@ -1,0 +1,110 @@
+package br.com.itbn.sisdent.service;
+
+import br.com.itbn.sisdent.dto.AppointmentRequest;
+import br.com.itbn.sisdent.model.Appointment;
+import br.com.itbn.sisdent.model.AppointmentStatus;
+import br.com.itbn.sisdent.model.ClinicUnit;
+import br.com.itbn.sisdent.model.Organization;
+import br.com.itbn.sisdent.model.Patient;
+import br.com.itbn.sisdent.model.PatientOrganizationLink;
+import br.com.itbn.sisdent.model.Practitioner;
+import br.com.itbn.sisdent.repository.AppointmentRepository;
+import br.com.itbn.sisdent.repository.OrganizationRepository;
+import br.com.itbn.sisdent.repository.PatientOrganizationLinkRepository;
+import br.com.itbn.sisdent.repository.PractitionerRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
+
+@ExtendWith(MockitoExtension.class)
+class AppointmentServiceTest {
+    @Mock AppointmentRepository appointments;
+    @Mock PractitionerRepository practitioners;
+    @Mock PatientOrganizationLinkRepository links;
+    @Mock OrganizationRepository organizations;
+    @Mock ScopeAuthorizationService authorization;
+    @InjectMocks AppointmentService service;
+
+    private final UUID organizationId = UUID.randomUUID();
+    private final UUID clinicId = UUID.randomUUID();
+    private final UUID patientId = UUID.randomUUID();
+    private final UUID practitionerId = UUID.randomUUID();
+    private final Instant start = Instant.parse("2026-08-04T09:00:00Z");
+    private final Instant end = Instant.parse("2026-08-04T10:00:00Z");
+    private AppointmentRequest request;
+    private Practitioner practitioner;
+    private PatientOrganizationLink link;
+    private ClinicUnit clinic;
+
+    @BeforeEach
+    void setUp() {
+        request = new AppointmentRequest(clinicId, patientId, practitionerId, start, end, "Europe/Lisbon");
+        practitioner = org.mockito.Mockito.mock(Practitioner.class);
+        link = org.mockito.Mockito.mock(PatientOrganizationLink.class);
+        clinic = org.mockito.Mockito.mock(ClinicUnit.class);
+        Patient patient = org.mockito.Mockito.mock(Patient.class);
+        lenient().when(practitioner.isActive()).thenReturn(true);
+        lenient().when(practitioner.getId()).thenReturn(1L);
+        lenient().when(practitioner.getGlobalId()).thenReturn(practitionerId);
+        lenient().when(practitioner.getDisplayName()).thenReturn("Dr Ana");
+        lenient().when(link.getPatient()).thenReturn(patient);
+        lenient().when(patient.getGlobalId()).thenReturn(patientId);
+        lenient().when(patient.getName()).thenReturn("Patient");
+        lenient().when(clinic.getGlobalId()).thenReturn(clinicId);
+    }
+
+    @Test
+    void createsAppointmentForAnAvailablePractitioner() {
+        Organization organization = new Organization("Alpha");
+        when(organizations.findByGlobalId(organizationId)).thenReturn(Optional.of(organization));
+        when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
+        when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
+        when(links.findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(patientId, organizationId, clinicId)).thenReturn(Optional.of(link));
+        when(appointments.hasOverlap(1L, start, end, null)).thenReturn(false);
+        when(appointments.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertThat(service.create(organizationId, request).schedulingTimezone()).isEqualTo("Europe/Lisbon");
+    }
+
+    @Test
+    void rejectsInvalidTimesTimezonesAndSchedulingConflicts() {
+        AppointmentRequest invalidRange = new AppointmentRequest(clinicId, patientId, practitionerId, end, start, "Europe/Lisbon");
+        AppointmentRequest invalidZone = new AppointmentRequest(clinicId, patientId, practitionerId, start, end, "invalid-zone");
+        assertThatThrownBy(() -> service.create(organizationId, invalidRange)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> service.create(organizationId, invalidZone)).isInstanceOf(ResponseStatusException.class);
+
+        when(organizations.findByGlobalId(organizationId)).thenReturn(Optional.of(new Organization("Alpha")));
+        when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
+        when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
+        when(links.findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(patientId, organizationId, clinicId))
+                .thenReturn(Optional.of(link));
+        when(appointments.hasOverlap(1L, start, end, null)).thenReturn(true);
+        assertThatThrownBy(() -> service.create(organizationId, request)).isInstanceOf(SchedulingConflictException.class);
+    }
+
+    @Test
+    void getsAndTransitionsAppointmentsWithinTheRequestedClinic() {
+        Appointment appointment = new Appointment(new Organization("Alpha"), clinic, link, practitioner, start, end, "Europe/Lisbon");
+        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointment.getGlobalId(), organizationId)).thenReturn(Optional.of(appointment));
+
+        assertThat(service.get(organizationId, clinicId, appointment.getGlobalId()).status()).isEqualTo(AppointmentStatus.SCHEDULED);
+        assertThat(service.transition(organizationId, clinicId, appointment.getGlobalId(), AppointmentStatus.COMPLETED).status())
+                .isEqualTo(AppointmentStatus.COMPLETED);
+        assertThatThrownBy(() -> service.transition(organizationId, clinicId, appointment.getGlobalId(), AppointmentStatus.CANCELLED))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+}
