@@ -429,6 +429,12 @@ export class ResourceListComponent {
     this.filters().filter((filter) => filter.placement === 'advanced'),
   );
 
+  private endpoint(): string {
+    if (this.config.key !== 'patients') return this.config.endpoint;
+    const membership = this.auth.activeMembership();
+    return membership ? `/api/organizations/${membership.organizationId}/patients${membership.clinicUnitId ? `?clinicUnitId=${encodeURIComponent(membership.clinicUnitId)}` : ''}` : '';
+  }
+
   constructor() {
     if (this.config.key !== 'patients') {
       this.load();
@@ -457,7 +463,7 @@ export class ResourceListComponent {
       filters: this.filterValues(),
     };
     this.http
-      .get<PageResponse<Record<string, unknown>>>(this.config.endpoint, {
+      .get<PageResponse<Record<string, unknown>>>(this.endpoint(), {
         params: this.tableQuery.toHttpParams(query),
       })
       .subscribe({
@@ -537,7 +543,7 @@ export class ResourceListComponent {
     this.filterDisplayValues.update((values) => ({ ...values, [filter.key]: value }));
     this.updateFilter(filter.key, filter.selectionRequired ? '' : value);
     this.http
-      .get<FilterOption[]>(`${this.config.endpoint}/filter-options`, {
+      .get<FilterOption[]>(`${this.endpoint().split('?')[0]}/filter-options`, {
         params: { field: filter.key, query: value },
       })
       .subscribe({
@@ -605,7 +611,7 @@ export class ResourceListComponent {
   remove(record: Record<string, unknown>): void {
     if (!confirm(`Delete ${this.primary(record)}?`)) return;
     this.http
-      .delete(`${this.config.endpoint}/${this.resourceIdentifier(record)}`)
+      .delete(`${this.endpoint().split('?')[0]}/${this.resourceIdentifier(record)}`)
       .subscribe({ next: () => this.load(), error: () => this.error.set(true) });
   }
 
@@ -672,8 +678,8 @@ export class ResourceListComponent {
       .subscribe((value?: FormValues) => {
         if (!value) return;
         const request = record
-          ? this.http.put(`${this.config.endpoint}/${this.resourceIdentifier(record)}`, schema.toRequest(value))
-          : this.http.post(this.config.endpoint, schema.toRequest(value));
+          ? this.http.put(`${this.endpoint().split('?')[0]}/${this.resourceIdentifier(record)}`, schema.toRequest(value))
+          : this.http.post(this.endpoint().split('?')[0], schema.toRequest(value));
         request.subscribe({ next: () => this.load(), error: () => this.error.set(true) });
       });
   }

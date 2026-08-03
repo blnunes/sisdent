@@ -46,13 +46,13 @@ public class AccountManagementService {
     public PageResponse<AccountResponse> platformPage(PageQuery query, String filter) {
         authorization.requirePlatformAdministrator();
         return PageResponse.from(accounts.findManagementPage(normalizeFilter(filter), deterministicPage(query)),
-                account -> response(account, null, true));
+                account -> response(account, null));
     }
 
     @Transactional(readOnly = true)
     public AccountResponse platformRead(UUID accountId) {
         authorization.requirePlatformAdministrator();
-        return response(requireAccount(accountId), null, true);
+        return response(requireAccount(accountId), null);
     }
 
     @Transactional
@@ -61,8 +61,8 @@ public class AccountManagementService {
         String email = Account.normalizeEmail(request.email());
         if (accounts.existsByEmail(email)) throw conflict("The email address is unavailable");
         Person person = persons.save(new Person(request.displayName()));
-        Account account = accounts.saveAndFlush(new Account(person, null, email, passwords.encode(request.password()), false, false));
-        return response(account, null, true);
+        Account account = accounts.saveAndFlush(new Account(person, email, passwords.encode(request.password()), false));
+        return response(account, null);
     }
 
     @Transactional
@@ -72,7 +72,7 @@ public class AccountManagementService {
         requireVersion(account.getVersion(), request.version());
         try { account.changeActive(request.active()); }
         catch (IllegalStateException exception) { throw conflict("The requested account lifecycle transition is unavailable"); }
-        return response(accounts.saveAndFlush(account), null, true);
+        return response(accounts.saveAndFlush(account), null);
     }
 
     @Transactional
@@ -86,17 +86,17 @@ public class AccountManagementService {
         }
         try { account.changePlatformAdministrator(request.platformAdministrator()); }
         catch (IllegalStateException exception) { throw conflict("The requested platform-administrator transition is unavailable"); }
-        return response(accounts.saveAndFlush(account), null, true);
+        return response(accounts.saveAndFlush(account), null);
     }
 
     @Transactional(readOnly = true)
-    public AccountResponse currentAccount() { return response(current.require(), null, false); }
+    public AccountResponse currentAccount() { return response(current.require(), null); }
 
     @Transactional(readOnly = true)
     public PageResponse<AccountResponse> organizationPage(UUID organizationId, PageQuery query, String filter) {
         authorization.requireAccountAdministration(organizationId);
         return PageResponse.from(accounts.findManagementPageInOrganization(organizationId, normalizeFilter(filter), deterministicPage(query)),
-                account -> response(account, organizationId, false));
+                account -> response(account, organizationId));
     }
 
     @Transactional(readOnly = true)
@@ -104,21 +104,19 @@ public class AccountManagementService {
         authorization.requireAccountAdministration(organizationId);
         Account account = accounts.findVisibleInOrganization(organizationId, accountId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return response(account, organizationId, false);
+        return response(account, organizationId);
     }
 
     private Account requireAccount(UUID accountId) {
         return accounts.findByGlobalId(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
-    private AccountResponse response(Account account, UUID organizationId, boolean includeLegacyMarker) {
+    private AccountResponse response(Account account, UUID organizationId) {
         List<Membership> visible = organizationId == null
                 ? memberships.findAllByAccount_IdOrderByOrganization_NameAscClinicUnit_NameAsc(account.getId())
                 : memberships.findAllByAccount_IdAndOrganization_GlobalIdOrderByClinicUnit_NameAsc(account.getId(), organizationId);
         return new AccountResponse(account.getGlobalId(), account.getPerson().getDisplayName(), account.getEmail(),
-                account.isActive(), account.isEmailVerified(), account.isEmailMigrationRequired(),
-                account.isPlatformAdministrator(), account.getVersion(),
-                includeLegacyMarker ? account.isEmailMigrationRequired() && account.getLegacyUser() != null : null,
+                account.isActive(), account.isPlatformAdministrator(), account.getVersion(),
                 visible.stream().map(OrganizationService::toResponse).toList());
     }
 

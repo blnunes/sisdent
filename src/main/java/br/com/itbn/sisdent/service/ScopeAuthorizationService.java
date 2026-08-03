@@ -56,7 +56,13 @@ public class ScopeAuthorizationService {
     }
 
     public void requireAppointmentRead(UUID organizationId, UUID clinicUnitId) {
-        if (matchingMemberships(organizationId, clinicUnitId).stream().noneMatch(m -> m.getRole() != MembershipRole.PRACTITIONER_MANAGER)) {
+        boolean allowed = matchingMemberships(organizationId, clinicUnitId).stream().anyMatch(membership ->
+                membership.getRole() == MembershipRole.ORGANIZATION_ADMIN
+                        || membership.getRole() == MembershipRole.MANAGER
+                        || membership.getRole() == MembershipRole.APPOINTMENT_MANAGER
+                        || membership.getRole() == MembershipRole.APPOINTMENT_READER
+                        || membership.getRole() == MembershipRole.READ_ONLY);
+        if (!allowed) {
             throw new AccessDeniedException("No active membership grants appointment read access");
         }
     }

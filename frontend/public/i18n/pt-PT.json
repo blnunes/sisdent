@@ -45,6 +45,8 @@
     "NEW_PASSWORD": "Nova password (opcional)",
     "MIN_PASSWORD": "Mínimo de 8 caracteres.",
     "ROLE": "Perfil",
+    "ORGANIZATION": "Organização",
+    "SCOPE": "Âmbito",
     "ROLE_PERMISSIONS": "Permissões deste perfil",
     "FULL_ACCESS": "Acesso total",
     "CANCEL": "Cancelar",
@@ -232,6 +234,13 @@
     "HEADER_DESCRIPTION": "Faça a gestão dos próximos 31 dias de {{organization}}.",
     "REFRESH": "Atualizar",
     "SCHEDULE": "Agendar consulta",
+    "RESCHEDULE": "Reagendar consulta",
+    "SAVE_RESCHEDULE": "Guardar novo horário",
+    "CANCEL_EDIT": "Cancelar edição",
+    "COMPLETE": "Concluir",
+    "NO_SHOW": "Marcar falta",
+    "CANCEL": "Cancelar consulta",
+    "ACTIONS": "Ações da consulta",
     "SUMMARY": "Resumo de consultas",
     "UPCOMING": "Consultas futuras",
     "AVAILABLE_PRACTITIONERS": "Profissionais disponíveis",
@@ -275,17 +284,27 @@
       "LOAD_OPTIONS": "Não foi possível carregar as opções da consulta.",
       "LOAD_CLINICS": "Não foi possível carregar as clínicas disponíveis.",
       "PRACTITIONER_UNAVAILABLE": "O profissional não está disponível neste intervalo.",
-      "CREATE": "Não foi possível agendar a consulta."
+      "CREATE": "Não foi possível agendar a consulta.",
+      "RESCHEDULE": "Não foi possível reagendar a consulta.",
+      "TRANSITION": "Não foi possível atualizar o estado da consulta.",
+      "CONFLICT": "Esta consulta foi alterada ou o horário selecionado já não está disponível. Atualize e tente novamente."
     }
   },
   "CLINICAL": {
     "TITLE": "Área clínica",
     "OVERTITLE": "Registo clínico protegido",
     "DESCRIPTION": "A informação clínica está disponível apenas na organização e clínica selecionadas.",
+    "CLINIC": "Unidade clínica",
+    "NO_CLINIC": "Selecione uma unidade clínica para aceder aos registos.",
+    "NO_PATIENT": "Não existem pacientes na unidade clínica selecionada.",
     "NO_ACCESS": "A sua adesão ativa não concede acesso clínico.",
     "PATIENT": "Paciente",
     "ENCOUNTERS": "Consultas",
     "NARRATIVE": "Narrativa clínica",
+    "ADMIN_NOTE": "Nota administrativa",
+    "DRAFT": "Rascunho",
+    "EDIT_DRAFT": "Editar rascunho",
+    "CANCEL": "Cancelar",
     "SAVE_DRAFT": "Guardar rascunho",
     "FINALIZE": "Finalizar",
     "ODONTOGRAM": "Odontograma",
@@ -293,9 +312,20 @@
     "CONDITION": "Condição",
     "RECORD_FINDING": "Registar observação",
     "VOID": "Anular",
+    "VOID_REASON": "Motivo da anulação",
+    "VOIDED": "Anulado",
+    "HISTORY": "Histórico",
+    "AMEND": "Criar aditamento",
+    "AMEND_REASON": "Motivo do aditamento",
+    "CREATE_AMENDMENT": "Criar aditamento final",
+    "AMENDMENT_HISTORY": "Histórico de aditamentos",
+    "CORRECT": "Corrigir após anular",
     "ERROR": {
       "LOAD": "Não foi possível carregar o registo clínico no âmbito selecionado.",
-      "SAVE": "Não foi possível guardar o registo clínico."
+      "SAVE": "Não foi possível guardar o registo clínico.",
+      "FORBIDDEN": "A sua adesão ativa não permite esta ação clínica.",
+      "SCOPE": "O paciente ou a clínica selecionados já não estão no seu âmbito.",
+      "STALE_OR_FINAL": "Este registo foi alterado, está finalizado ou já foi anulado. Atualize e tente novamente."
     }
   },
   "ACCOUNTS": {
@@ -310,6 +340,7 @@
     "GRANT_ERROR": "Não foi possível atribuir o acesso.",
     "ACCESS_DENIED": "A sua conta não pode gerir acessos nesta organização.",
     "MEMBERSHIP_EXISTS": "Esta conta já tem um acesso com o mesmo âmbito.",
+    "STALE_MEMBERSHIP": "Esta associação foi alterada por outro utilizador. Atualize e tente novamente.",
     "ACCOUNT_OR_SCOPE_NOT_FOUND": "A conta ou o âmbito selecionado já não está disponível.",
     "NO_MANAGEMENT_ACCESS": "A sua conta não tem autoridade para gerir acessos.",
     "MANAGING_SCOPE": "A gerir utilizadores: {{organization}}",
@@ -349,6 +380,8 @@
     "PLATFORM_ADMINISTRATOR": "Administrador de plataforma",
     "MAKE_PLATFORM_ADMIN": "Tornar administrador de plataforma",
     "REVOKE_PLATFORM_ADMIN": "Remover administração de plataforma",
+    "REVOKE": "Revogar acesso",
+    "REVOKE_CONFIRM": "Revogar o acesso desta conta em {{organization}}?",
     "NO_ACCESS": "Sem acesso de organização",
     "EMPTY": "Não foram encontradas contas.",
     "ROLES": {
@@ -361,6 +394,42 @@
       "CLINICAL_READER": "Leitor clínico",
       "CLINICAL_AUTHOR": "Autor clínico",
       "CLINICAL_MANAGER": "Gestor clínico"
+    }
+  },
+  "ORGANIZATION": {
+    "OVERTITLE": "Administração da organização",
+    "REFRESH": "Atualizar",
+    "EDIT": "Editar",
+    "DEACTIVATE": "Desativar",
+    "ACTIVE": "Ativo",
+    "INACTIVE": "Inativo",
+    "CANCEL": "Cancelar",
+    "SAVE": "Guardar",
+    "VALIDATION": { "REQUIRED": "Este campo é obrigatório." },
+    "ERROR": {
+      "LOAD_UNITS": "Não foi possível carregar as clínicas.",
+      "CREATE_UNIT": "Não foi possível criar a clínica.",
+      "LOAD_PRACTITIONERS": "Não foi possível carregar os profissionais.",
+      "SAVE_PRACTITIONER": "Não foi possível guardar o profissional.",
+      "DEACTIVATE_PRACTITIONER": "Não foi possível desativar o profissional."
+    },
+    "CLINIC_UNITS": {
+      "TITLE": "Clínicas",
+      "DESCRIPTION": "Faça a gestão das clínicas em {{organization}}.",
+      "LIST_TITLE": "Clínicas atuais",
+      "EMPTY": "Não existem clínicas nesta organização.",
+      "CREATE": "Adicionar clínica",
+      "NAME": "Nome da clínica"
+    },
+    "PRACTITIONERS": {
+      "TITLE": "Profissionais",
+      "DESCRIPTION": "Faça a gestão dos profissionais da organização em {{organization}}.",
+      "NEW": "Novo profissional",
+      "EDIT": "Editar profissional",
+      "EMPTY": "Não existem profissionais nesta organização.",
+      "DISPLAY_NAME": "Nome",
+      "REGISTRATION": "Número de cédula",
+      "NO_REGISTRATION": "Sem número de cédula"
     }
   },
   "PERMISSION_GROUPS": {

@@ -9,8 +9,6 @@ import br.com.itbn.sisdent.model.Gender;
 import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.model.Speciality;
 import br.com.itbn.sisdent.model.Account;
-import br.com.itbn.sisdent.model.AccountEmailClaim;
-import br.com.itbn.sisdent.model.EmailClaimType;
 import br.com.itbn.sisdent.model.ClinicUnit;
 import br.com.itbn.sisdent.model.Membership;
 import br.com.itbn.sisdent.model.MembershipRole;
@@ -22,7 +20,6 @@ import br.com.itbn.sisdent.model.Practitioner;
 import br.com.itbn.sisdent.model.Appointment;
 import br.com.itbn.sisdent.model.AppointmentStatus;
 import br.com.itbn.sisdent.model.PerformedProcedure;
-import br.com.itbn.sisdent.repository.AccountEmailClaimRepository;
 import br.com.itbn.sisdent.repository.AccountRepository;
 import br.com.itbn.sisdent.repository.ClinicUnitRepository;
 import br.com.itbn.sisdent.repository.MembershipRepository;
@@ -77,7 +74,6 @@ public class InitialDataLoader implements ApplicationRunner {
     private final OrganizationRepository organizationRepository;
     private final ClinicUnitRepository clinicUnitRepository;
     private final AccountRepository accountRepository;
-    private final AccountEmailClaimRepository emailClaimRepository;
     private final PersonRepository personRepository;
     private final MembershipRepository membershipRepository;
     private final PasswordEncoder passwordEncoder;
@@ -94,7 +90,7 @@ public class InitialDataLoader implements ApplicationRunner {
             AddressRepository addressRepository,
             PatientRepository patientRepository, OrganizationRepository organizationRepository,
             ClinicUnitRepository clinicUnitRepository, AccountRepository accountRepository,
-            AccountEmailClaimRepository emailClaimRepository, PersonRepository personRepository,
+            PersonRepository personRepository,
             MembershipRepository membershipRepository, PasswordEncoder passwordEncoder,
             PatientOrganizationLinkRepository patientLinkRepository, PractitionerRepository practitionerRepository,
             AppointmentRepository appointmentRepository, PerformedProcedureRepository performedProcedureRepository) {
@@ -105,7 +101,7 @@ public class InitialDataLoader implements ApplicationRunner {
         this.addressRepository = addressRepository;
         this.patientRepository = patientRepository;
         this.organizationRepository = organizationRepository; this.clinicUnitRepository = clinicUnitRepository;
-        this.accountRepository = accountRepository; this.emailClaimRepository = emailClaimRepository;
+        this.accountRepository = accountRepository;
         this.personRepository = personRepository; this.membershipRepository = membershipRepository;
         this.passwordEncoder = passwordEncoder;
         this.patientLinkRepository = patientLinkRepository; this.practitionerRepository = practitionerRepository;
@@ -186,10 +182,8 @@ public class InitialDataLoader implements ApplicationRunner {
         for (DemoProfileData profile : profiles) {
             Account account = accountRepository.findByEmail(Account.normalizeEmail(profile.email())).orElseGet(() -> {
                 Person person = personRepository.save(new Person(profile.displayName()));
-                Account created = accountRepository.save(new Account(person, null, profile.email(),
-                        passwordEncoder.encode(profile.password()), profile.platformAdministrator(), false));
-                emailClaimRepository.save(new AccountEmailClaim(created, profile.email(), EmailClaimType.VERIFIED));
-                return created;
+                return accountRepository.save(new Account(person, profile.email(),
+                        passwordEncoder.encode(profile.password()), profile.platformAdministrator()));
             });
             if (profile.organizationName() == null) continue;
             Organization organization = organizationRepository.findByName(profile.organizationName()).orElseThrow(() ->

@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -102,7 +103,65 @@ class Phase2IdentityIntegrationTests {
     }
 
     @Test
-    void patientSearchIsTenantScopedAndExactIntakeDisclosesOnlyABoolean() throws Exception {
+    void membershipChangesRequireTheCurrentVersionAndCannotCrossOrganizationScope() throws Exception {
+        Organization management = organizationRepository.save(new Organization("Membership management"));
+        Organization other = organizationRepository.save(new Organization("Other membership scope"));
+        Account administrator = saveAccount("membership-admin@example.com", false);
+        administrator.assignAccountManagementOrganizationIfAbsent(management);
+        accountRepository.saveAndFlush(administrator);
+        membershipRepository.saveAndFlush(new Membership(administrator, management, null, MembershipRole.ORGANIZATION_ADMIN));
+        Account colleague = saveAccount("membership-colleague@example.com", false);
+        Membership managed = membershipRepository.saveAndFlush(new Membership(colleague, management, null, MembershipRole.READ_ONLY));
+        Membership outsideScope = membershipRepository.saveAndFlush(new Membership(colleague, other, null, MembershipRole.READ_ONLY));
+        String token = login("membership-admin@example.com", "phase2-password");
+
+        mockMvc.perform(post("/api/organizations/{organizationId}/memberships/{membershipId}/revoke",
+                        management.getGlobalId(), managed.getGlobalId()).header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":99}"))
+                .andExpect(status().isConflict());
+        mockMvc.perform(post("/api/organizations/{organizationId}/memberships/{membershipId}/revoke",
+                        management.getGlobalId(), outsideScope.getGlobalId()).header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/organizations/{organizationId}/memberships/{membershipId}/revoke",
+                        management.getGlobalId(), managed.getGlobalId()).header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void organizationAdministratorCannotChangePlatformAdministratorMemberships() throws Exception {
+        Organization organization = organizationRepository.save(new Organization("Protected platform account organization"));
+        Account organizationAdministrator = saveAccount("organization-administrator@example.com", false);
+        organizationAdministrator.assignAccountManagementOrganizationIfAbsent(organization);
+        accountRepository.saveAndFlush(organizationAdministrator);
+        membershipRepository.saveAndFlush(new Membership(organizationAdministrator, organization, null,
+                MembershipRole.ORGANIZATION_ADMIN));
+        Account platformAdministrator = saveAccount("protected-platform@example.com", true);
+        Membership protectedMembership = membershipRepository.saveAndFlush(new Membership(platformAdministrator,
+                organization, null, MembershipRole.READ_ONLY));
+        String token = login("organization-administrator@example.com", "phase2-password");
+
+        mockMvc.perform(patch("/api/organizations/{organizationId}/memberships/{membershipId}",
+                        organization.getGlobalId(), protectedMembership.getGlobalId())
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"role\":\"MANAGER\",\"version\":0}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/organizations/{organizationId}/memberships/{membershipId}/revoke",
+                        organization.getGlobalId(), protectedMembership.getGlobalId())
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"version\":0}"))
+                .andExpect(status().isForbidden());
+
+        assertThat(membershipRepository.findById(protectedMembership.getId()).orElseThrow().getRole())
+                .isEqualTo(MembershipRole.READ_ONLY);
+        assertThat(membershipRepository.findById(protectedMembership.getId()).orElseThrow().isActive()).isTrue();
+    }
+
+    @Test
+    void patientSearchAndExactIntakeAreTenantScoped() throws Exception {
         Patient patient = patientRepository.findAll().getFirst();
         Organization linkedOrganization = organizationRepository.save(new Organization("Linked clinic"));
         Organization unrelatedOrganization = organizationRepository.save(new Organization("Unrelated clinic"));
@@ -125,7 +184,7 @@ class Phase2IdentityIntegrationTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(exactMatchJson(patient)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.possibleMatchExists").value(true))
+                .andExpect(jsonPath("$.possibleMatchExists").value(false))
                 .andExpect(jsonPath("$.patientId").doesNotExist())
                 .andExpect(jsonPath("$.organizationId").doesNotExist());
     }
@@ -157,6 +216,33 @@ class Phase2IdentityIntegrationTests {
     }
 
     @Test
+    void deactivatingOneOrganizationLinkDoesNotDeactivateAnother() throws Exception {
+        Patient patient = patientRepository.findAll().getFirst();
+        Organization first = organizationRepository.save(new Organization("First patient tenant"));
+        Organization second = organizationRepository.save(new Organization("Second patient tenant"));
+        Account account = saveAccount("patient-lifecycle@example.com", false);
+        membershipRepository.save(new Membership(account, first, null, MembershipRole.MANAGER));
+        membershipRepository.save(new Membership(account, second, null, MembershipRole.MANAGER));
+        linkRepository.save(new br.com.itbn.sisdent.model.PatientOrganizationLink(
+                patient, first, null, br.com.itbn.sisdent.model.PatientLinkBasis.INTAKE));
+        linkRepository.saveAndFlush(new br.com.itbn.sisdent.model.PatientOrganizationLink(
+                patient, second, null, br.com.itbn.sisdent.model.PatientLinkBasis.INTAKE));
+        String token = login("patient-lifecycle@example.com", "phase2-password");
+
+        mockMvc.perform(delete("/api/organizations/{organizationId}/patients/{patientId}",
+                        first.getGlobalId(), patient.getGlobalId()).header("Authorization", bearer(token)))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/organizations/{organizationId}/patients", first.getGlobalId())
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content.length()").value(0));
+        mockMvc.perform(get("/api/organizations/{organizationId}/patients", second.getGlobalId())
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content.length()").value(1));
+        assertThat(patientRepository.findById(patient.getId()).orElseThrow().isActive()).isTrue();
+    }
+
+    @Test
     void platformAdministratorAloneHasNoPatientAccess() throws Exception {
         Organization organization = organizationRepository.save(new Organization("Clinical tenant"));
         saveAccount("platform@example.com", true);
@@ -170,8 +256,8 @@ class Phase2IdentityIntegrationTests {
 
     private Account saveAccount(String email, boolean platformAdministrator) {
         Person person = personRepository.save(new Person(email.strip()));
-        return accountRepository.saveAndFlush(new Account(person, null, email,
-                passwordEncoder.encode("phase2-password"), platformAdministrator, false));
+        return accountRepository.saveAndFlush(new Account(person, email,
+                passwordEncoder.encode("phase2-password"), platformAdministrator));
     }
 
     private String login(String email, String password) throws Exception {

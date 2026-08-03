@@ -68,6 +68,7 @@ export class AppointmentsComponent {
   appointmentDate: Date | null = null;
   startTime = '';
   endTime = '';
+  editingAppointment: Appointment | null = null;
   readonly minimumDate = new Date();
   readonly timeSlots = Array.from({ length: 21 }, (_, index) => {
     const minutes = (8 * 60) + (index * 30);
@@ -116,6 +117,8 @@ export class AppointmentsComponent {
   selectClinicUnit(clinic: ClinicUnit): void {
     this.clinicUnitId = clinic.id;
     this.clinicSearch = clinic.name;
+    this.patientId = '';
+    this.loadPatients(clinic.id);
   }
 
   selectStartTime(): void {
@@ -150,10 +153,6 @@ export class AppointmentsComponent {
       next: (records) => this.practitioners.set(records.filter((practitioner) => practitioner.active)),
       error: () => this.error.set(this.translate.instant('APPOINTMENTS.ERROR.LOAD_OPTIONS')),
     });
-    this.http.get<PageResponse<{ globalId: string; name: string }>>(`/api/organizations/${membership.organizationId}/patients`).subscribe({
-      next: (page) => this.patients.set(page.content),
-      error: () => this.error.set(this.translate.instant('APPOINTMENTS.ERROR.LOAD_OPTIONS')),
-    });
     const clinicScope = membership.clinicUnitId
       ? `?clinicUnitId=${encodeURIComponent(membership.clinicUnitId)}`
       : '';
@@ -162,6 +161,7 @@ export class AppointmentsComponent {
         this.clinicUnits.set(units);
         const selected = units.find((unit) => unit.id === this.clinicUnitId);
         if (selected) this.clinicSearch = selected.name;
+        if (this.clinicUnitId) this.loadPatients(this.clinicUnitId);
       },
       error: () => this.error.set(this.translate.instant('APPOINTMENTS.ERROR.LOAD_CLINICS')),
     });
@@ -171,26 +171,68 @@ export class AppointmentsComponent {
     const membership = this.membership();
     if (!membership || !this.appointmentDate || !this.startTime || !this.endTime) return;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    this.http.post<Appointment>(`/api/organizations/${membership.organizationId}/appointments`, {
+    const request = {
       clinicUnitId: this.clinicUnitId,
       patientId: this.patientId,
       practitionerId: this.practitionerId,
       startAt: this.localDateTime(this.startTime).toISOString(),
       endAt: this.localDateTime(this.endTime).toISOString(),
       schedulingTimezone: timezone,
-    }).subscribe({
+    };
+    const response = this.editingAppointment
+      ? this.http.put<Appointment>(`/api/organizations/${membership.organizationId}/appointments/${this.editingAppointment.globalId}/reschedule`, request)
+      : this.http.post<Appointment>(`/api/organizations/${membership.organizationId}/appointments`, request);
+    response.subscribe({
       next: () => {
         this.patientId = '';
         this.practitionerId = '';
         this.appointmentDate = null;
         this.startTime = '';
         this.endTime = '';
+        this.editingAppointment = null;
         this.load();
       },
       error: (response) => this.error.set(response.status === 409
-        ? this.translate.instant('APPOINTMENTS.ERROR.PRACTITIONER_UNAVAILABLE')
-        : this.translate.instant('APPOINTMENTS.ERROR.CREATE')),
+        ? this.translate.instant('APPOINTMENTS.ERROR.CONFLICT')
+        : this.translate.instant(this.editingAppointment ? 'APPOINTMENTS.ERROR.RESCHEDULE' : 'APPOINTMENTS.ERROR.CREATE')),
     });
+  }
+
+  reschedule(appointment: Appointment): void {
+    if (appointment.status !== 'SCHEDULED') return;
+    this.editingAppointment = appointment;
+    this.clinicUnitId = appointment.clinicUnitId;
+    this.clinicSearch = this.clinicUnits().find((unit) => unit.id === appointment.clinicUnitId)?.name ?? '';
+    this.patientId = appointment.patientId;
+    this.practitionerId = appointment.practitionerId;
+    this.appointmentDate = new Date(appointment.startAt);
+    this.startTime = this.timeOf(appointment.startAt);
+    this.endTime = this.timeOf(appointment.endAt);
+    this.loadPatients(appointment.clinicUnitId);
+    this.scrollToSchedule();
+  }
+
+  transition(appointment: Appointment, action: 'cancel' | 'complete' | 'no-show'): void {
+    const membership = this.membership();
+    if (!membership || appointment.status !== 'SCHEDULED') return;
+    this.http.post<Appointment>(`/api/organizations/${membership.organizationId}/appointments/${appointment.globalId}/${action}`, {}, {
+      params: { clinicUnitId: appointment.clinicUnitId },
+    }).subscribe({ next: () => this.load(), error: (response) => this.error.set(response.status === 409
+      ? this.translate.instant('APPOINTMENTS.ERROR.CONFLICT') : this.translate.instant('APPOINTMENTS.ERROR.TRANSITION')) });
+  }
+
+  cancelEdit(): void { this.editingAppointment = null; this.patientId = ''; this.practitionerId = ''; this.appointmentDate = null; this.startTime = ''; this.endTime = ''; }
+
+  private loadPatients(clinicUnitId: string): void {
+    const membership = this.membership();
+    if (!membership || !clinicUnitId) { this.patients.set([]); return; }
+    this.http.get<PageResponse<{ globalId: string; name: string }>>(`/api/organizations/${membership.organizationId}/patients`, {
+      params: { clinicUnitId },
+    }).subscribe({ next: (page) => this.patients.set(page.content), error: () => this.error.set(this.translate.instant('APPOINTMENTS.ERROR.LOAD_OPTIONS')) });
+  }
+
+  private timeOf(value: string): string {
+    return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(value));
   }
 
   private localDateTime(time: string): Date {

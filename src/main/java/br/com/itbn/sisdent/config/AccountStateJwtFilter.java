@@ -28,11 +28,8 @@ public class AccountStateJwtFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
         if (SecurityContextHolder.getContext().getAuthentication()
                 instanceof JwtAuthenticationToken authentication) {
-            boolean tokenMigrationRequired = Boolean.TRUE.equals(
-                    authentication.getToken().getClaim("emailMigrationRequired"));
             boolean current = findCurrentState(authentication.getName())
-                    .map(state -> state.active()
-                            && state.emailMigrationRequired() == tokenMigrationRequired)
+                    .map(AccountState::active)
                     .orElse(false);
             if (!current) {
                 SecurityContextHolder.clearContext();
@@ -46,13 +43,12 @@ public class AccountStateJwtFilter extends OncePerRequestFilter {
     private java.util.Optional<AccountState> findCurrentState(String subject) {
         try {
             return accountRepository.findByGlobalId(UUID.fromString(subject))
-                    .map(account -> new AccountState(
-                            account.isActive(), account.isEmailMigrationRequired()));
+                    .map(account -> new AccountState(account.isActive()));
         } catch (IllegalArgumentException exception) {
             return java.util.Optional.empty();
         }
     }
 
-    private record AccountState(boolean active, boolean emailMigrationRequired) {
+    private record AccountState(boolean active) {
     }
 }

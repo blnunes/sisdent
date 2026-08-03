@@ -3,8 +3,6 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { switchMap, tap } from 'rxjs';
 import {
-  EmailEnrollmentResponse,
-  EmailVerificationResponse,
   JwtPayload,
   LoginRequest,
   Membership,
@@ -31,7 +29,7 @@ export class AuthService {
     const payload = this.payload();
     return !!payload && payload.exp * 1000 > Date.now();
   });
-  readonly isAdmin = computed(() => this.payload()?.authorities.includes('ROLE_ADMIN') ?? false);
+  readonly isAdmin = computed(() => this.payload()?.platformAdministrator ?? false);
   readonly isPlatformAdministrator = computed(
     () => this.sessionState()?.platformAdministrator ?? this.payload()?.platformAdministrator ?? false,
   );
@@ -62,12 +60,25 @@ export class AuthService {
   }
 
   canReadAppointments(): boolean {
-    return !!this.activeMembership();
+    const role = this.activeMembership()?.role;
+    return role === 'ORGANIZATION_ADMIN'
+      || role === 'MANAGER'
+      || role === 'APPOINTMENT_MANAGER'
+      || role === 'APPOINTMENT_READER'
+      || role === 'READ_ONLY';
   }
 
   canManageAppointments(): boolean {
     const role = this.activeMembership()?.role;
     return role === 'ORGANIZATION_ADMIN' || role === 'MANAGER' || role === 'APPOINTMENT_MANAGER';
+  }
+
+  canManagePractitioners(): boolean {
+    const membership = this.activeMembership();
+    if (!membership || membership.clinicUnitId) return false;
+    return membership.role === 'ORGANIZATION_ADMIN'
+      || membership.role === 'MANAGER'
+      || membership.role === 'PRACTITIONER_MANAGER';
   }
 
   canReadClinical(): boolean {
@@ -86,7 +97,13 @@ export class AuthService {
   }
 
   canManageOrganizationAccess(): boolean {
-    return this.activeMembership()?.role === 'ORGANIZATION_ADMIN';
+    return this.canAdministerOrganization();
+  }
+
+  /** Organization administration is deliberately restricted to organization-wide administrators. */
+  canAdministerOrganization(): boolean {
+    const membership = this.activeMembership();
+    return membership?.role === 'ORGANIZATION_ADMIN' && !membership.clinicUnitId;
   }
 
   login(request: LoginRequest) {
@@ -133,19 +150,7 @@ export class AuthService {
   }
 
   destination(): string {
-    return this.sessionState()?.emailMigrationRequired ? '/email-enrollment' : '/home';
-  }
-
-  startEmailEnrollment(email: string) {
-    return this.http.post<EmailEnrollmentResponse>('/api/account/email-enrollment', { email });
-  }
-
-  resendEmailEnrollment() {
-    return this.http.post<EmailEnrollmentResponse>('/api/account/email-enrollment/resend', {});
-  }
-
-  verifyEmail(token: string) {
-    return this.http.post<EmailVerificationResponse>('/api/auth/email-verification', { token });
+    return '/home';
   }
 
   private decode(token: string | null): JwtPayload | null {

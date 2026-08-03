@@ -8,12 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authorization.AuthorizationDecision;
-import org.springframework.security.authorization.AuthorizationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -28,29 +24,12 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
-import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import br.com.itbn.sisdent.model.Permission;
 
 @Configuration
 public class SecurityConfiguration {
-
-    private static final String USER_RESOURCE = "/api/users/**";
-    private static final String PATIENT_RESOURCE = "/api/patients/**";
-    private static final String SPECIALITY_RESOURCE = "/api/specialities/**";
-    private static final String MAINTAIN_USERS_PERMISSION = Permission.MAINTAIN_USERS.name();
-    private static final String READ_USERS_PERMISSION = Permission.READ_USERS.name();
-    private static final String MAINTAIN_PATIENTS_PERMISSION = Permission.MAINTAIN_PATIENTS.name();
-    private static final String READ_PATIENTS_PERMISSION = Permission.READ_PATIENTS.name();
-    private static final String MAINTAIN_SPECIALITIES_PERMISSION = Permission.MAINTAIN_SPECIALITIES.name();
-    private static final String READ_PERMISSIONS_PERMISSION = Permission.READ_PERMISSIONS.name();
-    private static final String MAINTAIN_PERMISSIONS_PERMISSION = Permission.MAINTAIN_PERMISSIONS.name();
 
     @Bean
     SecurityFilterChain securityFilterChain(
@@ -66,7 +45,6 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/api/auth/login",
-                                "/api/auth/email-verification",
                                 "/actuator/health",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
@@ -76,61 +54,11 @@ public class SecurityConfiguration {
                                 "/configuration/**",
                                 "/h2-console/**",
                                 "/i18n/**").permitAll()
-                        .requestMatchers(HttpMethod.PATCH, "/api/users/me/password")
-                        .authenticated()
-                        // The unscoped Phase 1 patient API is intentionally closed. Patient
-                        // access now goes through /api/organizations/{organizationId}/patients.
-                        .requestMatchers(PATIENT_RESOURCE).denyAll()
-                        .requestMatchers(HttpMethod.GET, USER_RESOURCE)
-                        .access(hasAnyPermission(
-                                READ_USERS_PERMISSION,
-                                MAINTAIN_USERS_PERMISSION,
-                                READ_PERMISSIONS_PERMISSION,
-                                MAINTAIN_PERMISSIONS_PERMISSION))
-                        .requestMatchers(HttpMethod.POST, USER_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
-                        .requestMatchers(HttpMethod.PUT, "/api/users/*/permissions")
-                        .access(hasAnyPermission(MAINTAIN_PERMISSIONS_PERMISSION))
-                        .requestMatchers(HttpMethod.PUT, USER_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
-                        .requestMatchers(HttpMethod.PATCH, USER_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
-                        .requestMatchers(HttpMethod.DELETE, USER_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
-                        .requestMatchers(HttpMethod.GET, SPECIALITY_RESOURCE)
-                        .access(hasAnyPermission("READ_SPECIALITIES", MAINTAIN_SPECIALITIES_PERMISSION))
-                        .requestMatchers(HttpMethod.POST, SPECIALITY_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_SPECIALITIES_PERMISSION))
-                        .requestMatchers(HttpMethod.PUT, SPECIALITY_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_SPECIALITIES_PERMISSION))
-                        .requestMatchers(HttpMethod.DELETE, SPECIALITY_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_SPECIALITIES_PERMISSION))
-                        .requestMatchers(HttpMethod.GET, "/api/addresses/**")
-                        .access(hasAnyPermission("READ_ADDRESSES", "MAINTAIN_ADDRESSES", READ_PATIENTS_PERMISSION, MAINTAIN_PATIENTS_PERMISSION))
-                        .requestMatchers(HttpMethod.POST, "/api/addresses/**")
-                        .access(hasAnyPermission("MAINTAIN_ADDRESSES"))
-                        .requestMatchers(HttpMethod.PUT, "/api/addresses/**")
-                        .access(hasAnyPermission("MAINTAIN_ADDRESSES"))
-                        .requestMatchers(HttpMethod.DELETE, "/api/addresses/**")
-                        .access(hasAnyPermission("MAINTAIN_ADDRESSES"))
-                        .requestMatchers(HttpMethod.GET, "/api/countries/**")
-                        .access(hasAnyPermission("READ_COUNTRIES", "MAINTAIN_COUNTRIES"))
-                        .requestMatchers(HttpMethod.POST, "/api/countries/**")
-                        .access(hasAnyPermission("MAINTAIN_COUNTRIES"))
-                        .requestMatchers(HttpMethod.PUT, "/api/countries/**")
-                        .access(hasAnyPermission("MAINTAIN_COUNTRIES"))
-                        .requestMatchers(HttpMethod.DELETE, "/api/countries/**")
-                        .access(hasAnyPermission("MAINTAIN_COUNTRIES"))
-                        .requestMatchers(HttpMethod.GET, "/api/administrative-divisions/**", "/api/states/**")
-                        .access(hasAnyPermission(
-                                "READ_ADMINISTRATIVE_DIVISIONS",
-                                "MAINTAIN_ADMINISTRATIVE_DIVISIONS"))
-                        .requestMatchers(HttpMethod.POST, "/api/administrative-divisions/**", "/api/states/**")
-                        .access(hasAnyPermission("MAINTAIN_ADMINISTRATIVE_DIVISIONS"))
-                        .requestMatchers(HttpMethod.PUT, "/api/administrative-divisions/**", "/api/states/**")
-                        .access(hasAnyPermission("MAINTAIN_ADMINISTRATIVE_DIVISIONS"))
-                        .requestMatchers(HttpMethod.DELETE, "/api/administrative-divisions/**", "/api/states/**")
-                        .access(hasAnyPermission("MAINTAIN_ADMINISTRATIVE_DIVISIONS"))
+                        // Foundational catalogues are platform-wide, not organization-scoped.
+                        // They require platform-administrator authority.
+                        .requestMatchers("/api/specialities/**", "/api/addresses/**", "/api/countries/**",
+                                "/api/administrative-divisions/**", "/api/states/**")
+                        .hasAuthority("ROLE_PLATFORM_ADMIN")
                         // Single-page application shell, static assets, and client-side routes.
                         // The SPA bundle contains no secrets; data authorization is enforced on
                         // the /api/** matchers above. Client-side route protection is handled by
@@ -186,23 +114,6 @@ public class SecurityConfiguration {
                 new JwtTimestampValidator(),
                 new JwtIssuerValidator("sisdent")));
         return decoder;
-    }
-
-    private AuthorizationManager<RequestAuthorizationContext> hasAnyPermission(String... permissions) {
-        return (authentication, context) -> {
-            Authentication auth = authentication.get();
-            if (auth == null || !auth.isAuthenticated()) {
-                return new AuthorizationDecision(false);
-            }
-
-            Set<String> authorities = auth.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .collect(Collectors.toSet());
-
-            boolean admin = authorities.contains("ROLE_ADMIN");
-            boolean allowed = admin || authorities.stream().anyMatch(authority -> Arrays.asList(permissions).contains(authority));
-            return new AuthorizationDecision(allowed);
-        };
     }
 
     @Bean
