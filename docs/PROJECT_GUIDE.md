@@ -11,6 +11,10 @@ Scoped clinical encounters and odontograms are available to explicitly granted
 clinical memberships. Treatment plans, billing, and patient portal access are
 future work.
 
+The authoritative operational role and scope matrix is
+[`AUTHORIZATION_CONTRACT.md`](AUTHORIZATION_CONTRACT.md). The operator-focused
+description is in [`ROLE_GUIDE.md`](ROLE_GUIDE.md).
+
 ## Current behavior
 
 - Patient records have a stable global UUID.

@@ -62,7 +62,12 @@ export class AuthService {
   }
 
   canReadAppointments(): boolean {
-    return !!this.activeMembership();
+    const role = this.activeMembership()?.role;
+    return role === 'ORGANIZATION_ADMIN'
+      || role === 'MANAGER'
+      || role === 'APPOINTMENT_MANAGER'
+      || role === 'APPOINTMENT_READER'
+      || role === 'READ_ONLY';
   }
 
   canManageAppointments(): boolean {

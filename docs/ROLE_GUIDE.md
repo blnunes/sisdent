@@ -29,8 +29,11 @@ A role can apply to either:
   units, subject to the role's permissions.
 - **One clinic unit** — the person can work only in that clinic unit.
 
-Organization Administrator is always organization-wide. It cannot be assigned
-to only one clinic unit.
+Organization Administrator and Practitioner Manager are always
+organization-wide. They cannot be assigned to only one clinic unit. The
+practitioner catalogue is organization-owned; a clinic-unit membership never
+grants practitioner management. All other operational roles may be assigned at
+organization or clinic-unit scope.
 
 ## Platform Administrator
 
@@ -104,7 +107,8 @@ The Practitioner Manager role is for people responsible for practitioner setup.
 
 Can:
 
-- Manage practitioner records within the assigned scope.
+- Manage organization-owned practitioner records across the assigned
+  organization.
 - Read patient lists in the assigned scope.
 
 Cannot:
@@ -213,7 +217,7 @@ Cannot:
 | Platform Administrator | No automatic access | No automatic access | No automatic access | No automatic access | All organizations |
 | Organization Administrator | Read and update | Manage | Manage | Manage | Assigned account-management organization |
 | Manager | Read and update | Manage | Manage | No | No |
-| Practitioner Manager | Read lists | Manage | No | No | No |
+| Practitioner Manager | Read lists | Manage (organization-wide only) | No | No | No |
 | Appointment Manager | Read lists | No | Manage | No | No |
 | Appointment Reader | Read lists | No | View | No | No |
 | Clinical Reader | Read lists | No | No | View | No |
