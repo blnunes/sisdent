@@ -4,7 +4,7 @@
     <mat-sidenav-content><main class="content">
       <header class="page-header"><div><span class="eyebrow">{{ 'ACCOUNTS.ADMINISTRATION' | translate }}</span><h1>{{ 'ACCOUNTS.TITLE' | translate }}</h1><p>{{ 'ACCOUNTS.DESCRIPTION' | translate }}</p></div>
         @if (auth.isPlatformAdministrator()) { <div class="platform-actions"><mat-checkbox [checked]="viewAllAccounts()" (change)="viewAllAccounts.set($event.checked)">{{ 'ACCOUNTS.VIEW_ALL' | translate }}</mat-checkbox><button mat-flat-button class="create-button" (click)="creating.set(!creating())">{{ 'ACCOUNTS.NEW' | translate }}</button></div> }
-        
+
       </header>
       @if (!auth.isPlatformAdministrator() && auth.activeMembership(); as membership) {<section class="scope-notice" role="status"><mat-icon>business</mat-icon><div><strong>{{ 'ACCOUNTS.MANAGING_SCOPE' | translate:{ organization: membership.organizationName } }}</strong><span>{{ 'ACCOUNTS.SCOPE_NOTICE' | translate }}</span></div></section>}
       @if (creating()) { <mat-card appearance="outlined" class="form-card"><form [formGroup]="createForm" (ngSubmit)="create()"><mat-form-field appearance="outline"><mat-label>{{ 'ACCOUNTS.DISPLAY_NAME' | translate }}</mat-label><input matInput formControlName="displayName" /></mat-form-field><mat-form-field appearance="outline"><mat-label>{{ 'ACCOUNTS.EMAIL' | translate }}</mat-label><input matInput type="email" formControlName="email" /></mat-form-field><mat-form-field appearance="outline"><mat-label>{{ 'ACCOUNTS.PASSWORD' | translate }}</mat-label><input matInput type="password" formControlName="password" /></mat-form-field><button mat-flat-button type="submit" [disabled]="createForm.invalid">{{ 'ACCOUNTS.CREATE' | translate }}</button></form></mat-card> }
