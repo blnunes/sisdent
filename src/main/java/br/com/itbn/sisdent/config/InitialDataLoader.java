@@ -54,6 +54,7 @@ import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -185,13 +186,15 @@ public class InitialDataLoader implements ApplicationRunner {
                 return accountRepository.save(new Account(person, profile.email(),
                         passwordEncoder.encode(profile.password()), profile.platformAdministrator()));
             });
-            if (profile.organizationName() == null) continue;
-            Organization organization = organizationRepository.findByName(profile.organizationName()).orElseThrow(() ->
-                    new IllegalStateException("Unknown organization in " + INITIAL_DATA_PATH + ": " + profile.organizationName()));
-            ClinicUnit clinic = profile.clinicUnitName() == null ? null : clinicUnitRepository
-                    .findByOrganization_IdAndName(organization.getId(), profile.clinicUnitName())
+            String organizationName = Objects.requireNonNullElse(profile.organizationName(), "");
+            if (organizationName.isEmpty()) continue;
+            Organization organization = organizationRepository.findByName(organizationName).orElseThrow(() ->
+                    new IllegalStateException("Unknown organization in " + INITIAL_DATA_PATH + ": " + organizationName));
+            String clinicUnitName = Objects.requireNonNullElse(profile.clinicUnitName(), "");
+            ClinicUnit clinic = clinicUnitName.isEmpty() ? null : clinicUnitRepository
+                    .findByOrganization_IdAndName(organization.getId(), clinicUnitName)
                     .orElseThrow(() -> new IllegalStateException(
-                            "Unknown clinic unit in " + INITIAL_DATA_PATH + ": " + profile.clinicUnitName()));
+                            "Unknown clinic unit in " + INITIAL_DATA_PATH + ": " + clinicUnitName));
             boolean exists = clinic == null
                     ? membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnitIsNull(account.getId(), organization.getId())
                     : membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnit_Id(account.getId(), organization.getId(), clinic.getId());
@@ -203,8 +206,11 @@ public class InitialDataLoader implements ApplicationRunner {
     }
 
     private void saveOrganizations(List<OrganizationData> organizations) {
-        organizations.forEach(data -> organizationRepository.findByName(data.name())
-                .orElseGet(() -> organizationRepository.save(new Organization(data.name()))));
+        organizations.forEach(data -> {
+            if (organizationRepository.findByName(data.name()).isEmpty()) {
+                organizationRepository.save(new Organization(data.name()));
+            }
+        });
     }
 
     private void saveClinicUnits(List<ClinicUnitData> clinicUnits) {
