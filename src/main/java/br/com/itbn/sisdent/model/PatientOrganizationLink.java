@@ -50,4 +50,5 @@ public class PatientOrganizationLink extends AuditableEntity {
     public ClinicUnit getClinicUnit() { return clinicUnit; }
     public PatientLinkBasis getOperationalBasis() { return operationalBasis; }
     public boolean isActive() { return active; }
+    public void deactivate() { this.active = false; }
 }

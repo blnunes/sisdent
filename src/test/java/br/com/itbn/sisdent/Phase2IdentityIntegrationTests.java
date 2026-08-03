@@ -102,7 +102,7 @@ class Phase2IdentityIntegrationTests {
     }
 
     @Test
-    void patientSearchIsTenantScopedAndExactIntakeDisclosesOnlyABoolean() throws Exception {
+    void patientSearchAndExactIntakeAreTenantScoped() throws Exception {
         Patient patient = patientRepository.findAll().getFirst();
         Organization linkedOrganization = organizationRepository.save(new Organization("Linked clinic"));
         Organization unrelatedOrganization = organizationRepository.save(new Organization("Unrelated clinic"));
@@ -125,7 +125,7 @@ class Phase2IdentityIntegrationTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(exactMatchJson(patient)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.possibleMatchExists").value(true))
+                .andExpect(jsonPath("$.possibleMatchExists").value(false))
                 .andExpect(jsonPath("$.patientId").doesNotExist())
                 .andExpect(jsonPath("$.organizationId").doesNotExist());
     }
@@ -154,6 +154,33 @@ class Phase2IdentityIntegrationTests {
                 .andExpect(jsonPath("$.operationalBasis").value("ATTENDANCE"))
                 .andExpect(jsonPath("$.createdBy").value(account.getGlobalId().toString()))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty());
+    }
+
+    @Test
+    void deactivatingOneOrganizationLinkDoesNotDeactivateAnother() throws Exception {
+        Patient patient = patientRepository.findAll().getFirst();
+        Organization first = organizationRepository.save(new Organization("First patient tenant"));
+        Organization second = organizationRepository.save(new Organization("Second patient tenant"));
+        Account account = saveAccount("patient-lifecycle@example.com", false);
+        membershipRepository.save(new Membership(account, first, null, MembershipRole.MANAGER));
+        membershipRepository.save(new Membership(account, second, null, MembershipRole.MANAGER));
+        linkRepository.save(new br.com.itbn.sisdent.model.PatientOrganizationLink(
+                patient, first, null, br.com.itbn.sisdent.model.PatientLinkBasis.INTAKE));
+        linkRepository.saveAndFlush(new br.com.itbn.sisdent.model.PatientOrganizationLink(
+                patient, second, null, br.com.itbn.sisdent.model.PatientLinkBasis.INTAKE));
+        String token = login("patient-lifecycle@example.com", "phase2-password");
+
+        mockMvc.perform(delete("/api/organizations/{organizationId}/patients/{patientId}",
+                        first.getGlobalId(), patient.getGlobalId()).header("Authorization", bearer(token)))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/organizations/{organizationId}/patients", first.getGlobalId())
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content.length()").value(0));
+        mockMvc.perform(get("/api/organizations/{organizationId}/patients", second.getGlobalId())
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.content.length()").value(1));
+        assertThat(patientRepository.findById(patient.getId()).orElseThrow().isActive()).isTrue();
     }
 
     @Test
