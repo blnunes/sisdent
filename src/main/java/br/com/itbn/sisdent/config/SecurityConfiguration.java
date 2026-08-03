@@ -106,7 +106,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.DELETE, SPECIALITY_RESOURCE)
                         .access(hasAnyPermission(MAINTAIN_SPECIALITIES_PERMISSION))
                         .requestMatchers(HttpMethod.GET, "/api/addresses/**")
-                        .access(hasAnyPermission("READ_ADDRESSES", "MAINTAIN_ADDRESSES"))
+                        .access(hasAnyPermission("READ_ADDRESSES", "MAINTAIN_ADDRESSES", READ_PATIENTS_PERMISSION, MAINTAIN_PATIENTS_PERMISSION))
                         .requestMatchers(HttpMethod.POST, "/api/addresses/**")
                         .access(hasAnyPermission("MAINTAIN_ADDRESSES"))
                         .requestMatchers(HttpMethod.PUT, "/api/addresses/**")

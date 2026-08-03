@@ -116,7 +116,7 @@ public class PatientService {
                 request.identificationType(), IdentificationNumbers.normalize(request.identificationNumber()),
                 countryService.requireByCode(request.documentIssuerCountryCode()),
                 countryService.requireByCode(request.nationalityCode()),
-                addressService.createPatientAddress(request.address()),
+                addressService.resolvePatientAddress(request.addressId(), request.address()),
                 specialityService.findAllByIds(request.specialityIds()));
     }
 

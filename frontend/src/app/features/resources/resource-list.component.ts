@@ -28,7 +28,7 @@ import { PageResponse, Permission } from '../../core/models';
 import { AuthService } from '../../core/auth.service';
 import { TableQueryService } from '../../core/table-query.service';
 import { TranslatePipe } from '@ngx-translate/core';
-import { distinctUntilChanged } from 'rxjs';
+import { distinctUntilChanged, forkJoin } from 'rxjs';
 import { AppHeaderComponent } from '../../shared/app-header.component';
 import { ModuleNavigationComponent } from '../../shared/module-navigation.component';
 import { PatientDetailsDialog } from './patient-details-dialog.component';
@@ -53,6 +53,25 @@ type ResourceConfig = {
 type SelectOption = { value: string; label: string };
 type SpecialityOption = { id: number; name: string };
 type ProcedureOption = { id?: number; name: string };
+type AddressOption = {
+  id: number;
+  street: string;
+  district?: string;
+  city: string;
+  additionalInfo?: string;
+  block?: string;
+  postalCode?: string;
+  administrativeDivision?: { name: string; code: string; type: string };
+  country: { code: string };
+};
+type CountryOption = { code: string; name: string };
+type AdministrativeDivisionOption = {
+  id: number;
+  name: string;
+  code: string;
+  type: string;
+  country: { code: string };
+};
 type Field = {
   key: string;
   label: string;
@@ -124,7 +143,7 @@ const FIELDS = {
     { key: 'city', label: 'City', required: true },
     { key: 'additionalInfo', label: 'Additional information' },
     { key: 'block', label: 'Block' },
-    { key: 'postalCode', label: 'Postal code' },
+    { key: 'postalCode', label: 'Postal code', required: true },
     { key: 'administrativeDivisionName', label: 'Administrative division name' },
     { key: 'administrativeDivisionCode', label: 'Administrative division code' },
     { key: 'administrativeDivisionType', label: 'Administrative division type' },
@@ -199,16 +218,16 @@ const FIELDS = {
       required: true,
       section: 'Nationality',
     },
+    { key: 'countryCode', label: 'Address country code', required: true, section: 'Address' },
+    { key: 'postalCode', label: 'Postal code', required: true, section: 'Address' },
     { key: 'street', label: 'Street', required: true, section: 'Address', fullWidth: true },
     { key: 'district', label: 'District', section: 'Address' },
     { key: 'city', label: 'City', required: true, section: 'Address' },
     { key: 'additionalInfo', label: 'Additional information', section: 'Address' },
     { key: 'block', label: 'Block', section: 'Address' },
-    { key: 'postalCode', label: 'Postal code', section: 'Address' },
     { key: 'administrativeDivisionName', label: 'Administrative division name', section: 'Address' },
-    { key: 'administrativeDivisionCode', label: 'Administrative division code', section: 'Address' },
+    { key: 'administrativeDivisionCode', label: 'Administrative division code', required: true, section: 'Address' },
     { key: 'administrativeDivisionType', label: 'Administrative division type', section: 'Address' },
-    { key: 'countryCode', label: 'Address country code', required: true, section: 'Address' },
     { key: 'specialityIds', label: 'Specialities', section: 'Specialities', fullWidth: true },
   ],
 } as const;
@@ -227,6 +246,7 @@ const addressValues = (record: Record<string, unknown>): FormValues => {
     administrativeDivisionCode: String(division?.['code'] ?? ''),
     administrativeDivisionType: String(division?.['type'] ?? ''),
     countryCode: String(country?.['code'] ?? ''),
+    addressId: String(record['id'] ?? ''),
   };
 };
 
@@ -236,7 +256,7 @@ const addressRequest = (value: FormValues) => ({
   city: value['city'],
   additionalInfo: value['additionalInfo'] || null,
   block: value['block'] || null,
-  postalCode: value['postalCode'] || null,
+  postalCode: value['postalCode'],
   administrativeDivision: value['administrativeDivisionCode']
     ? {
         name: value['administrativeDivisionName'],
@@ -307,7 +327,7 @@ const SCHEMAS: Record<string, FormSchema> = {
       identificationNumber: value['identificationNumber'],
       documentIssuerCountryCode: value['documentIssuerCountryCode'],
       nationalityCode: value['nationalityCode'],
-      address: addressRequest(value),
+      ...(value['addressId'] ? { addressId: Number(value['addressId']) } : { address: addressRequest(value) }),
       specialityIds: value['specialityIds']
         .split(',')
         .map((id) => Number(id.trim()))
@@ -379,6 +399,7 @@ export class ResourceListComponent {
   readonly filterValues = signal<Record<string, string>>({});
   readonly filterDisplayValues = signal<Record<string, string>>({});
   readonly filterOptions = signal<Record<string, FilterOption[]>>({});
+  readonly nationalityOptions = signal<FilterOption[]>([]);
   readonly showAdvancedFilters = signal(false);
   readonly title = computed(() => this.config.title);
   readonly schema = computed(() => SCHEMAS[this.config.key]);
@@ -405,7 +426,6 @@ export class ResourceListComponent {
     this.filters().filter((filter) => filter.placement !== 'advanced'),
   );
   readonly advancedFilters = computed(() =>
-  readonly nationalityOptions = signal<FilterOption[]>([]);
     this.filters().filter((filter) => filter.placement === 'advanced'),
   );
 
@@ -554,6 +574,17 @@ export class ResourceListComponent {
     this.load();
   }
 
+  private loadNationalityOptions(): void {
+    this.http
+      .get<FilterOption[]>(`${this.config.endpoint}/filter-options`, {
+        params: { field: 'nationalityCode' },
+      })
+      .subscribe({
+        next: (options) => this.nationalityOptions.set(options),
+        error: () => this.nationalityOptions.set([]),
+      });
+  }
+
   create(): void {
     this.openEditor();
   }
@@ -574,17 +605,6 @@ export class ResourceListComponent {
   remove(record: Record<string, unknown>): void {
     if (!confirm(`Delete ${this.primary(record)}?`)) return;
     this.http
-  private loadNationalityOptions(): void {
-    this.http
-      .get<FilterOption[]>(`${this.config.endpoint}/filter-options`, {
-        params: { field: 'nationalityCode' },
-      })
-      .subscribe({
-        next: (options) => this.nationalityOptions.set(options),
-        error: () => this.nationalityOptions.set([]),
-      });
-  }
-
       .delete(`${this.config.endpoint}/${this.resourceIdentifier(record)}`)
       .subscribe({ next: () => this.load(), error: () => this.error.set(true) });
   }
@@ -601,12 +621,26 @@ export class ResourceListComponent {
       return;
     }
     if (this.config.key === 'patients') {
-      this.http
-        .get<PageResponse<SpecialityOption>>('/api/specialities', {
+      forkJoin({
+        specialities: this.http.get<PageResponse<SpecialityOption>>('/api/specialities', {
           params: { page: '0', size: '100', sort: 'name', direction: 'asc' },
-        })
+        }),
+        countries: this.http.get<PageResponse<CountryOption>>('/api/countries', {
+          params: { page: '0', size: '100', sort: 'name', direction: 'asc' },
+        }),
+        administrativeDivisions: this.http.get<PageResponse<AdministrativeDivisionOption>>('/api/administrative-divisions', {
+          params: { page: '0', size: '100', sort: 'name', direction: 'asc' },
+        }),
+      })
         .subscribe({
-          next: (response) => this.openDialog(schema, record, undefined, response.content),
+          next: (response) => this.openDialog(
+            schema,
+            record,
+            undefined,
+            response.specialities.content,
+            response.countries.content,
+            response.administrativeDivisions.content,
+          ),
           error: () => this.error.set(true),
         });
       return;
@@ -619,6 +653,8 @@ export class ResourceListComponent {
     record?: Record<string, unknown>,
     continents?: string[],
     specialities?: SpecialityOption[],
+    countries?: CountryOption[],
+    administrativeDivisions?: AdministrativeDivisionOption[],
   ): void {
     const fields = schema.fields.map((field) =>
       field.key === 'continent'
@@ -630,7 +666,7 @@ export class ResourceListComponent {
         width: '760px',
         maxWidth: '94vw',
         autoFocus: 'first-tabbable',
-        data: { fields, values: record ? schema.fromRecord(record) : undefined, specialities },
+        data: { fields, values: record ? schema.fromRecord(record) : undefined, specialities, countries, administrativeDivisions, resourceKey: this.config.key },
       })
       .afterClosed()
       .subscribe((value?: FormValues) => {
@@ -687,6 +723,7 @@ export class ResourceListComponent {
 @Component({
   selector: 'app-resource-form-dialog',
   imports: [
+    MatAutocompleteModule,
     ReactiveFormsModule,
     MatButtonModule,
     MatDatepickerModule,
@@ -703,13 +740,27 @@ export class ResourceListComponent {
   styleUrl: './resource-form-dialog.component.scss',
 })
 export class ResourceFormDialog {
+  private readonly patientAddressFieldKeys = [
+    'street',
+    'district',
+    'city',
+    'additionalInfo',
+    'block',
+    'administrativeDivisionName',
+    'administrativeDivisionCode',
+    'administrativeDivisionType',
+  ];
   readonly data = inject<{
     fields: Field[];
     values?: FormValues;
     specialities?: SpecialityOption[];
+    countries?: CountryOption[];
+    administrativeDivisions?: AdministrativeDivisionOption[];
+    resourceKey: string;
   }>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<ResourceFormDialog, Record<string, string>>);
   private readonly fb = inject(FormBuilder);
+  private readonly http = inject(HttpClient);
   readonly form = this.fb.group(
     Object.fromEntries(
       this.data.fields.map((field) => [
@@ -722,10 +773,26 @@ export class ResourceFormDialog {
   readonly specialityToAdd = signal<number | null>(null);
   readonly selectedProcedures = signal<ProcedureOption[]>(this.initialProcedures());
   readonly procedureNameToAdd = signal('');
+  readonly postalCodeSuggestions = signal<AddressOption[]>([]);
+  readonly selectedAddressId = signal(this.data.values?.['addressId'] ?? '');
+  readonly isAddressLocked = computed(() => Boolean(this.selectedAddressId()));
+  readonly selectedCountryCode = signal(this.data.values?.['countryCode'] ?? '');
+  readonly availableAdministrativeDivisions = computed(() =>
+    (this.data.administrativeDivisions ?? []).filter(
+      (division) => division.country.code === this.selectedCountryCode(),
+    ),
+  );
+  readonly countriesWithAdministrativeDivisions = computed(() => {
+    const countryCodes = new Set((this.data.administrativeDivisions ?? []).map((division) => division.country.code));
+    return (this.data.countries ?? []).filter((country) => countryCodes.has(country.code));
+  });
   readonly availableSpecialities = computed(() => {
     const selectedIds = new Set(this.selectedSpecialities().map((speciality) => speciality.id));
     return (this.data.specialities ?? []).filter((speciality) => !selectedIds.has(speciality.id));
   });
+  constructor() {
+    if (this.isPatientForm() && this.isAddressLocked()) this.lockSelectedAddressFields();
+  }
   sections(): string[] {
     return [...new Set(this.data.fields.map((field) => field.section ?? 'Record details'))];
   }
@@ -754,7 +821,104 @@ export class ResourceFormDialog {
         ];
       }),
     );
+    if (this.isPatientForm()) values['addressId'] = this.selectedAddressId();
     this.ref.close(values);
+  }
+  isPatientForm(): boolean {
+    return this.data.resourceKey === 'patients';
+  }
+  isHiddenPatientAddressField(field: Field): boolean {
+    return this.isPatientForm() &&
+      (field.key === 'administrativeDivisionName' || field.key === 'administrativeDivisionType');
+  }
+  isPatientAddressField(field: Field): boolean {
+    return this.isPatientForm() && field.section === 'Address';
+  }
+  onPostalCodeInput(postalCode: string): void {
+    this.clearSelectedAddress();
+    const countryCode = String(this.form.get('countryCode')?.value ?? '').trim().toUpperCase();
+    const query = postalCode.trim();
+    if (!/^[A-Z]{2}$/.test(countryCode) || query.length < 2) {
+      this.postalCodeSuggestions.set([]);
+      return;
+    }
+    this.http
+      .get<AddressOption[]>('/api/addresses/postal-code-suggestions', { params: { countryCode, query } })
+      .subscribe({ next: (addresses) => this.postalCodeSuggestions.set(addresses), error: () => this.postalCodeSuggestions.set([]) });
+  }
+  onCountryCodeInput(): void {
+    this.selectedAddressId.set('');
+    this.postalCodeSuggestions.set([]);
+  }
+  onCountrySelected(countryCode: string): void {
+    this.selectedCountryCode.set(countryCode);
+    this.clearSelectedAddress();
+    this.postalCodeSuggestions.set([]);
+    this.form.patchValue({
+      postalCode: '',
+      street: '',
+      district: '',
+      city: '',
+      additionalInfo: '',
+      block: '',
+      administrativeDivisionCode: '',
+      administrativeDivisionName: '',
+      administrativeDivisionType: '',
+    });
+  }
+  onAdministrativeDivisionSelected(code: string): void {
+    const division = this.availableAdministrativeDivisions().find((option) => option.code === code);
+    this.selectedAddressId.set('');
+    this.form.patchValue({
+      administrativeDivisionName: division?.name ?? '',
+      administrativeDivisionType: division?.type ?? '',
+    });
+  }
+  onAddressFieldInput(fieldKey: string): void {
+    this.clearSelectedAddress();
+    if (fieldKey === 'countryCode') this.postalCodeSuggestions.set([]);
+  }
+  selectPostalCodeAddress(address: AddressOption): void {
+    this.selectedAddressId.set(String(address.id));
+    this.selectedCountryCode.set(address.country.code);
+    this.postalCodeSuggestions.set([]);
+    this.form.patchValue({
+      countryCode: address.country.code,
+      postalCode: address.postalCode ?? '',
+      street: address.street,
+      district: address.district ?? '',
+      city: address.city,
+      additionalInfo: address.additionalInfo ?? '',
+      block: address.block ?? '',
+      administrativeDivisionName: address.administrativeDivision?.name ?? '',
+      administrativeDivisionCode: address.administrativeDivision?.code ?? '',
+      administrativeDivisionType: address.administrativeDivision?.type ?? '',
+    });
+    this.lockSelectedAddressFields();
+  }
+  postalCodeAddressLabel(address: AddressOption): string {
+    return `${address.postalCode ?? '—'} — ${address.street}, ${address.city}`;
+  }
+  postalCodeDisplayValue(value: AddressOption | string | null): string {
+    return typeof value === 'string' ? value : value?.postalCode ?? '';
+  }
+  private lockSelectedAddressFields(): void {
+    this.patientAddressFieldKeys.forEach((key) => this.form.get(key)?.disable({ emitEvent: false }));
+  }
+  private clearSelectedAddress(): void {
+    if (!this.selectedAddressId()) return;
+    this.selectedAddressId.set('');
+    this.patientAddressFieldKeys.forEach((key) => this.form.get(key)?.enable({ emitEvent: false }));
+    this.form.patchValue({
+      street: '',
+      district: '',
+      city: '',
+      additionalInfo: '',
+      block: '',
+      administrativeDivisionCode: '',
+      administrativeDivisionName: '',
+      administrativeDivisionType: '',
+    });
   }
   private initialValue(field: Field): string | Date | null {
     const value = this.data.values?.[field.key] ?? '';

@@ -21,4 +21,8 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
 
     @EntityGraph(attributePaths = {"administrativeDivision", "administrativeDivision.country", "country"})
     List<Address> findAllByCountry_CodeAndPostalCodeOrderByStreet(String countryCode, String postalCode);
+
+    @EntityGraph(attributePaths = {"administrativeDivision", "administrativeDivision.country", "country"})
+    List<Address> findTop10ByCountry_CodeAndPostalCodeStartingWithOrderByPostalCodeAscStreetAsc(
+            String countryCode, String postalCode);
 }

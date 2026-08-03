@@ -79,7 +79,10 @@
     { "name": "Peru", "code": "PE", "continent": "SOUTH_AMERICA" },
     { "name": "Suriname", "code": "SR", "continent": "SOUTH_AMERICA" },
     { "name": "Uruguay", "code": "UY", "continent": "SOUTH_AMERICA" },
-    { "name": "Venezuela", "code": "VE", "continent": "SOUTH_AMERICA" }
+    { "name": "Venezuela", "code": "VE", "continent": "SOUTH_AMERICA" },
+    { "name": "Japan", "code": "JP", "continent": "ASIA" },
+    { "name": "South Africa", "code": "ZA", "continent": "AFRICA" },
+    { "name": "Australia", "code": "AU", "continent": "OCEANIA" }
   ],
   "seedDefaults": {
     "addressCountryCode": "US",
@@ -145,7 +148,18 @@
     { "name": "New York", "code": "NY", "type": "STATE" },
     { "name": "Texas", "code": "TX", "type": "STATE" },
     { "name": "Virginia", "code": "VA", "type": "STATE" },
-    { "name": "Washington", "code": "WA", "type": "STATE" }
+    { "name": "Washington", "code": "WA", "type": "STATE" },
+    { "name": "Lisbon", "code": "PT-LIS", "type": "DISTRICT", "countryCode": "PT" },
+    { "name": "Île-de-France", "code": "FR-IDF", "type": "REGION", "countryCode": "FR" },
+    { "name": "Berlin", "code": "DE-BE", "type": "STATE", "countryCode": "DE" },
+    { "name": "São Paulo", "code": "BR-SP", "type": "STATE", "countryCode": "BR" },
+    { "name": "Buenos Aires", "code": "AR-C", "type": "AUTONOMOUS_CITY", "countryCode": "AR" },
+    { "name": "Santiago Metropolitan", "code": "CL-RM", "type": "REGION", "countryCode": "CL" },
+    { "name": "Ontario", "code": "CA-ON", "type": "PROVINCE", "countryCode": "CA" },
+    { "name": "Mexico City", "code": "MX-CMX", "type": "FEDERAL_ENTITY", "countryCode": "MX" },
+    { "name": "Tokyo", "code": "JP-13", "type": "PREFECTURE", "countryCode": "JP" },
+    { "name": "Gauteng", "code": "ZA-GP", "type": "PROVINCE", "countryCode": "ZA" },
+    { "name": "New South Wales", "code": "AU-NSW", "type": "STATE", "countryCode": "AU" }
   ],
   "addresses": [
     {
@@ -327,6 +341,127 @@
       "block": "Building G",
       "postalCode": "33000003",
       "administrativeDivisionCode": "FL"
+    },
+    {
+      "reference": "liberdade-lisbon",
+      "street": "Avenida da Liberdade 245",
+      "district": "Santo António",
+      "city": "Lisbon",
+      "additionalInfo": "Floor 3",
+      "block": "Building A",
+      "postalCode": "1250-143",
+      "administrativeDivisionCode": "PT-LIS",
+      "countryCode": "PT"
+    },
+    {
+      "reference": "rivoli-paris",
+      "street": "18 Rue de Rivoli",
+      "district": "4th arrondissement",
+      "city": "Paris",
+      "additionalInfo": "Appartement 12",
+      "block": "Bâtiment B",
+      "postalCode": "75004",
+      "administrativeDivisionCode": "FR-IDF",
+      "countryCode": "FR"
+    },
+    {
+      "reference": "friedrich-berlin",
+      "street": "Friedrichstraße 89",
+      "district": "Mitte",
+      "city": "Berlin",
+      "additionalInfo": "2. OG",
+      "block": "Haus C",
+      "postalCode": "10117",
+      "administrativeDivisionCode": "DE-BE",
+      "countryCode": "DE"
+    },
+    {
+      "reference": "paulista-sao-paulo",
+      "street": "Avenida Paulista 1578",
+      "district": "Bela Vista",
+      "city": "São Paulo",
+      "additionalInfo": "Conjunto 82",
+      "block": "Torre Norte",
+      "postalCode": "01310-200",
+      "administrativeDivisionCode": "BR-SP",
+      "countryCode": "BR"
+    },
+    {
+      "reference": "corrientes-buenos-aires",
+      "street": "Avenida Corrientes 1245",
+      "district": "San Nicolás",
+      "city": "Buenos Aires",
+      "additionalInfo": "Piso 6",
+      "block": "Edificio Central",
+      "postalCode": "C1043",
+      "administrativeDivisionCode": "AR-C",
+      "countryCode": "AR"
+    },
+    {
+      "reference": "providencia-santiago",
+      "street": "Avenida Providencia 1450",
+      "district": "Providencia",
+      "city": "Santiago",
+      "additionalInfo": "Oficina 504",
+      "block": "Torre Andes",
+      "postalCode": "7500000",
+      "administrativeDivisionCode": "CL-RM",
+      "countryCode": "CL"
+    },
+    {
+      "reference": "king-toronto",
+      "street": "88 King Street West",
+      "district": "Financial District",
+      "city": "Toronto",
+      "additionalInfo": "Suite 410",
+      "block": "Commerce Court",
+      "postalCode": "M5H 1J9",
+      "administrativeDivisionCode": "CA-ON",
+      "countryCode": "CA"
+    },
+    {
+      "reference": "reforma-mexico-city",
+      "street": "Paseo de la Reforma 222",
+      "district": "Juárez",
+      "city": "Mexico City",
+      "additionalInfo": "Piso 9",
+      "block": "Torre Reforma",
+      "postalCode": "06600",
+      "administrativeDivisionCode": "MX-CMX",
+      "countryCode": "MX"
+    },
+    {
+      "reference": "ginza-tokyo",
+      "street": "5-8-1 Ginza",
+      "district": "Chuo City",
+      "city": "Tokyo",
+      "additionalInfo": "Suite 402",
+      "block": "Ginza Building",
+      "postalCode": "104-0061",
+      "administrativeDivisionCode": "JP-13",
+      "countryCode": "JP"
+    },
+    {
+      "reference": "main-johannesburg",
+      "street": "101 Main Street",
+      "district": "Johannesburg CBD",
+      "city": "Johannesburg",
+      "additionalInfo": "Level 5",
+      "block": "Civic Centre",
+      "postalCode": "2001",
+      "administrativeDivisionCode": "ZA-GP",
+      "countryCode": "ZA"
+    },
+    {
+      "reference": "george-sydney",
+      "street": "200 George Street",
+      "district": "Sydney CBD",
+      "city": "Sydney",
+      "additionalInfo": "Level 7",
+      "block": "Harbour Tower",
+      "postalCode": "2000",
+      "administrativeDivisionCode": "AU-NSW",
+      "countryCode": "AU"
     }
   ],
   "patients": [
@@ -336,6 +471,7 @@
       "active": true,
       "gender": "FEMALE",
       "taxId": "10000000001",
+      "nationalityCode": "PT",
       "addressReference": "maple-grove-austin",
       "specialityNames": ["Pediatric Dentistry", "Orthodontics and Dentofacial Orthopedics"]
     },
@@ -345,6 +481,7 @@
       "active": true,
       "gender": "MALE",
       "taxId": "10000000002",
+      "nationalityCode": "BR",
       "addressReference": "maple-grove-austin",
       "specialityNames": ["Endodontics", "Oral and Maxillofacial Pathology"]
     },
@@ -354,6 +491,7 @@
       "active": true,
       "gender": "FEMALE",
       "taxId": "10000000003",
+      "nationalityCode": "FR",
       "addressReference": "cedar-park-dallas",
       "specialityNames": ["Periodontics", "Prosthodontics"]
     },
@@ -363,6 +501,7 @@
       "active": true,
       "gender": "MALE",
       "taxId": "10000000004",
+      "nationalityCode": "CA",
       "addressReference": "cedar-park-dallas",
       "specialityNames": ["Oral Medicine"]
     },
@@ -372,6 +511,7 @@
       "active": false,
       "gender": "FEMALE",
       "taxId": "10000000005",
+      "nationalityCode": "MX",
       "addressReference": "sunset-ridge-miami",
       "specialityNames": ["Orofacial Pain", "Oral and Maxillofacial Radiology"]
     },
@@ -468,7 +608,6 @@
     {
       "name": "Henry Walker",
       "birthDate": "2002-12-15",
-      "nationalityCode": "PT",
       "active": true,
       "gender": "MALE",
       "taxId": "10000000016",
@@ -478,7 +617,6 @@
     {
       "name": "Harper Lewis",
       "birthDate": "1993-02-08",
-      "nationalityCode": "BR",
       "active": true,
       "gender": "OTHER",
       "taxId": "10000000017",
@@ -488,7 +626,6 @@
     {
       "name": "Alexander Young",
       "birthDate": "1980-06-30",
-      "nationalityCode": "FR",
       "active": true,
       "gender": "MALE",
       "taxId": "10000000018",
@@ -498,7 +635,6 @@
     {
       "name": "Evelyn Martinez",
       "birthDate": "1998-10-04",
-      "nationalityCode": "CA",
       "active": true,
       "gender": "FEMALE",
       "taxId": "10000000019",
@@ -508,7 +644,6 @@
     {
       "name": "Daniel Harris",
       "birthDate": "1965-01-17",
-      "nationalityCode": "MX",
       "active": false,
       "gender": "MALE",
       "taxId": "10000000020",

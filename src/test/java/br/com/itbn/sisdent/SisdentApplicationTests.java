@@ -142,6 +142,30 @@ class SisdentApplicationTests {
     }
 
     @Test
+    void suggestsAddressesByPostalCodePrefixWithinCountry() throws Exception {
+        mockMvc.perform(get("/api/addresses/postal-code-suggestions")
+                        .param("countryCode", "US")
+                        .param("query", "100"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].postalCode").value("10000001"));
+    }
+
+    @Test
+    void requiresPostalCodeWhenCreatingAnAddress() throws Exception {
+        mockMvc.perform(post("/api/addresses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "street": "1 Validation Street",
+                                  "city": "New York",
+                                  "administrativeDivision": {"name": "New York", "code": "NY", "type": "STATE"},
+                                  "countryCode": "US"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void returnsAllSeededSpecialities() throws Exception {
         mockMvc.perform(get("/api/specialities").param("size", "100"))
                 .andExpect(status().isOk())
@@ -243,30 +267,35 @@ class SisdentApplicationTests {
     void returnsAllSeededAdministrativeDivisions() throws Exception {
         mockMvc.perform(get("/api/administrative-divisions").param("size", "100"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(8))
-                .andExpect(jsonPath("$.content[0].code").value("CA"))
-                .andExpect(jsonPath("$.content[0].country.code").value("US"))
-                .andExpect(jsonPath("$.content[7].code").value("WA"));
+                .andExpect(jsonPath("$.totalElements").value(19))
+                .andExpect(jsonPath("$.content[?(@.code == 'CA')].country.code").value("US"))
+                .andExpect(jsonPath("$.content[?(@.code == 'AU-NSW')].country.code").value("AU"));
     }
 
     @Test
-    void returnsCountriesFromEuropeAndTheAmericas() throws Exception {
+    void returnsCountriesAcrossSeededContinents() throws Exception {
         mockMvc.perform(get("/api/countries").param("size", "100"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(80))
+                .andExpect(jsonPath("$.totalElements").value(83))
                 .andExpect(jsonPath("$.content[?(@.code == 'BR')].continent")
                         .value("SOUTH_AMERICA"))
                 .andExpect(jsonPath("$.content[?(@.code == 'PT')].continent")
                         .value("EUROPE"))
                 .andExpect(jsonPath("$.content[?(@.code == 'US')].continent")
-                        .value("NORTH_AMERICA"));
+                        .value("NORTH_AMERICA"))
+                .andExpect(jsonPath("$.content[?(@.code == 'JP')].continent")
+                        .value("ASIA"))
+                .andExpect(jsonPath("$.content[?(@.code == 'ZA')].continent")
+                        .value("AFRICA"))
+                .andExpect(jsonPath("$.content[?(@.code == 'AU')].continent")
+                        .value("OCEANIA"));
     }
 
     @Test
     void returnsAllSeededAddresses() throws Exception {
         mockMvc.perform(get("/api/addresses"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(20));
+                .andExpect(jsonPath("$.totalElements").value(31));
     }
 
     @Test
