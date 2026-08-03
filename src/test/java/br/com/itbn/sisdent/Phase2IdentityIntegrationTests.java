@@ -256,8 +256,8 @@ class Phase2IdentityIntegrationTests {
 
     private Account saveAccount(String email, boolean platformAdministrator) {
         Person person = personRepository.save(new Person(email.strip()));
-        return accountRepository.saveAndFlush(new Account(person, null, email,
-                passwordEncoder.encode("phase2-password"), platformAdministrator, false));
+        return accountRepository.saveAndFlush(new Account(person, email,
+                passwordEncoder.encode("phase2-password"), platformAdministrator));
     }
 
     private String login(String email, String password) throws Exception {

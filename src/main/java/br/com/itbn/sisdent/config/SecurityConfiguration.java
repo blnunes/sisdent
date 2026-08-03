@@ -31,8 +31,6 @@ import java.nio.charset.StandardCharsets;
 @Configuration
 public class SecurityConfiguration {
 
-    private static final String PATIENT_RESOURCE = "/api/patients/**";
-
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -47,7 +45,6 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/api/auth/login",
-                                "/api/auth/email-verification",
                                 "/actuator/health",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
@@ -57,11 +54,8 @@ public class SecurityConfiguration {
                                 "/configuration/**",
                                 "/h2-console/**",
                                 "/i18n/**").permitAll()
-                        // The unscoped Phase 1 patient API is intentionally closed. Patient
-                        // access now goes through /api/organizations/{organizationId}/patients.
-                        .requestMatchers(PATIENT_RESOURCE).denyAll()
                         // Foundational catalogues are platform-wide, not organization-scoped.
-                        // They must never be authorized through legacy app_users permissions.
+                        // They require platform-administrator authority.
                         .requestMatchers("/api/specialities/**", "/api/addresses/**", "/api/countries/**",
                                 "/api/administrative-divisions/**", "/api/states/**")
                         .hasAuthority("ROLE_PLATFORM_ADMIN")

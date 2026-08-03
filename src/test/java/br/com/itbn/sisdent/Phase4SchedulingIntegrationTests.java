@@ -25,7 +25,7 @@ class Phase4SchedulingIntegrationTests {
     @Test void scopesSchedulingAndPreservesTerminalLifecycle() throws Exception {
         Organization organization = organizations.save(new Organization("Scheduling organization"));
         ClinicUnit clinic = clinics.save(new ClinicUnit(organization, "Main"));
-        Account account = accounts.save(new Account(persons.save(new Person("Scheduler")), null, "scheduler@example.com", encoder.encode("phase4-password"), false, false));
+        Account account = accounts.save(new Account(persons.save(new Person("Scheduler")), "scheduler@example.com", encoder.encode("phase4-password"), false));
         memberships.save(new Membership(account, organization, null, MembershipRole.MANAGER));
         Patient patient = patients.findAll().getFirst();
         links.save(new PatientOrganizationLink(patient, organization, clinic, PatientLinkBasis.ATTENDANCE));

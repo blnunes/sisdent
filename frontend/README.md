@@ -50,9 +50,14 @@ Password: admin
 
 ```bash
 npm test -- --watch=false
+npm run check:i18n
 npm run build
 npm run test:e2e
 ```
+
+Run `npm run check:i18n` whenever user-facing copy changes. It verifies that
+each configured locale has the same translation keys and that every statically
+referenced key in Angular templates and TypeScript exists.
 
 `npm run test:e2e` checks `/actuator/health` first. It reuses a healthy API or
 starts a temporary Spring Boot process and waits for it before running the

@@ -80,7 +80,7 @@ organization endpoints and surfaces forbidden scope, stale-version, finalized
 record, and unavailable-patient errors to the user.
 
 To replace a patient's speciality assignments, send their IDs in
-`specialityIds` to `PUT /api/patients/{id}`. Send an empty array
+`specialityIds` to `PUT /api/organizations/{organizationId}/patients/{patientId}`. Send an empty array
 (`"specialityIds": []`) to remove every assignment from that patient; this
 does not delete the speciality records. Catalog removal is logical so existing
 history remains valid.
@@ -91,8 +91,17 @@ The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
 ## Test
 
 ```bash
-mvn test
+./mvnw test
+cd frontend && npm ci
+npm test -- --watch=false
+npm run check:i18n
+npm run build
+npm run test:e2e
 ```
+
+Backend code follows the existing Spring service/controller boundaries; keep
+authorization checks in the server-side scope services. Angular components must
+present translated, user-safe error messages rather than server error details.
 
 ## Deployment
 

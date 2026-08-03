@@ -8,7 +8,6 @@ public record SessionResponse(
         String email,
         String displayName,
         boolean platformAdministrator,
-        boolean emailMigrationRequired,
         UUID accountManagementOrganizationId,
         List<MembershipResponse> memberships) {
 }

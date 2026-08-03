@@ -65,40 +65,6 @@ describe('AuthService', () => {
     expect(service.destination()).toBe('/home');
   });
 
-  it('routes a legacy login to required email enrollment', () => {
-    service
-      .login({
-        identificationType: 'PASSPORT',
-        identificationNumber: 'LEGACY-USER',
-        password: 'password',
-      })
-      .subscribe();
-
-    http.expectOne('/api/auth/login').flush({
-      accessToken: jwt({
-        accountId: 'account-legacy',
-        email: 'passport.legacy-user@legacy.sisdent.invalid',
-        emailMigrationRequired: true,
-        platformAdministrator: false,
-        memberships: [],
-        authorities: ['ROLE_USER'],
-        exp: futureExpiration(),
-      }),
-      tokenType: 'Bearer',
-      expiresIn: 3600,
-    });
-    http.expectOne('/api/session').flush({
-      accountId: 'account-legacy',
-      email: 'passport.legacy-user@legacy.sisdent.invalid',
-      displayName: 'Legacy user',
-      platformAdministrator: false,
-      emailMigrationRequired: true,
-      memberships: [],
-    });
-
-    expect(service.destination()).toBe('/email-enrollment');
-  });
-
   it('selects the requested membership when the header supplies its ID', () => {
     service.login({ email: 'group.admin@sisdent.demo', password: 'odonto2026@O' }).subscribe();
     http.expectOne('/api/auth/login').flush({
@@ -179,18 +145,6 @@ describe('AuthService', () => {
       memberships: [{ id: 'organization-practitioner-manager', organizationId: 'northstar', organizationName: 'Northstar', role: 'PRACTITIONER_MANAGER' }],
     });
     expect(service.canManagePractitioners()).toBe(true);
-  });
-
-  it('returns the controlled verification outcome without authentication', () => {
-    let status = '';
-    service.verifyEmail('invalid-token').subscribe((response) => (status = response.status));
-
-    const request = http.expectOne('/api/auth/email-verification');
-    expect(request.request.method).toBe('POST');
-    expect(request.request.body).toEqual({ token: 'invalid-token' });
-    request.flush({ status: 'INVALID_OR_EXPIRED' });
-
-    expect(status).toBe('INVALID_OR_EXPIRED');
   });
 
   it('exposes organization administration only to an organization-wide administrator', () => {
