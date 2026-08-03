@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { AccountSummary, ClinicUnit, OrganizationOption, PageResponse } from './models';
+import { AccountSummary, ClinicUnit, OrganizationOption, PageResponse, Practitioner } from './models';
 import { TableQuery, TableQueryService } from './table-query.service';
 
 @Injectable({ providedIn: 'root' })
@@ -28,10 +28,32 @@ export class AccountApiService {
   listClinicUnits(organizationId: string) {
     return this.http.get<ClinicUnit[]>(`/api/organizations/${organizationId}/clinic-units`);
   }
+  createClinicUnit(organizationId: string, request: { name: string }) {
+    return this.http.post<ClinicUnit>(`/api/organizations/${organizationId}/clinic-units`, request);
+  }
+  listPractitioners(organizationId: string) {
+    return this.http.get<Practitioner[]>(`/api/organizations/${organizationId}/practitioners`);
+  }
+  createPractitioner(organizationId: string, request: PractitionerWrite) {
+    return this.http.post<Practitioner>(`/api/organizations/${organizationId}/practitioners`, request);
+  }
+  updatePractitioner(organizationId: string, practitionerId: string, request: PractitionerWrite) {
+    return this.http.put<Practitioner>(`/api/organizations/${organizationId}/practitioners/${practitionerId}`, request);
+  }
+  deactivatePractitioner(organizationId: string, practitionerId: string) {
+    return this.http.delete<void>(`/api/organizations/${organizationId}/practitioners/${practitionerId}`);
+  }
   grantMembership(organizationId: string, request: { email: string; clinicUnitId?: string | null; role: string }) {
     return this.http.post(`/api/organizations/${organizationId}/account-memberships`, request);
   }
   changeMembershipRole(organizationId: string, membershipId: string, request: { role: string; version: number }) {
     return this.http.patch(`/api/organizations/${organizationId}/memberships/${membershipId}`, request);
   }
+}
+
+export interface PractitionerWrite {
+  displayName: string;
+  registrationNumber: string;
+  specialityIds: number[];
+  accountId?: string | null;
 }

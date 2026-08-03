@@ -1,7 +1,17 @@
 import { Routes } from '@angular/router';
-import { anyPermissionsGuard, authGuard } from './core/auth.guard';
+import { anyPermissionsGuard, authGuard, organizationAdministrationGuard, practitionerManagementGuard } from './core/auth.guard';
 
 export const routes: Routes = [
+  {
+    path: 'clinic-units',
+    canActivate: [authGuard, organizationAdministrationGuard],
+    loadComponent: () => import('./features/organization/clinic-units.component').then((m) => m.ClinicUnitsComponent),
+  },
+  {
+    path: 'practitioners',
+    canActivate: [authGuard, practitionerManagementGuard],
+    loadComponent: () => import('./features/organization/practitioners.component').then((m) => m.PractitionersComponent),
+  },
   {
     path: 'appointments',
     canActivate: [authGuard],

@@ -99,7 +99,13 @@ export class AuthService {
   }
 
   canManageOrganizationAccess(): boolean {
-    return this.activeMembership()?.role === 'ORGANIZATION_ADMIN';
+    return this.canAdministerOrganization();
+  }
+
+  /** Organization administration is deliberately restricted to organization-wide administrators. */
+  canAdministerOrganization(): boolean {
+    const membership = this.activeMembership();
+    return membership?.role === 'ORGANIZATION_ADMIN' && !membership.clinicUnitId;
   }
 
   login(request: LoginRequest) {

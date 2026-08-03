@@ -363,6 +363,20 @@
       "CLINICAL_MANAGER": "Klinische beheerder"
     }
   },
+  "ORGANIZATION": {
+    "OVERTITLE": "Organisatiebeheer",
+    "REFRESH": "Vernieuwen",
+    "EDIT": "Bewerken",
+    "DEACTIVATE": "Deactiveren",
+    "ACTIVE": "Actief",
+    "INACTIVE": "Inactief",
+    "CANCEL": "Annuleren",
+    "SAVE": "Opslaan",
+    "VALIDATION": { "REQUIRED": "Dit veld is verplicht." },
+    "ERROR": { "LOAD_UNITS": "Kan klinieken niet laden.", "CREATE_UNIT": "Kan kliniek niet maken.", "LOAD_PRACTITIONERS": "Kan behandelaars niet laden.", "SAVE_PRACTITIONER": "Kan behandelaar niet opslaan.", "DEACTIVATE_PRACTITIONER": "Kan behandelaar niet deactiveren." },
+    "CLINIC_UNITS": { "TITLE": "Klinieken", "DESCRIPTION": "Beheer de klinieken in {{organization}}.", "LIST_TITLE": "Huidige klinieken", "EMPTY": "Er zijn geen klinieken in deze organisatie.", "CREATE": "Kliniek toevoegen", "NAME": "Naam kliniek" },
+    "PRACTITIONERS": { "TITLE": "Behandelaars", "DESCRIPTION": "Beheer organisatiebrede behandelaars in {{organization}}.", "NEW": "Nieuwe behandelaar", "EDIT": "Behandelaar bewerken", "EMPTY": "Er zijn geen behandelaars in deze organisatie.", "DISPLAY_NAME": "Weergavenaam", "REGISTRATION": "Registratienummer", "NO_REGISTRATION": "Geen registratienummer" }
+  },
   "PERMISSION_GROUPS": {
     "USERS": "Gebruikers",
     "PATIENTS": "Patiënten",

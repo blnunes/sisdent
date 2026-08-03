@@ -42,6 +42,9 @@ Password: admin
 - logical deletion;
 - add and remove permissions;
 - responsive Angular Material interface.
+- organization administration routes: `/clinic-units` for organization-wide
+  Organization Administrators and `/practitioners` for organization-wide
+  Organization Administrators, Managers, and Practitioner Managers.
 
 ## Validation
 

@@ -26,3 +26,17 @@ export const anyPermissionsGuard = (...permissions: Permission[]): CanActivateFn
     ? true
     : inject(Router).createUrlTree(['/not-found']);
 };
+
+export const organizationAdministrationGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  return auth.canAdministerOrganization()
+    ? true
+    : inject(Router).createUrlTree(['/not-found']);
+};
+
+export const practitionerManagementGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  return auth.canManagePractitioners()
+    ? true
+    : inject(Router).createUrlTree(['/not-found']);
+};

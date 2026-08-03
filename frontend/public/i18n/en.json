@@ -363,6 +363,20 @@
       "CLINICAL_MANAGER": "Clinical manager"
     }
   },
+  "ORGANIZATION": {
+    "OVERTITLE": "Organization administration",
+    "REFRESH": "Refresh",
+    "EDIT": "Edit",
+    "DEACTIVATE": "Deactivate",
+    "ACTIVE": "Active",
+    "INACTIVE": "Inactive",
+    "CANCEL": "Cancel",
+    "SAVE": "Save",
+    "VALIDATION": { "REQUIRED": "This field is required." },
+    "ERROR": { "LOAD_UNITS": "Unable to load clinic units.", "CREATE_UNIT": "Unable to create the clinic unit.", "LOAD_PRACTITIONERS": "Unable to load practitioners.", "SAVE_PRACTITIONER": "Unable to save the practitioner.", "DEACTIVATE_PRACTITIONER": "Unable to deactivate the practitioner." },
+    "CLINIC_UNITS": { "TITLE": "Clinic units", "DESCRIPTION": "Manage the clinic units in {{organization}}.", "LIST_TITLE": "Current clinic units", "EMPTY": "There are no clinic units in this organization.", "CREATE": "Add clinic unit", "NAME": "Clinic unit name" },
+    "PRACTITIONERS": { "TITLE": "Practitioners", "DESCRIPTION": "Manage organization-wide practitioners in {{organization}}.", "NEW": "New practitioner", "EDIT": "Edit practitioner", "EMPTY": "There are no practitioners in this organization.", "DISPLAY_NAME": "Display name", "REGISTRATION": "Registration number", "NO_REGISTRATION": "No registration number" }
+  },
   "PERMISSION_GROUPS": {
     "USERS": "Users",
     "PATIENTS": "Patients",
