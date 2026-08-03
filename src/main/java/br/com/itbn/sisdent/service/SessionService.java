@@ -21,6 +21,7 @@ public class SessionService {
         Account account = currentAccountService.require();
         return new SessionResponse(account.getGlobalId(), account.getEmail(), account.getPerson().getDisplayName(),
                 account.isPlatformAdministrator(), account.isEmailMigrationRequired(),
+                account.getAccountManagementOrganization() == null ? null : account.getAccountManagementOrganization().getGlobalId(),
                 membershipRepository.findAllByAccount_IdAndActiveTrue(account.getId()).stream()
                         .map(OrganizationService::toResponse).toList());
     }

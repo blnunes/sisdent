@@ -105,6 +105,19 @@ public class ScopeAuthorizationService {
         }
     }
 
+    public void requireAccountAdministration(UUID organizationId) {
+        var account = currentAccountService.require();
+        if (account.isPlatformAdministrator()) return;
+        if (account.getAccountManagementOrganization() == null
+                || !account.getAccountManagementOrganization().getGlobalId().equals(organizationId)) {
+            throw new AccessDeniedException("Account administration is restricted to the assigned organization");
+        }
+        boolean allowed = membershipRepository.findAllByAccount_IdAndOrganization_GlobalIdAndActiveTrue(account.getId(), organizationId)
+                .stream().anyMatch(membership -> membership.getClinicUnit() == null
+                        && membership.getRole() == MembershipRole.ORGANIZATION_ADMIN);
+        if (!allowed) throw new AccessDeniedException("Organization administrator access is required");
+    }
+
     public ClinicUnit requireClinicInOrganization(UUID organizationId, UUID clinicUnitId) {
         ClinicUnit clinicUnit = clinicUnitRepository.findByGlobalId(clinicUnitId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clinic unit not found"));

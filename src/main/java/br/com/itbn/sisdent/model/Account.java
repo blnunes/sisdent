@@ -45,6 +45,10 @@ public class Account extends AuditableEntity {
     @Column(name = "platform_administrator", nullable = false)
     private boolean platformAdministrator;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_management_organization_id")
+    private Organization accountManagementOrganization;
+
     @Column(name = "email_migration_required", nullable = false)
     private boolean emailMigrationRequired;
 
@@ -80,6 +84,7 @@ public class Account extends AuditableEntity {
     public String getPassword() { return password; }
     public boolean isActive() { return active; }
     public boolean isPlatformAdministrator() { return platformAdministrator; }
+    public Organization getAccountManagementOrganization() { return accountManagementOrganization; }
     public boolean isEmailMigrationRequired() { return emailMigrationRequired; }
     public boolean isEmailVerified() { return emailVerified; }
     public String getPendingEmail() { return pendingEmail; }
@@ -114,5 +119,9 @@ public class Account extends AuditableEntity {
             throw new IllegalStateException("Account already has the requested platform-administrator state");
         }
         this.platformAdministrator = platformAdministrator;
+    }
+
+    public void assignAccountManagementOrganizationIfAbsent(Organization organization) {
+        if (accountManagementOrganization == null) accountManagementOrganization = organization;
     }
 }

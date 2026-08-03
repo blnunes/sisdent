@@ -94,14 +94,14 @@ public class AccountManagementService {
 
     @Transactional(readOnly = true)
     public PageResponse<AccountResponse> organizationPage(UUID organizationId, PageQuery query, String filter) {
-        authorization.requireOrganizationAdministration(organizationId);
+        authorization.requireAccountAdministration(organizationId);
         return PageResponse.from(accounts.findManagementPageInOrganization(organizationId, normalizeFilter(filter), deterministicPage(query)),
                 account -> response(account, organizationId, false));
     }
 
     @Transactional(readOnly = true)
     public AccountResponse organizationRead(UUID organizationId, UUID accountId) {
-        authorization.requireOrganizationAdministration(organizationId);
+        authorization.requireAccountAdministration(organizationId);
         Account account = accounts.findVisibleInOrganization(organizationId, accountId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         return response(account, organizationId, false);

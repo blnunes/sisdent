@@ -3,7 +3,7 @@
   <mat-sidenav-container class="drawer-container"><mat-sidenav #drawer mode="over" class="side-drawer"><div class="drawer-brand"><mat-icon>dentistry</mat-icon><strong>Sisdent</strong></div><app-module-navigation active="accounts" (navigate)="drawer.close()" /></mat-sidenav>
     <mat-sidenav-content><main class="content">
       <header class="page-header"><div><span class="eyebrow">{{ 'ACCOUNTS.ADMINISTRATION' | translate }}</span><h1>{{ 'ACCOUNTS.TITLE' | translate }}</h1><p>{{ 'ACCOUNTS.DESCRIPTION' | translate }}</p></div>
-        @if (auth.isPlatformAdministrator()) { <button mat-flat-button class="create-button" (click)="creating.set(!creating())">{{ 'ACCOUNTS.NEW' | translate }}</button> }
+        @if (auth.isPlatformAdministrator()) { <div class="platform-actions"><mat-checkbox [checked]="viewAllAccounts()" (change)="viewAllAccounts.set($event.checked)">{{ 'ACCOUNTS.VIEW_ALL' | translate }}</mat-checkbox><button mat-flat-button class="create-button" (click)="creating.set(!creating())">{{ 'ACCOUNTS.NEW' | translate }}</button></div> }
         
       </header>
       @if (!auth.isPlatformAdministrator() && auth.activeMembership(); as membership) {<section class="scope-notice" role="status"><mat-icon>business</mat-icon><div><strong>{{ 'ACCOUNTS.MANAGING_SCOPE' | translate:{ organization: membership.organizationName } }}</strong><span>{{ 'ACCOUNTS.SCOPE_NOTICE' | translate }}</span></div></section>}

@@ -89,7 +89,7 @@ public class OrganizationService {
 
     @Transactional
     public MembershipResponse addMembership(UUID organizationId, MembershipRequest request) {
-        authorization.requireOrganizationAdministration(organizationId);
+        authorization.requireAccountAdministration(organizationId);
         Organization organization = requireOrganization(organizationId);
         ClinicUnit clinicUnit = request.clinicUnitId() == null ? null
                 : authorization.requireClinicInOrganization(organizationId, request.clinicUnitId());
@@ -111,14 +111,15 @@ public class OrganizationService {
         if (duplicate) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A membership already exists for this scope");
         }
-        return toResponse(membershipRepository.saveAndFlush(
-                new Membership(account, organization, clinicUnit, request.role())));
+        Membership membership = membershipRepository.saveAndFlush(new Membership(account, organization, clinicUnit, request.role()));
+        assignAccountManagementOrganization(account, organization, clinicUnit, request.role());
+        return toResponse(membership);
     }
 
     /** Exact email lookup supports a deliberate grant without exposing a global account directory. */
     @Transactional
     public MembershipResponse grantMembership(UUID organizationId, AccountMembershipRequest request) {
-        authorization.requireOrganizationAdministration(organizationId);
+        authorization.requireAccountAdministration(organizationId);
         Organization organization = requireOrganization(organizationId);
         ClinicUnit clinicUnit = request.clinicUnitId() == null ? null
                 : authorization.requireClinicInOrganization(organizationId, request.clinicUnitId());
@@ -131,12 +132,14 @@ public class OrganizationService {
                 ? membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnitIsNull(account.getId(), organization.getId())
                 : membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnit_Id(account.getId(), organization.getId(), clinicUnit.getId());
         if (duplicate) throw new ResponseStatusException(HttpStatus.CONFLICT, "A membership already exists for this scope");
-        return toResponse(membershipRepository.saveAndFlush(new Membership(account, organization, clinicUnit, request.role())));
+        Membership membership = membershipRepository.saveAndFlush(new Membership(account, organization, clinicUnit, request.role()));
+        assignAccountManagementOrganization(account, organization, clinicUnit, request.role());
+        return toResponse(membership);
     }
 
     @Transactional
     public void revokeMembership(UUID organizationId, UUID membershipId) {
-        authorization.requireOrganizationAdministration(organizationId);
+        authorization.requireAccountAdministration(organizationId);
         Membership membership = membershipRepository.findByGlobalId(membershipId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!membership.getOrganization().getGlobalId().equals(organizationId)) {
@@ -149,7 +152,7 @@ public class OrganizationService {
 
     @Transactional
     public void revokeMembership(UUID organizationId, UUID membershipId, MembershipRevokeRequest request) {
-        authorization.requireOrganizationAdministration(organizationId);
+        authorization.requireAccountAdministration(organizationId);
         Membership membership = membershipRepository.findByGlobalId(membershipId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!membership.getOrganization().getGlobalId().equals(organizationId)) {
@@ -165,7 +168,7 @@ public class OrganizationService {
     @Transactional
     public MembershipResponse changeMembershipRole(UUID organizationId, UUID membershipId,
             MembershipRoleUpdateRequest request) {
-        authorization.requireOrganizationAdministration(organizationId);
+        authorization.requireAccountAdministration(organizationId);
         Membership membership = membershipRepository.findByGlobalId(membershipId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!membership.getOrganization().getGlobalId().equals(organizationId)) {
@@ -185,6 +188,13 @@ public class OrganizationService {
         return organizationRepository.findByGlobalId(id)
                 .filter(Organization::isActive)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+    }
+
+    private void assignAccountManagementOrganization(Account account, Organization organization, ClinicUnit clinicUnit,
+            MembershipRole role) {
+        if (role == MembershipRole.ORGANIZATION_ADMIN && clinicUnit == null) {
+            account.assignAccountManagementOrganizationIfAbsent(organization);
+        }
     }
 
     static MembershipResponse toResponse(Membership membership) {

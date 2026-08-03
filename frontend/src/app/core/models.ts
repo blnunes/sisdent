@@ -105,6 +105,7 @@ export interface Session {
   displayName: string;
   platformAdministrator: boolean;
   emailMigrationRequired: boolean;
+  accountManagementOrganizationId?: string;
   memberships: Membership[];
 }
 

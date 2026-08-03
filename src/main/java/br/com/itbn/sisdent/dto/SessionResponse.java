@@ -9,5 +9,6 @@ public record SessionResponse(
         String displayName,
         boolean platformAdministrator,
         boolean emailMigrationRequired,
+        UUID accountManagementOrganizationId,
         List<MembershipResponse> memberships) {
 }

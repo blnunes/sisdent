@@ -202,6 +202,9 @@ public class InitialDataLoader implements ApplicationRunner {
                     ? membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnitIsNull(account.getId(), organization.getId())
                     : membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnit_Id(account.getId(), organization.getId(), clinic.getId());
             if (!exists) membershipRepository.save(new Membership(account, organization, clinic, profile.membershipRole()));
+            if (profile.membershipRole() == MembershipRole.ORGANIZATION_ADMIN && clinic == null) {
+                account.assignAccountManagementOrganizationIfAbsent(organization);
+            }
         }
     }
 
