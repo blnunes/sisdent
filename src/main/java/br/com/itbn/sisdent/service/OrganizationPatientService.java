@@ -8,6 +8,11 @@ import br.com.itbn.sisdent.dto.PatientRequest;
 import br.com.itbn.sisdent.dto.FilterOptionResponse;
 import br.com.itbn.sisdent.dto.PatientResponse;
 import br.com.itbn.sisdent.dto.PageResponse;
+import br.com.itbn.sisdent.pagination.PageQuery;
+import br.com.itbn.sisdent.pagination.PageableFactory;
+import br.com.itbn.sisdent.pagination.SortDefinition;
+import br.com.itbn.sisdent.filter.PatientFilter;
+import br.com.itbn.sisdent.filter.PatientLinkSpecifications;
 import br.com.itbn.sisdent.mapper.ResponseMapper;
 import br.com.itbn.sisdent.model.ClinicUnit;
 import br.com.itbn.sisdent.model.Organization;
@@ -31,13 +36,17 @@ public class OrganizationPatientService {
     private final OrganizationRepository organizationRepository;
     private final ScopeAuthorizationService authorization;
     private final PatientService patientService;
+    private final PageableFactory pageableFactory;
+    private static final SortDefinition SORT_DEFINITION = new SortDefinition("patient.name",
+            java.util.Set.of("patient.name", "patient.birthDate", "patient.active", "patient.gender"));
 
     public OrganizationPatientService(PatientRepository patientRepository,
             PatientOrganizationLinkRepository linkRepository, OrganizationRepository organizationRepository,
-            ScopeAuthorizationService authorization, PatientService patientService) {
+            ScopeAuthorizationService authorization, PatientService patientService, PageableFactory pageableFactory) {
         this.patientRepository = patientRepository; this.linkRepository = linkRepository;
         this.organizationRepository = organizationRepository; this.authorization = authorization;
         this.patientService = patientService;
+        this.pageableFactory = pageableFactory;
     }
 
     @Transactional(readOnly = true)
@@ -46,7 +55,8 @@ public class OrganizationPatientService {
         if (!"name".equals(field)) {
             return List.of();
         }
-        return search(organizationId, clinicUnitId, query).content().stream()
+        return search(organizationId, clinicUnitId, new PageQuery(0, 10, "patient.name", "asc"),
+                new PatientFilter(null, query, null, null, null, null, null, null, null, null, null)).content().stream()
                 .limit(10).map(patient -> new FilterOptionResponse(patient.name(), patient.name())).toList();
     }
 
@@ -68,30 +78,37 @@ public class OrganizationPatientService {
     public PatientResponse update(UUID organizationId, UUID clinicUnitId, UUID patientId, PatientRequest request) {
         authorization.requireWrite(organizationId, clinicUnitId);
         Patient patient = requireLinkedPatient(organizationId, clinicUnitId, patientId);
+        if (linkRepository.existsByPatient_IdAndOrganization_GlobalIdNotAndActiveTrue(patient.getId(), organizationId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A globally shared patient cannot be changed from an organization workspace");
+        }
+        if (clinicUnitId != null && linkRepository
+                .findAllByPatient_GlobalIdAndOrganization_GlobalIdAndActiveTrue(patientId, organizationId).stream()
+                .anyMatch(link -> link.getClinicUnit() == null
+                        || !clinicUnitId.equals(link.getClinicUnit().getGlobalId()))) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A patient shared with another clinic unit cannot be changed from a clinic workspace");
+        }
         return patientService.update(patient.getId(), request);
     }
 
     @Transactional
     public void delete(UUID organizationId, UUID clinicUnitId, UUID patientId) {
         authorization.requireWrite(organizationId, clinicUnitId);
-        Patient patient = requireLinkedPatient(organizationId, clinicUnitId, patientId);
-        patientService.delete(patient.getId());
+        PatientOrganizationLink link = requireLinkedPatientLink(organizationId, clinicUnitId, patientId);
+        link.deactivate();
+        linkRepository.save(link);
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<PatientResponse> search(UUID organizationId, UUID clinicUnitId, String name) {
+    public PageResponse<PatientResponse> search(UUID organizationId, UUID clinicUnitId, PageQuery query,
+            PatientFilter filter) {
         authorization.requireRead(organizationId, clinicUnitId);
         if (clinicUnitId != null) {
             authorization.requireClinicInOrganization(organizationId, clinicUnitId);
         }
-        String normalizedName = name == null ? "" : name.strip();
-        List<PatientOrganizationLink> links = clinicUnitId == null
-                ? linkRepository.searchLinkedPatientsInOrganization(organizationId, normalizedName)
-                : linkRepository.searchLinkedPatientsInClinic(organizationId, clinicUnitId, normalizedName);
-        List<PatientResponse> content = links
-                .stream().map(PatientOrganizationLink::getPatient).distinct()
-                .map(ResponseMapper::toResponse).toList();
-        return new PageResponse<>(content, 0, content.size(), content.size(), content.isEmpty() ? 0 : 1);
+        return PageResponse.from(linkRepository.findAll(PatientLinkSpecifications.matching(organizationId, clinicUnitId, filter),
+                pageableFactory.create(scopedQuery(query), SORT_DEFINITION)), link -> ResponseMapper.toResponse(link.getPatient()));
     }
 
     @Transactional(readOnly = true)
@@ -101,8 +118,12 @@ public class OrganizationPatientService {
         if (clinicUnitId != null) {
             authorization.requireClinicInOrganization(organizationId, clinicUnitId);
         }
-        boolean exists = findExact(request.documentType(), request.issuerCountryCode(),
-                request.documentNumber(), request.birthDate()) != null;
+        Patient patient = findExact(request.documentType(), request.issuerCountryCode(),
+                request.documentNumber(), request.birthDate());
+        boolean exists = patient != null && linkRepository
+                .findAllByPatient_GlobalIdAndOrganization_GlobalIdAndActiveTrue(patient.getGlobalId(), organizationId).stream()
+                .anyMatch(link -> clinicUnitId == null || (link.getClinicUnit() != null
+                        && clinicUnitId.equals(link.getClinicUnit().getGlobalId())));
         return new ExactPatientMatchResponse(exists);
     }
 
@@ -118,11 +139,7 @@ public class OrganizationPatientService {
         if (patient == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No exact patient match");
         }
-        boolean duplicate = clinic == null
-                ? linkRepository.existsByPatient_IdAndOrganization_IdAndClinicUnitIsNull(
-                        patient.getId(), organization.getId())
-                : linkRepository.existsByPatient_IdAndOrganization_IdAndClinicUnit_Id(
-                        patient.getId(), organization.getId(), clinic.getId());
+        boolean duplicate = linkRepository.existsByPatient_IdAndOrganization_IdAndActiveTrue(patient.getId(), organization.getId());
         if (duplicate) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "The patient is already linked to this organization scope");
@@ -144,14 +161,24 @@ public class OrganizationPatientService {
     }
 
     private Patient requireLinkedPatient(UUID organizationId, UUID clinicUnitId, UUID patientId) {
-        PatientOrganizationLink link = linkRepository
-                .findFirstByPatient_GlobalIdAndOrganization_GlobalId(patientId, organizationId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if (clinicUnitId != null && (link.getClinicUnit() == null
-                || !link.getClinicUnit().getGlobalId().equals(clinicUnitId))) {
-            throw new org.springframework.security.access.AccessDeniedException(
-                    "Patient is outside the clinic-unit scope");
-        }
-        return link.getPatient();
+        return requireLinkedPatientLink(organizationId, clinicUnitId, patientId).getPatient();
+    }
+
+    private PatientOrganizationLink requireLinkedPatientLink(UUID organizationId, UUID clinicUnitId, UUID patientId) {
+        return linkRepository.findAllByPatient_GlobalIdAndOrganization_GlobalIdAndActiveTrue(patientId, organizationId).stream()
+                .filter(link -> clinicUnitId == null || (link.getClinicUnit() != null
+                        && link.getClinicUnit().getGlobalId().equals(clinicUnitId)))
+                .findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    private PageQuery scopedQuery(PageQuery query) {
+        String sort = switch (query.sort() == null ? "id" : query.sort()) {
+            case "id", "name" -> "patient.name";
+            case "birthDate" -> "patient.birthDate";
+            case "active" -> "patient.active";
+            case "gender" -> "patient.gender";
+            default -> query.sort();
+        };
+        return new PageQuery(query.page(), query.size(), sort, query.direction());
     }
 }

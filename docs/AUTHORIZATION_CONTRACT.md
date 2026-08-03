@@ -1,5 +1,21 @@
 # Authorization contract
 
+## Patient tenant lifecycle
+
+Patient identity is global so an explicitly authorized intake workflow can deduplicate an
+existing person. Operational access is not global: only active `patient_organization_links`
+are readable and a clinic-unit request must match that link's clinic unit. Deleting a patient
+from an organization workspace deactivates that organization link; it never deactivates the
+shared patient identity or a link in another organization. Inactive links are excluded from
+all organization and clinic patient lists. The exact-match endpoint only reports a match that
+is already active in the caller's scope, so it cannot be used to discover patients in another
+organization.
+
+An organization workspace cannot update a patient that is actively shared with another
+organization. A clinic workspace also cannot update a patient shared with another clinic unit.
+This preserves the existing global identity model without allowing a local edit to silently
+alter a different tenant's operational record.
+
 Organization-scoped APIs authorize exclusively through an active membership.
 Legacy `app_users` roles and permissions remain compatibility data for legacy
 or global resources and do not grant patient, practitioner, appointment, or
