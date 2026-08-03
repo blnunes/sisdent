@@ -85,6 +85,10 @@ export class AuthService {
     return role === 'ORGANIZATION_ADMIN' || role === 'CLINICAL_MANAGER';
   }
 
+  canManageOrganizationAccess(): boolean {
+    return this.activeMembership()?.role === 'ORGANIZATION_ADMIN';
+  }
+
   login(request: LoginRequest) {
     return this.http.post<TokenResponse>('/api/auth/login', request).pipe(
       tap(({ accessToken }) => {

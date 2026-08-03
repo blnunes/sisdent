@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { anyPermissionsGuard, authGuard, permissionsGuard } from './core/auth.guard';
+import { anyPermissionsGuard, authGuard } from './core/auth.guard';
 
 export const routes: Routes = [
   {
@@ -36,10 +36,12 @@ export const routes: Routes = [
         (m) => m.EmailVerificationComponent,
       ),
   },
+  // The former legacy-user URL is kept only as a client-side compatibility redirect.
+  { path: 'users', pathMatch: 'full', redirectTo: 'accounts' },
   {
-    path: 'users',
-    canActivate: [authGuard, permissionsGuard('MAINTAIN_USERS')],
-    loadComponent: () => import('./features/users/users.component').then((m) => m.UsersComponent),
+    path: 'accounts',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/accounts/accounts.component').then((m) => m.AccountsComponent),
   },
   {
     path: 'patients',
@@ -90,11 +92,8 @@ export const routes: Routes = [
     loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
     data: { key: 'administrativeDivisions', endpoint: '/api/administrative-divisions', title: 'MODULES.ADMINISTRATIVE_DIVISIONS', description: 'MODULES.ADMINISTRATIVE_DIVISIONS_DESCRIPTION', maintainPermission: 'MAINTAIN_ADMINISTRATIVE_DIVISIONS' },
   },
-  {
-    path: 'permissions',
-    canActivate: [authGuard, anyPermissionsGuard('READ_PERMISSIONS', 'MAINTAIN_PERMISSIONS')],
-    loadComponent: () => import('./features/permissions/permissions.component').then((m) => m.PermissionsComponent),
-  },
+  // Phase 6 deliberately has no generic legacy permission editor.
+  { path: 'permissions', pathMatch: 'full', redirectTo: 'accounts' },
   {
     path: 'not-found',
     loadComponent: () =>

@@ -1,0 +1,18 @@
+@use '../users/users.component.scss';
+
+.form-card { margin: 0 0 24px; padding: 22px 26px; border-color: var(--app-border); border-radius: 18px; }
+.platform-actions { display:flex; align-items:center; gap:16px; }
+.scope-notice { display:flex; align-items:flex-start; gap:12px; margin:0 0 20px; padding:14px 18px; border:1px solid var(--app-border); border-radius:14px; background:var(--app-primary-subtle); }.scope-notice mat-icon { color:var(--app-primary); }.scope-notice div { display:grid; gap:3px; }.scope-notice span { color:var(--app-text-muted); font-size:.9rem; }
+.form-card form { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.form-card p { width: 100%; margin: 0; color: var(--app-text-muted); }
+.form-card mat-form-field { flex: 1 1 220px; }
+.status-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+.platform-chip { color: var(--app-primary); font-weight: 700; }
+.membership-list { display: grid; gap: 8px; min-width: 290px; }
+.membership { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--app-border); border-radius: 10px; background: var(--app-surface); }
+.membership strong, .membership span { display: block; }
+.membership div > span { margin-top: 2px; color: var(--app-text-muted); font-size: .8rem; }
+.membership .role-badge { flex: none; white-space: nowrap; }
+.no-access { color: var(--app-text-muted); font-style: italic; }
+.copy-id { min-width: 0; padding: 0; font-size: .75rem; }
+@media (max-width: 800px) { .form-card { padding: 18px; } .form-card form { align-items: stretch; } .form-card button { width: 100%; } }

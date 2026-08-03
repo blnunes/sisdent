@@ -62,6 +62,8 @@ class Phase2IdentityIntegrationTests {
         Organization first = organizationRepository.save(new Organization("First organization"));
         Organization second = organizationRepository.save(new Organization("Second organization"));
         Account account = saveAccount("multi@example.com", false);
+        account.assignAccountManagementOrganizationIfAbsent(first);
+        accountRepository.save(account);
         Membership firstMembership = membershipRepository.save(
                 new Membership(account, first, null, MembershipRole.ORGANIZATION_ADMIN));
         Membership secondMembership = membershipRepository.save(
@@ -76,6 +78,27 @@ class Phase2IdentityIntegrationTests {
         assertThat(accountRepository.findById(account.getId())).isPresent();
         assertThat(membershipRepository.findById(firstMembership.getId()).orElseThrow().isActive()).isFalse();
         assertThat(membershipRepository.findById(secondMembership.getId()).orElseThrow().isActive()).isTrue();
+    }
+
+    @Test
+    void delegatedAccountAdministrationIsLimitedToThePersistedManagementOrganization() throws Exception {
+        Organization base = organizationRepository.save(new Organization("Management base"));
+        Organization other = organizationRepository.save(new Organization("Operational-only organization"));
+        Account account = saveAccount("scoped-admin@example.com", false);
+        account.assignAccountManagementOrganizationIfAbsent(base);
+        accountRepository.save(account);
+        membershipRepository.save(new Membership(account, base, null, MembershipRole.ORGANIZATION_ADMIN));
+        membershipRepository.save(new Membership(account, other, null, MembershipRole.ORGANIZATION_ADMIN));
+        String token = login("scoped-admin@example.com", "phase2-password");
+
+        mockMvc.perform(get("/api/platform/accounts").header("Authorization", bearer(token)))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/organizations/{organizationId}/accounts", base.getGlobalId())
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/organizations/{organizationId}/accounts", other.getGlobalId())
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isForbidden());
     }
 
     @Test

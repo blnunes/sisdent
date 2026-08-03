@@ -6,6 +6,9 @@ import br.com.itbn.sisdent.dto.MembershipRequest;
 import br.com.itbn.sisdent.dto.MembershipResponse;
 import br.com.itbn.sisdent.dto.OrganizationRequest;
 import br.com.itbn.sisdent.dto.OrganizationResponse;
+import br.com.itbn.sisdent.dto.AccountMembershipRequest;
+import br.com.itbn.sisdent.dto.MembershipRevokeRequest;
+import br.com.itbn.sisdent.dto.MembershipRoleUpdateRequest;
 import br.com.itbn.sisdent.model.Account;
 import br.com.itbn.sisdent.model.ClinicUnit;
 import br.com.itbn.sisdent.model.Membership;
@@ -52,6 +55,16 @@ public class OrganizationService {
         return new OrganizationResponse(organization.getGlobalId(), organization.getName(), organization.isActive());
     }
 
+    @Transactional(readOnly = true)
+    public List<OrganizationResponse> listOrganizationsForPlatform() {
+        authorization.requirePlatformAdministrator();
+        return organizationRepository.findAll().stream()
+                .filter(Organization::isActive)
+                .sorted(java.util.Comparator.comparing(Organization::getName, String.CASE_INSENSITIVE_ORDER))
+                .map(organization -> new OrganizationResponse(organization.getGlobalId(), organization.getName(), true))
+                .toList();
+    }
+
     @Transactional
     public ClinicUnitResponse createClinicUnit(UUID organizationId, ClinicUnitRequest request) {
         authorization.requireOrganizationAdministration(organizationId);
@@ -62,7 +75,9 @@ public class OrganizationService {
 
     @Transactional(readOnly = true)
     public List<ClinicUnitResponse> listClinicUnits(UUID organizationId, UUID clinicUnitId) {
-        authorization.requireAppointmentRead(organizationId, clinicUnitId);
+        if (!authorization.isPlatformAdministrator()) {
+            authorization.requireAppointmentRead(organizationId, clinicUnitId);
+        }
         List<ClinicUnit> units = clinicUnitRepository.findAllByOrganization_GlobalIdAndActiveTrueOrderByName(organizationId);
         if (clinicUnitId != null) {
             units = units.stream().filter(unit -> unit.getGlobalId().equals(clinicUnitId)).toList();
@@ -74,7 +89,7 @@ public class OrganizationService {
 
     @Transactional
     public MembershipResponse addMembership(UUID organizationId, MembershipRequest request) {
-        authorization.requireOrganizationAdministration(organizationId);
+        authorization.requireAccountAdministration(organizationId);
         Organization organization = requireOrganization(organizationId);
         ClinicUnit clinicUnit = request.clinicUnitId() == null ? null
                 : authorization.requireClinicInOrganization(organizationId, request.clinicUnitId());
@@ -96,13 +111,35 @@ public class OrganizationService {
         if (duplicate) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A membership already exists for this scope");
         }
-        return toResponse(membershipRepository.saveAndFlush(
-                new Membership(account, organization, clinicUnit, request.role())));
+        Membership membership = membershipRepository.saveAndFlush(new Membership(account, organization, clinicUnit, request.role()));
+        assignAccountManagementOrganization(account, organization, clinicUnit, request.role());
+        return toResponse(membership);
+    }
+
+    /** Exact email lookup supports a deliberate grant without exposing a global account directory. */
+    @Transactional
+    public MembershipResponse grantMembership(UUID organizationId, AccountMembershipRequest request) {
+        authorization.requireAccountAdministration(organizationId);
+        Organization organization = requireOrganization(organizationId);
+        ClinicUnit clinicUnit = request.clinicUnitId() == null ? null
+                : authorization.requireClinicInOrganization(organizationId, request.clinicUnitId());
+        if (request.role() == MembershipRole.ORGANIZATION_ADMIN && clinicUnit != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization administrators must have organization-wide scope");
+        }
+        Account account = accountRepository.findByEmail(Account.normalizeEmail(request.email()))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        boolean duplicate = clinicUnit == null
+                ? membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnitIsNull(account.getId(), organization.getId())
+                : membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnit_Id(account.getId(), organization.getId(), clinicUnit.getId());
+        if (duplicate) throw new ResponseStatusException(HttpStatus.CONFLICT, "A membership already exists for this scope");
+        Membership membership = membershipRepository.saveAndFlush(new Membership(account, organization, clinicUnit, request.role()));
+        assignAccountManagementOrganization(account, organization, clinicUnit, request.role());
+        return toResponse(membership);
     }
 
     @Transactional
     public void revokeMembership(UUID organizationId, UUID membershipId) {
-        authorization.requireOrganizationAdministration(organizationId);
+        authorization.requireAccountAdministration(organizationId);
         Membership membership = membershipRepository.findByGlobalId(membershipId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         if (!membership.getOrganization().getGlobalId().equals(organizationId)) {
@@ -113,10 +150,51 @@ public class OrganizationService {
         membershipRepository.save(membership);
     }
 
+    @Transactional
+    public void revokeMembership(UUID organizationId, UUID membershipId, MembershipRevokeRequest request) {
+        authorization.requireAccountAdministration(organizationId);
+        Membership membership = membershipRepository.findByGlobalId(membershipId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (!membership.getOrganization().getGlobalId().equals(organizationId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        if (membership.getVersion() != request.version() || !membership.isActive()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "The membership was changed by another request");
+        }
+        membership.revoke();
+        membershipRepository.saveAndFlush(membership);
+    }
+
+    @Transactional
+    public MembershipResponse changeMembershipRole(UUID organizationId, UUID membershipId,
+            MembershipRoleUpdateRequest request) {
+        authorization.requireAccountAdministration(organizationId);
+        Membership membership = membershipRepository.findByGlobalId(membershipId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (!membership.getOrganization().getGlobalId().equals(organizationId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        if (!membership.isActive() || membership.getVersion() != request.version()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "The membership was changed by another request");
+        }
+        if (request.role() == MembershipRole.ORGANIZATION_ADMIN && membership.getClinicUnit() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization administrators must have organization-wide scope");
+        }
+        membership.changeRole(request.role());
+        return toResponse(membershipRepository.saveAndFlush(membership));
+    }
+
     private Organization requireOrganization(UUID id) {
         return organizationRepository.findByGlobalId(id)
                 .filter(Organization::isActive)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+    }
+
+    private void assignAccountManagementOrganization(Account account, Organization organization, ClinicUnit clinicUnit,
+            MembershipRole role) {
+        if (role == MembershipRole.ORGANIZATION_ADMIN && clinicUnit == null) {
+            account.assignAccountManagementOrganizationIfAbsent(organization);
+        }
     }
 
     static MembershipResponse toResponse(Membership membership) {
@@ -124,6 +202,6 @@ public class OrganizationService {
         return new MembershipResponse(membership.getGlobalId(),
                 membership.getOrganization().getGlobalId(), membership.getOrganization().getName(),
                 clinic == null ? null : clinic.getGlobalId(), clinic == null ? null : clinic.getName(),
-                membership.getRole());
+                membership.getRole(), membership.getVersion());
     }
 }

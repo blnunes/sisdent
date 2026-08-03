@@ -18,6 +18,12 @@ public interface MembershipRepository extends JpaRepository<Membership, Long> {
     @EntityGraph(attributePaths = {"organization", "clinicUnit", "account"})
     Optional<Membership> findByGlobalId(UUID globalId);
 
+    @EntityGraph(attributePaths = {"organization", "clinicUnit", "account"})
+    List<Membership> findAllByAccount_IdOrderByOrganization_NameAscClinicUnit_NameAsc(Long accountId);
+
+    @EntityGraph(attributePaths = {"organization", "clinicUnit", "account"})
+    List<Membership> findAllByAccount_IdAndOrganization_GlobalIdOrderByClinicUnit_NameAsc(Long accountId, UUID organizationId);
+
     boolean existsByAccount_IdAndOrganization_IdAndClinicUnit_Id(Long accountId, Long organizationId, Long clinicUnitId);
     boolean existsByAccount_IdAndOrganization_IdAndClinicUnitIsNull(Long accountId, Long organizationId);
 }

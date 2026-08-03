@@ -779,6 +779,7 @@
   "demoProfiles": [
     { "displayName": "Platform Operations", "email": "platform.operations@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": true, "organizationName": null, "clinicUnitName": null, "membershipRole": null },
     { "displayName": "Demo Group Administrator", "email": "group.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
+    { "displayName": "Demo Group Administrator", "email": "group.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Harbor Dental Clinic", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
     { "displayName": "Demo Group Administrator", "email": "group.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Southstart Dental Group", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
     { "displayName": "Northstar Administrator", "email": "northstar.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
     { "displayName": "Northstar Operations Manager", "email": "northstar.manager@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": "Northstar Central Clinic", "membershipRole": "MANAGER" },

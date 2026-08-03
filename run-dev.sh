@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PORTS=(4200 8080)
 MAX_ATTEMPTS=50
+HEALTH_ATTEMPTS=120
 
 port_pids() {
   lsof -nP -tiTCP:"$1" -sTCP:LISTEN 2>/dev/null || true
@@ -62,6 +63,23 @@ trap cleanup EXIT INT TERM
   ./mvnw spring-boot:run
 ) &
 BACKEND_PID=$!
+
+echo "Waiting for the backend health endpoint on port 8080..."
+for ((attempt = 1; attempt <= HEALTH_ATTEMPTS; attempt++)); do
+  if curl --fail --silent --show-error http://127.0.0.1:8080/actuator/health >/dev/null 2>&1; then
+    echo "Backend is ready. Starting the frontend..."
+    break
+  fi
+  if ! kill -0 "$BACKEND_PID" 2>/dev/null; then
+    echo "Backend exited before becoming ready." >&2
+    exit 1
+  fi
+  if (( attempt == HEALTH_ATTEMPTS )); then
+    echo "Backend did not become ready within 60 seconds." >&2
+    exit 1
+  fi
+  sleep 0.5
+done
 
 (
   cd "$ROOT_DIR/frontend"

@@ -32,6 +32,10 @@ public class ScopeAuthorizationService {
         }
     }
 
+    public boolean isPlatformAdministrator() {
+        return currentAccountService.require().isPlatformAdministrator();
+    }
+
     public void requireRead(UUID organizationId, UUID clinicUnitId) {
         if (matchingMemberships(organizationId, clinicUnitId).isEmpty()) {
             throw new AccessDeniedException("No active membership grants access to this scope");
@@ -89,6 +93,9 @@ public class ScopeAuthorizationService {
     }
 
     public void requireOrganizationAdministration(UUID organizationId) {
+        if (currentAccountService.require().isPlatformAdministrator()) {
+            return;
+        }
         boolean allowed = membershipRepository.findAllByAccount_IdAndOrganization_GlobalIdAndActiveTrue(
                         currentAccountService.require().getId(), organizationId).stream()
                 .anyMatch(membership -> membership.getClinicUnit() == null
@@ -96,6 +103,19 @@ public class ScopeAuthorizationService {
         if (!allowed) {
             throw new AccessDeniedException("Organization administrator access is required");
         }
+    }
+
+    public void requireAccountAdministration(UUID organizationId) {
+        var account = currentAccountService.require();
+        if (account.isPlatformAdministrator()) return;
+        if (account.getAccountManagementOrganization() == null
+                || !account.getAccountManagementOrganization().getGlobalId().equals(organizationId)) {
+            throw new AccessDeniedException("Account administration is restricted to the assigned organization");
+        }
+        boolean allowed = membershipRepository.findAllByAccount_IdAndOrganization_GlobalIdAndActiveTrue(account.getId(), organizationId)
+                .stream().anyMatch(membership -> membership.getClinicUnit() == null
+                        && membership.getRole() == MembershipRole.ORGANIZATION_ADMIN);
+        if (!allowed) throw new AccessDeniedException("Organization administrator access is required");
     }
 
     public ClinicUnit requireClinicInOrganization(UUID organizationId, UUID clinicUnitId) {
