@@ -48,7 +48,7 @@ class PatientServiceTest {
     void createsGlobalPatientWithCountryScopedDocumentAndOptionalTaxId() {
         PatientRequest request = patientRequest();
         Country portugal = country();
-        when(addressService.createPatientAddress(request.address())).thenReturn(address(portugal));
+        when(addressService.resolvePatientAddress(request.addressId(), request.address())).thenReturn(address(portugal));
         when(specialityService.findAllByIds(request.specialityIds()))
                 .thenReturn(List.of(new Speciality("Orthodontics")));
         when(countryService.requireByCode("PT")).thenReturn(portugal);
@@ -62,7 +62,7 @@ class PatientServiceTest {
         assertThat(response.identificationType()).isEqualTo(DocumentType.NATIONAL_ID_CARD);
         assertThat(response.documentIssuerCountry().code()).isEqualTo("PT");
         assertThat(response.address().postalCode()).isEqualTo("1250-096");
-        verify(addressService).createPatientAddress(request.address());
+        verify(addressService).resolvePatientAddress(request.addressId(), request.address());
     }
 
     private PatientRequest patientRequest() {
@@ -76,6 +76,7 @@ class PatientServiceTest {
                 "12 345-ABC",
                 "PT",
                 "PT",
+                null,
                 new AddressRequest(
                         "Avenida da Liberdade 100",
                         null,

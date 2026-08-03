@@ -18,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -58,21 +59,39 @@ class AddressServiceTest {
     }
 
     @Test
-    void patientAddressIsAlwaysCreatedInsteadOfReusedByPostalCode() {
+    void reusesAnExistingPatientAddressWithTheSameNormalizedDetails() {
         AddressRequest request = request();
         Country country = country();
         AdministrativeDivision division = division(country);
         when(countryService.requireByCode("PT")).thenReturn(country);
         when(administrativeDivisionService.findOrCreate(request.administrativeDivision(), country))
                 .thenReturn(division);
-        when(addressRepository.save(any(Address.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        Address existing = address();
+        when(addressRepository.findAllByCountry_CodeAndPostalCodeOrderByStreet("PT", "1250-096"))
+                .thenReturn(List.of(existing));
 
-        Address result = addressService.createPatientAddress(request);
+        Address result = addressService.resolvePatientAddress(null, request);
 
-        assertThat(result.getCity()).isEqualTo("Lisbon");
-        assertThat(result.getAdministrativeDivision()).isSameAs(division);
-        verify(addressRepository).save(any(Address.class));
+        assertThat(result).isSameAs(existing);
+        verify(addressRepository, never()).save(any(Address.class));
+    }
+
+    @Test
+    void reusesTheAddressSelectedById() {
+        Address existing = address();
+        when(addressRepository.findById(42L)).thenReturn(java.util.Optional.of(existing));
+
+        assertThat(addressService.resolvePatientAddress(42L, null)).isSameAs(existing);
+    }
+
+    @Test
+    void suggestsPostalCodesWithinTheSelectedCountry() {
+        when(addressRepository.findTop10ByCountry_CodeAndPostalCodeStartingWithOrderByPostalCodeAscStreetAsc("PT", "125"))
+                .thenReturn(List.of(address()));
+
+        List<AddressResponse> results = addressService.suggestByPostalCode("pt", "125");
+
+        assertThat(results).singleElement().extracting(AddressResponse::postalCode).isEqualTo("1250-096");
     }
 
     private AddressRequest request() {

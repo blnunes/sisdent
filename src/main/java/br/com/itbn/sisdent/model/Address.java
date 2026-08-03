@@ -31,7 +31,7 @@ public class Address extends AuditableEntity {
 
     private String block;
 
-    @Column(length = 20)
+    @Column(nullable = false, length = 20)
     private String postalCode;
 
     @ManyToOne(fetch = FetchType.LAZY)

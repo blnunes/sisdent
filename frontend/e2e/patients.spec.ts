@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page, type Response } from '@playwright/test';
 
 const patient = {
   name: `E2E Patient ${Date.now()}`,
@@ -17,6 +17,7 @@ test.describe('Patient management', () => {
     await expect(page).toHaveURL(/\/home$/);
     await page.goto('/patients');
     await expect(page.getByRole('heading', { name: 'Patients', exact: true })).toBeVisible();
+    await expect(page.getByRole('cell', { name: 'Olivia Bennett', exact: true })).toBeVisible();
   });
 
   test('creates, updates and deletes a patient', async ({ page }) => {
@@ -34,16 +35,14 @@ test.describe('Patient management', () => {
     await page.getByLabel('Tax ID').fill(patient.taxId);
     await selectOption(page, 'Identification type', 'National ID card');
     await page.getByLabel('Identification number').fill(patient.identificationNumber);
-    await page.getByLabel('Document issuer country code').fill('PT');
-    await page.getByLabel('Nationality country code').fill('PT');
+    await selectOption(page, 'Document issuer country code', 'Portugal (PT)');
+    await selectOption(page, 'Nationality country code', 'Portugal (PT)');
+    await selectOption(page, 'Address country code', 'Portugal (PT)');
     await page.getByLabel('Street').fill('E2E Test Street');
     await page.getByLabel('District').fill('Lisbon');
     await page.getByLabel('City').fill('Lisbon');
     await page.getByLabel('Postal code').fill('1000-001');
-    await page.getByLabel('Administrative division name').fill('Lisbon');
-    await page.getByLabel('Administrative division code').fill('11');
-    await page.getByLabel('Administrative division type').fill('DISTRICT');
-    await page.getByLabel('Address country code').fill('PT');
+    await selectOption(page, 'Administrative division', 'Lisbon (PT-LIS)');
 
     const createResponse = page.waitForResponse(
       (response) =>
@@ -83,7 +82,154 @@ test.describe('Patient management', () => {
     await deleteResponse;
     await expect(page.getByRole('cell', { name: patient.updatedName })).toHaveCount(0);
   });
+
+  test('filters patients by every available criterion and by combined criteria', async ({ page }) => {
+    const filters = page.getByRole('region', { name: 'Patient filters' });
+
+    let response = await applyTextFilter(page, filters, 'Patient name', 'Olivia');
+    expectFilterParameter(response, 'name', 'Olivia');
+    await expectPatientResults(page, response, (entry) => entry.name.toLowerCase().includes('olivia'));
+    await resetFilters(page, filters);
+
+    response = await applySelectFilter(page, filters, 'Status', 'Inactive');
+    expectFilterParameter(response, 'active', 'false');
+    await expectPatientResults(page, response, (entry) => entry.active === false);
+    await resetFilters(page, filters);
+
+    response = await selectAutocompleteFilter(page, filters, 'Speciality', 'Pediatric Dentistry');
+    expectFilterParameter(response, 'specialityId');
+    await expectPatientResults(page, response, (entry) => entry.specialities.some((speciality) => speciality.name === 'Pediatric Dentistry'));
+    await resetFilters(page, filters);
+
+    await filters.getByRole('button', { name: 'More filters' }).click();
+
+    response = await selectBirthDateFilter(page, filters, 'April 18, 1992');
+    expectFilterParameter(response, 'birthDate', '1992-04-18');
+    await expectPatientResults(page, response, (entry) => entry.birthDate === '1992-04-18');
+    await resetFilters(page, filters);
+
+    response = await applySelectFilter(page, filters, 'Gender', 'Female');
+    expectFilterParameter(response, 'gender', 'FEMALE');
+    await expectPatientResults(page, response, (entry) => entry.gender === 'FEMALE');
+    await resetFilters(page, filters);
+
+    response = await selectAutocompleteFilter(page, filters, 'Tax ID', '10000000001');
+    expectFilterParameter(response, 'taxId', '10000000001');
+    await expectPatientResults(page, response, (entry) => entry.taxId === '10000000001');
+    await resetFilters(page, filters);
+
+    response = await applySelectFilter(page, filters, 'Identification type', 'National ID card');
+    expectFilterParameter(response, 'identificationType', 'NATIONAL_ID_CARD');
+    await expectPatientResults(page, response, (entry) => entry.identificationType === 'NATIONAL_ID_CARD');
+    await resetFilters(page, filters);
+
+    response = await applySelectFilter(page, filters, 'Nationality', 'United States (US)');
+    expectFilterParameter(response, 'nationalityCode', 'US');
+    await expectPatientResults(page, response, (entry) => entry.nationality.code === 'US');
+    await resetFilters(page, filters);
+
+    response = await selectAutocompleteFilter(page, filters, 'Address', 'Maple Grove');
+    expectFilterParameter(response, 'addressId');
+    await expectPatientResults(page, response, (entry) => entry.address.street.includes('Maple Grove'));
+    await resetFilters(page, filters);
+
+    await filters.getByLabel('Patient name').fill('Olivia');
+    await filters.getByLabel('Tax ID').fill('10000000001');
+    await applySelectFilter(page, filters, 'Status', 'Active');
+    await applySelectFilter(page, filters, 'Gender', 'Female');
+    response = await selectAutocompleteFilter(page, filters, 'Speciality', 'Pediatric Dentistry');
+    expectFilterParameter(response, 'name', 'Olivia');
+    expectFilterParameter(response, 'taxId', '10000000001');
+    expectFilterParameter(response, 'active', 'true');
+    expectFilterParameter(response, 'gender', 'FEMALE');
+    expectFilterParameter(response, 'specialityId');
+    await expectPatientResults(page, response, (entry) =>
+      entry.name === 'Olivia Bennett'
+      && entry.taxId === '10000000001'
+      && entry.active === true
+      && entry.gender === 'FEMALE'
+      && entry.specialities.some((speciality) => speciality.name === 'Pediatric Dentistry'),
+    );
+  });
 });
+
+type PatientResult = {
+  name: string;
+  birthDate: string;
+  active: boolean;
+  gender: string;
+  taxId: string;
+  identificationType: string;
+  nationality: { code: string };
+  address: { street: string };
+  specialities: { name: string }[];
+};
+
+async function applyTextFilter(page: Page, filters: Locator, label: string, value: string): Promise<Response> {
+  const response = waitForPatientResults(page);
+  await filters.getByLabel(label, { exact: true }).fill(value);
+  await filters.getByRole('button', { name: 'Filter', exact: true }).click();
+  return response;
+}
+
+async function applySelectFilter(page: Page, filters: Locator, label: string, option: string): Promise<Response> {
+  const response = waitForPatientResults(page);
+  await filters.getByRole('combobox', { name: label, exact: true }).click();
+  await page.getByRole('option', { name: option, exact: true }).click();
+  return response;
+}
+
+async function selectAutocompleteFilter(page: Page, filters: Locator, label: string, query: string): Promise<Response> {
+  const input = filters.getByLabel(label, { exact: true });
+  await input.fill(query);
+  await expect(page.getByRole('option').filter({ hasText: query }).first()).toBeVisible();
+  const response = waitForPatientResults(page);
+  await page.getByRole('option').filter({ hasText: query }).first().click();
+  return response;
+}
+
+async function selectBirthDateFilter(page: Page, filters: Locator, dateLabel: string): Promise<Response> {
+  const field = filters.getByLabel('Birth date', { exact: true });
+  await field.locator('xpath=..').getByRole('button', { name: 'Open calendar' }).click();
+  const calendar = page.locator('mat-calendar');
+  await calendar.locator('.mat-calendar-period-button').click();
+  await calendar.getByText('1992', { exact: true }).click();
+  const response = waitForPatientResults(page);
+  await calendar.getByRole('button', { name: dateLabel, exact: true }).click();
+  return response;
+}
+
+async function resetFilters(page: Page, filters: Locator): Promise<void> {
+  const response = waitForPatientResults(page);
+  await filters.getByRole('button', { name: 'Clear all', exact: true }).click();
+  await response;
+}
+
+function waitForPatientResults(page: Page): Promise<Response> {
+  return page.waitForResponse((response) =>
+    response.request().method() === 'GET'
+    && /\/api\/organizations\/[^/]+\/patients\?/.test(response.url())
+    && !response.url().includes('/filter-options'),
+  );
+}
+
+function expectFilterParameter(response: Response, key: string, expected?: string): void {
+  const value = new URL(response.url()).searchParams.get(key);
+  if (expected) expect(value).toBe(expected);
+  else expect(value).toBeTruthy();
+}
+
+async function expectPatientResults(page: Page, response: Response, predicate: (entry: PatientResult) => boolean): Promise<void> {
+  expect(response.url()).toContain('/patients?');
+  expect(response.ok()).toBe(true);
+  const result = await page.evaluate(async (url) => {
+    const token = localStorage.getItem('sisdent.access-token');
+    return (await fetch(url, { headers: { Authorization: `Bearer ${token}` } })).json();
+  }, response.url()) as { content: PatientResult[]; totalElements: number };
+  expect(result.totalElements).toBeGreaterThan(0);
+  expect(result.content).not.toHaveLength(0);
+  expect(result.content.every(predicate)).toBe(true);
+}
 
 async function selectOption(page: Page, label: string, option: string): Promise<void> {
   await page.getByRole('dialog').getByRole('combobox', { name: label, exact: true }).click();

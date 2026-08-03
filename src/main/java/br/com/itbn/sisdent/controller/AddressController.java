@@ -45,6 +45,13 @@ public class AddressController {
         return addressService.findByPostalCode(countryCode, postalCode);
     }
 
+    @GetMapping("/postal-code-suggestions")
+    public List<AddressResponse> suggestByPostalCode(
+            @RequestParam String countryCode,
+            @RequestParam String query) {
+        return addressService.suggestByPostalCode(countryCode, query);
+    }
+
     @PostMapping @ResponseStatus(HttpStatus.CREATED)
     public AddressResponse create(@Valid @RequestBody AddressRequest request) { return addressService.create(request); }
     @PutMapping("/{id}")

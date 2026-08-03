@@ -236,17 +236,19 @@ public class InitialDataLoader implements ApplicationRunner {
     private Map<String, AdministrativeDivision> saveAdministrativeDivisions(
             List<AdministrativeDivisionData> divisions,
             Map<String, Country> countriesByCode,
-            String countryCode) {
-        Country country = requireReference(countriesByCode, countryCode, "country code");
+            String defaultCountryCode) {
         List<AdministrativeDivision> savedDivisions = divisions.stream()
-                .map(division -> administrativeDivisionRepository
-                        .findByCountry_CodeAndCode(countryCode, division.code())
+                .map(division -> {
+                    String countryCode = countryCode(division.countryCode(), defaultCountryCode);
+                    Country country = requireReference(countriesByCode, countryCode, "country code");
+                    return administrativeDivisionRepository.findByCountry_CodeAndCode(countryCode, division.code())
                         .orElseGet(() -> administrativeDivisionRepository.save(
                                 new AdministrativeDivision(
                                         division.name(),
                                         division.code(),
                                         division.type(),
-                                        country))))
+                                        country)));
+                })
                 .toList();
 
         return savedDivisions.stream()
@@ -268,13 +270,23 @@ public class InitialDataLoader implements ApplicationRunner {
             List<AddressData> addresses,
             Map<String, AdministrativeDivision> divisionsByCode,
             Map<String, Country> countriesByCode,
-            String addressCountryCode) {
+            String defaultCountryCode) {
         return addresses.stream()
                 .collect(Collectors.toMap(
                         AddressData::reference,
-                        address -> addressRepository
+                        address -> {
+                            String countryCode = countryCode(address.countryCode(), defaultCountryCode);
+                            AdministrativeDivision division = requireReference(
+                                    divisionsByCode,
+                                    address.administrativeDivisionCode(),
+                                    "administrative division code");
+                            if (!division.getCountry().getCode().equals(countryCode)) {
+                                throw new IllegalStateException("Address country must match its administrative division in "
+                                        + INITIAL_DATA_PATH + ": " + address.reference());
+                            }
+                            return addressRepository
                                 .findAllByCountry_CodeAndPostalCodeOrderByStreet(
-                                        addressCountryCode,
+                                        countryCode,
                                         address.postalCode())
                                 .stream()
                                 .filter(existing -> existing.getStreet().equals(address.street()))
@@ -286,14 +298,12 @@ public class InitialDataLoader implements ApplicationRunner {
                                         address.additionalInfo(),
                                         address.block(),
                                         address.postalCode(),
-                                        requireReference(
-                                                divisionsByCode,
-                                                address.administrativeDivisionCode(),
-                                                "administrative division code"),
+                                        division,
                                         requireReference(
                                                 countriesByCode,
-                                                addressCountryCode,
-                                                "country code"))))));
+                                                countryCode,
+                                                "country code"))));
+                        }));
     }
 
     private void savePatients(
@@ -318,7 +328,9 @@ public class InitialDataLoader implements ApplicationRunner {
                                 "document issuer country code"),
                         requireReference(
                                 countriesByCode,
-                                seedDefaults.patientNationalityCode(),
+                                patient.nationalityCode() == null || patient.nationalityCode().isBlank()
+                                        ? seedDefaults.patientNationalityCode()
+                                        : patient.nationalityCode(),
                                 "nationality country code"),
                         requireReference(
                                 addressesByReference,
@@ -340,6 +352,10 @@ public class InitialDataLoader implements ApplicationRunner {
                     "Unknown " + referenceType + " in " + INITIAL_DATA_PATH + ": " + key);
         }
         return value;
+    }
+
+    private String countryCode(String value, String defaultCountryCode) {
+        return value == null || value.isBlank() ? defaultCountryCode : value;
     }
 
     public record InitialData(
@@ -365,7 +381,7 @@ public class InitialDataLoader implements ApplicationRunner {
             String identificationPrefix) {
     }
 
-    public record AdministrativeDivisionData(String name, String code, String type) {
+    public record AdministrativeDivisionData(String name, String code, String type, String countryCode) {
     }
 
     public record SpecialityData(String name, List<String> procedures) {
@@ -379,7 +395,8 @@ public class InitialDataLoader implements ApplicationRunner {
             String additionalInfo,
             String block,
             String postalCode,
-            String administrativeDivisionCode) {
+            String administrativeDivisionCode,
+            String countryCode) {
     }
 
     public record PatientData(
@@ -388,6 +405,7 @@ public class InitialDataLoader implements ApplicationRunner {
             boolean active,
             Gender gender,
             String taxId,
+            String nationalityCode,
             String addressReference,
             List<String> specialityNames) {
     }
