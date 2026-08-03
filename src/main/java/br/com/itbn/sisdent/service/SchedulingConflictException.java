@@ -1,0 +1,1 @@
+package br.com.itbn.sisdent.service; public class SchedulingConflictException extends RuntimeException { public SchedulingConflictException(){super("The requested practitioner is unavailable in the requested interval");} }

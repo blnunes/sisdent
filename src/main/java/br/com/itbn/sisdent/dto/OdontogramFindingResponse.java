@@ -1,0 +1,2 @@
+package br.com.itbn.sisdent.dto; import br.com.itbn.sisdent.model.*; import java.time.*; import java.util.*;
+public record OdontogramFindingResponse(UUID globalId,UUID clinicUnitId,UUID patientId,UUID practitionerId,UUID replacementForId,String toothCode,OdontogramSurface surface,OdontogramCondition condition,Instant observedAt,String observationTimezone,String clinicalNote,Instant voidedAt,String voidedBy,String voidReason,long version) {}

@@ -1,57 +1,57 @@
 package br.com.itbn.sisdent.config;
 
+import br.com.itbn.sisdent.model.Account;
+import br.com.itbn.sisdent.model.Membership;
+import br.com.itbn.sisdent.model.MembershipRole;
+import br.com.itbn.sisdent.model.Organization;
+import br.com.itbn.sisdent.model.Person;
+import br.com.itbn.sisdent.repository.AccountRepository;
+import br.com.itbn.sisdent.repository.MembershipRepository;
+import br.com.itbn.sisdent.repository.OrganizationRepository;
+import br.com.itbn.sisdent.repository.PersonRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.com.itbn.sisdent.model.IdentificationType;
-import br.com.itbn.sisdent.model.Role;
-import br.com.itbn.sisdent.model.User;
-import br.com.itbn.sisdent.repository.UserRepository;
-import br.com.itbn.sisdent.service.IdentificationNumbers;
-
 @Component
+@Order(2)
 public class AdminDataLoader implements ApplicationRunner {
-
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final IdentificationType identificationType;
-    private final String identificationNumber;
+    private final AccountRepository accounts;
+    private final PersonRepository people;
+    private final OrganizationRepository organizations;
+    private final MembershipRepository memberships;
+    private final PasswordEncoder passwords;
+    private final String email;
     private final String password;
 
-    public AdminDataLoader(
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            @Value("${sisdent.bootstrap-admin.identification-type}") IdentificationType identificationType,
-            @Value("${sisdent.bootstrap-admin.identification-number}") String identificationNumber,
+    public AdminDataLoader(AccountRepository accounts, PersonRepository people,
+            OrganizationRepository organizations, MembershipRepository memberships,
+            PasswordEncoder passwords, @Value("${sisdent.bootstrap-admin.email}") String email,
             @Value("${sisdent.bootstrap-admin.password}") String password) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.identificationType = identificationType;
-        this.identificationNumber = identificationNumber;
+        this.accounts = accounts;
+        this.people = people;
+        this.organizations = organizations;
+        this.memberships = memberships;
+        this.passwords = passwords;
+        this.email = email;
         this.password = password;
     }
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        String normalizedNumber = IdentificationNumbers.normalize(identificationNumber);
-        userRepository.findByIdentificationTypeAndIdentificationNumber(
-                identificationType,
-                normalizedNumber)
-                .ifPresentOrElse(existingUser -> {
-                    if (existingUser.getRole() == Role.ADMIN) {
-                        existingUser.setPermissions(Role.ADMIN.defaultPermissions());
-                        userRepository.save(existingUser);
-                    }
-                }, () -> userRepository.save(new User(
-                        identificationType,
-                        normalizedNumber,
-                        passwordEncoder.encode(password),
-                        Role.ADMIN,
-                        Role.ADMIN.defaultPermissions())));
+        Account account = accounts.findByEmail(Account.normalizeEmail(email)).orElseGet(() ->
+                accounts.save(new Account(people.save(new Person("Sisdent Administrator")), email,
+                        passwords.encode(password), true)));
+        if (organizations.findAll().isEmpty()) organizations.save(new Organization("Sisdent Training Organization"));
+        organizations.findAll().forEach(organization -> {
+            if (!memberships.existsByAccount_IdAndOrganization_IdAndClinicUnitIsNull(account.getId(), organization.getId())) {
+                memberships.save(new Membership(account, organization, null, MembershipRole.ORGANIZATION_ADMIN));
+            }
+        });
     }
 }

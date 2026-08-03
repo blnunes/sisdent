@@ -33,31 +33,57 @@ Open `http://localhost:4200` and use `NATIONAL_ID / ADMIN / admin`. See
 ## Endpoints
 
 ```text
-GET /api/states
+GET /api/administrative-divisions
 GET /api/countries
 GET /api/addresses
-GET /api/addresses/postal-code/{postalCode}
-GET /api/patients
-GET /api/patients/{id}
-POST /api/patients
+GET /api/addresses/postal-code/{postalCode}?countryCode=PT
+GET /api/organizations/{organizationId}/patients
+POST /api/organizations/{organizationId}/patients
+PUT /api/organizations/{organizationId}/patients/{patientId}
+DELETE /api/organizations/{organizationId}/patients/{patientId}
+GET /api/organizations/{organizationId}/appointments
+GET /api/organizations/{organizationId}/clinical/encounters
 GET /api/specialities
 POST /api/specialities
 PUT /api/specialities/{id}
 ```
 
-Countries use ISO 3166-1 alpha-2 codes. Patients carry nationality plus a
-globally unique passport or national identity number, and addresses reference
-their country of residence.
+Countries use ISO 3166-1 alpha-2 codes. Patients have a stable global UUID and
+carry a passport or national identity card with its issuing country. Addresses
+reference their country of residence and an optional country-scoped
+administrative division.
 
 Example:
 
 ```bash
-curl http://localhost:8080/api/patients
+curl -H 'Authorization: Bearer <token>' \
+  'http://localhost:8080/api/organizations/{organizationId}/patients'
 ```
 
-Procedures are nested resources owned by a speciality. They are returned,
-created, updated, and removed through the speciality endpoints; there is no
-standalone `/api/procedures` endpoint.
+Dental procedures are nested resources owned by a speciality. They are
+returned, created, updated, and deactivated through the speciality endpoints;
+there is no standalone `/api/procedures` endpoint.
+
+## Clinical workspace
+
+Clinical records are always addressed below the active organization and clinic
+scope: `/api/organizations/{organizationId}/clinical`. A clinical reader can
+read encounters and odontogram history; a clinical author can create and edit
+only their draft encounters; a clinical manager (and an organization
+administrator) can finalize encounters and create amendments. Final encounters
+are never edited in place. Odontogram findings are likewise preserved: a
+correction first voids the finding with a reason and version, then creates a
+replacement that references the voided finding.
+
+The workspace loads clinic units and patients only through the scoped
+organization endpoints and surfaces forbidden scope, stale-version, finalized
+record, and unavailable-patient errors to the user.
+
+To replace a patient's speciality assignments, send their IDs in
+`specialityIds` to `PUT /api/organizations/{organizationId}/patients/{patientId}`. Send an empty array
+(`"specialityIds": []`) to remove every assignment from that patient; this
+does not delete the speciality records. Catalog removal is logical so existing
+history remains valid.
 
 The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
 `jdbc:h2:mem:sisdent`, username `sa`, and an empty password.
@@ -65,8 +91,17 @@ The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
 ## Test
 
 ```bash
-mvn test
+./mvnw test
+cd frontend && npm ci
+npm test -- --watch=false
+npm run check:i18n
+npm run build
+npm run test:e2e
 ```
+
+Backend code follows the existing Spring service/controller boundaries; keep
+authorization checks in the server-side scope services. Angular components must
+present translated, user-safe error messages rather than server error details.
 
 ## Deployment
 

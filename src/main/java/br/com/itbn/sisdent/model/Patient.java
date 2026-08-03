@@ -19,14 +19,22 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "patients")
-public class Patient {
+public class Patient extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "global_id", nullable = false, unique = true, updatable = false)
+    private UUID globalId = UUID.randomUUID();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "person_id")
+    private Person person;
 
     @Column(nullable = false)
     private String name;
@@ -41,15 +49,19 @@ public class Patient {
     @Column(nullable = false)
     private Gender gender;
 
-    @Column(nullable = false, unique = true, length = 11)
+    @Column(length = 32)
     private String taxId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private IdentificationType identificationType;
+    private DocumentType identificationType;
 
-    @Column(nullable = false, unique = true, length = 64)
+    @Column(nullable = false, length = 64)
     private String identificationNumber;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "document_issuer_country_id", nullable = false)
+    private Country documentIssuerCountry;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "nationality_country_id", nullable = false)
@@ -76,8 +88,9 @@ public class Patient {
             boolean active,
             Gender gender,
             String taxId,
-            IdentificationType identificationType,
+            DocumentType identificationType,
             String identificationNumber,
+            Country documentIssuerCountry,
             Country nationality,
             Address address,
             Collection<Speciality> specialities) {
@@ -88,6 +101,7 @@ public class Patient {
         this.taxId = taxId;
         this.identificationType = identificationType;
         this.identificationNumber = identificationNumber;
+        this.documentIssuerCountry = documentIssuerCountry;
         this.nationality = nationality;
         this.address = address;
         this.specialities.addAll(specialities);
@@ -95,6 +109,14 @@ public class Patient {
 
     public Long getId() {
         return id;
+    }
+
+    public UUID getGlobalId() {
+        return globalId;
+    }
+
+    public Person getPerson() {
+        return person;
     }
 
     public String getName() {
@@ -117,12 +139,16 @@ public class Patient {
         return taxId;
     }
 
-    public IdentificationType getIdentificationType() {
+    public DocumentType getIdentificationType() {
         return identificationType;
     }
 
     public String getIdentificationNumber() {
         return identificationNumber;
+    }
+
+    public Country getDocumentIssuerCountry() {
+        return documentIssuerCountry;
     }
 
     public Country getNationality() {
@@ -136,4 +162,16 @@ public class Patient {
     public Set<Speciality> getSpecialities() {
         return Set.copyOf(specialities);
     }
+
+    public void update(String name, LocalDate birthDate, boolean active, Gender gender, String taxId,
+            DocumentType identificationType, String identificationNumber, Country documentIssuerCountry,
+            Country nationality, Address address, Collection<Speciality> specialities) {
+        this.name = name; this.birthDate = birthDate; this.active = active; this.gender = gender;
+        this.taxId = taxId; this.identificationType = identificationType;
+        this.identificationNumber = identificationNumber; this.documentIssuerCountry = documentIssuerCountry;
+        this.nationality = nationality; this.address = address;
+        this.specialities.clear(); this.specialities.addAll(specialities);
+    }
+
+    public void deactivate() { this.active = false; }
 }

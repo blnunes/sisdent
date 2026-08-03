@@ -1,12 +1,25 @@
 package br.com.itbn.sisdent.controller;
 
 import br.com.itbn.sisdent.dto.CountryResponse;
+import br.com.itbn.sisdent.dto.CountryRequest;
+import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.service.CountryService;
+import br.com.itbn.sisdent.pagination.PageQuery;
+import br.com.itbn.sisdent.model.Continent;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import jakarta.validation.Valid;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/countries")
@@ -19,7 +32,24 @@ public class CountryController {
     }
 
     @GetMapping
-    public List<CountryResponse> findAll() {
-        return countryService.findAll();
+    public PageResponse<CountryResponse> findAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String direction) {
+        return countryService.findPage(new PageQuery(page, size, sort, direction));
     }
+
+    /** Exposes the authoritative enum values for clients that create countries. */
+    @GetMapping("/continents")
+    public List<Continent> continents() {
+        return List.of(Continent.values());
+    }
+
+    @PostMapping @ResponseStatus(HttpStatus.CREATED)
+    public CountryResponse create(@Valid @RequestBody CountryRequest request) { return countryService.create(request); }
+    @PutMapping("/{id}")
+    public CountryResponse update(@PathVariable Long id, @Valid @RequestBody CountryRequest request) { return countryService.update(id, request); }
+    @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) { countryService.delete(id); }
 }

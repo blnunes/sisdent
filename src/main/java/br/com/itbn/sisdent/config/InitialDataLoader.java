@@ -1,17 +1,38 @@
 package br.com.itbn.sisdent.config;
 
 import br.com.itbn.sisdent.model.Address;
+import br.com.itbn.sisdent.model.AdministrativeDivision;
 import br.com.itbn.sisdent.model.Continent;
 import br.com.itbn.sisdent.model.Country;
+import br.com.itbn.sisdent.model.DocumentType;
 import br.com.itbn.sisdent.model.Gender;
-import br.com.itbn.sisdent.model.IdentificationType;
 import br.com.itbn.sisdent.model.Patient;
-import br.com.itbn.sisdent.model.State;
 import br.com.itbn.sisdent.model.Speciality;
+import br.com.itbn.sisdent.model.Account;
+import br.com.itbn.sisdent.model.ClinicUnit;
+import br.com.itbn.sisdent.model.Membership;
+import br.com.itbn.sisdent.model.MembershipRole;
+import br.com.itbn.sisdent.model.Organization;
+import br.com.itbn.sisdent.model.Person;
+import br.com.itbn.sisdent.model.PatientOrganizationLink;
+import br.com.itbn.sisdent.model.PatientLinkBasis;
+import br.com.itbn.sisdent.model.Practitioner;
+import br.com.itbn.sisdent.model.Appointment;
+import br.com.itbn.sisdent.model.AppointmentStatus;
+import br.com.itbn.sisdent.model.PerformedProcedure;
+import br.com.itbn.sisdent.repository.AccountRepository;
+import br.com.itbn.sisdent.repository.ClinicUnitRepository;
+import br.com.itbn.sisdent.repository.MembershipRepository;
+import br.com.itbn.sisdent.repository.OrganizationRepository;
+import br.com.itbn.sisdent.repository.PersonRepository;
+import br.com.itbn.sisdent.repository.PatientOrganizationLinkRepository;
+import br.com.itbn.sisdent.repository.PractitionerRepository;
+import br.com.itbn.sisdent.repository.AppointmentRepository;
+import br.com.itbn.sisdent.repository.PerformedProcedureRepository;
+import br.com.itbn.sisdent.repository.AdministrativeDivisionRepository;
 import br.com.itbn.sisdent.repository.AddressRepository;
 import br.com.itbn.sisdent.repository.CountryRepository;
 import br.com.itbn.sisdent.repository.PatientRepository;
-import br.com.itbn.sisdent.repository.StateRepository;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.jspecify.annotations.NullMarked;
 import org.slf4j.Logger;
@@ -20,18 +41,24 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
+import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
+@Order(1)
 @NullMarked
 public class InitialDataLoader implements ApplicationRunner {
 
@@ -40,24 +67,46 @@ public class InitialDataLoader implements ApplicationRunner {
 
     private final JsonMapper jsonMapper;
     private final CountryRepository countryRepository;
-    private final StateRepository stateRepository;
+    private final AdministrativeDivisionRepository administrativeDivisionRepository;
     private final SpecialityRepository specialityRepository;
     private final AddressRepository addressRepository;
     private final PatientRepository patientRepository;
+    private final OrganizationRepository organizationRepository;
+    private final ClinicUnitRepository clinicUnitRepository;
+    private final AccountRepository accountRepository;
+    private final PersonRepository personRepository;
+    private final MembershipRepository membershipRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final PatientOrganizationLinkRepository patientLinkRepository;
+    private final PractitionerRepository practitionerRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final PerformedProcedureRepository performedProcedureRepository;
 
     public InitialDataLoader(
             JsonMapper jsonMapper,
             CountryRepository countryRepository,
-            StateRepository stateRepository,
+            AdministrativeDivisionRepository administrativeDivisionRepository,
             SpecialityRepository specialityRepository,
             AddressRepository addressRepository,
-            PatientRepository patientRepository) {
+            PatientRepository patientRepository, OrganizationRepository organizationRepository,
+            ClinicUnitRepository clinicUnitRepository, AccountRepository accountRepository,
+            PersonRepository personRepository,
+            MembershipRepository membershipRepository, PasswordEncoder passwordEncoder,
+            PatientOrganizationLinkRepository patientLinkRepository, PractitionerRepository practitionerRepository,
+            AppointmentRepository appointmentRepository, PerformedProcedureRepository performedProcedureRepository) {
         this.jsonMapper = jsonMapper;
         this.countryRepository = countryRepository;
-        this.stateRepository = stateRepository;
+        this.administrativeDivisionRepository = administrativeDivisionRepository;
         this.specialityRepository = specialityRepository;
         this.addressRepository = addressRepository;
         this.patientRepository = patientRepository;
+        this.organizationRepository = organizationRepository; this.clinicUnitRepository = clinicUnitRepository;
+        this.accountRepository = accountRepository;
+        this.personRepository = personRepository; this.membershipRepository = membershipRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.patientLinkRepository = patientLinkRepository; this.practitionerRepository = practitionerRepository;
+        this.appointmentRepository = appointmentRepository;
+        this.performedProcedureRepository = performedProcedureRepository;
     }
 
     @Override
@@ -65,11 +114,14 @@ public class InitialDataLoader implements ApplicationRunner {
     public void run(ApplicationArguments arguments) throws IOException {
         InitialData initialData = readInitialData();
         Map<String, Country> countriesByCode = saveCountries(initialData.countries());
-        Map<String, State> statesByAbbreviation = saveStates(initialData.states());
+        Map<String, AdministrativeDivision> divisionsByCode = saveAdministrativeDivisions(
+                initialData.administrativeDivisions(),
+                countriesByCode,
+                initialData.seedDefaults().addressCountryCode());
         Map<String, Speciality> specialitiesByName = saveSpecialities(initialData.specialities());
         Map<String, Address> addressesByReference = saveAddresses(
                 initialData.addresses(),
-                statesByAbbreviation,
+                divisionsByCode,
                 countriesByCode,
                 initialData.seedDefaults().addressCountryCode());
         savePatients(
@@ -78,15 +130,90 @@ public class InitialDataLoader implements ApplicationRunner {
                 specialitiesByName,
                 countriesByCode,
                 initialData.seedDefaults());
+        saveOrganizations(initialData.organizations());
+        saveClinicUnits(initialData.clinicUnits());
+        saveDemoProfiles(initialData.demoProfiles());
+        saveOperationalDemo(initialData.operationalDemo(), specialitiesByName);
 
         LOGGER.info(
-                "Initial data synchronized from {}: {} countries, {} states, {} specialities, {} addresses and {} patients",
+                "Initial data synchronized from {}: {} countries, {} administrative divisions, {} specialities, {} addresses and {} patients",
                 INITIAL_DATA_PATH,
                 initialData.countries().size(),
-                initialData.states().size(),
+                initialData.administrativeDivisions().size(),
                 initialData.specialities().size(),
                 initialData.addresses().size(),
                 initialData.patients().size());
+    }
+
+    private void saveOperationalDemo(List<DemoOrganizationData> organizations, Map<String, Speciality> specialities) {
+        for (DemoOrganizationData data : organizations) {
+            Organization organization = organizationRepository.findByName(data.organizationName()).orElseThrow();
+            ClinicUnit clinic = clinicUnitRepository.findByOrganization_IdAndName(organization.getId(), data.clinicUnitName()).orElseThrow();
+            List<PatientOrganizationLink> links = data.patientTaxIds().stream().map(taxId -> {
+                Patient patient = patientRepository.findByTaxId(taxId).orElseThrow();
+                return patientLinkRepository.findFirstByPatient_GlobalIdAndOrganization_GlobalId(patient.getGlobalId(), organization.getGlobalId())
+                        .orElseGet(() -> patientLinkRepository.save(new PatientOrganizationLink(patient, organization, clinic, PatientLinkBasis.ATTENDANCE)));
+            }).toList();
+            List<Practitioner> practitioners = data.practitioners().stream().map(practitioner -> practitionerRepository
+                    .findAllByOrganization_GlobalIdOrderByDisplayName(organization.getGlobalId()).stream()
+                    .filter(existing -> existing.getDisplayName().equals(practitioner.displayName())).findFirst()
+                    .orElseGet(() -> practitionerRepository.save(new Practitioner(organization, null, practitioner.displayName(),
+                            practitioner.registrationNumber(), practitioner.specialityNames().stream().map(specialities::get)
+                                    .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)))))).toList();
+            if (!appointmentRepository.existsByClinicUnit_Id(clinic.getId())) {
+                Appointment scheduled = new Appointment(organization, clinic, links.getFirst(), practitioners.getFirst(),
+                        Instant.parse(data.scheduledStart()), Instant.parse(data.scheduledEnd()), "Europe/Lisbon");
+                appointmentRepository.save(scheduled);
+                Appointment completed = new Appointment(organization, clinic, links.get(Math.min(1, links.size() - 1)), practitioners.getFirst(),
+                        Instant.parse(data.completedStart()), Instant.parse(data.completedEnd()), "Europe/Lisbon");
+                completed.transition(AppointmentStatus.COMPLETED);
+                appointmentRepository.save(completed);
+                PerformedProcedure performedProcedure = new PerformedProcedure(
+                        completed,
+                        practitioners.getFirst().getSpecialities().iterator().next().getProcedures().iterator().next(),
+                        completed.getEndAt(),
+                        "Seeded completed appointment record");
+                performedProcedureRepository.save(performedProcedure);
+            }
+        }
+    }
+
+    private void saveDemoProfiles(List<DemoProfileData> profiles) {
+        for (DemoProfileData profile : profiles) {
+            Account account = accountRepository.findByEmail(Account.normalizeEmail(profile.email())).orElseGet(() -> {
+                Person person = personRepository.save(new Person(profile.displayName()));
+                return accountRepository.save(new Account(person, profile.email(),
+                        passwordEncoder.encode(profile.password()), profile.platformAdministrator()));
+            });
+            if (profile.organizationName() == null) continue;
+            Organization organization = organizationRepository.findByName(profile.organizationName()).orElseThrow(() ->
+                    new IllegalStateException("Unknown organization in " + INITIAL_DATA_PATH + ": " + profile.organizationName()));
+            ClinicUnit clinic = profile.clinicUnitName() == null ? null : clinicUnitRepository
+                    .findByOrganization_IdAndName(organization.getId(), profile.clinicUnitName())
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Unknown clinic unit in " + INITIAL_DATA_PATH + ": " + profile.clinicUnitName()));
+            boolean exists = clinic == null
+                    ? membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnitIsNull(account.getId(), organization.getId())
+                    : membershipRepository.existsByAccount_IdAndOrganization_IdAndClinicUnit_Id(account.getId(), organization.getId(), clinic.getId());
+            if (!exists) membershipRepository.save(new Membership(account, organization, clinic, profile.membershipRole()));
+            if (profile.membershipRole() == MembershipRole.ORGANIZATION_ADMIN && clinic == null) {
+                account.assignAccountManagementOrganizationIfAbsent(organization);
+            }
+        }
+    }
+
+    private void saveOrganizations(List<OrganizationData> organizations) {
+        organizations.forEach(data -> organizationRepository.findByName(data.name())
+                .orElseGet(() -> organizationRepository.save(new Organization(data.name()))));
+    }
+
+    private void saveClinicUnits(List<ClinicUnitData> clinicUnits) {
+        clinicUnits.forEach(data -> {
+            Organization organization = organizationRepository.findByName(data.organizationName()).orElseThrow(() ->
+                    new IllegalStateException("Unknown organization in " + INITIAL_DATA_PATH + ": " + data.organizationName()));
+            clinicUnitRepository.findByOrganization_IdAndName(organization.getId(), data.name())
+                    .orElseGet(() -> clinicUnitRepository.save(new ClinicUnit(organization, data.name())));
+        });
     }
 
     private Map<String, Country> saveCountries(List<CountryData> countries) {
@@ -106,15 +233,24 @@ public class InitialDataLoader implements ApplicationRunner {
         }
     }
 
-    private Map<String, State> saveStates(List<StateData> states) {
-        List<State> savedStates = states.stream()
-                .map(state -> stateRepository.findByAbbreviation(state.abbreviation())
-                        .orElseGet(() -> stateRepository.save(
-                                new State(state.name(), state.abbreviation()))))
+    private Map<String, AdministrativeDivision> saveAdministrativeDivisions(
+            List<AdministrativeDivisionData> divisions,
+            Map<String, Country> countriesByCode,
+            String countryCode) {
+        Country country = requireReference(countriesByCode, countryCode, "country code");
+        List<AdministrativeDivision> savedDivisions = divisions.stream()
+                .map(division -> administrativeDivisionRepository
+                        .findByCountry_CodeAndCode(countryCode, division.code())
+                        .orElseGet(() -> administrativeDivisionRepository.save(
+                                new AdministrativeDivision(
+                                        division.name(),
+                                        division.code(),
+                                        division.type(),
+                                        country))))
                 .toList();
 
-        return savedStates.stream()
-                .collect(Collectors.toMap(State::getAbbreviation, Function.identity()));
+        return savedDivisions.stream()
+                .collect(Collectors.toMap(AdministrativeDivision::getCode, Function.identity()));
     }
 
     private Map<String, Speciality> saveSpecialities(List<SpecialityData> specialities) {
@@ -130,23 +266,30 @@ public class InitialDataLoader implements ApplicationRunner {
 
     private Map<String, Address> saveAddresses(
             List<AddressData> addresses,
-            Map<String, State> statesByAbbreviation,
+            Map<String, AdministrativeDivision> divisionsByCode,
             Map<String, Country> countriesByCode,
             String addressCountryCode) {
         return addresses.stream()
                 .collect(Collectors.toMap(
                         AddressData::reference,
-                        address -> addressRepository.findByPostalCode(address.postalCode())
+                        address -> addressRepository
+                                .findAllByCountry_CodeAndPostalCodeOrderByStreet(
+                                        addressCountryCode,
+                                        address.postalCode())
+                                .stream()
+                                .filter(existing -> existing.getStreet().equals(address.street()))
+                                .findFirst()
                                 .orElseGet(() -> addressRepository.save(new Address(
                                         address.street(),
                                         address.district(),
+                                        address.city() == null ? address.district() : address.city(),
                                         address.additionalInfo(),
                                         address.block(),
                                         address.postalCode(),
                                         requireReference(
-                                                statesByAbbreviation,
-                                                address.stateAbbreviation(),
-                                                "state abbreviation"),
+                                                divisionsByCode,
+                                                address.administrativeDivisionCode(),
+                                                "administrative division code"),
                                         requireReference(
                                                 countriesByCode,
                                                 addressCountryCode,
@@ -169,6 +312,10 @@ public class InitialDataLoader implements ApplicationRunner {
                         patient.taxId(),
                         seedDefaults.identificationType(),
                         seedDefaults.identificationPrefix() + patient.taxId(),
+                        requireReference(
+                                countriesByCode,
+                                seedDefaults.patientNationalityCode(),
+                                "document issuer country code"),
                         requireReference(
                                 countriesByCode,
                                 seedDefaults.patientNationalityCode(),
@@ -198,10 +345,14 @@ public class InitialDataLoader implements ApplicationRunner {
     public record InitialData(
             List<CountryData> countries,
             SeedDefaults seedDefaults,
-            List<StateData> states,
+            List<AdministrativeDivisionData> administrativeDivisions,
             List<SpecialityData> specialities,
             List<AddressData> addresses,
-            List<PatientData> patients) {
+            List<PatientData> patients,
+            List<OrganizationData> organizations,
+            List<ClinicUnitData> clinicUnits,
+            List<DemoProfileData> demoProfiles,
+            List<DemoOrganizationData> operationalDemo) {
     }
 
     public record CountryData(String name, String code, Continent continent) {
@@ -210,11 +361,11 @@ public class InitialDataLoader implements ApplicationRunner {
     public record SeedDefaults(
             String addressCountryCode,
             String patientNationalityCode,
-            IdentificationType identificationType,
+            DocumentType identificationType,
             String identificationPrefix) {
     }
 
-    public record StateData(String name, String abbreviation) {
+    public record AdministrativeDivisionData(String name, String code, String type) {
     }
 
     public record SpecialityData(String name, List<String> procedures) {
@@ -224,10 +375,11 @@ public class InitialDataLoader implements ApplicationRunner {
             String reference,
             String street,
             String district,
+            String city,
             String additionalInfo,
             String block,
             String postalCode,
-            String stateAbbreviation) {
+            String administrativeDivisionCode) {
     }
 
     public record PatientData(
@@ -238,5 +390,24 @@ public class InitialDataLoader implements ApplicationRunner {
             String taxId,
             String addressReference,
             List<String> specialityNames) {
+    }
+
+    public record OrganizationData(String name) {
+    }
+
+    public record ClinicUnitData(String organizationName, String name) {
+    }
+
+    public record DemoProfileData(
+            String displayName, String email, String password, boolean platformAdministrator,
+            String organizationName, String clinicUnitName, MembershipRole membershipRole) {
+    }
+
+    public record DemoOrganizationData(String organizationName, String clinicUnitName, List<String> patientTaxIds,
+            List<DemoPractitionerData> practitioners, String scheduledStart, String scheduledEnd,
+            String completedStart, String completedEnd) {
+    }
+
+    public record DemoPractitionerData(String displayName, String registrationNumber, List<String> specialityNames) {
     }
 }

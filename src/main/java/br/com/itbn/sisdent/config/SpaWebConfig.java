@@ -16,12 +16,12 @@ public class SpaWebConfig implements WebMvcConfigurer {
         // resource handler. API and actuator paths are excluded so they reach their
         // own controllers. Matching only extension-less paths also avoids an
         // infinite forward loop: /index.html has a dot, so it is not re-captured.
-        registry.addViewController("/{path:^(?!api|actuator)[^.]*$}")
+        registry.addViewController("/{path:^(?!api|actuator|swagger-ui|swagger-resources|v3|webjars|configuration)[^.]*$}")
                 .setViewName("forward:/index.html");
         // Match the first path segment here. Putting /** first allows it to consume
         // "/api" and incorrectly forwards unknown API endpoints such as
         // "/api/procedures" to Angular with HTTP 200.
-        registry.addViewController("/{path:^(?!api$|actuator$|i18n$)[^.]+}/**")
+        registry.addViewController("/{path:^(?!api$|actuator$|i18n$|swagger-ui$|swagger-resources$|v3$|webjars$|configuration$)[^.]+}/**")
                 .setViewName("forward:/index.html");
     }
 }

@@ -84,7 +84,7 @@
   "seedDefaults": {
     "addressCountryCode": "US",
     "patientNationalityCode": "US",
-    "identificationType": "NATIONAL_ID",
+    "identificationType": "NATIONAL_ID_CARD",
     "identificationPrefix": "US"
   },
   "specialities": [
@@ -137,15 +137,15 @@
       "procedures": ["Dental crown placement", "Denture fitting"]
     }
   ],
-  "states": [
-    { "name": "California", "abbreviation": "CA" },
-    { "name": "Florida", "abbreviation": "FL" },
-    { "name": "Illinois", "abbreviation": "IL" },
-    { "name": "Massachusetts", "abbreviation": "MA" },
-    { "name": "New York", "abbreviation": "NY" },
-    { "name": "Texas", "abbreviation": "TX" },
-    { "name": "Virginia", "abbreviation": "VA" },
-    { "name": "Washington", "abbreviation": "WA" }
+  "administrativeDivisions": [
+    { "name": "California", "code": "CA", "type": "STATE" },
+    { "name": "Florida", "code": "FL", "type": "STATE" },
+    { "name": "Illinois", "code": "IL", "type": "STATE" },
+    { "name": "Massachusetts", "code": "MA", "type": "STATE" },
+    { "name": "New York", "code": "NY", "type": "STATE" },
+    { "name": "Texas", "code": "TX", "type": "STATE" },
+    { "name": "Virginia", "code": "VA", "type": "STATE" },
+    { "name": "Washington", "code": "WA", "type": "STATE" }
   ],
   "addresses": [
     {
@@ -155,7 +155,7 @@
       "additionalInfo": "Apartment 3B",
       "block": "Building A",
       "postalCode": "73000001",
-      "stateAbbreviation": "TX"
+      "administrativeDivisionCode": "TX"
     },
     {
       "reference": "cedar-park-dallas",
@@ -164,7 +164,7 @@
       "additionalInfo": "Unit 12",
       "block": "Building C",
       "postalCode": "73000002",
-      "stateAbbreviation": "TX"
+      "administrativeDivisionCode": "TX"
     },
     {
       "reference": "sunset-ridge-miami",
@@ -173,7 +173,7 @@
       "additionalInfo": "Apartment 8A",
       "block": "Tower South",
       "postalCode": "33000001",
-      "stateAbbreviation": "FL"
+      "administrativeDivisionCode": "FL"
     },
     {
       "reference": "palm-harbor-orlando",
@@ -182,7 +182,7 @@
       "additionalInfo": "Suite 204",
       "block": "Building B",
       "postalCode": "33000002",
-      "stateAbbreviation": "FL"
+      "administrativeDivisionCode": "FL"
     },
     {
       "reference": "pacific-view-seattle",
@@ -191,7 +191,7 @@
       "additionalInfo": "Apartment 14",
       "block": "West Wing",
       "postalCode": "98000001",
-      "stateAbbreviation": "WA"
+      "administrativeDivisionCode": "WA"
     },
     {
       "reference": "rainier-court-tacoma",
@@ -200,7 +200,7 @@
       "additionalInfo": "Unit 5",
       "block": "Building D",
       "postalCode": "98000002",
-      "stateAbbreviation": "WA"
+      "administrativeDivisionCode": "WA"
     },
     {
       "reference": "harbor-point-boston",
@@ -209,7 +209,7 @@
       "additionalInfo": "Apartment 6C",
       "block": "East Building",
       "postalCode": "02000001",
-      "stateAbbreviation": "MA"
+      "administrativeDivisionCode": "MA"
     },
     {
       "reference": "willow-brook-cambridge",
@@ -218,7 +218,7 @@
       "additionalInfo": "Unit 9",
       "block": "Building A",
       "postalCode": "02000002",
-      "stateAbbreviation": "MA"
+      "administrativeDivisionCode": "MA"
     },
     {
       "reference": "hudson-square-new-york",
@@ -227,7 +227,7 @@
       "additionalInfo": "Apartment 11D",
       "block": "North Tower",
       "postalCode": "10000001",
-      "stateAbbreviation": "NY"
+      "administrativeDivisionCode": "NY"
     },
     {
       "reference": "oak-terrace-brooklyn",
@@ -236,7 +236,7 @@
       "additionalInfo": "Apartment 4F",
       "block": "Building 2",
       "postalCode": "10000002",
-      "stateAbbreviation": "NY"
+      "administrativeDivisionCode": "NY"
     },
     {
       "reference": "lake-shore-chicago",
@@ -245,7 +245,7 @@
       "additionalInfo": "Unit 17B",
       "block": "Tower One",
       "postalCode": "60000001",
-      "stateAbbreviation": "IL"
+      "administrativeDivisionCode": "IL"
     },
     {
       "reference": "prairie-stone-evanston",
@@ -254,7 +254,7 @@
       "additionalInfo": "Apartment 2A",
       "block": "Building F",
       "postalCode": "60000002",
-      "stateAbbreviation": "IL"
+      "administrativeDivisionCode": "IL"
     },
     {
       "reference": "golden-gate-san-francisco",
@@ -263,7 +263,7 @@
       "additionalInfo": "Apartment 7",
       "block": "West Court",
       "postalCode": "90000001",
-      "stateAbbreviation": "CA"
+      "administrativeDivisionCode": "CA"
     },
     {
       "reference": "mission-garden-san-diego",
@@ -272,7 +272,7 @@
       "additionalInfo": "Unit 10C",
       "block": "Building E",
       "postalCode": "90000002",
-      "stateAbbreviation": "CA"
+      "administrativeDivisionCode": "CA"
     },
     {
       "reference": "capitol-oaks-sacramento",
@@ -281,7 +281,7 @@
       "additionalInfo": "Apartment 15A",
       "block": "South Tower",
       "postalCode": "90000003",
-      "stateAbbreviation": "CA"
+      "administrativeDivisionCode": "CA"
     },
     {
       "reference": "bluebonnet-hill-houston",
@@ -290,7 +290,7 @@
       "additionalInfo": "Unit 4",
       "block": "Building B",
       "postalCode": "73000003",
-      "stateAbbreviation": "TX"
+      "administrativeDivisionCode": "TX"
     },
     {
       "reference": "potomac-view-arlington",
@@ -299,7 +299,7 @@
       "additionalInfo": "Apartment 9C",
       "block": "East Tower",
       "postalCode": "22000001",
-      "stateAbbreviation": "VA"
+      "administrativeDivisionCode": "VA"
     },
     {
       "reference": "magnolia-crossing-richmond",
@@ -308,7 +308,7 @@
       "additionalInfo": "Unit 6",
       "block": "Building H",
       "postalCode": "22000002",
-      "stateAbbreviation": "VA"
+      "administrativeDivisionCode": "VA"
     },
     {
       "reference": "atlantic-meadow-buffalo",
@@ -317,7 +317,7 @@
       "additionalInfo": "Apartment 3D",
       "block": "North Building",
       "postalCode": "10000003",
-      "stateAbbreviation": "NY"
+      "administrativeDivisionCode": "NY"
     },
     {
       "reference": "cypress-bend-tampa",
@@ -326,7 +326,7 @@
       "additionalInfo": "Unit 21",
       "block": "Building G",
       "postalCode": "33000003",
-      "stateAbbreviation": "FL"
+      "administrativeDivisionCode": "FL"
     }
   ],
   "patients": [
@@ -689,6 +689,175 @@
       "taxId": "10000000040",
       "addressReference": "cypress-bend-tampa",
       "specialityNames": ["Periodontics"]
+    },
+    {
+      "name": "Claire Sullivan",
+      "birthDate": "1993-05-12",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000041",
+      "addressReference": "maple-grove-austin",
+      "specialityNames": ["Endodontics", "Periodontics"]
+    },
+    {
+      "name": "Owen Price",
+      "birthDate": "1981-08-24",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000042",
+      "addressReference": "sunset-ridge-miami",
+      "specialityNames": ["Oral Medicine"]
+    },
+    {
+      "name": "Ruby Evans",
+      "birthDate": "2006-02-08",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000043",
+      "addressReference": "harbor-point-boston",
+      "specialityNames": ["Pediatric Dentistry"]
+    },
+    {
+      "name": "Theo Barnes",
+      "birthDate": "1974-11-19",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000044",
+      "addressReference": "lake-shore-chicago",
+      "specialityNames": ["Prosthodontics"]
+    },
+    {
+      "name": "Nora Phillips",
+      "birthDate": "1991-01-30",
+      "active": false,
+      "gender": "OTHER",
+      "taxId": "10000000045",
+      "addressReference": "golden-gate-san-francisco",
+      "specialityNames": ["Orofacial Pain"]
+    },
+    {
+      "name": "Caleb Foster",
+      "birthDate": "1986-06-16",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000046",
+      "addressReference": "bluebonnet-hill-houston",
+      "specialityNames": ["Oral and Maxillofacial Surgery"]
+    },
+    {
+      "name": "Maya Reynolds",
+      "birthDate": "1998-09-05",
+      "active": true,
+      "gender": "FEMALE",
+      "taxId": "10000000047",
+      "addressReference": "potomac-view-arlington",
+      "specialityNames": ["Orthodontics and Dentofacial Orthopedics"]
+    },
+    {
+      "name": "Leo Grant",
+      "birthDate": "1967-03-22",
+      "active": true,
+      "gender": "MALE",
+      "taxId": "10000000048",
+      "addressReference": "cypress-bend-tampa",
+      "specialityNames": ["Dental Public Health"]
+    }
+  ],
+  "organizations": [
+    { "name": "Northstar Dental Group" },
+    { "name": "Harbor Dental Clinic" },
+    { "name": "Southstart Dental Group" }
+  ],
+  "clinicUnits": [
+    { "organizationName": "Northstar Dental Group", "name": "Northstar Central Clinic" },
+    { "organizationName": "Northstar Dental Group", "name": "Northstar Lakeside Clinic" },
+    { "organizationName": "Harbor Dental Clinic", "name": "Harbor Riverside Unit" },
+    { "organizationName": "Harbor Dental Clinic", "name": "Harbor Midtown Clinic" },
+    { "organizationName": "Southstart Dental Group", "name": "Southstart Downtown Clinic" },
+    { "organizationName": "Southstart Dental Group", "name": "Southstart Seaside Clinic" }
+  ],
+  "demoProfiles": [
+    { "displayName": "Platform Operations", "email": "platform.operations@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": true, "organizationName": null, "clinicUnitName": null, "membershipRole": null },
+    { "displayName": "Demo Group Administrator", "email": "group.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
+    { "displayName": "Demo Group Administrator", "email": "group.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Harbor Dental Clinic", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
+    { "displayName": "Demo Group Administrator", "email": "group.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Southstart Dental Group", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
+    { "displayName": "Northstar Administrator", "email": "northstar.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
+    { "displayName": "Northstar Operations Manager", "email": "northstar.manager@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": "Northstar Central Clinic", "membershipRole": "MANAGER" },
+    { "displayName": "Northstar Practitioner Manager", "email": "northstar.practitioners@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": null, "membershipRole": "PRACTITIONER_MANAGER" },
+    { "displayName": "Northstar Appointment Manager", "email": "northstar.scheduler@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": "Northstar Central Clinic", "membershipRole": "APPOINTMENT_MANAGER" },
+    { "displayName": "Northstar Appointment Reader", "email": "northstar.viewer@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": "Northstar Lakeside Clinic", "membershipRole": "APPOINTMENT_READER" },
+    { "displayName": "Northstar Read Only Staff", "email": "northstar.readonly@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Northstar Dental Group", "clinicUnitName": "Northstar Central Clinic", "membershipRole": "READ_ONLY" },
+    { "displayName": "Harbor Administrator", "email": "harbor.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Harbor Dental Clinic", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
+    { "displayName": "Harbor Scheduler", "email": "harbor.scheduler@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Harbor Dental Clinic", "clinicUnitName": "Harbor Riverside Unit", "membershipRole": "APPOINTMENT_MANAGER" },
+    { "displayName": "Southstart Administrator", "email": "southstart.admin@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Southstart Dental Group", "clinicUnitName": null, "membershipRole": "ORGANIZATION_ADMIN" },
+    { "displayName": "Southstart Scheduler", "email": "southstart.scheduler@sisdent.demo", "password": "odonto2026@O", "platformAdministrator": false, "organizationName": "Southstart Dental Group", "clinicUnitName": "Southstart Downtown Clinic", "membershipRole": "APPOINTMENT_MANAGER" }
+  ],
+  "operationalDemo": [
+    {
+      "organizationName": "Northstar Dental Group",
+      "clinicUnitName": "Northstar Central Clinic",
+      "patientTaxIds": ["10000000001", "10000000002", "10000000003", "10000000004", "10000000005", "10000000006"],
+      "practitioners": [
+        { "displayName": "Dr. Rowan Blake", "registrationNumber": "NS-1001", "specialityNames": ["Endodontics", "Periodontics"] },
+        { "displayName": "Dr. Casey Monroe", "registrationNumber": "NS-1002", "specialityNames": ["Pediatric Dentistry", "Orthodontics and Dentofacial Orthopedics"] }
+      ],
+      "scheduledStart": "2030-01-15T09:00:00Z", "scheduledEnd": "2030-01-15T09:30:00Z",
+      "completedStart": "2025-01-15T09:00:00Z", "completedEnd": "2025-01-15T09:30:00Z"
+    },
+    {
+      "organizationName": "Northstar Dental Group",
+      "clinicUnitName": "Northstar Lakeside Clinic",
+      "patientTaxIds": ["10000000007", "10000000008", "10000000009", "10000000010", "10000000011", "10000000012"],
+      "practitioners": [
+        { "displayName": "Dr. Parker Hayes", "registrationNumber": "NS-1003", "specialityNames": ["Orthodontics and Dentofacial Orthopedics", "Dental Public Health"] },
+        { "displayName": "Dr. Reese Morgan", "registrationNumber": "NS-1004", "specialityNames": ["Oral Medicine", "Periodontics"] }
+      ],
+      "scheduledStart": "2030-01-15T10:00:00Z", "scheduledEnd": "2030-01-15T10:30:00Z",
+      "completedStart": "2025-01-15T10:00:00Z", "completedEnd": "2025-01-15T10:30:00Z"
+    },
+    {
+      "organizationName": "Harbor Dental Clinic",
+      "clinicUnitName": "Harbor Riverside Unit",
+      "patientTaxIds": ["10000000013", "10000000014", "10000000015", "10000000016", "10000000017", "10000000018"],
+      "practitioners": [
+        { "displayName": "Dr. Jordan Ellis", "registrationNumber": "HB-2001", "specialityNames": ["Prosthodontics", "Oral Medicine"] },
+        { "displayName": "Dr. Taylor Quinn", "registrationNumber": "HB-2002", "specialityNames": ["Oral and Maxillofacial Surgery"] }
+      ],
+      "scheduledStart": "2030-01-16T10:00:00Z", "scheduledEnd": "2030-01-16T10:30:00Z",
+      "completedStart": "2025-01-16T10:00:00Z", "completedEnd": "2025-01-16T10:30:00Z"
+    },
+    {
+      "organizationName": "Harbor Dental Clinic",
+      "clinicUnitName": "Harbor Midtown Clinic",
+      "patientTaxIds": ["10000000019", "10000000020", "10000000021", "10000000022", "10000000023", "10000000024"],
+      "practitioners": [
+        { "displayName": "Dr. Alex Bennett", "registrationNumber": "HB-2003", "specialityNames": ["Pediatric Dentistry", "Oral Medicine"] },
+        { "displayName": "Dr. Skyler Brooks", "registrationNumber": "HB-2004", "specialityNames": ["Periodontics", "Prosthodontics"] }
+      ],
+      "scheduledStart": "2030-01-16T11:00:00Z", "scheduledEnd": "2030-01-16T11:30:00Z",
+      "completedStart": "2025-01-16T11:00:00Z", "completedEnd": "2025-01-16T11:30:00Z"
+    },
+    {
+      "organizationName": "Southstart Dental Group",
+      "clinicUnitName": "Southstart Downtown Clinic",
+      "patientTaxIds": ["10000000025", "10000000026", "10000000027", "10000000028", "10000000029", "10000000030"],
+      "practitioners": [
+        { "displayName": "Dr. Morgan Avery", "registrationNumber": "SS-3001", "specialityNames": ["Dental Anesthesiology", "Oral Medicine"] },
+        { "displayName": "Dr. Cameron Reed", "registrationNumber": "SS-3002", "specialityNames": ["Dental Public Health", "Pediatric Dentistry"] }
+      ],
+      "scheduledStart": "2030-01-17T11:00:00Z", "scheduledEnd": "2030-01-17T11:30:00Z",
+      "completedStart": "2025-01-17T11:00:00Z", "completedEnd": "2025-01-17T11:30:00Z"
+    },
+    {
+      "organizationName": "Southstart Dental Group",
+      "clinicUnitName": "Southstart Seaside Clinic",
+      "patientTaxIds": ["10000000031", "10000000032", "10000000033", "10000000034", "10000000035", "10000000036"],
+      "practitioners": [
+        { "displayName": "Dr. Jamie Sutton", "registrationNumber": "SS-3003", "specialityNames": ["Endodontics", "Dental Anesthesiology"] },
+        { "displayName": "Dr. Robin Foster", "registrationNumber": "SS-3004", "specialityNames": ["Oral and Maxillofacial Surgery", "Pediatric Dentistry"] }
+      ],
+      "scheduledStart": "2030-01-17T12:00:00Z", "scheduledEnd": "2030-01-17T12:30:00Z",
+      "completedStart": "2025-01-17T12:00:00Z", "completedEnd": "2025-01-17T12:30:00Z"
     }
   ]
 }

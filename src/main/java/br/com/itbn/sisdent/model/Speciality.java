@@ -2,6 +2,8 @@ package br.com.itbn.sisdent.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -18,7 +20,7 @@ import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "specialities")
-public class Speciality {
+public class Speciality extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,12 +29,15 @@ public class Speciality {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private CatalogStatus status = CatalogStatus.ACTIVE;
+
     @OneToMany(
             mappedBy = "speciality",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE},
             fetch = FetchType.LAZY)
-    private Set<Procedure> procedures = new LinkedHashSet<>();
+    private Set<DentalProcedure> procedures = new LinkedHashSet<>();
 
     protected Speciality() {
     }
@@ -50,26 +55,37 @@ public class Speciality {
         this.name = name;
     }
 
-    public Procedure addProcedure(String name) {
-        Procedure procedure = new Procedure(name, this);
+    public DentalProcedure addProcedure(String name) {
+        Optional<DentalProcedure> existingProcedure = procedures.stream()
+                .filter(procedure -> procedure.getName().equalsIgnoreCase(name))
+                .findFirst();
+        if (existingProcedure.isPresent()) {
+            DentalProcedure procedure = existingProcedure.get();
+            procedure.rename(name);
+            procedure.activate();
+            return procedure;
+        }
+        DentalProcedure procedure = new DentalProcedure(name, this);
         procedures.add(procedure);
         return procedure;
     }
 
-    public Optional<Procedure> findProcedure(Long procedureId) {
+    public Optional<DentalProcedure> findProcedure(Long procedureId) {
         return procedures.stream()
                 .filter(procedure -> procedureId.equals(procedure.getId()))
                 .findFirst();
     }
 
     public void retainProcedures(Set<Long> procedureIds) {
-        procedures.removeIf(procedure ->
-                procedure.getId() != null && !procedureIds.contains(procedure.getId()));
+        procedures.stream()
+                .filter(procedure -> procedure.getId() != null && !procedureIds.contains(procedure.getId()))
+                .forEach(DentalProcedure::deactivate);
     }
 
     public void addMissingProcedures(Collection<String> procedureNames) {
         Set<String> existingNames = procedures.stream()
-                .map(Procedure::getName)
+                .filter(procedure -> procedure.getStatus() == CatalogStatus.ACTIVE)
+                .map(DentalProcedure::getName)
                 .collect(Collectors.toSet());
         procedureNames.stream()
                 .filter(name -> !existingNames.contains(name))
@@ -84,7 +100,20 @@ public class Speciality {
         return name;
     }
 
-    public Set<Procedure> getProcedures() {
+    public CatalogStatus getStatus() {
+        return status;
+    }
+
+    public void activate() {
+        this.status = CatalogStatus.ACTIVE;
+    }
+
+    public void deactivate() {
+        this.status = CatalogStatus.INACTIVE;
+        procedures.forEach(DentalProcedure::deactivate);
+    }
+
+    public Set<DentalProcedure> getProcedures() {
         return Set.copyOf(procedures);
     }
 }

@@ -3,14 +3,12 @@ package br.com.itbn.sisdent.service;
 import br.com.itbn.sisdent.dto.AddressRequest;
 import br.com.itbn.sisdent.dto.PatientRequest;
 import br.com.itbn.sisdent.dto.PatientResponse;
-import br.com.itbn.sisdent.dto.StateRequest;
 import br.com.itbn.sisdent.model.Address;
 import br.com.itbn.sisdent.model.Continent;
 import br.com.itbn.sisdent.model.Country;
+import br.com.itbn.sisdent.model.DocumentType;
 import br.com.itbn.sisdent.model.Gender;
-import br.com.itbn.sisdent.model.IdentificationType;
 import br.com.itbn.sisdent.model.Patient;
-import br.com.itbn.sisdent.model.State;
 import br.com.itbn.sisdent.model.Speciality;
 import br.com.itbn.sisdent.repository.PatientRepository;
 import org.junit.jupiter.api.Test;
@@ -18,12 +16,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
-import java.time.Month;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,110 +45,62 @@ class PatientServiceTest {
     private PatientService patientService;
 
     @Test
-    void returnsPatientsSortedByName() {
-        when(patientRepository.findAll(Sort.by("name")))
-                .thenReturn(List.of(patient(existingAddress())));
-
-        List<PatientResponse> responses = patientService.findAll();
-
-        assertThat(responses).singleElement()
-                .extracting(PatientResponse::name)
-                .isEqualTo("Ana Souza");
-        verify(patientRepository).findAll(Sort.by("name"));
-    }
-
-    @Test
-    void returnsEmptyWhenPatientDoesNotExist() {
-        when(patientRepository.findById(999L)).thenReturn(Optional.empty());
-
-        Optional<PatientResponse> response = patientService.findById(999L);
-
-        assertThat(response).isEmpty();
-    }
-
-    @Test
-    void createsPatientReusingExistingAddress() {
-        Address address = existingAddress();
-        when(addressService.findOrCreate(patientRequest().address())).thenReturn(address);
-        when(specialityService.findAllByIds(patientRequest().specialityIds()))
-                .thenReturn(List.of(new Speciality("Pediatric")));
-        when(countryService.requireByCode("BR")).thenReturn(country());
+    void createsGlobalPatientWithCountryScopedDocumentAndOptionalTaxId() {
+        PatientRequest request = patientRequest();
+        Country portugal = country();
+        when(addressService.createPatientAddress(request.address())).thenReturn(address(portugal));
+        when(specialityService.findAllByIds(request.specialityIds()))
+                .thenReturn(List.of(new Speciality("Orthodontics")));
+        when(countryService.requireByCode("PT")).thenReturn(portugal);
         when(patientRepository.saveAndFlush(any(Patient.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        PatientResponse response = patientService.create(patientRequest());
+        PatientResponse response = patientService.create(request);
 
-        assertThat(response.name()).isEqualTo("Ana Souza");
-        assertThat(response.identificationNumber()).isEqualTo("12345ABC");
-        assertThat(response.nationality().code()).isEqualTo("BR");
-        assertThat(response.address().postalCode()).isEqualTo("01310100");
-        verify(addressService).findOrCreate(patientRequest().address());
-    }
-
-    @Test
-    void createsPatientWithResolvedAddress() {
-        Address address = existingAddress();
-        when(addressService.findOrCreate(patientRequest().address())).thenReturn(address);
-        when(specialityService.findAllByIds(patientRequest().specialityIds()))
-                .thenReturn(List.of(new Speciality("Pediatric")));
-        when(countryService.requireByCode("BR")).thenReturn(country());
-        when(patientRepository.saveAndFlush(any(Patient.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
-
-        PatientResponse response = patientService.create(patientRequest());
-
-        assertThat(response.address().state().abbreviation()).isEqualTo("SP");
-        verify(addressService).findOrCreate(patientRequest().address());
-        verify(patientRepository).saveAndFlush(any(Patient.class));
+        assertThat(response.globalId()).isNotNull();
+        assertThat(response.taxId()).isNull();
+        assertThat(response.identificationType()).isEqualTo(DocumentType.NATIONAL_ID_CARD);
+        assertThat(response.documentIssuerCountry().code()).isEqualTo("PT");
+        assertThat(response.address().postalCode()).isEqualTo("1250-096");
+        verify(addressService).createPatientAddress(request.address());
     }
 
     private PatientRequest patientRequest() {
         return new PatientRequest(
-                "Ana Souza",
-                LocalDate.of(1992, Month.APRIL, 18),
+                "Ana Silva",
+                LocalDate.of(1992, 4, 18),
                 true,
                 Gender.FEMALE,
-                "12345678901",
-                IdentificationType.NATIONAL_ID,
+                null,
+                DocumentType.NATIONAL_ID_CARD,
                 "12 345-ABC",
-                "BR",
+                "PT",
+                "PT",
                 new AddressRequest(
-                        "Avenida Paulista",
-                        "Bela Vista",
-                        "Suite 1204",
-                        "B",
-                        "01310100",
-                        new StateRequest("São Paulo", "SP"),
-                        "BR"),
+                        "Avenida da Liberdade 100",
+                        null,
+                        "Lisbon",
+                        null,
+                        null,
+                        "1250-096",
+                        null,
+                        "PT"),
                 Set.of(1L));
     }
 
-    private Patient patient(Address address) {
-        return new Patient(
-                "Ana Souza",
-                LocalDate.of(1992, Month.APRIL, 18),
-                true,
-                Gender.FEMALE,
-                "12345678901",
-                IdentificationType.NATIONAL_ID,
-                "12345ABC",
-                country(),
-                address,
-                List.of(new Speciality("Pediatric")));
-    }
-
-    private Address existingAddress() {
+    private Address address(Country country) {
         return new Address(
-                "Avenida Paulista",
-                "Bela Vista",
-                "Suite 1204",
-                "B",
-                "01310100",
-                new State("São Paulo", "SP"),
-                country());
+                "Avenida da Liberdade 100",
+                null,
+                "Lisbon",
+                null,
+                null,
+                "1250-096",
+                null,
+                country);
     }
 
     private Country country() {
-        return new Country("Brazil", "BR", Continent.SOUTH_AMERICA);
+        return new Country("Portugal", "PT", Continent.EUROPE);
     }
 }

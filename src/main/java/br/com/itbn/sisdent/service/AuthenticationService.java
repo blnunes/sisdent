@@ -2,36 +2,35 @@ package br.com.itbn.sisdent.service;
 
 import br.com.itbn.sisdent.dto.LoginRequest;
 import br.com.itbn.sisdent.dto.TokenResponse;
-import br.com.itbn.sisdent.model.User;
-import br.com.itbn.sisdent.repository.UserRepository;
+import br.com.itbn.sisdent.model.Account;
+import br.com.itbn.sisdent.repository.AccountRepository;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthenticationService {
 
-    private final UserRepository userRepository;
+    private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
     public AuthenticationService(
-            UserRepository userRepository,
+            AccountRepository accountRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService) {
-        this.userRepository = userRepository;
+        this.accountRepository = accountRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
+    @Transactional
     public TokenResponse authenticate(LoginRequest request) {
-        User user = userRepository.findByIdentificationTypeAndIdentificationNumber(
-                        request.identificationType(),
-                        IdentificationNumbers.normalize(request.identificationNumber()))
-                .filter(User::isActive)
+        Account account = accountRepository.findByEmail(Account.normalizeEmail(request.email()))
+                .filter(Account::isActive)
                 .filter(candidate -> passwordEncoder.matches(request.password(), candidate.getPassword()))
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
-        return jwtService.issue(user);
+        return jwtService.issue(account);
     }
-
 }

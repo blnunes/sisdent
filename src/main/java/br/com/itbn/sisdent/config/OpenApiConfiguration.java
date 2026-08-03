@@ -40,6 +40,9 @@ public class OpenApiConfiguration {
                         .title("Sisdent API")
                         .version("v1")
                         .description(
-                                "Authenticated REST API for managing patients, users, permissions, countries, addresses, and states."));
+                                "Authenticated REST API for platform administration and tenant-scoped dental operations. "
+                                        + "Patient, practitioner, appointment, clinical, clinic-unit, and membership "
+                                        + "operations are authorized by active organization or clinic-unit memberships; "
+                                        + "platform administration does not itself grant operational access."));
     }
 }

@@ -24,8 +24,7 @@ npm ci
 npm start
 ```
 
-Open `http://localhost:4200`. The development server proxies `/api` to port
-8080. The local training credentials are:
+Open `http://localhost:4200`. The development server proxies `/api` to port 8080. The local training credentials are:
 
 ```text
 Identification type: NATIONAL_ID
@@ -43,12 +42,30 @@ Password: admin
 - logical deletion;
 - add and remove permissions;
 - responsive Angular Material interface.
+- organization administration routes: `/clinic-units` for organization-wide
+  Organization Administrators and `/practitioners` for organization-wide
+  Organization Administrators, Managers, and Practitioner Managers.
 
 ## Validation
 
 ```bash
 npm test -- --watch=false
+npm run check:i18n
 npm run build
+npm run test:e2e
+```
+
+Run `npm run check:i18n` whenever user-facing copy changes. It verifies that
+each configured locale has the same translation keys and that every statically
+referenced key in Angular templates and TypeScript exists.
+
+`npm run test:e2e` checks `/actuator/health` first. It reuses a healthy API or
+starts a temporary Spring Boot process and waits for it before running the
+Playwright test; the Angular development server is started automatically too.
+Install the Chromium runtime once before running it locally:
+
+```bash
+npx playwright install chromium
 ```
 
 ## Visual direction

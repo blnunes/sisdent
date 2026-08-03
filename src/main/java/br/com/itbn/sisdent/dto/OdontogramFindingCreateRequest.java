@@ -1,0 +1,2 @@
+package br.com.itbn.sisdent.dto; import br.com.itbn.sisdent.model.*; import jakarta.validation.constraints.*; import java.time.*; import java.util.*;
+public record OdontogramFindingCreateRequest(@NotNull UUID clinicUnitId,@NotNull UUID patientId,UUID practitionerId,UUID replacementForId,@NotBlank @Pattern(regexp="^(?:[1-4][1-8]|[5-8][1-5])$") String toothCode,@NotNull OdontogramSurface surface,@NotNull OdontogramCondition condition,@NotNull Instant observedAt,@NotBlank @Size(max=64) String observationTimezone,@Size(max=500) String clinicalNote) {}
