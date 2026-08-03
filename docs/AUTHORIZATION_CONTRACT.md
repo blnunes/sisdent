@@ -17,10 +17,10 @@ This preserves the existing global identity model without allowing a local edit 
 alter a different tenant's operational record.
 
 Organization-scoped APIs authorize exclusively through an active membership.
-Legacy `app_users` roles and permissions remain compatibility data for legacy
-or global resources and do not grant patient, practitioner, appointment, or
-clinical access. Platform administration is likewise separate from operational
-access.
+Legacy `app_users` roles and permissions are read-only migration data. They are
+not copied into JWT authorities and do not grant access to any API. Platform
+administration is likewise separate from operational access. The remaining
+global catalog APIs are authorized only by `ROLE_PLATFORM_ADMIN`.
 
 An organization-wide membership applies to every clinic unit in its
 organization; a clinic-unit membership applies only to that unit. A membership
