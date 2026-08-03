@@ -55,6 +55,10 @@ public interface PatientOrganizationLinkRepository extends JpaRepository<Patient
     Optional<PatientOrganizationLink> findFirstByPatient_GlobalIdAndOrganization_GlobalId(
             UUID patientId, UUID organizationId);
 
+    @EntityGraph(attributePaths = {"patient", "organization", "clinicUnit"})
+    Optional<PatientOrganizationLink> findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(
+            UUID patientId, UUID organizationId, UUID clinicUnitId);
+
     @Override
     @EntityGraph(attributePaths = {"patient", "patient.address", "patient.address.administrativeDivision",
             "patient.address.country", "patient.nationality", "patient.documentIssuerCountry",

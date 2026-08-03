@@ -68,7 +68,8 @@ description is in [`ROLE_GUIDE.md`](ROLE_GUIDE.md).
 | `GET/POST/PUT/DELETE` | `/api/organizations/{organizationId}/practitioners` | Scoped practitioner management (DELETE deactivates) |
 | `GET/POST` | `/api/organizations/{organizationId}/appointments` | Bounded schedule list and appointment creation |
 | `POST` | `/api/organizations/{organizationId}/appointments/{id}/cancel|complete|no-show` | Terminal lifecycle transitions |
-| `POST` | `/api/organizations/{organizationId}/appointments/{id}/performed-procedures` | Record catalog procedures after completion |
+| `GET/POST` | `/api/organizations/{organizationId}/appointments/{id}/performed-procedures` | Read or record catalog procedures in appointment scope |
+| `POST` | `/api/organizations/{organizationId}/appointments/performed-procedures/{procedureId}/void` | Audit-void a performed procedure in appointment scope |
 | `GET/POST/PUT` | `/api/organizations/{organizationId}/clinical/encounters` | Scoped encounter list, drafts, and updates |
 | `GET/POST` | `/api/organizations/{organizationId}/clinical/odontogram/*` | Read chart/history and record findings |
 | `PATCH` | `/api/users/me/password` | Change the current password |
@@ -154,7 +155,8 @@ roles. All demo profile passwords are `odonto2026@O`.
 | `group.admin@sisdent.demo` | Northstar Dental Group, Harbor Dental Clinic and Southstart Dental Group | Organization administrator memberships in all demonstration organizations; use this account to test cross-organization access management. |
 | `northstar.admin@sisdent.demo` | Northstar Dental Group | Northstar Central Clinic and Northstar Lakeside Clinic, each with 6 linked patients, 2 practitioners, and appointment history. |
 | `northstar.manager@sisdent.demo`, `northstar.scheduler@sisdent.demo`, `northstar.readonly@sisdent.demo` | Northstar Central Clinic | Clinic-scoped operational profiles for the Central scenario. |
-| `northstar.practitioners@sisdent.demo`, `northstar.viewer@sisdent.demo` | Northstar Lakeside Clinic | Clinic-scoped practitioner-management and appointment-reader profiles. |
+| `northstar.practitioners@sisdent.demo` | Northstar Dental Group | Organization-wide practitioner-management profile. |
+| `northstar.viewer@sisdent.demo` | Northstar Lakeside Clinic | Clinic-scoped appointment-reader profile. |
 | `harbor.admin@sisdent.demo`, `harbor.scheduler@sisdent.demo` | Harbor Dental Clinic / Harbor Riverside Unit | Harbor Riverside Unit and Harbor Midtown Clinic, each with 6 linked patients, 2 practitioners, and appointment history. |
 | `southstart.admin@sisdent.demo`, `southstart.scheduler@sisdent.demo` | Southstart Dental Group / Southstart Downtown Clinic | Southstart Downtown Clinic and Southstart Seaside Clinic, each with 6 linked patients, 2 practitioners, and appointment history. |
 
@@ -229,11 +231,15 @@ Flyway upgrade tests. Frontend browser journeys are in `frontend/e2e`.
 ## Operational scheduling
 
 Appointment requests require `startAt` and `endAt` ISO-8601 instants and a
-valid IANA `schedulingTimezone`; end must be later than start. The API returns
-a generic scheduling conflict if an active practitioner already has a scheduled
-overlap, without returning the other appointment or patient. Cancellation,
-completion and no-show are terminal. Performed procedures snapshot the active
-catalog name and can only be logically voided with a reason.
+valid IANA `schedulingTimezone`; end must be later than start. The patient must
+have an active link to the requested clinic unit on creation and rescheduling;
+the practitioner, appointment, and clinic unit must remain in the selected
+organization and clinic scope. The API returns a generic scheduling conflict if
+an active practitioner already has a scheduled overlap, without returning the
+other appointment or patient. Cancellation, completion and no-show are
+terminal. Appointment Managers can record and void procedures only in their
+authorized appointment scope; voiding snapshots the audit reason and preserves
+the immutable clinical history. Appointment Readers may view those records.
 
 For the isolated enrollment delivery seam, start with an explicit profile:
 
