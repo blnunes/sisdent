@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -26,7 +26,7 @@ export class AccountsComponent {
   readonly loading = signal(true); readonly error = signal(''); readonly accounts = signal<AccountSummary[]>([]); readonly manageableOrganizations = signal<OrganizationOption[]>([]);
   readonly creating = signal(false);
   readonly createForm = this.forms.nonNullable.group({ displayName: ['', [Validators.required, Validators.maxLength(255)]], email: ['', [Validators.required, Validators.email, Validators.maxLength(320)]], password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128)]] });
-  constructor() { this.load(); }
+  constructor() { effect(() => { this.auth.activeMembership(); this.auth.isPlatformAdministrator(); untracked(() => this.load()); }); }
   load(): void { this.loading.set(true); this.error.set(''); if (this.auth.isPlatformAdministrator()) { forkJoin({ page: this.api.listPlatform(), organizations: this.api.listPlatformOrganizations() }).subscribe({ next: ({ page, organizations }) => { this.accounts.set(page.content); this.manageableOrganizations.set(organizations); this.loading.set(false); }, error: () => { this.error.set(this.translate.instant('ACCOUNTS.LOAD_ERROR')); this.loading.set(false); } }); return; } const organizations = [...new Map((this.auth.session()?.memberships ?? []).filter(membership => membership.role === 'ORGANIZATION_ADMIN' && !membership.clinicUnitId).map(membership => [membership.organizationId, { id: membership.organizationId, name: membership.organizationName, active: true }])).values()]; this.manageableOrganizations.set(organizations); const activeOrganizationId = this.auth.activeMembership()?.organizationId; const organization = organizations.find(item => item.id === activeOrganizationId) ?? organizations[0]; if (!organization) { this.error.set(this.translate.instant('ACCOUNTS.NO_MANAGEMENT_ACCESS')); this.loading.set(false); return; } this.api.listOrganization(organization.id).subscribe({ next: page => { this.accounts.set(page.content); this.loading.set(false); }, error: () => { this.error.set(this.translate.instant('ACCOUNTS.LOAD_ERROR')); this.loading.set(false); } }); }
   lifecycle(account: AccountSummary): void { this.api.changeLifecycle(account, !account.active).subscribe({ next: () => this.load(), error: () => this.error.set(this.translate.instant('ACCOUNTS.CHANGE_ERROR')) }); }
   platformAdministration(account: AccountSummary): void { this.api.changePlatformAdministrator(account, !account.platformAdministrator).subscribe({ next: () => this.load(), error: () => this.error.set(this.translate.instant('ACCOUNTS.PLATFORM_ADMIN_ERROR')) }); }

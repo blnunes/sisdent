@@ -3,6 +3,7 @@
   <a class="brand" routerLink="/home"><mat-icon>dentistry</mat-icon><span>Sisdent</span></a>
   <span class="spacer"></span>
   @if (auth.session()?.memberships?.length) {
+    <span class="context-label">{{ 'USERS.ACTIVE_CONTEXT' | translate }}</span>
     <mat-select
       class="membership-select"
       [value]="auth.activeMembership()?.id"

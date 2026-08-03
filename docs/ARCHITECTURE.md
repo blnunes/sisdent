@@ -231,6 +231,10 @@ account management; organization administrators use organization-scoped account
 and membership operations, with no evidence of access in other organizations.
 The current-account response and Accounts and Access UI use only public UUIDs,
 display names, authentication state, and authorized membership summaries.
+The header's active membership is an explicit operational and administrative
+view context: changing it selects the corresponding organization-scoped list
+for a delegated organization administrator, but never grants a permission that
+the underlying membership does not contain.
 
 ## Security boundary
 

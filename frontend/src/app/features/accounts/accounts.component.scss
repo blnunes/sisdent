@@ -1,6 +1,7 @@
 @use '../users/users.component.scss';
 
 .form-card { margin: 0 0 24px; padding: 22px 26px; border-color: var(--app-border); border-radius: 18px; }
+.scope-notice { display:flex; align-items:flex-start; gap:12px; margin:0 0 20px; padding:14px 18px; border:1px solid var(--app-border); border-radius:14px; background:var(--app-primary-subtle); }.scope-notice mat-icon { color:var(--app-primary); }.scope-notice div { display:grid; gap:3px; }.scope-notice span { color:var(--app-text-muted); font-size:.9rem; }
 .form-card form { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .form-card p { width: 100%; margin: 0; color: var(--app-text-muted); }
 .form-card mat-form-field { flex: 1 1 220px; }
