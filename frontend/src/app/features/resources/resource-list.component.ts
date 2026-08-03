@@ -394,11 +394,18 @@ export class ResourceListComponent {
   );
   readonly columns = computed(() => TABLE_COLUMNS[this.config.key] ?? []);
   readonly displayedColumns = computed(() => this.columns().map((column) => column.key));
-  readonly filters = computed(() => this.config.filters ?? []);
+  readonly filters = computed(() =>
+    (this.config.filters ?? []).map((filter) =>
+      filter.key === 'nationalityCode'
+        ? { ...filter, options: this.nationalityOptions() }
+        : filter,
+    ),
+  );
   readonly primaryFilters = computed(() =>
     this.filters().filter((filter) => filter.placement !== 'advanced'),
   );
   readonly advancedFilters = computed(() =>
+  readonly nationalityOptions = signal<FilterOption[]>([]);
     this.filters().filter((filter) => filter.placement === 'advanced'),
   );
 
@@ -412,7 +419,11 @@ export class ResourceListComponent {
         distinctUntilChanged((previous, current) => previous?.id === current?.id),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe(() => this.load());
+      .subscribe((membership) => {
+        if (!membership) return;
+        this.loadNationalityOptions();
+        this.load();
+      });
   }
 
   load(): void {
@@ -563,6 +574,17 @@ export class ResourceListComponent {
   remove(record: Record<string, unknown>): void {
     if (!confirm(`Delete ${this.primary(record)}?`)) return;
     this.http
+  private loadNationalityOptions(): void {
+    this.http
+      .get<FilterOption[]>(`${this.config.endpoint}/filter-options`, {
+        params: { field: 'nationalityCode' },
+      })
+      .subscribe({
+        next: (options) => this.nationalityOptions.set(options),
+        error: () => this.nationalityOptions.set([]),
+      });
+  }
+
       .delete(`${this.config.endpoint}/${this.resourceIdentifier(record)}`)
       .subscribe({ next: () => this.load(), error: () => this.error.set(true) });
   }

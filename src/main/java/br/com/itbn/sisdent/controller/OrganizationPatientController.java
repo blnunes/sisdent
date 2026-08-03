@@ -21,8 +21,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import br.com.itbn.sisdent.filter.PatientFilter;
+import br.com.itbn.sisdent.model.DocumentType;
+import br.com.itbn.sisdent.model.Gender;
 
 @RestController
 public class OrganizationPatientController {
@@ -34,8 +38,20 @@ public class OrganizationPatientController {
     @GetMapping("/api/organizations/{organizationId}/patients")
     public PageResponse<PatientResponse> search(@PathVariable UUID organizationId,
             @RequestParam(required = false) UUID clinicUnitId,
-            @RequestParam(required = false) String name) {
-        return patientService.search(organizationId, clinicUnitId, name);
+            @RequestParam(required = false) Long id,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) LocalDate birthDate,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(required = false) Gender gender,
+            @RequestParam(required = false) String taxId,
+            @RequestParam(required = false) DocumentType identificationType,
+            @RequestParam(required = false) String identificationNumber,
+            @RequestParam(required = false) String nationalityCode,
+            @RequestParam(required = false) Long addressId,
+            @RequestParam(required = false) Long specialityId) {
+        return patientService.search(organizationId, clinicUnitId, new PatientFilter(
+                id, name, birthDate, active, gender, taxId, identificationType,
+                identificationNumber, nationalityCode, addressId, specialityId));
     }
 
     @GetMapping("/api/organizations/{organizationId}/patients/filter-options")

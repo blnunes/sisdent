@@ -324,7 +324,9 @@ public class InitialDataLoader implements ApplicationRunner {
                                 "document issuer country code"),
                         requireReference(
                                 countriesByCode,
-                                seedDefaults.patientNationalityCode(),
+                                patient.nationalityCode() == null || patient.nationalityCode().isBlank()
+                                        ? seedDefaults.patientNationalityCode()
+                                        : patient.nationalityCode(),
                                 "nationality country code"),
                         requireReference(
                                 addressesByReference,
@@ -406,6 +408,7 @@ public class InitialDataLoader implements ApplicationRunner {
 
     public record DemoProfileData(
             String displayName, String email, String password, boolean platformAdministrator,
+            String nationalityCode,
             String organizationName, String clinicUnitName, MembershipRole membershipRole) {
     }
 

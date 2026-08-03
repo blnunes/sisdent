@@ -468,6 +468,7 @@
     {
       "name": "Henry Walker",
       "birthDate": "2002-12-15",
+      "nationalityCode": "PT",
       "active": true,
       "gender": "MALE",
       "taxId": "10000000016",
@@ -477,6 +478,7 @@
     {
       "name": "Harper Lewis",
       "birthDate": "1993-02-08",
+      "nationalityCode": "BR",
       "active": true,
       "gender": "OTHER",
       "taxId": "10000000017",
@@ -486,6 +488,7 @@
     {
       "name": "Alexander Young",
       "birthDate": "1980-06-30",
+      "nationalityCode": "FR",
       "active": true,
       "gender": "MALE",
       "taxId": "10000000018",
@@ -495,6 +498,7 @@
     {
       "name": "Evelyn Martinez",
       "birthDate": "1998-10-04",
+      "nationalityCode": "CA",
       "active": true,
       "gender": "FEMALE",
       "taxId": "10000000019",
@@ -504,6 +508,7 @@
     {
       "name": "Daniel Harris",
       "birthDate": "1965-01-17",
+      "nationalityCode": "MX",
       "active": false,
       "gender": "MALE",
       "taxId": "10000000020",

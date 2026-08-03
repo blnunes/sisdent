@@ -8,6 +8,7 @@ import br.com.itbn.sisdent.dto.PatientRequest;
 import br.com.itbn.sisdent.dto.FilterOptionResponse;
 import br.com.itbn.sisdent.dto.PatientResponse;
 import br.com.itbn.sisdent.dto.PageResponse;
+import br.com.itbn.sisdent.filter.PatientFilter;
 import br.com.itbn.sisdent.mapper.ResponseMapper;
 import br.com.itbn.sisdent.model.ClinicUnit;
 import br.com.itbn.sisdent.model.Organization;
@@ -23,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 @Service
 public class OrganizationPatientService {
@@ -43,11 +45,18 @@ public class OrganizationPatientService {
     @Transactional(readOnly = true)
     public List<FilterOptionResponse> filterOptions(UUID organizationId, UUID clinicUnitId,
             String field, String query) {
-        if (!"name".equals(field)) {
-            return List.of();
-        }
-        return search(organizationId, clinicUnitId, query).content().stream()
-                .limit(10).map(patient -> new FilterOptionResponse(patient.name(), patient.name())).toList();
+        authorization.requireRead(organizationId, clinicUnitId);
+        String term = query == null ? "" : query.strip().toLowerCase();
+        return linkedPatients(organizationId, clinicUnitId).stream()
+                .map(PatientOrganizationLink::getPatient)
+                .distinct()
+                .flatMap(patient -> filterOption(field, patient).stream())
+                .filter(option -> option.label().toLowerCase().contains(term)
+                        || option.value().toLowerCase().contains(term))
+                .distinct()
+                .sorted(java.util.Comparator.comparing(FilterOptionResponse::label))
+                .limit(10)
+                .toList();
     }
 
     @Transactional
@@ -79,19 +88,64 @@ public class OrganizationPatientService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<PatientResponse> search(UUID organizationId, UUID clinicUnitId, String name) {
+    public PageResponse<PatientResponse> search(UUID organizationId, UUID clinicUnitId, PatientFilter filter) {
         authorization.requireRead(organizationId, clinicUnitId);
+        List<PatientResponse> content = linkedPatients(organizationId, clinicUnitId).stream()
+                .map(PatientOrganizationLink::getPatient).distinct()
+                .filter(matches(filter))
+                .sorted(java.util.Comparator.comparing(Patient::getName, String.CASE_INSENSITIVE_ORDER))
+                .map(ResponseMapper::toResponse).toList();
+        return new PageResponse<>(content, 0, content.size(), content.size(), content.isEmpty() ? 0 : 1);
+    }
+
+    private List<PatientOrganizationLink> linkedPatients(UUID organizationId, UUID clinicUnitId) {
         if (clinicUnitId != null) {
             authorization.requireClinicInOrganization(organizationId, clinicUnitId);
         }
-        String normalizedName = name == null ? "" : name.strip();
-        List<PatientOrganizationLink> links = clinicUnitId == null
-                ? linkRepository.searchLinkedPatientsInOrganization(organizationId, normalizedName)
-                : linkRepository.searchLinkedPatientsInClinic(organizationId, clinicUnitId, normalizedName);
-        List<PatientResponse> content = links
-                .stream().map(PatientOrganizationLink::getPatient).distinct()
-                .map(ResponseMapper::toResponse).toList();
-        return new PageResponse<>(content, 0, content.size(), content.size(), content.isEmpty() ? 0 : 1);
+        return clinicUnitId == null
+                ? linkRepository.findAllByOrganization_GlobalId(organizationId)
+                : linkRepository.searchLinkedPatientsInClinic(organizationId, clinicUnitId, "");
+    }
+
+    private Predicate<Patient> matches(PatientFilter filter) {
+        return patient -> matchesEquals(filter.id(), patient.getId())
+                && contains(patient.getName(), filter.normalized(filter.name()))
+                && matchesEquals(filter.birthDate(), patient.getBirthDate())
+                && matchesEquals(filter.active(), patient.isActive())
+                && matchesEquals(filter.gender(), patient.getGender())
+                && contains(patient.getTaxId(), filter.normalized(filter.taxId()))
+                && matchesEquals(filter.identificationType(), patient.getIdentificationType())
+                && contains(patient.getIdentificationNumber(), filter.normalized(filter.identificationNumber()))
+                && (filter.nationalityCode() == null || filter.nationalityCode().isBlank()
+                        || patient.getNationality().getCode().equalsIgnoreCase(filter.nationalityCode().strip()))
+                && matchesEquals(filter.addressId(), patient.getAddress().getId())
+                && (filter.specialityId() == null || patient.getSpecialities().stream()
+                        .anyMatch(speciality -> speciality.getId().equals(filter.specialityId())));
+    }
+
+    private <T> boolean matchesEquals(T expected, T actual) {
+        return expected == null || expected.equals(actual);
+    }
+
+    private boolean contains(String value, String expected) {
+        return expected == null || (value != null && value.toLowerCase().contains(expected));
+    }
+
+    private List<FilterOptionResponse> filterOption(String field, Patient patient) {
+        return switch (field) {
+            case "name" -> List.of(new FilterOptionResponse(patient.getName(), patient.getName()));
+            case "taxId" -> patient.getTaxId() == null ? List.of()
+                    : List.of(new FilterOptionResponse(patient.getTaxId(), patient.getTaxId()));
+            case "nationalityCode" -> List.of(new FilterOptionResponse(patient.getNationality().getCode(),
+                    patient.getNationality().getName() + " (" + patient.getNationality().getCode() + ")"));
+            case "addressId" -> List.of(new FilterOptionResponse(String.valueOf(patient.getAddress().getId()),
+                    patient.getAddress().getStreet() + " · " + patient.getAddress().getCity() + " · "
+                            + patient.getAddress().getCountry().getCode()));
+            case "specialityId" -> patient.getSpecialities().stream()
+                    .map(speciality -> new FilterOptionResponse(String.valueOf(speciality.getId()), speciality.getName()))
+                    .toList();
+            default -> List.of();
+        };
     }
 
     @Transactional(readOnly = true)
