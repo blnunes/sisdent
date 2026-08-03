@@ -1,14 +1,16 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Permission, User, UserWrite } from './models';
+import { PageResponse, Permission, User, UserWrite } from './models';
+import { TableQuery, TableQueryService } from './table-query.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserApiService {
   private readonly http = inject(HttpClient);
+  private readonly tableQuery = inject(TableQueryService);
   private readonly url = '/api/users';
 
-  list() {
-    return this.http.get<User[]>(this.url);
+  list(query: TableQuery = this.tableQuery.defaultQuery) {
+    return this.http.get<PageResponse<User>>(this.url, { params: this.tableQuery.toHttpParams(query) });
   }
 
   create(user: UserWrite) {

@@ -6,7 +6,9 @@ import br.com.itbn.sisdent.dto.PasswordChangeResponse;
 import br.com.itbn.sisdent.dto.UserRequest;
 import br.com.itbn.sisdent.dto.UserResponse;
 import br.com.itbn.sisdent.dto.UserUpdateRequest;
+import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.service.UserService;
+import br.com.itbn.sisdent.pagination.PageQuery;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,8 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/users")
@@ -35,8 +36,12 @@ public class UserController {
     }
 
     @GetMapping
-    public List<UserResponse> findAll() {
-        return userService.findAll();
+    public PageResponse<UserResponse> findAll(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String direction) {
+        return userService.findPage(new PageQuery(page, size, sort, direction));
     }
 
     @GetMapping("/{id}")

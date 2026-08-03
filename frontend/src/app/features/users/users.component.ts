@@ -1,4 +1,4 @@
-import { Component, inject, signal, ViewChild } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -13,18 +13,20 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatListModule } from '@angular/material/list';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Permission, Role, User, UserWrite } from '../../core/models';
 import { UserApiService } from '../../core/user-api.service';
 import { AppHeaderComponent } from '../../shared/app-header.component';
 import { ModuleNavigationComponent } from '../../shared/module-navigation.component';
+import { TableQueryService } from '../../core/table-query.service';
 
 @Component({
   selector: 'app-users',
@@ -41,6 +43,7 @@ import { ModuleNavigationComponent } from '../../shared/module-navigation.compon
     MatTableModule,
     MatSidenavModule,
     MatListModule,
+    MatSortModule,
     TranslatePipe,
     AppHeaderComponent,
     ModuleNavigationComponent,
@@ -53,15 +56,17 @@ export class UsersComponent {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
+  private readonly tableQuery = inject(TableQueryService);
 
   readonly loading = signal(true);
   readonly error = signal('');
+  readonly page = signal(0);
+  readonly pageSize = signal(5);
+  readonly totalElements = signal(0);
+  readonly sort = signal('id');
+  readonly sortDirection = signal<'asc' | 'desc'>('asc');
   readonly dataSource = new MatTableDataSource<User>([]);
   readonly displayedColumns = ['identification', 'role', 'permissions', 'status', 'actions'];
-
-  @ViewChild(MatPaginator) set paginator(paginator: MatPaginator) {
-    this.dataSource.paginator = paginator;
-  }
 
   constructor() {
     this.load();
@@ -73,9 +78,10 @@ export class UsersComponent {
 
   load(): void {
     this.loading.set(true);
-    this.api.list().subscribe({
-      next: (users) => {
-        this.dataSource.data = users;
+    this.api.list({ page: this.page(), size: this.pageSize(), sort: this.sort(), direction: this.sortDirection() }).subscribe({
+      next: (response) => {
+        this.dataSource.data = response.content;
+        this.totalElements.set(response.totalElements);
         this.loading.set(false);
       },
       error: () => {
@@ -85,9 +91,20 @@ export class UsersComponent {
     });
   }
 
+  changePage(event: PageEvent): void {
+    this.page.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+    this.load();
+  }
+
+  changeSort(change: Sort): void {
+    const next = this.tableQuery.nextSort({ page: this.page(), size: this.pageSize(), sort: this.sort(), direction: this.sortDirection() }, change);
+    this.page.set(next.page); this.sort.set(next.sort); this.sortDirection.set(next.direction);
+    this.load();
+  }
+
   filter(value: string): void {
     this.dataSource.filter = value.trim().toLowerCase();
-    this.dataSource.paginator?.firstPage();
   }
 
   create(): void {
@@ -223,14 +240,14 @@ export class UserFormDialog {
       'READ_USERS', 'MAINTAIN_USERS', 'READ_PATIENTS', 'MAINTAIN_PATIENTS',
       'READ_SPECIALITIES', 'MAINTAIN_SPECIALITIES', 'READ_ADDRESSES',
       'MAINTAIN_ADDRESSES', 'READ_COUNTRIES', 'MAINTAIN_COUNTRIES',
-      'READ_STATES', 'MAINTAIN_STATES',
+      'READ_ADMINISTRATIVE_DIVISIONS', 'MAINTAIN_ADMINISTRATIVE_DIVISIONS',
       'READ_PERMISSIONS', 'MAINTAIN_PERMISSIONS',
     ],
     MANAGER: [
       'READ_PATIENTS', 'MAINTAIN_PATIENTS', 'READ_SPECIALITIES',
-      'MAINTAIN_SPECIALITIES', 'READ_ADDRESSES', 'READ_COUNTRIES', 'READ_STATES',
+      'MAINTAIN_SPECIALITIES', 'READ_ADDRESSES', 'READ_COUNTRIES', 'READ_ADMINISTRATIVE_DIVISIONS',
     ],
-    USER: ['READ_PATIENTS', 'READ_SPECIALITIES', 'READ_ADDRESSES', 'READ_COUNTRIES', 'READ_STATES'],
+    USER: ['READ_PATIENTS', 'READ_SPECIALITIES', 'READ_ADDRESSES', 'READ_COUNTRIES', 'READ_ADMINISTRATIVE_DIVISIONS'],
   };
 
   permissionLabel(permission: Permission): string {
@@ -276,44 +293,44 @@ export class PermissionDialog {
     'MAINTAIN_ADDRESSES',
     'READ_COUNTRIES',
     'MAINTAIN_COUNTRIES',
-    'READ_STATES',
-    'MAINTAIN_STATES',
+    'READ_ADMINISTRATIVE_DIVISIONS',
+    'MAINTAIN_ADMINISTRATIVE_DIVISIONS',
     'READ_PERMISSIONS',
     'MAINTAIN_PERMISSIONS',
   ];
   readonly selected = signal(new Set(this.user.permissions));
   readonly isAdmin = this.user.role === 'ADMIN';
   readonly labels: Record<Permission, string> = {
-    READ_USERS: 'Utilizadores · Ler',
-    MAINTAIN_USERS: 'Utilizadores · Manter',
-    READ_PATIENTS: 'Pacientes · Ler',
-    MAINTAIN_PATIENTS: 'Pacientes · Manter',
-    READ_SPECIALITIES: 'Especialidades · Ler',
-    MAINTAIN_SPECIALITIES: 'Especialidades · Manter',
-    READ_ADDRESSES: 'Endereços · Ler',
-    MAINTAIN_ADDRESSES: 'Endereços · Manter',
-    READ_COUNTRIES: 'Países · Ler',
-    MAINTAIN_COUNTRIES: 'Países · Manter',
-    READ_STATES: 'Estados · Ler',
-    MAINTAIN_STATES: 'Estados · Manter',
-    READ_PERMISSIONS: 'Permissões · Ler',
-    MAINTAIN_PERMISSIONS: 'Permissões · Manter',
+    READ_USERS: 'Users · Read',
+    MAINTAIN_USERS: 'Users · Maintain',
+    READ_PATIENTS: 'Patients · Read',
+    MAINTAIN_PATIENTS: 'Patients · Maintain',
+    READ_SPECIALITIES: 'Specialities · Read',
+    MAINTAIN_SPECIALITIES: 'Specialities · Maintain',
+    READ_ADDRESSES: 'Addresses · Read',
+    MAINTAIN_ADDRESSES: 'Addresses · Maintain',
+    READ_COUNTRIES: 'Countries · Read',
+    MAINTAIN_COUNTRIES: 'Countries · Maintain',
+    READ_ADMINISTRATIVE_DIVISIONS: 'Administrative divisions · Read',
+    MAINTAIN_ADMINISTRATIVE_DIVISIONS: 'Administrative divisions · Maintain',
+    READ_PERMISSIONS: 'Permissions · Read',
+    MAINTAIN_PERMISSIONS: 'Permissions · Maintain',
   };
   readonly descriptions: Record<Permission, string> = {
-    READ_USERS: 'Consultar utilizadores',
-    MAINTAIN_USERS: 'Criar, alterar e remover utilizadores',
-    READ_PATIENTS: 'Consultar pacientes',
-    MAINTAIN_PATIENTS: 'Criar, alterar e remover pacientes',
-    READ_SPECIALITIES: 'Consultar especialidades',
-    MAINTAIN_SPECIALITIES: 'Criar, alterar e remover especialidades',
-    READ_ADDRESSES: 'Consultar endereços',
-    MAINTAIN_ADDRESSES: 'Gerir endereços',
-    READ_COUNTRIES: 'Consultar países',
-    MAINTAIN_COUNTRIES: 'Gerir países',
-    READ_STATES: 'Consultar estados',
-    MAINTAIN_STATES: 'Gerir estados',
-    READ_PERMISSIONS: 'Consultar permissões',
-    MAINTAIN_PERMISSIONS: 'Gerir permissões',
+    READ_USERS: 'View users',
+    MAINTAIN_USERS: 'Create, update, and deactivate users',
+    READ_PATIENTS: 'View patients',
+    MAINTAIN_PATIENTS: 'Create, update, and deactivate patients',
+    READ_SPECIALITIES: 'View specialities',
+    MAINTAIN_SPECIALITIES: 'Create, update, and deactivate specialities',
+    READ_ADDRESSES: 'View addresses',
+    MAINTAIN_ADDRESSES: 'Manage addresses',
+    READ_COUNTRIES: 'View countries',
+    MAINTAIN_COUNTRIES: 'Manage countries',
+    READ_ADMINISTRATIVE_DIVISIONS: 'View administrative divisions',
+    MAINTAIN_ADMINISTRATIVE_DIVISIONS: 'Manage administrative divisions',
+    READ_PERMISSIONS: 'View permissions',
+    MAINTAIN_PERMISSIONS: 'Manage permissions',
   };
 
   toggle(permission: Permission, checked: boolean): void {

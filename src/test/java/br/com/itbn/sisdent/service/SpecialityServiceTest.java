@@ -1,6 +1,6 @@
 package br.com.itbn.sisdent.service;
 
-import br.com.itbn.sisdent.dto.ProcedureRequest;
+import br.com.itbn.sisdent.dto.DentalProcedureRequest;
 import br.com.itbn.sisdent.dto.SpecialityRequest;
 import br.com.itbn.sisdent.dto.SpecialityResponse;
 import br.com.itbn.sisdent.model.Speciality;
@@ -52,8 +52,8 @@ class SpecialityServiceTest {
         SpecialityRequest request = new SpecialityRequest(
                 "Implant Dentistry",
                 List.of(
-                        new ProcedureRequest(null, "Implant placement"),
-                        new ProcedureRequest(null, "Bone graft")));
+                        new DentalProcedureRequest(null, "Implant placement"),
+                        new DentalProcedureRequest(null, "Bone graft")));
         when(specialityRepository.findByName(request.name())).thenReturn(java.util.Optional.empty());
         when(specialityRepository.save(any(Speciality.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));

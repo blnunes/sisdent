@@ -1,12 +1,22 @@
 package br.com.itbn.sisdent.service;
 
-import br.com.itbn.sisdent.dto.ProcedureRequest;
+import br.com.itbn.sisdent.dto.DentalProcedureRequest;
 import br.com.itbn.sisdent.dto.SpecialityRequest;
 import br.com.itbn.sisdent.dto.SpecialityResponse;
+import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.mapper.ResponseMapper;
+import br.com.itbn.sisdent.pagination.PageQuery;
+import br.com.itbn.sisdent.pagination.PageableFactory;
+import br.com.itbn.sisdent.pagination.SortDefinition;
+import br.com.itbn.sisdent.dto.FilterOptionResponse;
+import br.com.itbn.sisdent.filter.SpecialityFilter;
+import br.com.itbn.sisdent.filter.SpecialitySpecifications;
 import br.com.itbn.sisdent.model.Speciality;
+import br.com.itbn.sisdent.model.CatalogStatus;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,11 +30,14 @@ import java.util.stream.Collectors;
 
 @Service
 public class SpecialityService {
+    private static final SortDefinition SORT_DEFINITION = new SortDefinition("name", java.util.Set.of("id", "name"));
 
     private final SpecialityRepository specialityRepository;
+    private final PageableFactory pageableFactory;
 
-    public SpecialityService(SpecialityRepository specialityRepository) {
+    public SpecialityService(SpecialityRepository specialityRepository, PageableFactory pageableFactory) {
         this.specialityRepository = specialityRepository;
+        this.pageableFactory = pageableFactory;
     }
 
     @Transactional(readOnly = true)
@@ -32,6 +45,25 @@ public class SpecialityService {
         return specialityRepository.findAll(Sort.by("name")).stream()
                 .map(ResponseMapper::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<SpecialityResponse> findPage(PageQuery query, SpecialityFilter filter) {
+        return PageResponse.from(specialityRepository.findAll(
+                SpecialitySpecifications.matching(filter), pageableFactory.create(query, SORT_DEFINITION)), ResponseMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FilterOptionResponse> findFilterOptions(String field, String query) {
+        Pageable limit = PageRequest.of(0, 10);
+        String term = query == null ? "" : query.trim();
+        return switch (field) {
+            case "name" -> specialityRepository.findNameSuggestions(term, limit).stream()
+                    .map(value -> new FilterOptionResponse(value, value)).toList();
+            case "procedure" -> specialityRepository.findProcedureSuggestions(term, limit).stream()
+                    .map(value -> new FilterOptionResponse(value, value)).toList();
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported filter field");
+        };
     }
 
     @Transactional
@@ -47,7 +79,7 @@ public class SpecialityService {
         Speciality speciality = new Speciality(
                 request.name().trim(),
                 request.procedures().stream()
-                        .map(ProcedureRequest::name)
+                        .map(DentalProcedureRequest::name)
                         .map(String::trim)
                         .toList());
         return ResponseMapper.toResponse(specialityRepository.save(speciality));
@@ -62,11 +94,11 @@ public class SpecialityService {
                         "Speciality not found"));
         ensureNameAvailable(request.name(), specialityId);
 
-        List<ProcedureRequest> existingProcedures = request.procedures().stream()
+        List<DentalProcedureRequest> existingProcedures = request.procedures().stream()
                 .filter(procedure -> procedure.id() != null)
                 .toList();
         Set<Long> retainedIds = existingProcedures.stream()
-                .map(ProcedureRequest::id)
+                .map(DentalProcedureRequest::id)
                 .collect(Collectors.toSet());
         if (retainedIds.size() != existingProcedures.size()) {
             throw new ResponseStatusException(
@@ -83,12 +115,20 @@ public class SpecialityService {
         speciality.retainProcedures(retainedIds);
         request.procedures().stream()
                 .filter(procedure -> procedure.id() == null)
-                .map(ProcedureRequest::name)
+                .map(DentalProcedureRequest::name)
                 .map(String::trim)
                 .forEach(speciality::addProcedure);
         speciality.rename(request.name().trim());
 
         return ResponseMapper.toResponse(specialityRepository.saveAndFlush(speciality));
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Speciality speciality = specialityRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Speciality not found"));
+        speciality.deactivate();
+        specialityRepository.save(speciality);
     }
 
     List<Speciality> findAllByIds(Set<Long> ids) {
@@ -98,13 +138,18 @@ public class SpecialityService {
                     HttpStatus.BAD_REQUEST,
                     "One or more specialities do not exist");
         }
+        if (specialities.stream().anyMatch(speciality -> speciality.getStatus() != CatalogStatus.ACTIVE)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Inactive specialities cannot be assigned");
+        }
         return specialities;
     }
 
-    private void validateProcedureNames(List<ProcedureRequest> procedures) {
+    private void validateProcedureNames(List<DentalProcedureRequest> procedures) {
         Set<String> names = new HashSet<>();
         boolean hasDuplicate = procedures.stream()
-                .map(ProcedureRequest::name)
+                .map(DentalProcedureRequest::name)
                 .map(String::trim)
                 .map(name -> name.toLowerCase(Locale.ROOT))
                 .anyMatch(name -> !names.add(name));

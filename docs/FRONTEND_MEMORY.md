@@ -24,7 +24,7 @@ frontend/
             |-- login/
             |-- not-found/
             |-- permissions/
-            |-- resources/       # read-only module listings
+            |-- resources/       # paged resource tables and management dialogs
             `-- users/
 ```
 
@@ -120,7 +120,8 @@ Angular bindings, events, control flow, and encapsulated styles.
   three locales synchronized.
 - The official language for routes and identifiers is English: use `/home`,
   `/users`, `/permissions`, `/patients`, `/specialities`, `/addresses`,
-  `/countries`, and `/states`. Do not create Portuguese route aliases.
+  `/countries`, and `/administrative-divisions`. Do not create Portuguese
+  route aliases.
 - `/home` requires authentication only and has no dedicated permission. After
   login, `AuthService.destination()` must direct authenticated users to
   `/home`.
@@ -145,6 +146,30 @@ Angular bindings, events, control flow, and encapsulated styles.
 - Place tests next to the implementation when a feature has non-trivial
   behavior.
 
+## Paged tables and ordering
+
+All collection screens use server-side pagination and the shared
+`core/table-query.service.ts`. `TableQueryService` owns the HTTP query
+parameters (`page`, `size`, `sort`, and `direction`) and the three-state header
+cycle: ascending, descending, then the resource default (`id ASC`). Do not
+reimplement this state machine in individual components.
+
+Resource tables must expose scalar fields in distinct columns and sort only on
+fields permitted by the backend. Related or nested records may be rendered as
+one concise cell. Use `mat-table`, `matSort`, and `mat-sort-header`; the sorted
+header arrow must remain visible without hover. Long cell values must wrap
+instead of changing column widths: use a fixed table layout and
+`overflow-wrap: anywhere`.
+
+The generic resource table configuration is in
+`features/resources/resource-list.component.ts`. Add an explicit column
+definition for every resource; never fall back to generic “record” or
+“details” columns when scalar fields are available.
+
+Country continents are an authoritative backend enum. The Country form loads
+the allowed values from `GET /api/countries/continents` and presents them with
+`mat-select`; do not duplicate enum values in the frontend or allow free text.
+
 ## Verification
 
 Run from `frontend/` after changes:
@@ -158,3 +183,31 @@ npm test -- --watch=false
 If installation is already prepared, `npm run build` is the minimum check.
 Fix CSS budget, binding, import, or template failures before delivering the
 change.
+
+## End-to-end tests
+
+Playwright end-to-end tests live in `frontend/e2e/` and run with Chromium. Use
+the following commands from `frontend/`:
+
+```bash
+npx playwright install chromium  # once per machine
+npm run test:e2e
+npm run test:e2e:ui
+```
+
+`test:e2e` runs `scripts/run-e2e.mjs`. The runner checks
+`http://localhost:8080/actuator/health`, reuses a healthy API when one is
+already running, or starts Spring Boot and waits for the health endpoint before
+executing Playwright. It stops only the backend process it started itself.
+
+E2E tests must set `sisdent.language` to `en` with `page.addInitScript` before
+the first navigation. This prevents a persisted browser preference from
+changing text locators. `LanguageService` also keeps the Angular Material date
+adapter locale synchronized with the selected UI language; use accessible
+calendar labels rather than visible abbreviated month text.
+
+The patient lifecycle test creates a unique patient, updates it, and
+deactivates it. Keep generated test data valid for the API; notably,
+`city` and the document issuer country are required, while postal-code format
+is country-specific. Filter by the generated patient name before creating it
+so server-side pagination does not hide the new record.

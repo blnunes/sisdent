@@ -1,0 +1,18 @@
+<main class="verification-page">
+  <mat-card appearance="outlined">
+    @if (loading()) {
+      <mat-spinner diameter="42" />
+      <p>{{ 'EMAIL_VERIFICATION.CHECKING' | translate }}</p>
+    } @else if (status() === 'VERIFIED') {
+      <mat-icon class="success">verified</mat-icon>
+      <h1>{{ 'EMAIL_VERIFICATION.SUCCESS_TITLE' | translate }}</h1>
+      <p>{{ 'EMAIL_VERIFICATION.SUCCESS_DESCRIPTION' | translate }}</p>
+      <a mat-flat-button routerLink="/login">{{ 'EMAIL_VERIFICATION.LOGIN' | translate }}</a>
+    } @else {
+      <mat-icon class="failure">link_off</mat-icon>
+      <h1>{{ 'EMAIL_VERIFICATION.FAILURE_TITLE' | translate }}</h1>
+      <p>{{ 'EMAIL_VERIFICATION.FAILURE_DESCRIPTION' | translate }}</p>
+      <a mat-flat-button routerLink="/login">{{ 'EMAIL_VERIFICATION.BACK' | translate }}</a>
+    }
+  </mat-card>
+</main>

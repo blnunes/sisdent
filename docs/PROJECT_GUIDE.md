@@ -2,294 +2,259 @@
 
 ## Purpose
 
-Sisdent is an early REST API for managing patients in a dental clinic. The
-current scope covers patients, addresses, states, JWT authentication, users,
-roles, and permissions. Scheduling, practitioners, clinical records,
-treatments, and billing are not implemented yet.
+Sisdent is an early dental-management platform. The implemented MVP covers
+patients, international addresses, countries, administrative divisions,
+specialities, dental procedures, global email accounts, organizations, clinic
+units, scoped memberships, verified-email enrollment, and JWT authentication.
 
-This document describes the system that exists today. Future ideas are kept in
-a separate section so they are not mistaken for implemented features.
+Scoped clinical encounters and odontograms are available to explicitly granted
+clinical memberships. Treatment plans, billing, and patient portal access are
+future work.
 
-Related documents:
+## Current behavior
 
-- `docs/PIPELINE.md`: tests, SonarCloud, and Render deployment.
-- `docs/ARCHITECTURE.md`: components, flows, and architecture decisions.
+- Patient records have a stable global UUID.
+- Patient documents are passports or national identity cards and include the
+  issuing country.
+- Tax ID is optional.
+- Countries use ISO 3166-1 alpha-2 codes.
+- Administrative divisions are country-scoped and may represent a state,
+  province, district, region, or another local type.
+- Address city and street are required; district, postal code, and
+  administrative division are optional.
+- Equal postal codes do not cause address reuse.
+- Specialities own nested dental procedures.
+- Removing catalog records deactivates them instead of deleting history.
+- Core entities carry author/timestamp audit metadata and optimistic versions.
+- Collection filtering, sorting, and pagination execute in the database.
+- **Accounts and Access** presents the canonical account/person identity,
+  authentication state, and only the caller-authorized membership scope.
+- Legacy `app_users` data is compatibility-only and is not shown as a normal
+  administrative identifier.
 
-## Current features
-
-- List states ordered by name.
-- List addresses ordered by street.
-- Find an address by postal code.
-- List patients ordered by name.
-- Find a patient by ID.
-- Create a patient with request validation.
-- Reuse an existing address when its postal code already exists.
-- Create a missing state and address during patient creation.
-- Seed demonstration data from JSON when the database is empty.
-- Expose OpenAPI documentation and Swagger UI.
-- Expose an application health endpoint for the hosting platform.
-- Authenticate with an identification type and normalized identification
-  number, issuing one-hour JWT access tokens.
-- Manage users and their permissions through admin-only endpoints, with logical
-  deletion.
-- List countries from Europe, North America, and South America.
-- Associate addresses with a country of residence.
-- Associate patients with nationality and a unique normalized identification.
+## Main endpoints
 
 | Method | Path | Result |
 | --- | --- | --- |
-| `GET` | `/api/states` | List states |
-| `GET` | `/api/countries` | List countries ordered by name |
+| `GET` | `/api/administrative-divisions` | List administrative divisions |
+| `POST/PUT/DELETE` | `/api/administrative-divisions/{id}` | Maintain administrative divisions |
+| `GET` | `/api/countries` | List countries |
+| `GET` | `/api/countries/continents` | List supported continent values |
 | `GET` | `/api/addresses` | List addresses |
-| `GET` | `/api/addresses/postal-code/{postalCode}` | Find address by postal code |
-| `GET` | `/api/patients` | List patients |
-| `GET` | `/api/patients/{id}` | Find patient by ID |
-| `POST` | `/api/patients` | Create patient and missing address/state |
-| `GET` | `/api/specialities` | List specialities with their procedures |
-| `POST` | `/api/specialities` | Create a speciality and its procedures |
-| `PUT` | `/api/specialities/{id}` | Replace a speciality and its nested procedures |
-| `POST` | `/api/auth/login` | Authenticate and issue a JWT |
-| `GET` | `/api/users` | List active users (admin only) |
-| `GET` | `/api/users/{id}` | Find an active user (admin only) |
-| `POST` | `/api/users` | Create a user (admin only) |
-| `PUT` | `/api/users/{id}` | Update a user (admin only) |
-| `PUT` | `/api/users/{id}/permissions` | Replace permissions (admin only) |
-| `DELETE` | `/api/users/{id}` | Logically delete a user (admin only) |
-| `PATCH` | `/api/users/me/password` | Change the authenticated user's password |
-| `GET` | `/actuator/health` | Application health |
-| `GET` | `/v3/api-docs` | OpenAPI JSON contract |
-| `GET` | `/swagger-ui.html` | Swagger UI redirect |
+| `GET` | `/api/addresses/postal-code/{postalCode}?countryCode=PT` | Country-scoped postal lookup |
+| `GET` | `/api/organizations/{organizationId}/patients` | Search linked patients in the selected scope |
+| `POST` | `/api/organizations/{organizationId}/patient-intake/exact-match` | Return only whether an exact possible match exists |
+| `POST` | `/api/organizations/{organizationId}/patient-links` | Create an explicit audited patient link |
+| `POST` | `/api/platform/organizations` | Platform administrator creates an organization |
+| `POST` | `/api/organizations/{organizationId}/clinic-units` | Organization administrator creates a unit |
+| `POST/DELETE` | `/api/organizations/{organizationId}/memberships` | Add or revoke scoped membership |
+| `GET` | `/api/session` | Current account and memberships |
+| `GET/POST` | `/api/platform/accounts` | Platform-only canonical account list and creation |
+| `GET/PATCH` | `/api/platform/accounts/{accountId}` | Platform account read and lifecycle state (PATCH uses `/lifecycle`) |
+| `GET` | `/api/account` | Current canonical account summary without enrollment secrets |
+| `GET` | `/api/organizations/{organizationId}/accounts` | Organization-scoped account list without cross-tenant membership disclosure |
+| `POST` | `/api/organizations/{organizationId}/account-memberships` | Grant a controlled role to an existing account by exact email in that organization |
+| `GET` | `/api/platform/organizations` | Active organization choices for platform-wide access administration |
+| `POST` | `/api/account/email-enrollment` | Reserve and send verification for the current migrating account |
+| `POST` | `/api/account/email-enrollment/resend` | Supersede and resend the current account's challenge |
+| `POST` | `/api/auth/email-verification` | Consume an opaque token with a generic verification outcome |
+| `GET/POST` | `/api/specialities` | List or create specialities |
+| `PUT/DELETE` | `/api/specialities/{id}` | Replace or deactivate a speciality |
+| `POST` | `/api/auth/login` | Authenticate by email/password; legacy identification is transitional |
+| `GET/POST/PUT/DELETE` | `/api/organizations/{organizationId}/practitioners` | Scoped practitioner management (DELETE deactivates) |
+| `GET/POST` | `/api/organizations/{organizationId}/appointments` | Bounded schedule list and appointment creation |
+| `POST` | `/api/organizations/{organizationId}/appointments/{id}/cancel|complete|no-show` | Terminal lifecycle transitions |
+| `POST` | `/api/organizations/{organizationId}/appointments/{id}/performed-procedures` | Record catalog procedures after completion |
+| `GET/POST/PUT` | `/api/organizations/{organizationId}/clinical/encounters` | Scoped encounter list, drafts, and updates |
+| `GET/POST` | `/api/organizations/{organizationId}/clinical/odontogram/*` | Read chart/history and record findings |
+| `PATCH` | `/api/users/me/password` | Change the current password |
 
-Published environment:
+All collection endpoints accept `page`, `size`, `sort`, and `direction`.
+Resource-specific filters are documented in OpenAPI. `/api/states` is retained
+as a compatibility alias only.
 
-- API: `https://sisdent-yhze.onrender.com`
-- Swagger UI: `https://sisdent-yhze.onrender.com/swagger-ui/index.html`
+## Account and access management
 
-## Technology stack
+Platform administrators can create, read, paginate, activate, and deactivate
+canonical accounts. This does not grant organization, patient, appointment, or
+clinical access. Organization administrators can list historical/current
+member accounts within their own organization and grant or logically revoke
+membership by public UUID; they never receive other-organization memberships.
+The access dialog lets an organization administrator select any organization
+where it has organization-wide administration, while the platform administrator
+may select any active organization and its clinic units.
 
-| Area | Current technology |
-| --- | --- |
-| Language | Java 25 |
-| Framework | Spring Boot 4.1.0 |
-| Web | Spring MVC |
-| Security | Spring Security, OAuth2 Resource Server, signed JWT, BCrypt |
-| Persistence | Spring Data JPA and Hibernate |
-| Database | In-memory H2 |
-| Validation | Jakarta Bean Validation |
-| API documentation | Springdoc OpenAPI 3.0.3 |
-| Testing | JUnit 5, Spring Boot Test, MockMvc, and Mockito |
-| Coverage | JaCoCo 0.8.15 |
-| Build | Maven 3.9.x; Maven Wrapper included |
-| Quality | SonarCloud |
-| Container | Multi-stage Docker build with Temurin Java 25 |
-| Hosting | Render free plan |
-| CI/CD | GitHub Actions |
+Platform administration is an account-level authority, separate from organization
+memberships. A platform administrator can promote another account and then be
+demoted, provided at least one active platform administrator remains. Demotion
+does not revoke the account's organization memberships.
 
-## Code structure
+Account lists include only display name, authoritative email, active state,
+verification/migration state, platform-administrator state, and bounded
+membership summaries. Password hashes, pending addresses, enrollment secrets,
+legacy credentials, and patient/clinical/scheduling data are never included.
+See `docs/PHASE_6_IMPLEMENTATION.md` for the complete authorization and
+lifecycle matrices.
 
-```text
-src/main/java/br/com/itbn/sisdent/
-|-- SisdentApplication.java       # application entry point
-|-- config/
-|   |-- InitialDataLoader.java    # JSON seed when the database is empty
-|   `-- OpenApiConfiguration.java # Swagger metadata
-|-- controller/                   # HTTP endpoints
-|-- dto/                          # request and response contracts
-|-- mapper/                       # entity-to-response mapping
-|-- model/                        # JPA entities and Gender enum
-|-- repository/                   # Spring Data persistence
-`-- service/                      # application rules and transactions
+Dental procedures are nested under speciality requests and responses. There is
+no standalone procedure endpoint.
+
+## Patient request rules
+
+A create or update request requires:
+
+- name, birth date, active status, and gender;
+- document type (`PASSPORT` or `NATIONAL_ID_CARD`);
+- document number and document issuer country code;
+- nationality country code;
+- address street, city, and country code;
+- `specialityIds`, which may be an empty array.
+
+Document numbers are normalized before storage. Their uniqueness is scoped by
+document type and issuer country. Postal code format is country-specific and is
+therefore stored as text without an eight-digit rule.
+
+An example address fragment:
+
+```json
+{
+  "street": "Rua do Ouro 10",
+  "district": "Lisboa",
+  "city": "Lisboa",
+  "postalCode": "1100-061",
+  "administrativeDivision": {
+    "name": "Lisboa",
+    "code": "11",
+    "type": "DISTRICT"
+  },
+  "countryCode": "PT"
+}
 ```
 
-The normal flow is `Controller -> Service -> Repository -> H2`. Controllers do
-not access repositories directly. Request and response records are separate
-from JPA entities.
-
-`OpenApiConfiguration` is used indirectly by the Spring container. Spring Boot
-finds the class through component scanning because it is annotated with
-`@Configuration`; its `sisdentOpenApi` method registers an `OpenAPI` bean that
-Springdoc reads when serving `/v3/api-docs` and Swagger UI. There is deliberately
-no direct Java call to this class or method, so IDE "unused" inspections must not
-be interpreted as evidence that the configuration can be removed.
-
-`PatientService.create` contains the main business flow: it looks up an address
-by postal code and a state by abbreviation, creates missing records, and then
-persists the patient in one transaction.
-
-Patient and address repositories use `@EntityGraph` to load required
-associations and avoid extra queries while mapping response DTOs.
-
-## Current validation rules
-
-- Patient name is required.
-- Birth date is required and must be in the past.
-- `active` is required.
-- Gender is required: `FEMALE`, `MALE`, or `OTHER`.
-- Tax ID must contain exactly 11 digits and is unique in the database.
-- Identification type is required: `NATIONAL_ID` or `PASSPORT`.
-- Identification number accepts letters, numbers, spaces, and hyphens. It is
-  normalized to uppercase without spaces or hyphens before persistence.
-- Login applies the same normalization, so identification numbers are
-  case-insensitive (`admin`, `Admin`, and `ADMIN` all resolve to `ADMIN`).
-- The normalized identification number is globally unique through a database
-  constraint; duplicate creation returns HTTP `409 Conflict`.
-- Patient nationality and address country use two-letter ISO 3166-1 codes.
-- Street and district are required.
-- Postal code must contain exactly 8 digits and is unique.
-- State name is required; abbreviation must be two uppercase letters and unique.
-
-Validation currently checks format only. It does not validate Brazilian CPF
-check digits or whether a postal code exists in the real world.
+The entire patient write runs in one transaction. Database uniqueness and
+optimistic-lock conflicts return HTTP `409 Conflict`.
 
 ## Database and seed data
 
-The application uses an in-memory H2 database:
+Flyway applies immutable migrations from
+`src/main/resources/db/migration` before Hibernate validates the schema.
+`InitialDataLoader` then synchronizes demonstration reference and patient data
+from `src/main/resources/data/initial-data.json`.
+
+The same file provides a self-contained operational scenario for the Phase 1–4
+roles. All demo profile passwords are `odonto2026@O`.
+
+| Profile | Tenant scope | Demonstration data |
+| --- | --- | --- |
+| `platform.operations@sisdent.demo` | Platform | Platform administration; it does not have tenant clinical access. |
+| `group.admin@sisdent.demo` | Northstar Dental Group, Harbor Dental Clinic and Southstart Dental Group | Organization administrator memberships in all demonstration organizations; use this account to test cross-organization access management. |
+| `northstar.admin@sisdent.demo` | Northstar Dental Group | Northstar Central Clinic and Northstar Lakeside Clinic, each with 6 linked patients, 2 practitioners, and appointment history. |
+| `northstar.manager@sisdent.demo`, `northstar.scheduler@sisdent.demo`, `northstar.readonly@sisdent.demo` | Northstar Central Clinic | Clinic-scoped operational profiles for the Central scenario. |
+| `northstar.practitioners@sisdent.demo`, `northstar.viewer@sisdent.demo` | Northstar Lakeside Clinic | Clinic-scoped practitioner-management and appointment-reader profiles. |
+| `harbor.admin@sisdent.demo`, `harbor.scheduler@sisdent.demo` | Harbor Dental Clinic / Harbor Riverside Unit | Harbor Riverside Unit and Harbor Midtown Clinic, each with 6 linked patients, 2 practitioners, and appointment history. |
+| `southstart.admin@sisdent.demo`, `southstart.scheduler@sisdent.demo` | Southstart Dental Group / Southstart Downtown Clinic | Southstart Downtown Clinic and Southstart Seaside Clinic, each with 6 linked patients, 2 practitioners, and appointment history. |
+
+Organizations and clinic units are explicit seed sections. The Northstar,
+Harbor, and Southstart patient, practitioner, appointment, and procedure
+records are deliberately separate by clinic, so tenant and clinic-isolation
+flows can be exercised.
+
+Local development uses:
 
 ```text
 jdbc:h2:mem:sisdent
 ```
 
-Flyway applies the versioned SQL files in `src/main/resources/db/migration`
-before Hibernate starts. Hibernate uses `ddl-auto=validate`, so model/schema
-drift stops startup instead of silently changing the database. When the
-database is empty, `InitialDataLoader` reads
-`src/main/resources/data/initial-data.json` and inserts demonstration countries,
-states, addresses, and patients. Country reference data contains 80 sovereign
-states from Europe, North America (including Central America and the Caribbean),
-and South America. Codes follow ISO 3166-1 alpha-2.
-
-Country data is local so startup and patient creation do not depend on an
-external service. ISO's Online Browsing Platform is the authoritative
-maintenance source. REST Countries may support a future offline update tool,
-but it is not a runtime dependency.
-
-The default local in-memory database still loses API data when the process
-ends. Pre-production uses file-backed H2 in a persistent Docker volume. Render
-must use a persistent database to retain data between service replacements.
-
-The H2 console is available locally at `/h2-console` and disabled on Render by
-`H2_CONSOLE_ENABLED=false`.
+This database disappears when the process ends. Pre-production uses file-backed
+H2. Real production use requires durable managed persistence, backups, restore
+tests, encryption, and an approved RGPD operating model.
 
 ## Local setup
 
 Requirements:
 
 - JDK 25;
+- Node.js compatible with `frontend/package.json`;
 - Git;
-- Docker only if container testing is required;
-- no system Maven installation is needed when using the wrapper.
+- Docker only for container tests.
+
+Start the API:
 
 ```bash
-java -version
-./mvnw -version
 ./mvnw spring-boot:run
 ```
 
-The default URL is `http://localhost:8080`. To select another port:
+Start the web client:
 
 ```bash
-PORT=9090 ./mvnw spring-boot:run
+cd frontend
+npm ci
+npm start
 ```
 
-Local development creates a training administrator with identification
-`NATIONAL_ID / ADMIN` and password `admin`. These deliberately weak credentials
-exist only to simplify local exercises.
-
-Every deployed environment must override these variables:
-- `JWT_SECRET` — a strong random string with at least 32 characters.
-- `BOOTSTRAP_ADMIN_IDENTIFICATION_TYPE` — optional, defaults to `NATIONAL_ID`.
-- `BOOTSTRAP_ADMIN_IDENTIFICATION_NUMBER` — admin username/identifier in the
-  target environment.
-- `BOOTSTRAP_ADMIN_PASSWORD` — a strong admin password.
-
-Use `deploy/preprod/runtime.env.example` as a template and create
-`deploy/preprod/runtime.env` on the deployment host.
+The pre-filled local training administrator is `admin@sisdent.local` with
+password `admin`. The multi-organization demonstration account
+`group.admin@sisdent.demo` / `odonto2026@O` remains available for tenant-switching
+tests. These credentials are deliberately weak and must never be used in a
+deployed environment.
 
 Login example:
 
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"identificationType":"NATIONAL_ID","identificationNumber":"ADMIN","password":"admin"}'
+  -d '{"email":"admin@sisdent.local","password":"admin"}'
 ```
 
-Send the returned token as `Authorization: Bearer <accessToken>`. Permission
-changes and logical deletion affect newly issued tokens; an already issued
-token remains valid until its one-hour expiry.
+Use the returned token as `Authorization: Bearer <accessToken>`.
 
-Every authenticated role can change its own password by sending the current
-and new passwords to `PATCH /api/users/me/password`. The current password is
-verified with BCrypt before the new BCrypt hash is stored.
-
-Initial authorization matrix:
-
-| Role | Non-user services | User service |
-| --- | --- | --- |
-| `ADMIN` | Create, update, read, delete | Full access |
-| `MANAGER` | Create, update, read, delete | No access |
-| `USER` | Read | No access |
-
-Quick checks:
+## Verification
 
 ```bash
-curl http://localhost:8080/actuator/health
-curl http://localhost:8080/api/patients
-open http://localhost:8080/swagger-ui.html
-```
-
-## Test and build
-
-```bash
-# Run tests
 ./mvnw test
-
-# Run the CI verification phase and generate JaCoCo output
 ./mvnw verify
 
-# Build and run the JAR
-./mvnw clean package
-java -jar target/sisdent-0.0.1-SNAPSHOT.jar
-
-# Build and run a container
-docker build -t sisdent .
-docker run --rm -p 8080:8080 -e H2_CONSOLE_ENABLED=false sisdent
+cd frontend
+npm test -- --watch=false
+npm run build
 ```
 
-The HTML coverage report is generated at `target/site/jacoco/index.html`.
+The backend suite includes service, security, HTTP integration, seed-data, and
+Flyway upgrade tests. Frontend browser journeys are in `frontend/e2e`.
 
-The Docker build skips tests because the deployment pipeline verifies the code
-first. Run `./mvnw verify` before building an image locally.
+## Operational scheduling
 
-## Test suite
+Appointment requests require `startAt` and `endAt` ISO-8601 instants and a
+valid IANA `schedulingTimezone`; end must be later than start. The API returns
+a generic scheduling conflict if an active practitioner already has a scheduled
+overlap, without returning the other appointment or patient. Cancellation,
+completion and no-show are terminal. Performed procedures snapshot the active
+catalog name and can only be logically voided with a reason.
 
-- Unit tests for services with mocked repositories.
-- Unit tests for `ResponseMapper`.
-- Integration tests with Spring context, H2, and MockMvc.
-- Coverage of endpoints, seed data, 404 responses, invalid input, creation, and
-  the OpenAPI contract.
+For the isolated enrollment delivery seam, start with an explicit profile:
 
-On July 24, 2026, 35 tests passed with 97.87% line coverage. These values are a
-snapshot and should be updated as the project grows.
+```bash
+SPRING_PROFILES_ACTIVE=development ./mvnw spring-boot:run
+```
 
-## Suggested evolution
+The development provider keeps messages in memory and does not send real email.
+The `e2e` profile additionally enables an authenticated current-account-only
+test-support endpoint used by Playwright. Neither implementation exposes a
+production HTTP route. With no explicit development/test provider, enrollment
+delivery fails closed until a production provider is configured.
 
-Recommended order:
+## Engineering boundaries
 
-1. **Durable persistence:** migrate to PostgreSQL and use environment-specific
-   credentials. Flyway is already the schema authority; future changes must be
-   introduced as new migrations.
-2. **Security and privacy:** add Spring Security, users and roles, personal-data
-   protection, appropriate Tax ID masking, and audit trails.
-3. **Consistent errors:** add `@RestControllerAdvice` with Problem Details,
-   domain error codes, and controlled validation messages.
-4. **Complete patient API:** update, deactivate, search, filter, and paginate.
-5. **Dental domain:** practitioners, schedules, appointments, clinical records,
-   odontograms, procedures, and attachments.
-6. **Operations:** separate environments, observability, backups, alerts, and
-   restoration tests.
-7. **Contracts and clients:** introduce `/api/v1`, richer OpenAPI examples,
-   contract tests, and restricted CORS.
+- Source code, API names, migrations, and engineering documentation use English.
+- Existing Flyway migrations are never edited after release; add a new version.
+- API DTOs remain separate from JPA entities.
+- New reference data must be country-aware.
+- Do not use tax ID, postal code, or database sequence IDs as global person
+  identity.
+- Do not physically delete catalog or future clinical-history records.
 
-Before storing real clinical data, review privacy, retention, consent, and
-applicable legal requirements. Clinical data requires substantially stronger
-controls than the current prototype.
+See `docs/ARCHITECTURE.md` for the model, compatibility decisions, security
+boundary, and planned evolution. See `docs/PHASE_2_IMPLEMENTATION.md` for the
+authorization matrix and legacy migration strategy, and
+`docs/PHASE_3_IMPLEMENTATION.md` for the account cutover, token lifecycle,
+delivery isolation, and privacy-preserving errors.

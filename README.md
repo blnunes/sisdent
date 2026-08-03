@@ -33,21 +33,23 @@ Open `http://localhost:4200` and use `NATIONAL_ID / ADMIN / admin`. See
 ## Endpoints
 
 ```text
-GET /api/states
+GET /api/administrative-divisions
 GET /api/countries
 GET /api/addresses
-GET /api/addresses/postal-code/{postalCode}
+GET /api/addresses/postal-code/{postalCode}?countryCode=PT
 GET /api/patients
 GET /api/patients/{id}
 POST /api/patients
+PUT /api/patients/{id}
 GET /api/specialities
 POST /api/specialities
 PUT /api/specialities/{id}
 ```
 
-Countries use ISO 3166-1 alpha-2 codes. Patients carry nationality plus a
-globally unique passport or national identity number, and addresses reference
-their country of residence.
+Countries use ISO 3166-1 alpha-2 codes. Patients have a stable global UUID and
+carry a passport or national identity card with its issuing country. Addresses
+reference their country of residence and an optional country-scoped
+administrative division.
 
 Example:
 
@@ -55,9 +57,15 @@ Example:
 curl http://localhost:8080/api/patients
 ```
 
-Procedures are nested resources owned by a speciality. They are returned,
-created, updated, and removed through the speciality endpoints; there is no
-standalone `/api/procedures` endpoint.
+Dental procedures are nested resources owned by a speciality. They are
+returned, created, updated, and deactivated through the speciality endpoints;
+there is no standalone `/api/procedures` endpoint.
+
+To replace a patient's speciality assignments, send their IDs in
+`specialityIds` to `PUT /api/patients/{id}`. Send an empty array
+(`"specialityIds": []`) to remove every assignment from that patient; this
+does not delete the speciality records. Catalog removal is logical so existing
+history remains valid.
 
 The H2 console is available at `http://localhost:8080/h2-console` with JDBC URL
 `jdbc:h2:mem:sisdent`, username `sa`, and an empty password.

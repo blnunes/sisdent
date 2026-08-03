@@ -13,6 +13,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { User, Permission } from '../../core/models';
+import { TableQueryService } from '../../core/table-query.service';
 import { UserApiService } from '../../core/user-api.service';
 import { AppHeaderComponent } from '../../shared/app-header.component';
 import { ModuleNavigationComponent } from '../../shared/module-navigation.component';
@@ -32,6 +33,7 @@ export class PermissionsComponent {
   private readonly api = inject(UserApiService);
   private readonly snack = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
+  private readonly tableQuery = inject(TableQueryService);
   readonly auth = inject(AuthService);
   readonly loading = signal(true); readonly saving = signal(false); readonly error = signal(false);
   readonly users = signal<User[]>([]); readonly selectedId = signal<number | null>(null);
@@ -43,7 +45,7 @@ export class PermissionsComponent {
     { key: 'SPECIALITIES', permissions: ['READ_SPECIALITIES', 'MAINTAIN_SPECIALITIES'] },
     { key: 'ADDRESSES', permissions: ['READ_ADDRESSES', 'MAINTAIN_ADDRESSES'] },
     { key: 'COUNTRIES', permissions: ['READ_COUNTRIES', 'MAINTAIN_COUNTRIES'] },
-    { key: 'STATES', permissions: ['READ_STATES', 'MAINTAIN_STATES'] },
+    { key: 'ADMINISTRATIVE_DIVISIONS', permissions: ['READ_ADMINISTRATIVE_DIVISIONS', 'MAINTAIN_ADMINISTRATIVE_DIVISIONS'] },
     { key: 'PERMISSIONS', permissions: ['READ_PERMISSIONS', 'MAINTAIN_PERMISSIONS'] },
   ];
   readonly filteredGroups = computed(() => { this.revision(); const q = this.search().trim().toLowerCase();
@@ -53,7 +55,7 @@ export class PermissionsComponent {
   readonly hasChanges = computed(() => { this.revision(); const u = this.selected(); return !!u && !this.same(u.permissions, this.drafts.get(u.id)); });
   readonly changeCount = computed(() => { this.revision(); const u = this.selected(); if (!u) return 0; const draft = this.drafts.get(u.id) ?? new Set(); return new Set([...u.permissions, ...draft].filter(p => u.permissions.includes(p) !== draft.has(p))).size; });
   constructor() { this.load(); }
-  load(): void { this.loading.set(true); this.api.list().subscribe({ next: users => { this.users.set(users); users.forEach(u => this.drafts.set(u.id, new Set(u.permissions))); if (!this.selectedId() && users.length) this.selectedId.set(users[0].id); this.loading.set(false); }, error: () => { this.error.set(true); this.loading.set(false); } }); }
+  load(): void { this.loading.set(true); this.api.list({ ...this.tableQuery.defaultQuery, size: 100 }).subscribe({ next: response => { const users = response.content; this.users.set(users); users.forEach(u => this.drafts.set(u.id, new Set(u.permissions))); if (!this.selectedId() && users.length) this.selectedId.set(users[0].id); this.loading.set(false); }, error: () => { this.error.set(true); this.loading.set(false); } }); }
   select(user: User): void { if (this.hasChanges()) { this.snack.open(this.translate.instant('PERMISSIONS_PAGE.UNSAVED_WARNING'), this.translate.instant('USERS.CLOSE'), { duration: 4500 }); return; } this.selectedId.set(user.id); }
   has(permission: Permission): boolean { this.revision(); return this.drafts.get(this.selectedId() ?? -1)?.has(permission) ?? false; }
   toggle(permission: Permission, checked: boolean): void { const set = this.drafts.get(this.selectedId() ?? -1); if (!set) return; checked ? set.add(permission) : set.delete(permission); this.revision.update(v => v + 1); }

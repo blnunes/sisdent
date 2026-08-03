@@ -1,293 +1,287 @@
 # Sisdent architecture
 
-## Scope and context
+## Scope
 
-Sisdent is currently a small modular monolith packaged as one Spring Boot JAR
-and deployed as one Render container. HTTP clients access a REST API, and data
-is stored in an H2 database embedded in the application process.
+Sisdent is a modular monolith composed of a Spring Boot REST API and an Angular
+web application. It is currently an MVP for dental administration and global
+account/tenant foundations. Scoped clinical records and odontograms are
+implemented; patient portal access and billing are not.
 
-This document describes the implemented architecture. Future elements are
-explicitly identified as recommendations.
+The present domain foundation is international. Portugal and other European
+countries are supported alongside the existing demonstration data. Language,
+address, and identity rules must therefore not assume a Brazilian or US format.
 
-## System context
-
-```mermaid
-flowchart LR
-    U[User or HTTP client] -->|HTTPS REST/JSON| R[Sisdent service on Render]
-    U -->|HTTPS| SW[Swagger UI]
-    SW --> R
-    R --> H2[(In-memory H2)]
-    GH[GitHub Actions] -->|Render API| RD[Render deployment]
-    GH -->|Analysis| SC[SonarCloud]
-    RD --> R
-```
-
-Authentication is local and stateless through signed JWTs. There is currently
-no external database, queue, cache, separate frontend, or identity provider.
-
-## Runtime container
-
-```mermaid
-flowchart TB
-    subgraph Render
-        subgraph Java_25_Container[Java 25 container]
-            API[Spring Boot / Spring MVC]
-            ACT[Actuator]
-            DOC[Springdoc OpenAPI]
-            ORM[Spring Data JPA / Hibernate]
-            DB[(In-memory H2)]
-            API --> ORM
-            ORM --> DB
-            ACT --> API
-            DOC --> API
-        end
-    end
-```
-
-The final image uses `eclipse-temurin:25-jre`, non-root user `1001`, port 8080,
-and `-XX:MaxRAMPercentage=75.0`. The effective port comes from Render's `PORT`
-environment variable.
-
-## Internal components
+## Runtime
 
 ```mermaid
 flowchart LR
-    HTTP[HTTP request] --> SEC[JWT authentication and authorization]
-    SEC --> C[Controllers]
-    C --> V[DTO validation]
-    V --> S[Services]
-    S --> RP[Repositories]
-    RP --> JPA[JPA entities / Hibernate]
+    Browser[Angular client] -->|HTTPS and JWT| API[Spring Boot API]
+    API --> JPA[Spring Data JPA]
     JPA --> DB[(H2)]
-    S --> M[ResponseMapper]
-    M --> DTO[Response DTO]
-    DTO --> HTTPR[HTTP response]
+    API --> DOC[OpenAPI]
+    API --> HEALTH[Actuator health]
 ```
 
-### Controllers
+The backend is packaged with the compiled frontend in one Java 25 container.
+Authentication is local and stateless through signed JWTs. H2 remains suitable
+for development and pre-production demonstration only; a managed PostgreSQL
+database is the intended production target.
 
-Adapt HTTP requests to application calls. They define routes, `201` and `404`
-responses, and `@Valid` boundaries. They never access repositories directly.
+## Internal structure
 
-### DTOs
+```mermaid
+flowchart LR
+    HTTP[HTTP request] --> SEC[Authentication and permissions]
+    SEC --> C[Controllers]
+    C --> DTO[Validated request DTOs]
+    DTO --> S[Transactional services]
+    S --> R[Repositories]
+    R --> E[JPA entities]
+    E --> DB[(Database)]
+    S --> M[ResponseMapper]
+    M --> HTTP
+```
 
-Immutable records separate HTTP contracts from persistence entities. Request
-records contain input validation; response records represent the graph needed
-by API clients.
+- Controllers adapt HTTP contracts and do not access repositories directly.
+- DTO records isolate the API from persistence entities.
+- Services own transaction boundaries and application rules.
+- Repositories execute database-backed filtering, sorting, and pagination.
+- `ResponseMapper` maps initialized entity graphs to response DTOs while
+  `open-in-view=false`.
+- Flyway is the sole schema evolution mechanism; applied migrations are
+  immutable.
 
-### Services
-
-Define transaction boundaries and application rules. Queries use
-`@Transactional(readOnly = true)`, while patient creation runs as one write
-transaction. Address identity is currently based on postal code, and state
-identity is based on abbreviation.
-
-### Repositories
-
-Spring Data JPA interfaces. `@EntityGraph` loads address and state relationships
-for response mapping while `open-in-view=false`, also reducing N+1 queries.
-
-### Mapper and configuration
-
-`ResponseMapper` converts entities into API DTOs. `InitialDataLoader` seeds JSON
-data transactionally only when the database is empty. `OpenApiConfiguration`
-defines API title, version, and description.
-
-## Data model
+## Foundational domain model
 
 ```mermaid
 erDiagram
+    COUNTRY ||--o{ ADMINISTRATIVE_DIVISION : contains
     COUNTRY ||--o{ ADDRESS : locates
+    ADMINISTRATIVE_DIVISION o|--o{ ADDRESS : classifies
     COUNTRY ||--o{ PATIENT : nationality
-    APP_USER ||--o{ USER_PERMISSION : grants
-    STATE ||--o{ ADDRESS : contains
+    COUNTRY ||--o{ PATIENT : document_issuer
     ADDRESS ||--o{ PATIENT : assigned_to
+    PATIENT }o--o{ SPECIALITY : associated_with
+    SPECIALITY ||--o{ DENTAL_PROCEDURE : owns
+    PERSON ||--o| ACCOUNT : authenticates_as
+    PERSON o|--o| PATIENT : may_represent
+    ACCOUNT ||--o{ MEMBERSHIP : holds
+    ACCOUNT ||--o{ ACCOUNT_EMAIL_CLAIM : reserves
+    ACCOUNT ||--o{ EMAIL_VERIFICATION_CHALLENGE : receives
+    ORGANIZATION ||--o{ CLINIC_UNIT : owns
+    ORGANIZATION ||--o{ MEMBERSHIP : scopes
+    CLINIC_UNIT o|--o{ MEMBERSHIP : optionally_scopes
+    PATIENT ||--o{ PATIENT_ORGANIZATION_LINK : linked_by
+    ORGANIZATION ||--o{ PATIENT_ORGANIZATION_LINK : receives
 
-    STATE {
+    PATIENT {
         bigint id PK
-        varchar name
-        varchar abbreviation UK
-    }
-    COUNTRY {
-        bigint id PK
-        varchar name UK
-        char code UK
-        varchar continent
+        uuid global_id UK
+        varchar tax_id
+        varchar identification_type
+        varchar identification_number
+        bigint document_issuer_country_id FK
+        bigint nationality_country_id FK
+        bigint address_id FK
+        bigint version
     }
     ADDRESS {
         bigint id PK
         varchar street
         varchar district
-        varchar additional_info
-        varchar block
-        varchar postal_code UK
-        bigint state_id FK
+        varchar city
+        varchar postal_code
+        bigint administrative_division_id FK
         bigint country_id FK
+        bigint version
     }
-    PATIENT {
+    ADMINISTRATIVE_DIVISION {
         bigint id PK
         varchar name
-        date birth_date
-        boolean active
-        varchar gender
-        varchar tax_id UK
-        varchar identification_type
-        varchar identification_number UK
-        bigint nationality_country_id FK
-        bigint address_id FK
+        varchar code
+        varchar division_type
+        bigint country_id FK
+        bigint version
     }
-    APP_USER {
+    SPECIALITY {
         bigint id PK
-        varchar identification_type
-        varchar identification_number
-        varchar password
-        varchar role
-        boolean active
+        varchar name UK
+        varchar status
+        bigint version
     }
-    USER_PERMISSION {
-        bigint user_id FK
-        varchar permission
+    DENTAL_PROCEDURE {
+        bigint id PK
+        varchar name
+        varchar status
+        bigint speciality_id FK
+        bigint version
     }
 ```
 
-Current cardinalities:
+Every core entity contains `created_at`, `created_by`, `updated_at`,
+`updated_by`, and an optimistic-lock `version`.
 
-- A state has zero or more addresses.
-- An address can be assigned to multiple patients.
-- Every patient has exactly one address.
-- Every address has exactly one state.
-- Every address has exactly one country of residence.
-- Every patient has one nationality country.
-- Patient identification numbers are normalized and globally unique.
+### Identity and tenancy rules
 
-No JPA cascade is configured. The service coordinates creation explicitly.
+- A patient has a stable, platform-global UUID independent of database IDs.
+- A document is identified by document type, issuing country, and normalized
+  number. Supported MVP types are `PASSPORT` and `NATIONAL_ID_CARD`.
+- Tax ID is optional and is not used as a global identity key.
+- Verified accounts authenticate with one normalized, globally unique email
+  address. Canonical email claims prevent a pending enrollment address from
+  colliding with either another pending address or an authoritative address.
+- Account, person, and patient are separate so a future patient login does not
+  need administrative impersonation.
+- A compatibility link retains identification/password login only while the
+  migrated account has `email_migration_required=true`.
+- Membership roles are scoped to an organization or clinic unit. Revoking one
+  membership preserves the account and every unrelated membership.
+- Platform administration is separate and grants no patient access.
 
-## Main flow: create patient
+### Address rules
+
+- Country uses ISO 3166-1 alpha-2 codes.
+- Administrative division identity is scoped by country and code.
+- Administrative division, district, and postal code are optional.
+- City and street are required.
+- Postal codes are not globally unique and are not restricted to eight digits.
+- Patient creation creates its own address record; a postal code never implies
+  that two patients share the same address.
+- Postal lookup is country-scoped and may return multiple matches.
+
+### Catalog lifecycle
+
+Platform specialities own dental procedures. Records are deactivated rather
+than physically deleted, preserving references and audit history. Removing a
+procedure from a speciality update marks it inactive. Inactive specialities
+cannot be newly assigned to patients.
+
+The future organization model will layer organization-owned custom procedures
+over the platform catalog, with availability, price, and duration configured
+per clinic unit.
+
+## Compatibility and migrations
+
+Flyway migrations V6 and V7 upgrade existing data without dropping patient
+records:
+
+- `states` becomes `administrative_divisions`;
+- `procedures` becomes `dental_procedures`;
+- legacy patient documents become `NATIONAL_ID_CARD` issued by the backfilled
+  country;
+- existing patients receive global UUIDs;
+- legacy audit metadata is backfilled;
+- state permissions are renamed to administrative-division permissions.
+
+V8 creates persons, global accounts, organizations, clinic units, scoped
+memberships, and patient-organization links. It maps every legacy user to a
+unique synthetic email without removing the legacy credential and assigns
+existing patients to explicit `LEGACY_MIGRATION` links.
+
+V9 adds explicit email-verification state, a separately stored pending email,
+canonical email claims, and auditable verification challenges. Existing
+non-migrating bootstrap accounts are backfilled as verified. Migrated accounts
+retain their synthetic email and legacy login until their own verification
+succeeds.
+
+`/api/states` remains a temporary backend alias for
+`/api/administrative-divisions`. New clients use only the new route.
+
+## Verified-email enrollment
 
 ```mermaid
-sequenceDiagram
-    participant Client
-    participant Controller as PatientController
-    participant Service as PatientService
-    participant AddressRepo
-    participant StateRepo
-    participant PatientRepo
-
-    Client->>Controller: POST /api/patients
-    Controller->>Controller: Validate PatientRequest
-    Controller->>Service: create(request)
-    Service->>AddressRepo: findByPostalCode(postalCode)
-    alt address does not exist
-        Service->>StateRepo: findByAbbreviation(state)
-        alt state does not exist
-            Service->>StateRepo: save(state)
-        end
-        Service->>AddressRepo: save(address)
-    end
-    Service->>PatientRepo: save(patient)
-    PatientRepo-->>Service: persisted entity
-    Service-->>Controller: PatientResponse
-    Controller-->>Client: 201 Created
+stateDiagram-v2
+    [*] --> MigrationRequired: V8 migrated account
+    MigrationRequired --> ChallengeActive: authenticated enrollment
+    ChallengeActive --> ChallengeActive: resend supersedes old challenge
+    ChallengeActive --> MigrationRequired: expiry or invalid token
+    ChallengeActive --> Verified: atomic valid-token consumption
+    Verified --> [*]: email/password only
 ```
 
-The entire operation runs in one transaction. A uniqueness violation or other
-failure rolls it back.
+The raw 256-bit challenge secret exists only while being passed to the delivery
+interface. Persistence stores its SHA-256 hash, target email, expiry,
+consumption/revocation state, provider metadata, and normal audit fields.
+Successful verification promotes the pending email, marks it verified, clears
+the pending claim, retires legacy login, consumes the token, and invalidates
+other active challenges in one transaction.
 
-## Data initialization and lifecycle
+The default/production delivery implementation fails closed until a real
+provider is configured. Explicit `development`, `test`, and `e2e` profiles may
+use an in-memory provider. Only `e2e` exposes an authenticated, current-account
+test-support seam; that controller cannot be instantiated in production.
 
-1. Spring Boot starts, and Flyway validates and applies pending migrations.
-2. Hibernate validates that the entity mappings match the migrated schema.
-3. `InitialDataLoader` idempotently synchronizes countries, states,
-   specialities, addresses, and patients from JSON.
-4. The default local in-memory database disappears with the process;
-   pre-production uses file-backed H2 in a persistent volume.
+JWTs include `emailMigrationRequired`. Every authenticated request compares
+that claim with current account state. A pre-verification token is rejected
+after cutover, so the user must start a fresh verified-email session.
 
-Schema changes must be added as immutable, forward-only Flyway migrations.
+## Identity-management evolution
 
-## Architecture qualities
+`Account` is the canonical global authentication identity and `Person` is its
+display identity. Memberships are the sole source of organization and clinic
+access. The Phase 1 `app_users` record remains a temporary, audited
+compatibility link for accounts that still require verified-email enrollment;
+it is not the primary administrative identity and must not be used to grant
+tenant or clinical authority.
 
-### Strengths
+Phase 6 consolidates the administrative UI and APIs around Account, Person,
+and Membership while retaining legacy records read-only until a future,
+explicitly approved retirement phase. Platform administrators use paged global
+account management; organization administrators use organization-scoped account
+and membership operations, with no evidence of access in other organizations.
+The current-account response and Accounts and Access UI use only public UUIDs,
+display names, authentication state, and authorized membership summaries.
+The header's active membership selects an operational context. Accounts and
+Access has a stricter, persisted account-management organization for delegated
+administrators: changing the header never grants user-management visibility or
+membership mutation outside that assigned organization. Only a platform
+administrator may use the global account endpoints and view an unfiltered
+account list.
 
-- Clear separation between transport, application, and persistence concerns.
-- DTOs isolate API contracts from JPA entities.
-- Declarative transactions and read-only queries.
-- `open-in-view=false` makes persistence access explicit.
-- Entity graphs control association loading.
-- Input validation at the HTTP boundary.
-- Unit and integration tests with coverage above the current gate.
-- Multi-stage container image running as a non-root user.
-- Deployment gated by tests, SonarCloud, and health verification.
+## Security boundary
 
-### Limitations and risks
+## Operational scheduling
 
-- Local in-memory H2 loses changes after process shutdown.
-- File-backed H2 is not the intended final production database.
-- JWT revocation is not persisted, so permission changes and deactivation take
-  effect on the next login or after the current token expires.
-- Tax IDs and other personal data are returned in full.
-- There is no audit history, backup, or recovery strategy.
-- List endpoints have no pagination.
-- Concurrent `find-or-create` calls may race. Constraints prevent duplicates,
-  but conflict responses are not handled cleanly.
-- Domain errors do not have a standardized representation.
-- The core dental domain has not been modeled yet.
+Practitioners are organization-owned profiles with public UUIDs, optional
+account association and logically deactivated lifecycle. Appointment reads and
+writes are organization and optionally clinic-unit scoped; platform
+administration confers no operational access. An appointment binds one active
+organization patient link, one same-organization active practitioner, and one
+same-organization clinic unit. Its lifecycle is `SCHEDULED` followed by one
+terminal state: `CANCELLED`, `COMPLETED`, or `NO_SHOW`.
 
-## Recorded architecture decisions
+Scheduling stores UTC instants plus the validated IANA scheduling timezone.
+Competing create/reschedule requests acquire a pessimistic lock on the
+practitioner before checking interval overlap. This is portable to H2 and
+PostgreSQL, though PostgreSQL may later gain an additional native exclusion
+constraint. Performed procedures exist only under completed appointments,
+snapshot catalog names, and are corrected only through audited logical voiding.
 
-### Modular monolith
+Patient repositories are reached through organization-scoped services. Name
+search only traverses explicit patient-organization links. Exact intake
+matching returns one boolean. Platform technical administration does not grant
+clinical access. See `docs/PHASE_2_IMPLEMENTATION.md` for the authorization
+matrix, migration strategy, and compatibility risks.
 
-A single deployment is appropriate for the current size. Microservices would
-add operational cost without proportional benefit. Prefer domain-oriented
-modules inside the monolith before separating processes.
+## Known limitations
 
-### DTOs separate from entities
+- No cross-organization clinical sharing or temporary support-access workflow exists.
+- No treatment-plan, billing, patient-portal, or cross-organization clinical
+  sharing model exists.
+- No digital signature, retention, export, anonymization, or legal-hold workflow exists.
+- JWT revocation is not persisted.
+- H2 is not the production persistence target.
+- Auditing records the latest author and timestamps, not a complete immutable
+  change-event history.
 
-This protects the HTTP contract from JPA changes and prevents accidental proxy
-or relationship serialization.
+## Evolution order
 
-### In-memory database for the initial delivery
-
-H2 minimized setup and enabled a free demonstration. It is a temporary choice,
-not a production persistence foundation.
-
-### GitHub-controlled deployment
-
-Render auto deploy is disabled. GitHub Actions submits only commits that pass
-the Quality Gate and waits for deployment plus health confirmation. See
-`docs/PIPELINE.md`.
-
-## Recommended target architecture
-
-The first evolution should retain the monolith:
-
-```mermaid
-flowchart LR
-    Client[Authorized client] -->|HTTPS| API[Spring Boot API]
-    IDP[Authentication] --> API
-    API --> PG[(Managed PostgreSQL)]
-    API --> OBJ[(Attachment storage)]
-    API --> OBS[Logs, metrics, and alerts]
-    BK[Backup and recovery] --> PG
-```
-
-Recommended sequence:
-
-1. External PostgreSQL, retaining Flyway as the migration authority.
-2. `local`, `test`, and `prod` profiles; H2 only for development and tests.
-3. Spring Security and role-based access control.
-4. Problem Details and stable application error codes.
-5. Pagination, filtering, conflict handling, locking, and auditing.
-6. Observability, backups, and restoration testing.
-7. Scheduling, practitioners, and clinical-record modules, keeping domain
-   boundaries inside the monolith until there is a measurable reason to split.
-
-## Constraints for future agents
-
-- Never assume that current Render data is persistent.
-- Never add secrets to the repository.
-- Do not weaken the Quality Gate merely to make a build pass; fix the cause or
-  obtain an explicit owner decision.
-- Do not enable Render auto deploy without redesigning the pipeline.
-- Never expose the H2 console publicly.
-- Before introducing real clinical data, treat security, privacy, retention,
-  and auditing as architecture requirements rather than optional improvements.
+1. Global account identity, memberships, scoped authorization, and patient links (implemented).
+2. Verified-email enrollment and retirement of legacy identification login (implemented).
+3. Practitioner, appointment, and performed-procedure model (implemented).
+4. Protected clinical encounters and odontogram (implemented).
+5. Account and access-management consolidation; legacy identity compatibility (implemented).
+6. Treatment plans, unit pricing, acceptance, and billing.
+7. Production persistence, attachment storage, email delivery, observability, backup, and
+   recovery.
+8. RGPD workflows validated with Portuguese and EU legal/compliance specialists.

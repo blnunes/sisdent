@@ -12,13 +12,13 @@ public enum Role {
             Permission.MAINTAIN_SPECIALITIES,
             Permission.READ_ADDRESSES,
             Permission.READ_COUNTRIES,
-            Permission.READ_STATES)),
+            Permission.READ_ADMINISTRATIVE_DIVISIONS)),
     USER(EnumSet.of(
             Permission.READ_PATIENTS,
             Permission.READ_SPECIALITIES,
             Permission.READ_ADDRESSES,
             Permission.READ_COUNTRIES,
-            Permission.READ_STATES));
+            Permission.READ_ADMINISTRATIVE_DIVISIONS));
 
     private final Set<Permission> defaultPermissions;
 

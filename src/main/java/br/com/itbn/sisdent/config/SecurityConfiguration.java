@@ -27,7 +27,9 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -53,7 +55,8 @@ public class SecurityConfiguration {
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationConverter jwtAuthenticationConverter) {
+            JwtAuthenticationConverter jwtAuthenticationConverter,
+            AccountStateJwtFilter accountStateJwtFilter) {
         http
                 // This API is stateless and uses JWT Bearer tokens for auth, so CSRF protection is not required.
                 // Keep CSRF disabled only while authentication relies on Authorization headers rather than cookies/sessions.
@@ -63,14 +66,21 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/api/auth/login",
+                                "/api/auth/email-verification",
                                 "/actuator/health",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
+                                "/swagger-resources/**",
+                                "/webjars/**",
+                                "/configuration/**",
                                 "/h2-console/**",
                                 "/i18n/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/api/users/me/password")
                         .authenticated()
+                        // The unscoped Phase 1 patient API is intentionally closed. Patient
+                        // access now goes through /api/organizations/{organizationId}/patients.
+                        .requestMatchers(PATIENT_RESOURCE).denyAll()
                         .requestMatchers(HttpMethod.GET, USER_RESOURCE)
                         .access(hasAnyPermission(
                                 READ_USERS_PERMISSION,
@@ -87,14 +97,6 @@ public class SecurityConfiguration {
                         .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
                         .requestMatchers(HttpMethod.DELETE, USER_RESOURCE)
                         .access(hasAnyPermission(MAINTAIN_USERS_PERMISSION))
-                        .requestMatchers(HttpMethod.GET, PATIENT_RESOURCE)
-                        .access(hasAnyPermission(READ_PATIENTS_PERMISSION, MAINTAIN_PATIENTS_PERMISSION))
-                        .requestMatchers(HttpMethod.POST, PATIENT_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_PATIENTS_PERMISSION))
-                        .requestMatchers(HttpMethod.PUT, PATIENT_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_PATIENTS_PERMISSION))
-                        .requestMatchers(HttpMethod.DELETE, PATIENT_RESOURCE)
-                        .access(hasAnyPermission(MAINTAIN_PATIENTS_PERMISSION))
                         .requestMatchers(HttpMethod.GET, SPECIALITY_RESOURCE)
                         .access(hasAnyPermission("READ_SPECIALITIES", MAINTAIN_SPECIALITIES_PERMISSION))
                         .requestMatchers(HttpMethod.POST, SPECIALITY_RESOURCE)
@@ -105,10 +107,30 @@ public class SecurityConfiguration {
                         .access(hasAnyPermission(MAINTAIN_SPECIALITIES_PERMISSION))
                         .requestMatchers(HttpMethod.GET, "/api/addresses/**")
                         .access(hasAnyPermission("READ_ADDRESSES", "MAINTAIN_ADDRESSES"))
+                        .requestMatchers(HttpMethod.POST, "/api/addresses/**")
+                        .access(hasAnyPermission("MAINTAIN_ADDRESSES"))
+                        .requestMatchers(HttpMethod.PUT, "/api/addresses/**")
+                        .access(hasAnyPermission("MAINTAIN_ADDRESSES"))
+                        .requestMatchers(HttpMethod.DELETE, "/api/addresses/**")
+                        .access(hasAnyPermission("MAINTAIN_ADDRESSES"))
                         .requestMatchers(HttpMethod.GET, "/api/countries/**")
                         .access(hasAnyPermission("READ_COUNTRIES", "MAINTAIN_COUNTRIES"))
-                        .requestMatchers(HttpMethod.GET, "/api/states/**")
-                        .access(hasAnyPermission("READ_STATES", "MAINTAIN_STATES"))
+                        .requestMatchers(HttpMethod.POST, "/api/countries/**")
+                        .access(hasAnyPermission("MAINTAIN_COUNTRIES"))
+                        .requestMatchers(HttpMethod.PUT, "/api/countries/**")
+                        .access(hasAnyPermission("MAINTAIN_COUNTRIES"))
+                        .requestMatchers(HttpMethod.DELETE, "/api/countries/**")
+                        .access(hasAnyPermission("MAINTAIN_COUNTRIES"))
+                        .requestMatchers(HttpMethod.GET, "/api/administrative-divisions/**", "/api/states/**")
+                        .access(hasAnyPermission(
+                                "READ_ADMINISTRATIVE_DIVISIONS",
+                                "MAINTAIN_ADMINISTRATIVE_DIVISIONS"))
+                        .requestMatchers(HttpMethod.POST, "/api/administrative-divisions/**", "/api/states/**")
+                        .access(hasAnyPermission("MAINTAIN_ADMINISTRATIVE_DIVISIONS"))
+                        .requestMatchers(HttpMethod.PUT, "/api/administrative-divisions/**", "/api/states/**")
+                        .access(hasAnyPermission("MAINTAIN_ADMINISTRATIVE_DIVISIONS"))
+                        .requestMatchers(HttpMethod.DELETE, "/api/administrative-divisions/**", "/api/states/**")
+                        .access(hasAnyPermission("MAINTAIN_ADMINISTRATIVE_DIVISIONS"))
                         // Single-page application shell, static assets, and client-side routes.
                         // The SPA bundle contains no secrets; data authorization is enforced on
                         // the /api/** matchers above. Client-side route protection is handled by
@@ -123,6 +145,7 @@ public class SecurityConfiguration {
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
+                .addFilterAfter(accountStateJwtFilter, BearerTokenAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
         return http.build();
     }
@@ -130,6 +153,15 @@ public class SecurityConfiguration {
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    FilterRegistrationBean<AccountStateJwtFilter> disableContainerRegistration(
+            AccountStateJwtFilter filter) {
+        FilterRegistrationBean<AccountStateJwtFilter> registration =
+                new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean

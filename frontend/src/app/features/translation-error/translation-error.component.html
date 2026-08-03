@@ -1,0 +1,8 @@
+<main class="translation-error">
+  <mat-icon>translate</mat-icon>
+  <span class="code">I18N_LOAD_ERROR</span>
+  <h1>Translations could not be loaded</h1>
+  <p>The language file is unavailable. Verify that the asset was published to the server.</p>
+  <dl><dt>Language</dt><dd>{{ language }}</dd><dt>Expected resource</dt><dd><code>{{ resource }}</code></dd><dt>Technical detail</dt><dd><code>{{ message }}</code></dd></dl>
+  <div class="actions"><button mat-flat-button (click)="retry()"><mat-icon>refresh</mat-icon>Try again</button><a mat-button routerLink="/login">Back to login</a></div>
+</main>

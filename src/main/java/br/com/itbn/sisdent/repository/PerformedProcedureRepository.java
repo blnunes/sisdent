@@ -1,0 +1,3 @@
+package br.com.itbn.sisdent.repository;
+import br.com.itbn.sisdent.model.PerformedProcedure; import org.springframework.data.jpa.repository.*; import java.util.*;
+public interface PerformedProcedureRepository extends JpaRepository<PerformedProcedure,Long> { @EntityGraph(attributePaths={"appointment","dentalProcedure"}) List<PerformedProcedure> findAllByAppointment_GlobalIdAndAppointment_Organization_GlobalIdOrderByPerformedAt(UUID appointmentId,UUID organizationId); @EntityGraph(attributePaths={"appointment","dentalProcedure"}) Optional<PerformedProcedure> findByGlobalIdAndAppointment_Organization_GlobalId(UUID id,UUID organizationId); }

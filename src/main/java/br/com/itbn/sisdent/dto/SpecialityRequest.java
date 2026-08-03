@@ -9,5 +9,5 @@ import java.util.List;
 
 public record SpecialityRequest(
         @NotBlank String name,
-        @NotEmpty List<@NotNull @Valid ProcedureRequest> procedures) {
+        @NotEmpty List<@NotNull @Valid DentalProcedureRequest> procedures) {
 }

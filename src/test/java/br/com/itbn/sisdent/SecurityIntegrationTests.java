@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,8 +54,19 @@ class SecurityIntegrationTests {
     }
 
     @Test
+    void allowsSwaggerEndpointsWithoutAuthentication() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/swagger-ui.html"))
+                .andExpect(status().is3xxRedirection());
+        mockMvc.perform(get("/swagger-ui/index.html"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Swagger UI")));
+    }
+
+    @Test
     void adminCanManageUsersAndPermissionsWithSoftDelete() throws Exception {
-        String adminToken = login("NATIONAL_ID", "aDmIn", "admin");
+        String adminToken = emailLogin("admin@sisdent.local", "admin");
         String createRequest = """
                 {
                   "identificationType": "PASSPORT",
@@ -132,7 +144,7 @@ class SecurityIntegrationTests {
 
         mockMvc.perform(get("/api/patients")
                         .header("Authorization", bearer(token)))
-                .andExpect(status().isOk());
+                .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/users")
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isForbidden());
@@ -157,7 +169,7 @@ class SecurityIntegrationTests {
 
         mockMvc.perform(get("/api/patients")
                         .header("Authorization", bearer(token)))
-                .andExpect(status().isOk());
+                .andExpect(status().isForbidden());
 
         mockMvc.perform(get("/api/specialities")
                         .header("Authorization", bearer(token)))
@@ -288,6 +300,21 @@ class SecurityIntegrationTests {
                 .andReturn().getResponse().getContentAsString();
         JsonNode json = jsonMapper.readTree(response);
         return json.get("accessToken").asText();
+    }
+
+    private String emailLogin(String email, String password) throws Exception {
+        String response = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "%s",
+                                  "password": "%s"
+                                }
+                                """.formatted(email, password)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andReturn().getResponse().getContentAsString();
+        return jsonMapper.readTree(response).get("accessToken").asText();
     }
 
     private String bearer(String token) {

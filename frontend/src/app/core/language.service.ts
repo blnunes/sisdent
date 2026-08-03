@@ -3,6 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
+import { DateAdapter } from '@angular/material/core';
 
 export type Language = 'pt-PT' | 'en' | 'nl';
 
@@ -15,6 +16,7 @@ export class LanguageService {
   private readonly document = inject(DOCUMENT);
   private readonly title = inject(Title);
   private readonly router = inject(Router);
+  private readonly dateAdapter = inject<DateAdapter<Date>>(DateAdapter);
   readonly current = signal<Language>(this.savedLanguage());
 
   constructor() {
@@ -25,6 +27,7 @@ export class LanguageService {
     this.current.set(language);
     localStorage.setItem(STORAGE_KEY, language);
     this.document.documentElement.lang = language;
+    this.dateAdapter.setLocale(language === 'en' ? 'en-US' : language);
     this.translate.use(language).subscribe({
       next: () => this.setTitle(),
       error: (error) => this.reportLoadFailure(language, error),
@@ -32,7 +35,8 @@ export class LanguageService {
   }
 
   private reportLoadFailure(language: Language, error: unknown): void {
-    const message = error instanceof Error ? error.message : 'HTTP translation resource could not be loaded';
+    const message =
+      error instanceof Error ? error.message : 'HTTP translation resource could not be loaded';
     void this.router.navigate(['/translation-error'], {
       queryParams: { language, resource: `/i18n/${language}.json`, message },
       replaceUrl: true,

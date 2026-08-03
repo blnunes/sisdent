@@ -7,10 +7,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth.service';
-import { IdentificationType } from '../../core/models';
 import { LanguageSelectorComponent } from '../../shared/language-selector.component';
 import { ThemeToggleComponent } from '../../shared/theme-toggle.component';
 
@@ -24,7 +22,6 @@ import { ThemeToggleComponent } from '../../shared/theme-toggle.component';
     MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
-    MatSelectModule,
     TranslatePipe,
     LanguageSelectorComponent,
     ThemeToggleComponent,
@@ -39,25 +36,35 @@ export class LoginComponent {
   private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
+  readonly legacyLogin = signal(false);
   readonly hidePassword = signal(true);
   readonly error = signal('');
-  readonly types: IdentificationType[] = ['NATIONAL_ID', 'PASSPORT'];
-  readonly form = this.fb.nonNullable.group({
-    identificationType: ['NATIONAL_ID' as IdentificationType, Validators.required],
-    identificationNumber: ['ADMIN', Validators.required],
+  readonly emailForm = this.fb.nonNullable.group({
+    email: ['admin@sisdent.local', [Validators.required, Validators.email]],
     password: ['admin', Validators.required],
+  });
+  readonly legacyForm = this.fb.nonNullable.group({
+    identificationType: ['NATIONAL_ID' as const, Validators.required],
+    identificationNumber: ['', Validators.required],
+    password: ['', Validators.required],
   });
 
   submit(): void {
-    if (this.form.invalid || this.loading()) return;
+    const form = this.legacyLogin() ? this.legacyForm : this.emailForm;
+    if (form.invalid || this.loading()) return;
     this.error.set('');
     this.loading.set(true);
-    this.auth.login(this.form.getRawValue()).subscribe({
+    this.auth.login(form.getRawValue()).subscribe({
       next: () => void this.router.navigateByUrl(this.auth.destination()),
       error: () => {
         this.error.set(this.translate.instant('LOGIN.INVALID'));
         this.loading.set(false);
       },
     });
+  }
+
+  changeLoginMode(): void {
+    this.legacyLogin.update((value) => !value);
+    this.error.set('');
   }
 }

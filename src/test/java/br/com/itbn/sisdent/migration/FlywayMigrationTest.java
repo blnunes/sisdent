@@ -75,7 +75,7 @@ class FlywayMigrationTest {
             assertThat(result.next()).isTrue();
             assertThat(result.getString("name")).isEqualTo("Legacy Patient");
             assertThat(result.getString("identification_type"))
-                    .isEqualTo("NATIONAL_ID");
+                    .isEqualTo("NATIONAL_ID_CARD");
             assertThat(result.getString("identification_number"))
                     .isEqualTo("US12345678901");
             assertThat(result.getString("code")).isEqualTo("US");
@@ -145,6 +145,147 @@ class FlywayMigrationTest {
                     "READ_STATES",
                     "READ_USERS"
             );
+        }
+    }
+
+    @Test
+    void renamesStatePermissionsWithoutChangingAssignedAccess() throws Exception {
+        String url = databaseUrl("v7");
+        Flyway.configure()
+                .dataSource(url, "sa", "")
+                .locations("classpath:db/migration")
+                .target("6")
+                .load()
+                .migrate();
+
+        try (Connection connection = DriverManager.getConnection(url, "sa", "");
+             Statement statement = connection.createStatement()) {
+            statement.execute("""
+                    INSERT INTO app_users (
+                        id, identification_type, identification_number,
+                        password, role, active, created_at, updated_at,
+                        created_by, updated_by, version
+                    ) VALUES (
+                        100, 'NATIONAL_ID', 'DIVISION_MANAGER',
+                        'password', 'MANAGER', TRUE, CURRENT_TIMESTAMP,
+                        CURRENT_TIMESTAMP, 'migration-test', 'migration-test', 0
+                    )
+                    """);
+            statement.execute("""
+                    INSERT INTO user_permissions (user_id, permission) VALUES
+                        (100, 'READ_STATES'),
+                        (100, 'MAINTAIN_STATES')
+                    """);
+        }
+
+        Flyway.configure()
+                .dataSource(url, "sa", "")
+                .locations("classpath:db/migration")
+                .load()
+                .migrate();
+
+        try (Connection connection = DriverManager.getConnection(url, "sa", "");
+             Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery(
+                     "SELECT permission FROM user_permissions WHERE user_id = 100 ORDER BY permission")) {
+            ArrayList<String> permissions = new ArrayList<>();
+            while (result.next()) {
+                permissions.add(result.getString("permission"));
+            }
+            assertThat(permissions).containsExactlyInAnyOrder(
+                    "MAINTAIN_ADMINISTRATIVE_DIVISIONS",
+                    "READ_ADMINISTRATIVE_DIVISIONS");
+        }
+    }
+
+    @Test
+    void migratesLegacyUsersToUniqueGlobalAccountsWithoutRemovingLegacyLoginData() throws Exception {
+        String url = databaseUrl("v8-accounts");
+        Flyway.configure()
+                .dataSource(url, "sa", "")
+                .locations("classpath:db/migration")
+                .target("7")
+                .load()
+                .migrate();
+
+        try (Connection connection = DriverManager.getConnection(url, "sa", "");
+             Statement statement = connection.createStatement()) {
+            statement.execute("""
+                    INSERT INTO app_users (
+                        id, identification_type, identification_number, password, role, active,
+                        created_at, created_by, updated_at, updated_by, version
+                    ) VALUES
+                        (201, 'NATIONAL_ID', 'LEGACY-ONE', 'encoded-one', 'ADMIN', TRUE,
+                         CURRENT_TIMESTAMP, 'test', CURRENT_TIMESTAMP, 'test', 0),
+                        (202, 'PASSPORT', 'LEGACY-TWO', 'encoded-two', 'USER', TRUE,
+                         CURRENT_TIMESTAMP, 'test', CURRENT_TIMESTAMP, 'test', 0)
+                    """);
+            statement.execute("""
+                    INSERT INTO addresses (
+                        id, street, district, postal_code, administrative_division_id,
+                        country_id, city
+                    ) VALUES (
+                        301, 'Phase 2 Street', 'Phase 2 District', '1000-001', NULL,
+                        (SELECT id FROM countries WHERE code = 'US'), 'Lisbon'
+                    )
+                    """);
+            statement.execute("""
+                    INSERT INTO patients (
+                        id, name, birth_date, active, gender, tax_id, address_id,
+                        identification_type, identification_number,
+                        nationality_country_id, document_issuer_country_id
+                    ) VALUES (
+                        301, 'Preserved Phase 2 Patient', DATE '1990-01-01', TRUE,
+                        'OTHER', NULL, 301, 'NATIONAL_ID_CARD', 'PHASE2-PATIENT-301',
+                        (SELECT id FROM countries WHERE code = 'US'),
+                        (SELECT id FROM countries WHERE code = 'US')
+                    )
+                    """);
+        }
+
+        Flyway.configure()
+                .dataSource(url, "sa", "")
+                .locations("classpath:db/migration")
+                .load()
+                .migrate();
+
+        try (Connection connection = DriverManager.getConnection(url, "sa", "");
+             Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery("""
+                     SELECT a.email, a.password, a.email_migration_required,
+                            a.email_verified,
+                            u.identification_number
+                     FROM accounts a
+                     JOIN app_users u ON u.id = a.legacy_user_id
+                     ORDER BY u.id
+                     """)) {
+            assertThat(result.next()).isTrue();
+            assertThat(result.getString("email")).isEqualTo("national_id.legacy-one@legacy.sisdent.invalid");
+            assertThat(result.getString("password")).isEqualTo("encoded-one");
+            assertThat(result.getBoolean("email_migration_required")).isTrue();
+            assertThat(result.getBoolean("email_verified")).isFalse();
+            assertThat(result.getString("identification_number")).isEqualTo("LEGACY-ONE");
+            assertThat(result.next()).isTrue();
+            assertThat(result.getString("email")).isEqualTo("passport.legacy-two@legacy.sisdent.invalid");
+        }
+
+        try (Connection connection = DriverManager.getConnection(url, "sa", "");
+             Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery("""
+                     SELECT
+                         (SELECT COUNT(*) FROM app_users) AS users_count,
+                         (SELECT COUNT(*) FROM accounts) AS accounts_count,
+                         (SELECT COUNT(*) FROM memberships) AS memberships_count,
+                         (SELECT COUNT(*) FROM account_email_claims) AS claims_count,
+                         (SELECT COUNT(*) FROM patient_organization_links
+                          WHERE patient_id = 301) AS patient_links_count
+                     """)) {
+            assertThat(result.next()).isTrue();
+            assertThat(result.getInt("users_count")).isEqualTo(2);
+            assertThat(result.getInt("accounts_count")).isEqualTo(2);
+            assertThat(result.getInt("memberships_count")).isEqualTo(2);
+            assertThat(result.getInt("claims_count")).isEqualTo(2);
+            assertThat(result.getInt("patient_links_count")).isEqualTo(1);
         }
     }
 }

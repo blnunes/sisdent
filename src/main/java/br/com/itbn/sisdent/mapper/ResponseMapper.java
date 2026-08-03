@@ -1,16 +1,17 @@
 package br.com.itbn.sisdent.mapper;
 
 import br.com.itbn.sisdent.dto.AddressResponse;
+import br.com.itbn.sisdent.dto.AdministrativeDivisionResponse;
 import br.com.itbn.sisdent.dto.CountryResponse;
 import br.com.itbn.sisdent.dto.PatientResponse;
-import br.com.itbn.sisdent.dto.ProcedureResponse;
-import br.com.itbn.sisdent.dto.StateResponse;
+import br.com.itbn.sisdent.dto.DentalProcedureResponse;
 import br.com.itbn.sisdent.dto.SpecialityResponse;
+import br.com.itbn.sisdent.model.AdministrativeDivision;
 import br.com.itbn.sisdent.model.Address;
+import br.com.itbn.sisdent.model.CatalogStatus;
 import br.com.itbn.sisdent.model.Country;
+import br.com.itbn.sisdent.model.DentalProcedure;
 import br.com.itbn.sisdent.model.Patient;
-import br.com.itbn.sisdent.model.Procedure;
-import br.com.itbn.sisdent.model.State;
 import br.com.itbn.sisdent.model.Speciality;
 
 import java.util.Comparator;
@@ -20,8 +21,13 @@ public final class ResponseMapper {
     private ResponseMapper() {
     }
 
-    public static StateResponse toResponse(State state) {
-        return new StateResponse(state.getId(), state.getName(), state.getAbbreviation());
+    public static AdministrativeDivisionResponse toResponse(AdministrativeDivision division) {
+        return new AdministrativeDivisionResponse(
+                division.getId(),
+                division.getName(),
+                division.getCode(),
+                division.getType(),
+                toResponse(division.getCountry()));
     }
 
     public static CountryResponse toResponse(Country country) {
@@ -36,14 +42,16 @@ public final class ResponseMapper {
         return new SpecialityResponse(
                 speciality.getId(),
                 speciality.getName(),
+                speciality.getStatus(),
                 speciality.getProcedures().stream()
-                        .sorted(Comparator.comparing(Procedure::getName))
+                        .filter(procedure -> procedure.getStatus() == CatalogStatus.ACTIVE)
+                        .sorted(Comparator.comparing(DentalProcedure::getName))
                         .map(ResponseMapper::toResponse)
                         .toList());
     }
 
-    public static ProcedureResponse toResponse(Procedure procedure) {
-        return new ProcedureResponse(procedure.getId(), procedure.getName());
+    public static DentalProcedureResponse toResponse(DentalProcedure procedure) {
+        return new DentalProcedureResponse(procedure.getId(), procedure.getName(), procedure.getStatus());
     }
 
     public static AddressResponse toResponse(Address address) {
@@ -51,16 +59,20 @@ public final class ResponseMapper {
                 address.getId(),
                 address.getStreet(),
                 address.getDistrict(),
+                address.getCity(),
                 address.getAdditionalInfo(),
                 address.getBlock(),
                 address.getPostalCode(),
-                toResponse(address.getState()),
+                address.getAdministrativeDivision() == null
+                        ? null
+                        : toResponse(address.getAdministrativeDivision()),
                 toResponse(address.getCountry()));
     }
 
     public static PatientResponse toResponse(Patient patient) {
         return new PatientResponse(
                 patient.getId(),
+                patient.getGlobalId(),
                 patient.getName(),
                 patient.getBirthDate(),
                 patient.isActive(),
@@ -68,6 +80,7 @@ public final class ResponseMapper {
                 patient.getTaxId(),
                 patient.getIdentificationType(),
                 patient.getIdentificationNumber(),
+                toResponse(patient.getDocumentIssuerCountry()),
                 toResponse(patient.getNationality()),
                 toResponse(patient.getAddress()),
                 patient.getSpecialities().stream()

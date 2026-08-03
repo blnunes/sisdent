@@ -1,12 +1,11 @@
 package br.com.itbn.sisdent.service;
 
-import br.com.itbn.sisdent.dto.AddressResponse;
 import br.com.itbn.sisdent.dto.AddressRequest;
-import br.com.itbn.sisdent.dto.StateRequest;
+import br.com.itbn.sisdent.dto.AddressResponse;
 import br.com.itbn.sisdent.model.Address;
+import br.com.itbn.sisdent.model.AdministrativeDivision;
 import br.com.itbn.sisdent.model.Continent;
 import br.com.itbn.sisdent.model.Country;
-import br.com.itbn.sisdent.model.State;
 import br.com.itbn.sisdent.repository.AddressRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,11 +15,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,7 +28,7 @@ class AddressServiceTest {
     private AddressRepository addressRepository;
 
     @Mock
-    private StateService stateService;
+    private AdministrativeDivisionService administrativeDivisionService;
 
     @Mock
     private CountryService countryService;
@@ -41,80 +38,73 @@ class AddressServiceTest {
 
     @Test
     void returnsAddressesSortedByStreet() {
-        Address address = address("01310100");
-        when(addressRepository.findAll(Sort.by("street"))).thenReturn(List.of(address));
+        when(addressRepository.findAll(Sort.by("street"))).thenReturn(List.of(address()));
 
         List<AddressResponse> responses = addressService.findAll();
 
         assertThat(responses).singleElement()
                 .extracting(AddressResponse::postalCode)
-                .isEqualTo("01310100");
-        verify(addressRepository).findAll(Sort.by("street"));
+                .isEqualTo("1250-096");
     }
 
     @Test
-    void returnsEmptyWhenPostalCodeDoesNotExist() {
-        when(addressRepository.findByPostalCode("00000000")).thenReturn(Optional.empty());
+    void postalCodeLookupIsCountryScopedAndCanReturnMultipleAddresses() {
+        when(addressRepository.findAllByCountry_CodeAndPostalCodeOrderByStreet("PT", "1250-096"))
+                .thenReturn(List.of(address(), address()));
 
-        Optional<AddressResponse> response = addressService.findByPostalCode("00000000");
+        List<AddressResponse> responses = addressService.findByPostalCode("PT", "1250-096");
 
-        assertThat(response).isEmpty();
+        assertThat(responses).hasSize(2);
     }
 
     @Test
-    void reusesExistingAddress() {
-        Address existingAddress = address("01310100");
-        AddressRequest request = addressRequest();
-        when(addressRepository.findByPostalCode(request.postalCode()))
-                .thenReturn(Optional.of(existingAddress));
-
-        Address result = addressService.findOrCreate(request);
-
-        assertThat(result).isSameAs(existingAddress);
-        verify(addressRepository, never()).save(any(Address.class));
-    }
-
-    @Test
-    void createsMissingAddressWithResolvedState() {
-        AddressRequest request = addressRequest();
-        State state = new State("São Paulo", "SP");
+    void patientAddressIsAlwaysCreatedInsteadOfReusedByPostalCode() {
+        AddressRequest request = request();
         Country country = country();
-        when(addressRepository.findByPostalCode(request.postalCode())).thenReturn(Optional.empty());
-        when(stateService.findOrCreate(request.state())).thenReturn(state);
-        when(countryService.requireByCode("BR")).thenReturn(country);
+        AdministrativeDivision division = division(country);
+        when(countryService.requireByCode("PT")).thenReturn(country);
+        when(administrativeDivisionService.findOrCreate(request.administrativeDivision(), country))
+                .thenReturn(division);
         when(addressRepository.save(any(Address.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Address result = addressService.findOrCreate(request);
+        Address result = addressService.createPatientAddress(request);
 
-        assertThat(result.getState()).isSameAs(state);
-        assertThat(result.getCountry()).isSameAs(country);
+        assertThat(result.getCity()).isEqualTo("Lisbon");
+        assertThat(result.getAdministrativeDivision()).isSameAs(division);
         verify(addressRepository).save(any(Address.class));
     }
 
-    private AddressRequest addressRequest() {
+    private AddressRequest request() {
         return new AddressRequest(
-                "Avenida Paulista",
-                "Bela Vista",
-                "Suite 1204",
-                        "B",
-                        "01310100",
-                        new StateRequest("São Paulo", "SP"),
-                        "BR");
+                "Avenida da Liberdade 100",
+                null,
+                "Lisbon",
+                "Floor 2",
+                null,
+                "1250-096",
+                new AddressRequest.AdministrativeDivisionReference("Lisbon", "11", "DISTRICT"),
+                "PT");
     }
 
-    private Address address(String postalCode) {
+    private Address address() {
+        Country country = country();
         return new Address(
-                "Avenida Paulista",
-                "Bela Vista",
-                "Suite 1204",
-                "B",
-                postalCode,
-                new State("São Paulo", "SP"),
-                country());
+                "Avenida da Liberdade 100",
+                null,
+                "Lisbon",
+                "Floor 2",
+                null,
+                "1250-096",
+                division(country),
+                country);
+    }
+
+    private AdministrativeDivision division(Country country) {
+        return new AdministrativeDivision("Lisbon", "11", "DISTRICT", country);
     }
 
     private Country country() {
-        return new Country("Brazil", "BR", Continent.SOUTH_AMERICA);
+        return new Country("Portugal", "PT", Continent.EUROPE);
     }
 }

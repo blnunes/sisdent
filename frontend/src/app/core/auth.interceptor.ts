@@ -3,9 +3,26 @@ import { inject } from '@angular/core';
 import { AuthService } from './auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
-  const token = inject(AuthService).token();
-  if (!token || request.url.endsWith('/api/auth/login')) {
+  const auth = inject(AuthService);
+  const token = auth.token();
+  if (
+    !token ||
+    request.url.endsWith('/api/auth/login') ||
+    request.url.endsWith('/api/auth/email-verification')
+  ) {
     return next(request);
   }
-  return next(request.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
+  let scopedRequest = request;
+  const membership = auth.activeMembership();
+  if (membership && request.url.startsWith('/api/patients')) {
+    const suffix = request.url.slice('/api/patients'.length);
+    const separator = suffix.includes('?') ? '&' : '?';
+    const clinic = membership.clinicUnitId
+      ? `${separator}clinicUnitId=${encodeURIComponent(membership.clinicUnitId)}`
+      : '';
+    scopedRequest = request.clone({
+      url: `/api/organizations/${membership.organizationId}/patients${suffix}${clinic}`,
+    });
+  }
+  return next(scopedRequest.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
 };

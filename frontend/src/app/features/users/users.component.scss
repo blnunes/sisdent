@@ -111,6 +111,7 @@ h1 {
 }
 table {
   width: 100%;
+  table-layout: fixed;
 }
 th {
   color: #688087;
@@ -123,6 +124,8 @@ td,
 th {
   padding: 14px 18px !important;
   border-color: #edf3f3;
+  overflow-wrap: anywhere;
+  vertical-align: top;
 }
 .user-cell {
   display: flex;
@@ -214,6 +217,9 @@ mat-chip {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+:host ::ng-deep .mat-sort-header-sorted .mat-sort-header-arrow {
+  opacity: 1 !important;
 }
 @media (max-width: 800px) {
   .content {
