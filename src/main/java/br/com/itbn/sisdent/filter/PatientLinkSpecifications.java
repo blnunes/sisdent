@@ -21,19 +21,19 @@ public final class PatientLinkSpecifications {
                 predicate = builder.and(predicate,
                         builder.equal(root.join("clinicUnit").get("globalId"), clinicUnitId));
             }
-            predicate = equal(predicate, builder, patient.get("id"), filter.id());
+            predicate = withEqual(predicate, builder, patient.get("id"), filter.id());
             predicate = like(predicate, builder, patient.get("name"), filter.normalized(filter.name()));
-            predicate = equal(predicate, builder, patient.get("birthDate"), filter.birthDate());
-            predicate = equal(predicate, builder, patient.get("active"), filter.active());
-            predicate = equal(predicate, builder, patient.get("gender"), filter.gender());
+            predicate = withEqual(predicate, builder, patient.get("birthDate"), filter.birthDate());
+            predicate = withEqual(predicate, builder, patient.get("active"), filter.active());
+            predicate = withEqual(predicate, builder, patient.get("gender"), filter.gender());
             predicate = like(predicate, builder, patient.get("taxId"), filter.normalized(filter.taxId()));
-            predicate = equal(predicate, builder, patient.get("identificationType"), filter.identificationType());
+            predicate = withEqual(predicate, builder, patient.get("identificationType"), filter.identificationType());
             predicate = like(predicate, builder, patient.get("identificationNumber"), filter.normalized(filter.identificationNumber()));
             if (filter.nationalityCode() != null && !filter.nationalityCode().isBlank()) {
                 predicate = builder.and(predicate, builder.equal(patient.join("nationality").get("code"),
                         filter.nationalityCode().trim().toUpperCase()));
             }
-            predicate = equal(predicate, builder, patient.join("address").get("id"), filter.addressId());
+            predicate = withEqual(predicate, builder, patient.join("address").get("id"), filter.addressId());
             if (filter.specialityId() != null) {
                 query.distinct(true);
                 predicate = builder.and(predicate,
@@ -43,7 +43,7 @@ public final class PatientLinkSpecifications {
         };
     }
 
-    private static <T> jakarta.persistence.criteria.Predicate equal(jakarta.persistence.criteria.Predicate predicate,
+    private static <T> jakarta.persistence.criteria.Predicate withEqual(jakarta.persistence.criteria.Predicate predicate,
             jakarta.persistence.criteria.CriteriaBuilder builder, jakarta.persistence.criteria.Expression<T> path, T value) {
         return value == null ? predicate : builder.and(predicate, builder.equal(path, value));
     }

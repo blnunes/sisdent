@@ -254,6 +254,73 @@ class Phase2IdentityIntegrationTests {
                 .andExpect(jsonPath("$.title").value("Access denied"));
     }
 
+    @Test
+    void platformAdministratorCanProvisionOrganizationClinicAccountAndMembership() throws Exception {
+        saveAccount("provisioner@example.com", true);
+        String token = login("provisioner@example.com", "phase2-password");
+
+        String organizationId = jsonMapper.readTree(mockMvc.perform(post("/api/platform/organizations")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Provisioned organization\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Provisioned organization"))
+                .andReturn().getResponse().getContentAsString()).get("id").asString();
+
+        String clinicId = jsonMapper.readTree(mockMvc.perform(post("/api/organizations/{organizationId}/clinic-units", organizationId)
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Provisioned clinic\"}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString()).get("id").asString();
+
+        mockMvc.perform(post("/api/organizations/{organizationId}/memberships", organizationId)
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"Provisioned user\",\"email\":\"provisioned@example.com\",\"password\":\"strong-password\",\"clinicUnitId\":\"" + clinicId + "\",\"role\":\"READ_ONLY\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.role").value("READ_ONLY"));
+
+        mockMvc.perform(get("/api/organizations/{organizationId}/clinic-units", organizationId)
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(clinicId));
+    }
+
+    @Test
+    void platformAdministratorCanManageAccountLifecycleAndPrivileges() throws Exception {
+        saveAccount("account-admin@example.com", true);
+        String token = login("account-admin@example.com", "phase2-password");
+
+        String accountId = jsonMapper.readTree(mockMvc.perform(post("/api/platform/accounts")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"Managed account\",\"email\":\"managed@example.com\",\"password\":\"strong-password\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.email").value("managed@example.com"))
+                .andReturn().getResponse().getContentAsString()).get("id").asString();
+
+        mockMvc.perform(get("/api/platform/accounts")
+                        .header("Authorization", bearer(token))
+                        .param("filter", "managed@example.com"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(accountId));
+
+        mockMvc.perform(patch("/api/platform/accounts/{accountId}/lifecycle", accountId)
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"active\":false,\"version\":0}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
+
+        mockMvc.perform(patch("/api/platform/accounts/{accountId}/platform-administrator", accountId)
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"platformAdministrator\":true,\"version\":1}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.platformAdministrator").value(true));
+    }
+
     private Account saveAccount(String email, boolean platformAdministrator) {
         Person person = personRepository.save(new Person(email.strip()));
         return accountRepository.saveAndFlush(new Account(person, email,
