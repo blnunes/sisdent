@@ -3,8 +3,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth.service';
-import { AppHeaderComponent } from '../../shared/app-header.component';
-import { ModuleNavigationComponent } from '../../shared/module-navigation.component';
+import { AppHeaderComponent } from '../../core/layout/app-header/app-header.component';
+import { ModuleNavigationComponent } from '../../core/layout/module-navigation/module-navigation.component';
 
 @Component({
   selector: 'app-home',

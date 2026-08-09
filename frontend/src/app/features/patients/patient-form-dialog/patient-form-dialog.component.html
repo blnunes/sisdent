@@ -9,8 +9,8 @@
   <button
     mat-icon-button
     mat-dialog-close
-    [attr.aria-label]="'RESOURCE.CLOSE' | translate"
-    [matTooltip]="'RESOURCE.CLOSE' | translate"
+    [attr.aria-label]="translationKey('CLOSE') | translate"
+    [matTooltip]="translationKey('CLOSE') | translate"
   >
     <mat-icon>close</mat-icon>
   </button>
@@ -33,7 +33,7 @@
             } @else if (field.key === 'countryCode' && isPatientForm()) {
               <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
                 <mat-label>{{ field.label }}</mat-label>
-                <mat-select [formControlName]="field.key" (selectionChange)="onCountrySelected($event.value)">
+                <mat-select #countrySelect [formControlName]="field.key" (selectionChange)="onCountrySelected($event.value); countrySelect.close()">
                   @for (country of countriesWithAdministrativeDivisions(); track country.code) {
                     <mat-option [value]="country.code">{{ country.name }} ({{ country.code }})</mat-option>
                   }
@@ -42,7 +42,7 @@
             } @else if ((field.key === 'nationalityCode' || field.key === 'documentIssuerCountryCode') && isPatientForm()) {
               <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
                 <mat-label>{{ field.label }}</mat-label>
-                <mat-select [formControlName]="field.key">
+                <mat-select #countryReferenceSelect [formControlName]="field.key" (selectionChange)="countryReferenceSelect.close()">
                   @for (country of data.countries ?? []; track country.code) {
                     <mat-option [value]="country.code">{{ country.name }} ({{ country.code }})</mat-option>
                   }
@@ -51,7 +51,7 @@
             } @else if (field.key === 'administrativeDivisionCode' && isPatientForm()) {
               <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
                 <mat-label>Administrative division</mat-label>
-                <mat-select [formControlName]="field.key" (selectionChange)="onAdministrativeDivisionSelected($event.value)">
+                <mat-select #divisionSelect [formControlName]="field.key" (selectionChange)="onAdministrativeDivisionSelected($event.value); divisionSelect.close()">
                   @for (division of availableAdministrativeDivisions(); track division.id) {
                     <mat-option [value]="division.code">{{ division.name }} ({{ division.code }})</mat-option>
                   }
@@ -114,11 +114,11 @@
                                 type="button"
                                 class="remove-speciality"
                                 [attr.aria-label]="
-                                  ('RESOURCE.REMOVE_SPECIALITY' | translate) +
+                                  (translationKey('REMOVE_SPECIALITY') | translate) +
                                   ': ' +
                                   speciality.name
                                 "
-                                [matTooltip]="'RESOURCE.REMOVE_SPECIALITY' | translate"
+                                [matTooltip]="translationKey('REMOVE_SPECIALITY') | translate"
                                 (click)="removeSpeciality(speciality.id)"
                               >
                                 <mat-icon>delete_outline</mat-icon>
@@ -177,7 +177,7 @@
               <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
                 <mat-label>{{ field.label }}</mat-label>
                 @if (field.options) {
-                  <mat-select [formControlName]="field.key">
+                  <mat-select #fieldSelect [formControlName]="field.key" (selectionChange)="fieldSelect.close()">
                     @for (option of field.options; track option.value) {
                       <mat-option [value]="option.value">{{ option.label }}</mat-option>
                     }

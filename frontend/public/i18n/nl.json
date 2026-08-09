@@ -187,7 +187,7 @@
     "DISCARD": "Verwerpen",
     "UNSAVED_WARNING": "Er zijn niet-opgeslagen wijzigingen. Sla ze op voordat u van gebruiker wisselt."
   },
-  "RESOURCE": {
+  "PATIENTS": {
     "ACTIONS": "Acties",
     "VIEW": "Details bekijken",
     "EDIT": "Record bewerken",
@@ -227,6 +227,27 @@
       "OTHER": "Anders",
       "NATIONAL_ID": "Nationaal identiteitsbewijs",
       "PASSPORT": "Paspoort"
+    }
+  },
+  "RESOURCE": {
+    "ACTIONS": "Acties",
+    "VIEW": "Details bekijken",
+    "EDIT": "Record bewerken",
+    "DELETE": "Record verwijderen",
+    "REMOVE_SPECIALITY": "Specialisme verwijderen",
+    "CLOSE": "Sluiten",
+    "FILTER": {
+      "TITLE": "Records zoeken",
+      "DESCRIPTION": "Zoek en verfijn de resultaten wanneer nodig.",
+      "APPLY": "Filteren",
+      "MORE": "Meer filters",
+      "LESS": "Minder filters",
+      "CLEAR": "Wissen",
+      "CLEAR_FIELD": "Wissen",
+      "ADDITIONAL": "Aanvullende criteria",
+      "ALL": "Alle",
+      "BIRTH_DATE_ARIA": "Datum kiezen in de kalender",
+      "NAME": "Naam"
     }
   },
   "APPOINTMENTS": {

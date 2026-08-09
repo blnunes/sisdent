@@ -187,7 +187,7 @@
     "DISCARD": "Descartar",
     "UNSAVED_WARNING": "Existem alterações não guardadas. Guarde-as antes de mudar de utilizador."
   },
-  "RESOURCE": {
+  "PATIENTS": {
     "ACTIONS": "Ações",
     "VIEW": "Ver detalhes",
     "EDIT": "Editar registo",
@@ -227,6 +227,27 @@
       "OTHER": "Outro",
       "NATIONAL_ID": "Documento nacional",
       "PASSPORT": "Passaporte"
+    }
+  },
+  "RESOURCE": {
+    "ACTIONS": "Ações",
+    "VIEW": "Ver detalhes",
+    "EDIT": "Editar registo",
+    "DELETE": "Eliminar registo",
+    "REMOVE_SPECIALITY": "Remover especialidade",
+    "CLOSE": "Fechar",
+    "FILTER": {
+      "TITLE": "Encontrar registos",
+      "DESCRIPTION": "Pesquise e refine os resultados quando necessário.",
+      "APPLY": "Filtrar",
+      "MORE": "Mais filtros",
+      "LESS": "Menos filtros",
+      "CLEAR": "Limpar",
+      "CLEAR_FIELD": "Limpar",
+      "ADDITIONAL": "Critérios adicionais",
+      "ALL": "Todos",
+      "BIRTH_DATE_ARIA": "Escolher data no calendário",
+      "NAME": "Nome"
     }
   },
   "APPOINTMENTS": {

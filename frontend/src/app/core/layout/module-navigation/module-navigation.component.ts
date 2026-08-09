@@ -3,7 +3,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { TranslatePipe } from '@ngx-translate/core';
-import { AuthService } from '../core/auth.service';
+import { AuthService } from '../../auth.service';
 
 @Component({
   selector: 'app-module-navigation',

@@ -1,0 +1,11 @@
+:host { display: block; }
+.table-card { overflow: hidden; border-color: var(--app-border); border-radius: 22px; background: var(--app-surface); }
+.table-scroll { overflow-x: auto; }
+table { width: 100%; min-width: 660px; table-layout: fixed; }
+th { color: #688087; font-size: .74rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+td, th { padding: 14px 18px !important; border-color: #edf3f3; overflow-wrap: anywhere; vertical-align: top; }
+.actions { display: flex; gap: 2px; }
+.delete { color: #b34250; }
+.table-state { display: grid; min-height: 300px; place-items: center; color: var(--app-text-muted); text-align: center; }
+.table-state mat-icon { font-size: 38px; width: 38px; height: 38px; }
+.table-state button { border: 0; color: var(--app-primary); background: transparent; font: inherit; font-weight: 700; cursor: pointer; }

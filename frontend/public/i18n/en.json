@@ -187,7 +187,7 @@
     "DISCARD": "Discard",
     "UNSAVED_WARNING": "There are unsaved changes. Save them before changing users."
   },
-  "RESOURCE": {
+  "PATIENTS": {
     "ACTIONS": "Actions",
     "VIEW": "View details",
     "EDIT": "Edit record",
@@ -227,6 +227,27 @@
       "OTHER": "Other",
       "NATIONAL_ID": "National ID",
       "PASSPORT": "Passport"
+    }
+  },
+  "RESOURCE": {
+    "ACTIONS": "Actions",
+    "VIEW": "View details",
+    "EDIT": "Edit record",
+    "DELETE": "Delete record",
+    "REMOVE_SPECIALITY": "Remove speciality",
+    "CLOSE": "Close",
+    "FILTER": {
+      "TITLE": "Find records",
+      "DESCRIPTION": "Search and refine the results when needed.",
+      "APPLY": "Filter",
+      "MORE": "More filters",
+      "LESS": "Less filters",
+      "CLEAR": "Clear",
+      "CLEAR_FIELD": "Clear",
+      "ADDITIONAL": "Additional criteria",
+      "ALL": "All",
+      "BIRTH_DATE_ARIA": "Choose date from calendar",
+      "NAME": "Name"
     }
   },
   "APPOINTMENTS": {

@@ -11,8 +11,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountApiService } from '../../core/account-api.service';
 import { AuthService } from '../../core/auth.service';
 import { ClinicUnit } from '../../core/models';
-import { AppHeaderComponent } from '../../shared/app-header.component';
-import { ModuleNavigationComponent } from '../../shared/module-navigation.component';
+import { AppHeaderComponent } from '../../core/layout/app-header/app-header.component';
+import { ModuleNavigationComponent } from '../../core/layout/module-navigation/module-navigation.component';
 
 @Component({
   selector: 'app-clinic-units', standalone: true,

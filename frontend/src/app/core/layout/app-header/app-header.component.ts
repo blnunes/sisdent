@@ -5,9 +5,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSelectModule } from '@angular/material/select';
 import { TranslatePipe } from '@ngx-translate/core';
-import { AuthService } from '../core/auth.service';
-import { LanguageSelectorComponent } from './language-selector.component';
-import { ThemeToggleComponent } from './theme-toggle.component';
+import { AuthService } from '../../auth.service';
+import { LanguageSelectorComponent } from '../../../shared/preferences/language-selector/language-selector.component';
+import { ThemeToggleComponent } from '../../../shared/preferences/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-header',

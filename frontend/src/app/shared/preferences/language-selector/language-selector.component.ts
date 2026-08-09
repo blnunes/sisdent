@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Language, LanguageService } from '../core/language.service';
+import { Language, LanguageService } from '../../../core/language.service';
 
 @Component({
   selector: 'app-language-selector',

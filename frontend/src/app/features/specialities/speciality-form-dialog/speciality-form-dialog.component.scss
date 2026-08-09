@@ -1,0 +1,12 @@
+header { display: flex; align-items: start; justify-content: space-between; padding: 24px 28px 14px; }
+header p, header h2 { margin: 0; }
+header p { color: var(--app-text-muted); }
+form > mat-form-field { width: 100%; }
+section { border-top: 1px solid var(--app-border); padding-top: 14px; }
+.procedure-add { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+.procedure-add button { margin-top: 8px; }
+.procedures > div { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--app-border); }
+.empty { color: var(--app-text-muted); }
+.validation-error { color: var(--mat-sys-error); }
+mat-dialog-actions { padding: 14px 28px 22px; }
+@media (max-width: 560px) { .procedure-add { grid-template-columns: 1fr; }.procedure-add button { margin-top: 0; } }
