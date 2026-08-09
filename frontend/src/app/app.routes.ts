@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { anyPermissionsGuard, authGuard, organizationAdministrationGuard, practitionerManagementGuard } from './core/auth.guard';
+import { anyPermissionsGuard, authGuard, organizationAdministrationGuard, platformAdministrationGuard, practitionerManagementGuard } from './core/auth.guard';
 
 export const routes: Routes = [
   {
@@ -35,6 +35,11 @@ export const routes: Routes = [
     path: 'accounts',
     canActivate: [authGuard],
     loadComponent: () => import('./features/accounts/accounts.component').then((m) => m.AccountsComponent),
+  },
+  {
+    path: 'settings/translations',
+    canActivate: [authGuard, platformAdministrationGuard],
+    loadComponent: () => import('./features/catalog-translations/catalog-translations.component').then((m) => m.CatalogTranslationsComponent),
   },
   {
     path: 'patients',

@@ -1,12 +1,12 @@
 @if (filters().length) {
-  <mat-card appearance="outlined" class="filter-card" role="region" [attr.aria-label]="ariaLabel()"><form (submit)="$event.preventDefault(); apply.emit()">
+  <mat-card appearance="outlined" class="filter-card" role="region" [attr.aria-label]="ariaLabel() | translate"><form (submit)="$event.preventDefault(); apply.emit()">
     <div class="filter-heading"><h2>{{ key('FILTER.TITLE') | translate }}</h2><p>{{ key('FILTER.DESCRIPTION') | translate }}</p></div>
     <div class="filter-grid">
       @for (filter of primary(); track filter.key) {
         <ng-container *ngTemplateOutlet="control; context: { $implicit: filter }" />
       }
     </div>
-    <div class="filter-actions"><button mat-flat-button type="submit"><mat-icon>search</mat-icon>{{ key('FILTER.APPLY') | translate }}</button>@if (advanced().length) {<button mat-stroked-button type="button" (click)="advancedOpen.set(!advancedOpen())"><mat-icon>tune</mat-icon>{{ key(advancedOpen() ? 'FILTER.LESS' : 'FILTER.MORE') | translate }}</button>}<button mat-button type="button" [attr.aria-label]="clearAllAriaLabel()" (click)="clearAll.emit()">{{ key('FILTER.CLEAR') | translate }}</button></div>
+    <div class="filter-actions"><button mat-flat-button type="submit"><mat-icon>search</mat-icon>{{ key('FILTER.APPLY') | translate }}</button>@if (advanced().length) {<button mat-stroked-button type="button" (click)="advancedOpen.set(!advancedOpen())"><mat-icon>tune</mat-icon>{{ key(advancedOpen() ? 'FILTER.LESS' : 'FILTER.MORE') | translate }}</button>}<button mat-button type="button" [attr.aria-label]="clearAllAriaLabel() | translate" (click)="clearAll.emit()">{{ key('FILTER.CLEAR') | translate }}</button></div>
     @if (advancedOpen()) {<div class="advanced"><div class="filter-grid">@for (filter of advanced(); track filter.key) {<ng-container *ngTemplateOutlet="control; context: { $implicit: filter }" />}</div></div>}
   </form></mat-card>
 }

@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { Sort } from '@angular/material/sort';
 import { MatSidenav } from '@angular/material/sidenav';
@@ -8,6 +9,10 @@ import { PageResponse, Permission } from '../../core/models';
 import { TableQueryService } from '../../core/table-query.service';
 import { DataTableActionEvent, DataTableColumn, DataTablePageEvent, DataTableRow, DataTableRowAction, DataTableSortEvent } from '../../shared/data-table/data-table.models';
 import { FilterAutocompleteEvent, FilterDefinition, FilterOption, FilterValueEvent } from '../../shared/filters/filter.models';
+import { fromEvent } from 'rxjs';
+import { LANGUAGE_CHANGED_EVENT } from '../../core/language.service';
+import { CatalogDisplayNameService } from '../../core/catalog-display-name.service';
+import { TranslateService } from '@ngx-translate/core';
 
 export type ResourceRecord = Record<string, unknown>;
 export type ResourceListDefinition = {
@@ -16,7 +21,7 @@ export type ResourceListDefinition = {
   columns: readonly DataTableColumn[];
   filters?: readonly FilterDefinition[];
   identifier: (record: ResourceRecord) => string | number;
-  cells: (record: ResourceRecord) => Readonly<Record<string, string>>;
+  cells: (record: ResourceRecord, catalogNames: CatalogDisplayNameService, translate: TranslateService) => Readonly<Record<string, string>>;
   primary: (record: ResourceRecord) => string;
   canView?: () => boolean;
   canDelete?: (record: ResourceRecord) => boolean;
@@ -25,12 +30,14 @@ export type ResourceListDefinition = {
 };
 
 export abstract class ResourceListController {
-  readonly filterAriaLabel: string = 'Filters';
+  readonly filterAriaLabel: string = 'RESOURCE.FILTER.ARIA';
   protected readonly http = inject(HttpClient);
   protected readonly dialog = inject(MatDialog);
   protected readonly tableQuery = inject(TableQueryService);
   protected readonly destroyRef = inject(DestroyRef);
   readonly auth = inject(AuthService);
+  protected readonly catalogNames = inject(CatalogDisplayNameService);
+  protected readonly translate = inject(TranslateService);
   readonly loading = signal(true);
   readonly error = signal(false);
   readonly records = signal<ResourceRecord[]>([]);
@@ -51,9 +58,12 @@ export abstract class ResourceListController {
     this.canManage = computed(() => this.auth.hasPermission(definition.maintainPermission));
     this.rows = computed(() => this.records().map((record) => ({
       id: definition.identifier(record),
-      cells: definition.cells(record),
+      cells: definition.cells(record, this.catalogNames, this.translate),
       actions: this.actions(record),
     })));
+    fromEvent(window, LANGUAGE_CHANGED_EVENT)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.load());
   }
 
   load(): void {
@@ -107,7 +117,7 @@ export abstract class ResourceListController {
   protected view(_record: ResourceRecord): void {}
   protected edit(_record: ResourceRecord): void {}
   protected remove(record: ResourceRecord): void {
-    if (!confirm(`Delete ${this.definition.primary(record)}?`)) return;
+    if (!confirm(this.translate.instant('RESOURCE.DELETE_CONFIRM', { name: this.definition.primary(record) }))) return;
     this.http.delete(`${this.definition.endpoint().split('?')[0]}/${this.definition.identifier(record)}`).subscribe({ next: () => this.load(), error: () => this.error.set(true) });
   }
   protected save(record: ResourceRecord | undefined, body: unknown): void {

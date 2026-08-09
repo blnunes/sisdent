@@ -13,12 +13,13 @@ import defaultEnglish from '../../public/i18n/en.json';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth.interceptor';
+import { localeInterceptor } from './core/locale.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([localeInterceptor, authInterceptor])),
     provideNativeDateAdapter(),
     { provide: MAT_DATE_LOCALE, useValue: 'pt-PT' },
     provideTranslateService({

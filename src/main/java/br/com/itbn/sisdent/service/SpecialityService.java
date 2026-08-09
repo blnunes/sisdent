@@ -5,6 +5,7 @@ import br.com.itbn.sisdent.dto.SpecialityRequest;
 import br.com.itbn.sisdent.dto.SpecialityResponse;
 import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.mapper.ResponseMapper;
+import br.com.itbn.sisdent.localization.CatalogNameLocalizer;
 import br.com.itbn.sisdent.pagination.PageQuery;
 import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.pagination.SortDefinition;
@@ -13,6 +14,8 @@ import br.com.itbn.sisdent.filter.SpecialityFilter;
 import br.com.itbn.sisdent.filter.SpecialitySpecifications;
 import br.com.itbn.sisdent.model.Speciality;
 import br.com.itbn.sisdent.model.CatalogStatus;
+import br.com.itbn.sisdent.model.CatalogResourceType;
+import br.com.itbn.sisdent.model.DentalProcedure;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
@@ -35,23 +38,30 @@ public class SpecialityService {
 
     private final SpecialityRepository specialityRepository;
     private final PageableFactory pageableFactory;
+    private final CatalogNameLocalizer<Speciality> nameLocalizer;
+    private final CatalogTranslationService translations;
 
-    public SpecialityService(SpecialityRepository specialityRepository, PageableFactory pageableFactory) {
+    public SpecialityService(SpecialityRepository specialityRepository, PageableFactory pageableFactory,
+                             CatalogNameLocalizer<Speciality> nameLocalizer,
+                             CatalogTranslationService translations) {
         this.specialityRepository = specialityRepository;
         this.pageableFactory = pageableFactory;
+        this.nameLocalizer = nameLocalizer;
+        this.translations = translations;
     }
 
     @Transactional(readOnly = true)
     public List<SpecialityResponse> findAll() {
         return specialityRepository.findAll(Sort.by("name")).stream()
-                .map(ResponseMapper::toResponse)
+                .map(speciality -> toResponse(speciality, Locale.ENGLISH))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<SpecialityResponse> findPage(PageQuery query, SpecialityFilter filter) {
+    public PageResponse<SpecialityResponse> findPage(PageQuery query, SpecialityFilter filter, Locale locale) {
         return PageResponse.from(specialityRepository.findAll(
-                SpecialitySpecifications.matching(filter), pageableFactory.create(query, SORT_DEFINITION)), ResponseMapper::toResponse);
+                SpecialitySpecifications.matching(filter), pageableFactory.create(query, SORT_DEFINITION)),
+                speciality -> toResponse(speciality, locale));
     }
 
     @Transactional(readOnly = true)
@@ -68,7 +78,7 @@ public class SpecialityService {
     }
 
     @Transactional
-    public SpecialityResponse create(SpecialityRequest request) {
+    public SpecialityResponse create(SpecialityRequest request, Locale locale) {
         validateProcedureNames(request.procedures());
         if (request.procedures().stream().anyMatch(procedure -> procedure.id() != null)) {
             throw new ResponseStatusException(
@@ -83,11 +93,13 @@ public class SpecialityService {
                         .map(DentalProcedureRequest::name)
                         .map(String::trim)
                         .toList());
-        return ResponseMapper.toResponse(specialityRepository.save(speciality));
+        Speciality saved = specialityRepository.saveAndFlush(speciality);
+        persistTranslations(saved, request);
+        return toResponse(saved, locale);
     }
 
     @Transactional
-    public SpecialityResponse update(Long specialityId, SpecialityRequest request) {
+    public SpecialityResponse update(Long specialityId, SpecialityRequest request, Locale locale) {
         validateProcedureNames(request.procedures());
         Speciality speciality = specialityRepository.findById(specialityId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -121,7 +133,9 @@ public class SpecialityService {
                 .forEach(speciality::addProcedure);
         speciality.rename(request.name().trim());
 
-        return ResponseMapper.toResponse(specialityRepository.saveAndFlush(speciality));
+        Speciality saved = specialityRepository.saveAndFlush(speciality);
+        persistTranslations(saved, request);
+        return toResponse(saved, locale);
     }
 
     @Transactional
@@ -170,5 +184,26 @@ public class SpecialityService {
                             HttpStatus.CONFLICT,
                             "Speciality name already exists");
                 });
+    }
+
+    private SpecialityResponse toResponse(Speciality speciality, Locale locale) {
+        return ResponseMapper.toResponse(
+                speciality,
+                nameLocalizer.localize(speciality, locale),
+                procedure -> translations.resolve(CatalogResourceType.PROCEDURE, procedure.getId(), procedure.getName(), locale),
+                translations.effectiveTranslations(CatalogResourceType.SPECIALITY, speciality.getId(), speciality.getName()),
+                procedure -> translations.effectiveTranslations(CatalogResourceType.PROCEDURE, procedure.getId(), procedure.getName()));
+    }
+
+    private void persistTranslations(Speciality speciality, SpecialityRequest request) {
+        translations.merge(CatalogResourceType.SPECIALITY, speciality.getId(), request.translations());
+        for (DentalProcedureRequest procedureRequest : request.procedures()) {
+            DentalProcedure procedure = procedureRequest.id() == null
+                    ? speciality.getProcedures().stream()
+                        .filter(item -> item.getName().equalsIgnoreCase(procedureRequest.name().strip()))
+                        .findFirst().orElseThrow()
+                    : speciality.findProcedure(procedureRequest.id()).orElseThrow();
+            translations.merge(CatalogResourceType.PROCEDURE, procedure.getId(), procedureRequest.translations());
+        }
     }
 }

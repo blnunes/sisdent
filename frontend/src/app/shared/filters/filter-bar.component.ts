@@ -19,8 +19,8 @@ export class FilterBarComponent {
   readonly displayValues = input<Readonly<Record<string, string>>>({});
   readonly autocompleteOptions = input<Readonly<Record<string, readonly FilterOption[]>>>({});
   readonly translationPrefix = input('');
-  readonly ariaLabel = input('Filters');
-  readonly clearAllAriaLabel = input('Clear all');
+  readonly ariaLabel = input('RESOURCE.FILTER.ARIA');
+  readonly clearAllAriaLabel = input('RESOURCE.FILTER.CLEAR_ALL_ARIA');
   readonly valueChange = output<FilterValueEvent>();
   readonly autocompleteChange = output<FilterAutocompleteEvent>();
   readonly optionSelected = output<FilterValueEvent & { label: string }>();

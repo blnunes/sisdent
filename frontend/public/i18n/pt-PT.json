@@ -201,6 +201,7 @@
       "STATUS": "Estado"
     },
     "FILTER": {
+      "ARIA": "Filtros de pacientes",
       "TITLE": "Encontrar pacientes",
       "DESCRIPTION": "Pesquise pelo nome e refine os resultados apenas quando necessário.",
       "APPLY": "Filtrar",
@@ -227,7 +228,59 @@
       "OTHER": "Outro",
       "NATIONAL_ID": "Documento nacional",
       "PASSPORT": "Passaporte"
+    },
+    "DETAILS": {
+      "PROFILE": "Perfil do paciente", "ACTIVE": "Ativo", "INACTIVE": "Inativo",
+      "PERSONAL": "Dados pessoais", "GLOBAL_ID": "ID global do paciente", "BIRTH_DATE": "Data de nascimento",
+      "GENDER": "Género", "TAX_ID": "NIF", "IDENTIFICATION": "Identificação",
+      "NATIONALITY": "Nacionalidade", "COUNTRY": "País", "ADDRESS": "Endereço", "STREET": "Rua",
+      "CITY": "Cidade", "POSTAL_CODE": "Código postal", "DISTRICT": "Distrito",
+      "ADMINISTRATIVE_DIVISION": "Divisão administrativa", "BLOCK": "Bloco",
+      "ADDITIONAL_INFO": "Informação adicional", "SPECIALITIES": "Especialidades",
+      "NO_SPECIALITIES": "Nenhuma especialidade atribuída.",
+      "DOCUMENT_TYPES": { "NATIONAL_ID_CARD": "Documento nacional", "PASSPORT": "Passaporte" }
     }
+  },
+  "SPECIALITIES": {
+    "TABLE": { "NAME": "Nome", "PROCEDURES": "Procedimentos" },
+    "FORM": {
+      "NEW_TITLE": "Nova especialidade", "EDIT_TITLE": "Editar especialidade",
+      "CREATE_SUBTITLE": "Criar uma especialidade do catálogo", "UPDATE_SUBTITLE": "Atualizar os dados do catálogo",
+      "NAME": "Nome canónico", "NAME_REQUIRED": "O nome é obrigatório.", "CANONICAL_HINT": "Nome interno estável utilizado para identificar este registo do catálogo.", "PROCEDURES": "Procedimentos",
+      "TRANSLATIONS": "Traduções", "TRANSLATIONS_OPTIONAL": "Recomendado para todos os idiomas", "TRANSLATIONS_HELP": "Preencha os nomes que os utilizadores devem ver em inglês, português e neerlandês.", "SPECIALITY_NAME": "Nome da especialidade", "PROCEDURE_TRANSLATIONS": "Traduções dos procedimentos",
+      "PROCEDURES_DESCRIPTION": "Adicione os procedimentos clínicos disponíveis nesta especialidade.",
+      "ADD_PROCEDURE": "Adicionar procedimento", "SELECTED_PROCEDURES": "Procedimentos selecionados",
+      "REMOVE_PROCEDURE": "Remover procedimento: {{name}}", "MIN_PROCEDURE": "Adicione pelo menos um procedimento.",
+      "CANCEL": "Cancelar", "SAVE": "Guardar alterações"
+    },
+    "TRANSLATION_WARNING": { "TITLE": "Existem traduções em falta", "DESCRIPTION": "Ainda existem {{count}} campos de tradução vazios. Deseja preenchê-los agora?", "FALLBACK": "Se continuar, os utilizadores verão temporariamente o nome canónico nesses idiomas.", "CONTINUE": "Guardar com fallback", "ADD_NOW": "Adicionar traduções" }
+  },
+  "CATALOG": {
+    "SPECIALITIES": {
+      "dental-anesthesiology": "Anestesiologia Dentária", "dental-public-health": "Saúde Pública Dentária",
+      "endodontics": "Endodontia", "oral-and-maxillofacial-pathology": "Patologia Oral e Maxilofacial",
+      "oral-and-maxillofacial-radiology": "Radiologia Oral e Maxilofacial", "oral-and-maxillofacial-surgery": "Cirurgia Oral e Maxilofacial",
+      "oral-medicine": "Medicina Oral", "orofacial-pain": "Dor Orofacial",
+      "orthodontics-and-dentofacial-orthopedics": "Ortodontia e Ortopedia Dentofacial",
+      "pediatric-dentistry": "Odontopediatria", "periodontics": "Periodontologia", "prosthodontics": "Prostodontia"
+    },
+    "PROCEDURES": {
+      "local-anesthesia": "Anestesia local", "sedation": "Sedação", "oral-health-assessment": "Avaliação da saúde oral",
+      "preventive-program": "Programa preventivo", "pulpotomy": "Pulpotomia", "root-canal-treatment": "Tratamento endodôntico",
+      "histopathological-examination": "Exame histopatológico", "oral-biopsy": "Biópsia oral", "cbct-scan": "Tomografia CBCT",
+      "panoramic-radiograph": "Radiografia panorâmica", "dental-implant-placement": "Colocação de implante dentário", "tooth-extraction": "Extração dentária",
+      "oral-lesion-evaluation": "Avaliação de lesão oral", "salivary-gland-assessment": "Avaliação das glândulas salivares",
+      "occlusal-splint-therapy": "Terapia com goteira oclusal", "tmj-evaluation": "Avaliação da ATM", "orthodontic-adjustment": "Ajuste ortodôntico",
+      "orthodontic-appliance-installation": "Colocação de aparelho ortodôntico", "dental-sealant": "Selante dentário",
+      "fluoride-application": "Aplicação de flúor", "gingival-graft": "Enxerto gengival", "scaling-and-root-planing": "Destartarização e alisamento radicular",
+      "dental-crown-placement": "Colocação de coroa dentária", "denture-fitting": "Adaptação de prótese dentária"
+    }
+  },
+  "CATALOG_TRANSLATIONS": {
+    "NAVIGATION": "Traduções", "ADMINISTRATION": "Configurações da plataforma", "TITLE": "Traduções do catálogo", "DESCRIPTION": "Reveja e mantenha os nomes apresentados para especialidades e procedimentos em todos os idiomas.",
+    "MISSING_SUMMARY": "registos precisam de atenção", "SEARCH": "Pesquisar nome canónico", "RESOURCE_TYPE": "Tipo de conteúdo", "ALL_TYPES": "Todos os tipos", "MISSING_ONLY": "Traduções em falta", "LOADING": "A carregar traduções…", "LOAD_ERROR": "Não foi possível carregar as traduções.", "SAVE_ERROR": "Não foi possível guardar as traduções.",
+    "EMPTY": "Nenhum registo corresponde a estes filtros.", "MISSING_COUNT": "{{count}} em falta", "COMPLETE": "Completo", "NOT_TRANSLATED": "Sem tradução", "EDIT": "Editar traduções", "DIALOG_HELP": "Os campos vazios apresentam o nome canónico como fallback.", "CUSTOMIZED": "Tradução personalizada", "FALLBACK": "Tradução inicial ou fallback",
+    "TYPES": { "SPECIALITY": "Especialidade", "PROCEDURE": "Procedimento" }, "LOCALES": { "en": "Inglês", "pt-PT": "Português", "nl": "Neerlandês" }
   },
   "RESOURCE": {
     "ACTIONS": "Ações",
@@ -236,7 +289,11 @@
     "DELETE": "Eliminar registo",
     "REMOVE_SPECIALITY": "Remover especialidade",
     "CLOSE": "Fechar",
+    "NEW": "Novo",
+    "DELETE_CONFIRM": "Eliminar {{name}}?",
     "FILTER": {
+      "ARIA": "Filtros de registos",
+      "CLEAR_ALL_ARIA": "Limpar todos os filtros",
       "TITLE": "Encontrar registos",
       "DESCRIPTION": "Pesquise e refine os resultados quando necessário.",
       "APPLY": "Filtrar",

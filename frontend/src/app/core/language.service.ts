@@ -9,6 +9,7 @@ export type Language = 'pt-PT' | 'en' | 'nl';
 
 const STORAGE_KEY = 'sisdent.language';
 const SUPPORTED_LANGUAGES: readonly Language[] = ['pt-PT', 'en', 'nl'];
+export const LANGUAGE_CHANGED_EVENT = 'sisdent-language-changed';
 
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
@@ -24,12 +25,16 @@ export class LanguageService {
   }
 
   set(language: Language): void {
+    const changed = this.current() !== language;
     this.current.set(language);
     localStorage.setItem(STORAGE_KEY, language);
     this.document.documentElement.lang = language;
     this.dateAdapter.setLocale(language === 'en' ? 'en-US' : language);
     this.translate.use(language).subscribe({
-      next: () => this.setTitle(),
+      next: () => {
+        this.setTitle();
+        if (changed) window.dispatchEvent(new Event(LANGUAGE_CHANGED_EVENT));
+      },
       error: (error) => this.reportLoadFailure(language, error),
     });
   }

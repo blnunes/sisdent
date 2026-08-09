@@ -8,6 +8,7 @@ import br.com.itbn.sisdent.service.SpecialityService;
 import br.com.itbn.sisdent.pagination.PageQuery;
 import br.com.itbn.sisdent.filter.SpecialityFilter;
 import java.util.List;
+import java.util.Locale;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,8 +39,9 @@ public class SpecialityController {
             @RequestParam(required = false) String sort,
             @RequestParam(required = false) String direction,
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) String procedure) {
-        return specialityService.findPage(new PageQuery(page, size, sort, direction), new SpecialityFilter(name, procedure));
+            @RequestParam(required = false) String procedure,
+            Locale locale) {
+        return specialityService.findPage(new PageQuery(page, size, sort, direction), new SpecialityFilter(name, procedure), locale);
     }
 
     @GetMapping("/filter-options")
@@ -51,15 +53,16 @@ public class SpecialityController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public SpecialityResponse create(@Valid @RequestBody SpecialityRequest request) {
-        return specialityService.create(request);
+    public SpecialityResponse create(@Valid @RequestBody SpecialityRequest request, Locale locale) {
+        return specialityService.create(request, locale);
     }
 
     @PutMapping("/{id}")
     public SpecialityResponse update(
             @PathVariable Long id,
-            @Valid @RequestBody SpecialityRequest request) {
-        return specialityService.update(id, request);
+            @Valid @RequestBody SpecialityRequest request,
+            Locale locale) {
+        return specialityService.update(id, request, locale);
     }
 
     @DeleteMapping("/{id}")

@@ -35,7 +35,7 @@
                 <mat-label>{{ field.label }}</mat-label>
                 <mat-select #countrySelect [formControlName]="field.key" (selectionChange)="onCountrySelected($event.value); countrySelect.close()">
                   @for (country of countriesWithAdministrativeDivisions(); track country.code) {
-                    <mat-option [value]="country.code">{{ country.name }} ({{ country.code }})</mat-option>
+                    <mat-option [value]="country.code">{{ catalogNames.country(country) }} ({{ country.code }})</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
@@ -44,7 +44,7 @@
                 <mat-label>{{ field.label }}</mat-label>
                 <mat-select #countryReferenceSelect [formControlName]="field.key" (selectionChange)="countryReferenceSelect.close()">
                   @for (country of data.countries ?? []; track country.code) {
-                    <mat-option [value]="country.code">{{ country.name }} ({{ country.code }})</mat-option>
+                    <mat-option [value]="country.code">{{ catalogNames.country(country) }} ({{ country.code }})</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
@@ -84,7 +84,7 @@
                     <mat-label>Add speciality</mat-label>
                     <mat-select [value]="specialityToAdd()" (valueChange)="addSpeciality($event)">
                       @for (speciality of availableSpecialities(); track speciality.id) {
-                        <mat-option [value]="speciality.id">{{ speciality.name }}</mat-option>
+                        <mat-option [value]="speciality.id">{{ catalogNames.speciality(speciality) }}</mat-option>
                       }
                     </mat-select>
                   </mat-form-field>
@@ -106,7 +106,7 @@
                         @for (speciality of selectedSpecialities(); track speciality.id) {
                           <tr>
                             <td>
-                              <span class="speciality-chip">{{ speciality.name }}</span>
+                              <span class="speciality-chip">{{ catalogNames.speciality(speciality) }}</span>
                             </td>
                             <td>
                               <button

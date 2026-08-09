@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.Locale;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
@@ -36,8 +37,9 @@ public class CountryController {
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String sort,
-            @RequestParam(required = false) String direction) {
-        return countryService.findPage(new PageQuery(page, size, sort, direction));
+            @RequestParam(required = false) String direction,
+            Locale locale) {
+        return countryService.findPage(new PageQuery(page, size, sort, direction), locale);
     }
 
     /** Exposes the authoritative enum values for clients that create countries. */
@@ -47,9 +49,9 @@ public class CountryController {
     }
 
     @PostMapping @ResponseStatus(HttpStatus.CREATED)
-    public CountryResponse create(@Valid @RequestBody CountryRequest request) { return countryService.create(request); }
+    public CountryResponse create(@Valid @RequestBody CountryRequest request, Locale locale) { return countryService.create(request, locale); }
     @PutMapping("/{id}")
-    public CountryResponse update(@PathVariable Long id, @Valid @RequestBody CountryRequest request) { return countryService.update(id, request); }
+    public CountryResponse update(@PathVariable Long id, @Valid @RequestBody CountryRequest request, Locale locale) { return countryService.update(id, request, locale); }
     @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) { countryService.delete(id); }
 }

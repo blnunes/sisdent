@@ -1,8 +1,8 @@
 export type PatientRecord = Record<string, unknown>;
 export type PatientFormValues = Record<string, string>;
 export type PatientField = { key: string; label: string; required?: boolean; options?: readonly { value: string; label: string }[]; type?: 'date'; section?: string; fullWidth?: boolean };
-export type SpecialityOption = { id: number; name: string };
-export type CountryOption = { code: string; name: string };
+export type SpecialityOption = { id: number; name: string; displayName?: string };
+export type CountryOption = { code: string; name: string; displayName?: string };
 export type AdministrativeDivisionOption = { id: number; name: string; code: string; type: string; country: { code: string } };
 export type AddressOption = { id: number; street: string; district?: string; city: string; additionalInfo?: string; block?: string; postalCode?: string; administrativeDivision?: { name: string; code: string; type: string }; country: { code: string } };
 export type ProcedureOption = { id?: number; name: string };

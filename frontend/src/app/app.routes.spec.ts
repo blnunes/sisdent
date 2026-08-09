@@ -6,6 +6,7 @@ import { CountriesComponent } from './features/countries/countries.component';
 import { PatientsComponent } from './features/patients/patients.component';
 import { SpecialitiesComponent } from './features/specialities/specialities.component';
 import { routes } from './app.routes';
+import { platformAdministrationGuard } from './core/auth.guard';
 
 describe('feature routes', () => {
   const expectedComponents = new Map<string, Type<unknown>>([
@@ -35,6 +36,10 @@ describe('feature routes', () => {
 
   it('keeps the fallback route after all named routes', () => {
     expect(routes.at(-1)?.path).toBe('**');
+  });
+
+  it('restricts translation settings to the platform administrator guard', () => {
+    expect(routeFor('settings/translations').canActivate).toContain(platformAdministrationGuard);
   });
 });
 

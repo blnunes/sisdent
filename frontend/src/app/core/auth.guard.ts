@@ -13,6 +13,11 @@ export const adminGuard: CanActivateFn = () => {
   return auth.isAdmin() ? true : inject(Router).createUrlTree(['/not-found']);
 };
 
+export const platformAdministrationGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  return auth.isPlatformAdministrator() ? true : inject(Router).createUrlTree(['/not-found']);
+};
+
 export const permissionsGuard = (...permissions: Permission[]): CanActivateFn => () => {
   const auth = inject(AuthService);
   return auth.hasAllPermissions(...permissions)

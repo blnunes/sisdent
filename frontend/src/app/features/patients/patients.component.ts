@@ -10,6 +10,7 @@ import { PatientApiService } from './patient-api.service';
 import { PATIENT_FIELDS, PatientFormValues, PatientRecord, patientRequest, patientToForm } from './patient.models';
 import { PatientDetailsDialog } from './patient-details-dialog/patient-details-dialog.component';
 import { PatientFormDialog } from './patient-form-dialog/patient-form-dialog.component';
+import { TranslateService } from '@ngx-translate/core';
 
 const COLUMNS: readonly DataTableColumn[] = [
   { key: 'name', label: 'PATIENTS.TABLE.NAME', sortable: true },
@@ -37,7 +38,7 @@ export class PatientsComponent extends ResourceListController {
   readonly title = 'MODULES.PATIENTS';
   readonly description = 'MODULES.PATIENTS_DESCRIPTION';
   readonly translationPrefix = 'PATIENTS';
-  override readonly filterAriaLabel = 'Patient filters';
+  override readonly filterAriaLabel = 'PATIENTS.FILTER.ARIA';
   readonly columns = COLUMNS;
 
   constructor() {
@@ -66,16 +67,25 @@ export class PatientsComponent extends ResourceListController {
   }
   override create(): void { this.openEditor(); }
   protected override edit(record: ResourceRecord): void { this.openEditor(record); }
-  protected override view(record: ResourceRecord): void { this.dialog.open(PatientDetailsDialog, { width: '680px', maxWidth: '94vw', autoFocus: 'dialog', data: record }); }
+  protected override view(record: ResourceRecord): void {
+    this.api.specialities().subscribe({
+      next: response => {
+        const localized = new Map(response.content.map(item => [item.id, item]));
+        const assigned = Array.isArray(record['specialities']) ? record['specialities'] as ResourceRecord[] : [];
+        this.openDetails({ ...record, specialities: assigned.map(item => localized.get(Number(item['id'])) ?? item) });
+      },
+      error: () => this.openDetails(record),
+    });
+  }
   protected override remove(record: ResourceRecord): void {
     const membership = this.auth.activeMembership();
-    if (!membership || !confirm(`Delete ${String(record['name'] ?? '—')}?`)) return;
+    if (!membership || !confirm(this.translate.instant('RESOURCE.DELETE_CONFIRM', { name: String(record['name'] ?? '—') }))) return;
     this.api.deactivate(membership, String(record['globalId'])).subscribe({ next: () => this.load(), error: () => this.error.set(true) });
   }
   private loadNationalityOptions(): void {
     const membership = this.auth.activeMembership();
     if (!membership) return;
-    this.api.countries().subscribe({ next: (response) => { const options = response.content.map((country) => ({ value: country.code, label: `${country.name} (${country.code})` })); this.filters.update((filters) => filters.map((filter) => filter.key === 'nationalityCode' ? { ...filter, options } : filter)); }, error: () => this.filters.update((filters) => filters.map((filter) => filter.key === 'nationalityCode' ? { ...filter, options: [] as FilterOption[] } : filter)) });
+    this.api.countries().subscribe({ next: (response) => { const options = response.content.map((country) => ({ value: country.code, label: `${this.catalogNames.country(country)} (${country.code})` })); this.filters.update((filters) => filters.map((filter) => filter.key === 'nationalityCode' ? { ...filter, options } : filter)); }, error: () => this.filters.update((filters) => filters.map((filter) => filter.key === 'nationalityCode' ? { ...filter, options: [] as FilterOption[] } : filter)) });
   }
   private openEditor(record?: ResourceRecord): void {
     forkJoin({ specialities: this.api.specialities(), countries: this.api.countries(), administrativeDivisions: this.api.administrativeDivisions() }).subscribe({
@@ -83,8 +93,12 @@ export class PatientsComponent extends ResourceListController {
       error: () => this.error.set(true),
     });
   }
+  private openDetails(record: ResourceRecord): void {
+    this.dialog.open(PatientDetailsDialog, { width: '680px', maxWidth: '94vw', autoFocus: 'dialog', data: record });
+  }
 }
 
-function patientCells(record: ResourceRecord): Readonly<Record<string, string>> {
-  return { name: String(record['name'] ?? '—'), identificationNumber: String(record['identificationNumber'] ?? '—'), gender: String(record['gender'] ?? '—'), active: record['active'] ? 'Active' : 'Inactive' };
+function patientCells(record: ResourceRecord, _catalogNames: unknown, translate: TranslateService): Readonly<Record<string, string>> {
+  const gender = String(record['gender'] ?? 'OTHER');
+  return { name: String(record['name'] ?? '—'), identificationNumber: String(record['identificationNumber'] ?? '—'), gender: translate.instant(`PATIENTS.FILTER.${gender}`), active: translate.instant(record['active'] ? 'PATIENTS.FILTER.ACTIVE' : 'PATIENTS.FILTER.INACTIVE') };
 }

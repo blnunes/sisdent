@@ -21,6 +21,7 @@ import {
   SpecialityOption,
 } from '../patient.models';
 import { PatientApiService } from '../patient-api.service';
+import { CatalogDisplayNameService } from '../../../core/catalog-display-name.service';
 
 export type PatientFormDialogData = {
   fields: Field[];
@@ -66,6 +67,7 @@ export class PatientFormDialog {
   private readonly ref = inject(MatDialogRef<PatientFormDialog, Record<string, string>>);
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(PatientApiService);
+  readonly catalogNames = inject(CatalogDisplayNameService);
   readonly form = this.fb.group(
     Object.fromEntries(
       this.data.fields.map((field) => [
