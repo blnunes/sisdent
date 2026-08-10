@@ -4,7 +4,8 @@
   "HOME": {
     "TITLE": "Start",
     "OVERTITLE": "Sisdent",
-    "WELCOME": "Hallo, {{name}}",
+    "WELCOME": "Welkom",
+    "WELCOME_USER": "Hallo, {{name}}",
     "DESCRIPTION": "Gebruik het menu om te beginnen en de beschikbare functies te openen.",
     "SCOPE": "U bekijkt {{organization}} · {{clinic}}",
     "ALL_CLINICS": "alle klinieken",
@@ -63,6 +64,13 @@
     "LOGOUT": "Afmelden",
     "HOME": "Terug naar start",
     "BACK": "Terug naar inloggen"
+  },
+  "UNAVAILABLE": {
+    "OVERTITLE": "Verbinding niet beschikbaar",
+    "TITLE": "Sisdent kan niet worden bereikt",
+    "DESCRIPTION": "De server is niet beschikbaar of de verbinding is onderbroken. Uw gegevens blijven beschermd; probeer het opnieuw wanneer de service beschikbaar is.",
+    "RETRY": "Opnieuw proberen",
+    "HELP": "Neem contact op met uw systeembeheerder als het probleem aanhoudt."
   },
   "DIALOG": {
     "NEW_USER": "Nieuwe gebruiker",

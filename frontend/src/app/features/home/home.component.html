@@ -14,7 +14,8 @@
         <header class="dashboard-header">
           <div>
             <span class="eyebrow">{{ 'HOME.OVERTITLE' | translate }}</span>
-            <h1>{{ 'HOME.WELCOME' | translate:{ name: auth.session()?.displayName } }}</h1>
+            @if (auth.session()?.displayName; as displayName) {<h1>{{ 'HOME.WELCOME_USER' | translate:{ name: displayName } }}</h1>}
+            @else {<h1>{{ 'HOME.WELCOME' | translate }}</h1>}
             @if (membership()) {<p>{{ 'HOME.SCOPE' | translate:{ organization: membership()!.organizationName, clinic: membership()!.clinicUnitName || ('HOME.ALL_CLINICS' | translate) } }}</p>}
             @else {<p>{{ 'HOME.DESCRIPTION' | translate }}</p>}
           </div>

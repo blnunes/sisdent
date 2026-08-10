@@ -1,12 +1,29 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { catchError, map, of } from 'rxjs';
 import { AuthService } from './auth.service';
 import { Permission } from './models';
+import { markSystemUnavailable, wasSystemUnavailable } from './system-availability';
 
 export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
-  return auth.authenticated() ? true : inject(Router).createUrlTree(['/login']);
+  const router = inject(Router);
+  if (!auth.authenticated()) return router.createUrlTree([wasSystemUnavailable() ? '/unavailable' : '/login']);
+  return auth.loadSession().pipe(
+    map(() => true),
+    catchError((error: unknown) => {
+      if (isSystemUnavailable(error)) markSystemUnavailable();
+      auth.clearSession();
+      return of(router.createUrlTree([isSystemUnavailable(error) ? '/unavailable' : '/login']));
+    }),
+  );
 };
+
+function isSystemUnavailable(error: unknown): error is { status: number } {
+  if (typeof error !== 'object' || error === null || !('status' in error)) return false;
+  const status = error.status;
+  return typeof status === 'number' && (status === 0 || status >= 500);
+}
 
 export const adminGuard: CanActivateFn = () => {
   const auth = inject(AuthService);

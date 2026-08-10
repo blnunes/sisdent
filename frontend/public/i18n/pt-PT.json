@@ -4,7 +4,8 @@
   "HOME": {
     "TITLE": "Início",
     "OVERTITLE": "Sisdent",
-    "WELCOME": "Olá, {{name}}",
+    "WELCOME": "Bem-vindo",
+    "WELCOME_USER": "Olá, {{name}}",
     "DESCRIPTION": "Utilize o menu para começar e aceder às funcionalidades disponíveis.",
     "SCOPE": "A acompanhar {{organization}} · {{clinic}}",
     "ALL_CLINICS": "todas as clínicas",
@@ -63,6 +64,13 @@
     "LOGOUT": "Terminar sessão",
     "HOME": "Voltar ao início",
     "BACK": "Voltar ao login"
+  },
+  "UNAVAILABLE": {
+    "OVERTITLE": "Ligação indisponível",
+    "TITLE": "Não foi possível ligar ao Sisdent",
+    "DESCRIPTION": "O servidor está indisponível ou a ligação foi interrompida. Os seus dados continuam protegidos; tente novamente quando o serviço estiver disponível.",
+    "RETRY": "Tentar novamente",
+    "HELP": "Se o problema persistir, contacte o administrador do sistema."
   },
   "DIALOG": {
     "NEW_USER": "Novo utilizador",

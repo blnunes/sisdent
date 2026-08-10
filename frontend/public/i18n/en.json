@@ -4,7 +4,8 @@
   "HOME": {
     "TITLE": "Home",
     "OVERTITLE": "Sisdent",
-    "WELCOME": "Hello, {{name}}",
+    "WELCOME": "Welcome",
+    "WELCOME_USER": "Hello, {{name}}",
     "DESCRIPTION": "Use the menu to get started and access the available features.",
     "SCOPE": "Viewing {{organization}} · {{clinic}}",
     "ALL_CLINICS": "all clinics",
@@ -63,6 +64,13 @@
     "LOGOUT": "Sign out",
     "HOME": "Back to home",
     "BACK": "Back to login"
+  },
+  "UNAVAILABLE": {
+    "OVERTITLE": "Connection unavailable",
+    "TITLE": "Sisdent could not be reached",
+    "DESCRIPTION": "The server is unavailable or the connection was interrupted. Your data remains protected; try again when the service is available.",
+    "RETRY": "Try again",
+    "HELP": "If the problem persists, contact your system administrator."
   },
   "DIALOG": {
     "NEW_USER": "New user",
