@@ -13,7 +13,7 @@
 table {
   width: 100%;
   min-width: 660px;
-  table-layout: auto;
+  table-layout: fixed;
 }
 th {
   color: #688087;
@@ -28,9 +28,6 @@ th {
   border-color: #edf3f3;
   overflow-wrap: anywhere;
   vertical-align: top;
-}
-col.actions-column {
-  width: 184px;
 }
 th.mat-column-actions,
 td.mat-column-actions {

@@ -10,7 +10,7 @@
     <table mat-table [dataSource]="rows()" matSort [matSortActive]="sortActive()" [matSortDirection]="sortDirection()" (matSortChange)="onSort($event)">
       <colgroup>
         @for (column of columns(); track column.key) {
-          <col [class.actions-column]="column.key === 'actions'" />
+          <col [style.width]="column.key === 'actions' ? '184px' : null" />
         }
       </colgroup>
       @for (column of columns(); track column.key) {

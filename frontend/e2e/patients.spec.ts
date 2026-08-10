@@ -161,6 +161,7 @@ async function expectActionButtonsToFit(row: Locator): Promise<void> {
 
   await expect(buttons).toHaveCount(3);
   await expect(actionCell).toBeVisible();
+  await expect.poll(async () => actionCell.evaluate((cell) => cell.getBoundingClientRect().width)).toBeGreaterThanOrEqual(184);
   await expect.poll(async () => actionCell.evaluate((cell) => {
     const cellBounds = cell.getBoundingClientRect();
     return [...cell.querySelectorAll('button')].every((button) => {
