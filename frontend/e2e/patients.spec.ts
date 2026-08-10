@@ -21,6 +21,8 @@ test.describe('Patient management', () => {
   });
 
   test('creates, updates and deletes a patient', async ({ page }) => {
+    await expectActionButtonsToFit(page.getByRole('row', { name: /Olivia Bennett/ }));
+
     const filters = page.getByRole('region', { name: 'Patient filters' });
     await filters.getByLabel('Patient name').fill(patient.name);
     await filters.getByRole('button', { name: 'Filter', exact: true }).click();
@@ -152,6 +154,21 @@ test.describe('Patient management', () => {
     );
   });
 });
+
+async function expectActionButtonsToFit(row: Locator): Promise<void> {
+  const actionCell = row.locator('td.mat-column-actions');
+  const buttons = actionCell.getByRole('button');
+
+  await expect(buttons).toHaveCount(3);
+  await expect(actionCell).toBeVisible();
+  await expect.poll(async () => actionCell.evaluate((cell) => {
+    const cellBounds = cell.getBoundingClientRect();
+    return [...cell.querySelectorAll('button')].every((button) => {
+      const bounds = button.getBoundingClientRect();
+      return bounds.left >= cellBounds.left && bounds.right <= cellBounds.right;
+    });
+  })).toBe(true);
+}
 
 type PatientResult = {
   name: string;
