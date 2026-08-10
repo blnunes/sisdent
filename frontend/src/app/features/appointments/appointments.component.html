@@ -55,7 +55,7 @@
             <mat-card appearance="outlined" class="agenda-card">
               <div class="card-heading">
                 <div><h2>{{ 'APPOINTMENTS.UPCOMING_SCHEDULE' | translate }}</h2><p>{{ 'APPOINTMENTS.SCOPE_DESCRIPTION' | translate }}</p></div>
-                <span class="date-range"><mat-icon>date_range</mat-icon>{{ 'APPOINTMENTS.NEXT_DAYS' | translate:{ days: 31 } }}</span>
+                <span class="date-range"><mat-icon>date_range</mat-icon>{{ 'APPOINTMENTS.FROM_TODAY' | translate }}</span>
               </div>
               @if (loading()) {
                 <div class="state"><mat-spinner diameter="36" /><span>{{ 'APPOINTMENTS.LOADING' | translate }}</span></div>
@@ -80,6 +80,7 @@
                     </article>
                   }
                 </div>
+                @if (totalPages() > 1) {<div class="agenda-pagination"><button mat-stroked-button type="button" (click)="previousPage()" [disabled]="page() === 0">{{ 'APPOINTMENTS.PREVIOUS_PAGE' | translate }}</button><span>{{ 'APPOINTMENTS.PAGE' | translate:{ current: page() + 1, total: totalPages() } }}</span><button mat-stroked-button type="button" (click)="nextPage()" [disabled]="page() + 1 >= totalPages()">{{ 'APPOINTMENTS.NEXT_PAGE' | translate }}</button></div>}
               }
             </mat-card>
 

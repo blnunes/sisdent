@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class AppointmentServiceTest {
@@ -122,6 +123,16 @@ class AppointmentServiceTest {
 
         assertThat(service.list(organizationId, clinicId, start, end, 0, 200).content()).isEmpty();
         assertThat(service.reschedule(organizationId, appointment.getGlobalId(), request).status()).isEqualTo(AppointmentStatus.SCHEDULED);
+    }
+
+    @Test
+    void listsAppointmentsFromTheRequestedDayWithoutAnUpperDateLimit() {
+        when(appointments.findFrom(any(), any(), any(), any())).thenReturn(Page.empty());
+        when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
+
+        assertThat(service.list(organizationId, clinicId, start, null, 1, 10).content()).isEmpty();
+
+        verify(appointments).findFrom(any(), any(), any(), any());
     }
 
     @Test

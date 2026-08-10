@@ -60,6 +60,8 @@ export class AppointmentsComponent {
   readonly clinicUnits = signal<ClinicUnit[]>([]);
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly page = signal(0);
+  readonly totalPages = signal(0);
 
   clinicUnitId = this.membership()?.clinicUnitId ?? '';
   clinicSearch = '';
@@ -93,6 +95,7 @@ export class AppointmentsComponent {
         this.patients.set([]);
         this.practitioners.set([]);
         this.error.set('');
+        this.page.set(0);
         this.load();
       });
   }
@@ -130,18 +133,20 @@ export class AppointmentsComponent {
     return this.timeSlots.filter((time) => time > this.startTime);
   }
 
-  load(): void {
+  load(page = this.page()): void {
     const membership = this.membership();
     if (!membership) return;
     this.loading.set(true);
     this.error.set('');
-    const now = new Date();
-    const to = new Date(now.getTime() + 31 * 86_400_000);
-    const query = `from=${encodeURIComponent(now.toISOString())}&to=${encodeURIComponent(to.toISOString())}`
+    const from = new Date();
+    from.setHours(0, 0, 0, 0);
+    const query = `from=${encodeURIComponent(from.toISOString())}&page=${page}&size=10`
       + (membership.clinicUnitId ? `&clinicUnitId=${encodeURIComponent(membership.clinicUnitId)}` : '');
     this.http.get<PageResponse<Appointment>>(`/api/organizations/${membership.organizationId}/appointments?${query}`).subscribe({
       next: (page) => {
         this.appointments.set(page.content);
+        this.page.set(page.page);
+        this.totalPages.set(page.totalPages);
         this.loading.set(false);
       },
       error: () => {
@@ -166,6 +171,9 @@ export class AppointmentsComponent {
       error: () => this.error.set(this.translate.instant('APPOINTMENTS.ERROR.LOAD_CLINICS')),
     });
   }
+
+  previousPage(): void { if (this.page() > 0) this.load(this.page() - 1); }
+  nextPage(): void { if (this.page() + 1 < this.totalPages()) this.load(this.page() + 1); }
 
   create(): void {
     const membership = this.membership();
