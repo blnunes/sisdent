@@ -13,8 +13,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { ClinicalEncounter, ClinicUnit, OdontogramFinding, PageResponse } from '../../core/models';
-import { AppHeaderComponent } from '../../shared/app-header.component';
-import { ModuleNavigationComponent } from '../../shared/module-navigation.component';
+import { AppHeaderComponent } from '../../core/layout/app-header/app-header.component';
+import { ModuleNavigationComponent } from '../../core/layout/module-navigation/module-navigation.component';
 
 type PatientOption = { globalId: string; name: string };
 

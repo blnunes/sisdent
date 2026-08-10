@@ -48,6 +48,11 @@ POST /api/specialities
 PUT /api/specialities/{id}
 ```
 
+Country and speciality responses keep `name` as the canonical persisted value and
+also expose a localized `displayName`. Send `Accept-Language: en`, `nl`, or
+`pt-PT`; unsupported languages fall back to English and custom speciality names
+fall back to their canonical value.
+
 Countries use ISO 3166-1 alpha-2 codes. Patients have a stable global UUID and
 carry a passport or national identity card with its issuing country. Addresses
 reference their country of residence and an optional country-scoped

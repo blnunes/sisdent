@@ -15,6 +15,8 @@ import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.model.Speciality;
 
 import java.util.Comparator;
+import java.util.Map;
+import java.util.function.Function;
 
 public final class ResponseMapper {
 
@@ -31,27 +33,72 @@ public final class ResponseMapper {
     }
 
     public static CountryResponse toResponse(Country country) {
+        return toResponse(country, country.getName());
+    }
+
+    public static CountryResponse toResponse(Country country, String displayName) {
         return new CountryResponse(
                 country.getId(),
                 country.getName(),
+                displayName,
                 country.getCode(),
                 country.getContinent());
     }
 
     public static SpecialityResponse toResponse(Speciality speciality) {
+        return toResponse(
+                speciality,
+                speciality.getName(),
+                DentalProcedure::getName,
+                Map.of(),
+                procedure -> Map.of());
+    }
+
+    public static SpecialityResponse toResponse(Speciality speciality, String displayName) {
+        return toResponse(
+                speciality,
+                displayName,
+                DentalProcedure::getName,
+                Map.of(),
+                procedure -> Map.of());
+    }
+
+    public static SpecialityResponse toResponse(
+            Speciality speciality,
+            String displayName,
+            Function<DentalProcedure, String> procedureDisplayName,
+            Map<String, String> translations,
+            Function<DentalProcedure, Map<String, String>> procedureTranslations) {
         return new SpecialityResponse(
                 speciality.getId(),
                 speciality.getName(),
+                displayName,
                 speciality.getStatus(),
                 speciality.getProcedures().stream()
                         .filter(procedure -> procedure.getStatus() == CatalogStatus.ACTIVE)
                         .sorted(Comparator.comparing(DentalProcedure::getName))
-                        .map(ResponseMapper::toResponse)
-                        .toList());
+                        .map(procedure -> toResponse(
+                                procedure,
+                                procedureDisplayName.apply(procedure),
+                                procedureTranslations.apply(procedure)))
+                        .toList(),
+                translations);
     }
 
     public static DentalProcedureResponse toResponse(DentalProcedure procedure) {
-        return new DentalProcedureResponse(procedure.getId(), procedure.getName(), procedure.getStatus());
+        return toResponse(procedure, procedure.getName(), Map.of());
+    }
+
+    public static DentalProcedureResponse toResponse(
+            DentalProcedure procedure,
+            String displayName,
+            Map<String, String> translations) {
+        return new DentalProcedureResponse(
+                procedure.getId(),
+                procedure.getName(),
+                displayName,
+                procedure.getStatus(),
+                translations);
     }
 
     public static AddressResponse toResponse(Address address) {

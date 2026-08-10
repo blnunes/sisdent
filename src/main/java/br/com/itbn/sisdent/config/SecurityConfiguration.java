@@ -57,7 +57,8 @@ public class SecurityConfiguration {
                         // Foundational catalogues are platform-wide, not organization-scoped.
                         // They require platform-administrator authority.
                         .requestMatchers("/api/specialities/**", "/api/addresses/**", "/api/countries/**",
-                                "/api/administrative-divisions/**", "/api/states/**")
+                                "/api/administrative-divisions/**", "/api/states/**",
+                                "/api/platform/catalog-translations/**")
                         .hasAuthority("ROLE_PLATFORM_ADMIN")
                         // Single-page application shell, static assets, and client-side routes.
                         // The SPA bundle contains no secrets; data authorization is enforced on

@@ -1,0 +1,53 @@
+<div class="resource-shell">
+  <app-header (menuClick)="drawer.toggle()" /><mat-sidenav-container class="resource-container"
+    ><mat-sidenav #drawer mode="over" class="side-drawer"
+      ><div class="drawer-brand"><mat-icon>dentistry</mat-icon><strong>Sisdent</strong></div>
+      <app-module-navigation [active]="activeKey" (navigate)="closeMenu(drawer)" /></mat-sidenav
+    ><mat-sidenav-content
+      ><main class="resource-main">
+        <header class="page-header">
+          <div>
+            <span class="eyebrow">{{ 'HOME.TITLE' | translate }}</span>
+            <h1>{{ title | translate }}</h1>
+            <p>{{ description | translate }}</p>
+          </div>
+          @if (canManage()) {
+            <button mat-flat-button (click)="create()">
+              <mat-icon>add</mat-icon>{{ 'RESOURCE.NEW' | translate }}
+            </button>
+          }
+        </header>
+        <app-filter-bar
+          [filters]="filters()"
+          [values]="filterValues()"
+          [displayValues]="filterDisplayValues()"
+          [autocompleteOptions]="filterOptions()"
+          [translationPrefix]="translationPrefix"
+          [ariaLabel]="filterAriaLabel"
+          (valueChange)="updateFilter($event)"
+          (autocompleteChange)="updateAutocomplete($event)"
+          (optionSelected)="selectFilterOption($event)"
+          (apply)="applyFilters()"
+          (clear)="clearFilter($event)"
+          (clearAll)="clearFilters()"
+        /><app-data-table
+          [columns]="columns"
+          [rows]="rows()"
+          [loading]="loading()"
+          [error]="error()"
+          [emptyLabel]="'MODULES.EMPTY'"
+          [errorLabel]="'MODULES.LOAD_ERROR'"
+          [retryLabel]="'USERS.TRY_AGAIN'"
+          [paginationLabel]="'USERS.PAGINATION'"
+          [pageIndex]="page()"
+          [pageSize]="pageSize()"
+          [totalElements]="totalElements()"
+          [sortActive]="sort() === 'id' ? '' : sort()"
+          [sortDirection]="sort() === 'id' ? '' : sortDirection()"
+          (pageChange)="changePage($event)"
+          (sortChange)="changeSort($event)"
+          (rowAction)="handleAction($event)"
+          (retry)="load()"
+        /></main></mat-sidenav-content
+  ></mat-sidenav-container>
+</div>
