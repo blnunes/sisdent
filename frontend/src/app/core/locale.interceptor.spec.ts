@@ -11,7 +11,10 @@ describe('localeInterceptor', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(withInterceptors([localeInterceptor])), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(withInterceptors([localeInterceptor])),
+        provideHttpClientTesting(),
+      ],
     });
     http = TestBed.inject(HttpClient);
     controller = TestBed.inject(HttpTestingController);

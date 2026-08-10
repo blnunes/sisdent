@@ -46,17 +46,29 @@ public final class ResponseMapper {
     }
 
     public static SpecialityResponse toResponse(Speciality speciality) {
-        return toResponse(speciality, speciality.getName(), DentalProcedure::getName, Map.of(), procedure -> Map.of());
+        return toResponse(
+                speciality,
+                speciality.getName(),
+                DentalProcedure::getName,
+                Map.of(),
+                procedure -> Map.of());
     }
 
     public static SpecialityResponse toResponse(Speciality speciality, String displayName) {
-        return toResponse(speciality, displayName, DentalProcedure::getName, Map.of(), procedure -> Map.of());
+        return toResponse(
+                speciality,
+                displayName,
+                DentalProcedure::getName,
+                Map.of(),
+                procedure -> Map.of());
     }
 
-    public static SpecialityResponse toResponse(Speciality speciality, String displayName,
-                                                Function<DentalProcedure, String> procedureDisplayName,
-                                                Map<String, String> translations,
-                                                Function<DentalProcedure, Map<String, String>> procedureTranslations) {
+    public static SpecialityResponse toResponse(
+            Speciality speciality,
+            String displayName,
+            Function<DentalProcedure, String> procedureDisplayName,
+            Map<String, String> translations,
+            Function<DentalProcedure, Map<String, String>> procedureTranslations) {
         return new SpecialityResponse(
                 speciality.getId(),
                 speciality.getName(),
@@ -65,7 +77,9 @@ public final class ResponseMapper {
                 speciality.getProcedures().stream()
                         .filter(procedure -> procedure.getStatus() == CatalogStatus.ACTIVE)
                         .sorted(Comparator.comparing(DentalProcedure::getName))
-                        .map(procedure -> toResponse(procedure, procedureDisplayName.apply(procedure),
+                        .map(procedure -> toResponse(
+                                procedure,
+                                procedureDisplayName.apply(procedure),
                                 procedureTranslations.apply(procedure)))
                         .toList(),
                 translations);
@@ -75,10 +89,16 @@ public final class ResponseMapper {
         return toResponse(procedure, procedure.getName(), Map.of());
     }
 
-    public static DentalProcedureResponse toResponse(DentalProcedure procedure, String displayName,
-                                                     Map<String, String> translations) {
-        return new DentalProcedureResponse(procedure.getId(), procedure.getName(), displayName,
-                procedure.getStatus(), translations);
+    public static DentalProcedureResponse toResponse(
+            DentalProcedure procedure,
+            String displayName,
+            Map<String, String> translations) {
+        return new DentalProcedureResponse(
+                procedure.getId(),
+                procedure.getName(),
+                displayName,
+                procedure.getStatus(),
+                translations);
     }
 
     public static AddressResponse toResponse(Address address) {

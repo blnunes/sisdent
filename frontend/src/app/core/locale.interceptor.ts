@@ -9,8 +9,7 @@ export const localeInterceptor: HttpInterceptorFn = (request, next) => {
   if (!request.url.startsWith('/api/')) return next(request);
 
   const savedLanguage = localStorage.getItem(STORAGE_KEY);
-  const language = savedLanguage && SUPPORTED_LANGUAGES.has(savedLanguage)
-    ? savedLanguage
-    : DEFAULT_LANGUAGE;
+  const language =
+    savedLanguage && SUPPORTED_LANGUAGES.has(savedLanguage) ? savedLanguage : DEFAULT_LANGUAGE;
   return next(request.clone({ setHeaders: { 'Accept-Language': language } }));
 };

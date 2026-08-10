@@ -1,24 +1,124 @@
-.dialog-header { display: flex; align-items: center; gap: 16px; padding: 24px 28px 20px; border-bottom: 1px solid var(--app-border); }
-.dialog-header > button { margin-left: auto; }
-.patient-summary { min-width: 0; }
-.patient-summary p, .patient-summary h2 { margin: 0; }
-.patient-summary p { color: var(--app-text-muted); font-size: .82rem; font-weight: 700; }
-.patient-summary h2 { margin: 2px 0 8px; overflow-wrap: anywhere; }
-.patient-avatar { display: grid; width: 52px; height: 52px; flex: 0 0 52px; place-items: center; border-radius: 50%; color: var(--app-primary); background: var(--app-primary-subtle); font-weight: 800; }
-.status { display: inline-flex; padding: 3px 9px; border-radius: 999px; color: #176b50; background: #dff7ec; font-size: .76rem; font-weight: 800; }
-.status.inactive { color: #8a3340; background: #fde8eb; }
-mat-dialog-content { max-height: min(68vh, 680px); padding: 0 28px !important; }
-.details-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 28px; }
-.details-grid > div { display: grid; min-width: 0; gap: 4px; }
-.details-grid .wide { grid-column: 1 / -1; }
-.details-grid span { color: var(--app-text-muted); font-size: .78rem; font-weight: 700; }
-.details-grid strong { overflow-wrap: anywhere; font-weight: 650; }
-.monospace { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem; }
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chips > span { padding: 7px 11px; border: 1px solid var(--app-border); border-radius: 999px; background: var(--app-primary-subtle); }
-.chips .empty-chip { color: var(--app-text-muted); background: transparent; }
-section { padding: 22px 0; border-bottom: 1px solid var(--app-border); }
-section:last-child { border-bottom: 0; }
-section h3 { margin: 0 0 16px; font-size: 1rem; }
-mat-dialog-actions { padding: 14px 28px 20px; border-top: 1px solid var(--app-border); }
-@media (max-width: 560px) { .dialog-header { padding: 20px; }.details-grid { grid-template-columns: 1fr; }.details-grid .wide { grid-column: auto; }mat-dialog-content { padding: 0 20px !important; } }
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--app-border);
+}
+.dialog-header > button {
+  margin-left: auto;
+}
+.patient-summary {
+  min-width: 0;
+}
+.patient-summary p,
+.patient-summary h2 {
+  margin: 0;
+}
+.patient-summary p {
+  color: var(--app-text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.patient-summary h2 {
+  margin: 2px 0 8px;
+  overflow-wrap: anywhere;
+}
+.patient-avatar {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--app-primary);
+  background: var(--app-primary-subtle);
+  font-weight: 800;
+}
+.status {
+  display: inline-flex;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: #176b50;
+  background: #dff7ec;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+.status.inactive {
+  color: #8a3340;
+  background: #fde8eb;
+}
+mat-dialog-content {
+  max-height: min(68vh, 680px);
+  padding: 0 28px !important;
+}
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 28px;
+}
+.details-grid > div {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+.details-grid .wide {
+  grid-column: 1 / -1;
+}
+.details-grid span {
+  color: var(--app-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.details-grid strong {
+  overflow-wrap: anywhere;
+  font-weight: 650;
+}
+.monospace {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.82rem;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chips > span {
+  padding: 7px 11px;
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  background: var(--app-primary-subtle);
+}
+.chips .empty-chip {
+  color: var(--app-text-muted);
+  background: transparent;
+}
+section {
+  padding: 22px 0;
+  border-bottom: 1px solid var(--app-border);
+}
+section:last-child {
+  border-bottom: 0;
+}
+section h3 {
+  margin: 0 0 16px;
+  font-size: 1rem;
+}
+mat-dialog-actions {
+  padding: 14px 28px 20px;
+  border-top: 1px solid var(--app-border);
+}
+@media (max-width: 560px) {
+  .dialog-header {
+    padding: 20px;
+  }
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  .details-grid .wide {
+    grid-column: auto;
+  }
+  mat-dialog-content {
+    padding: 0 20px !important;
+  }
+}

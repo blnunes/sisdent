@@ -8,27 +8,35 @@ describe('CatalogDisplayNameService', () => {
     'CATALOG.PROCEDURES.local-anesthesia': 'Anestesia local',
   };
 
-  beforeEach(() => TestBed.configureTestingModule({
-    providers: [{
-      provide: TranslateService,
-      useValue: {
-        getCurrentLang: () => 'pt-PT',
-        instant: (key: string) => translations[key] ?? key,
-      },
-    }],
-  }));
+  beforeEach(() =>
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: TranslateService,
+          useValue: {
+            getCurrentLang: () => 'pt-PT',
+            instant: (key: string) => translations[key] ?? key,
+          },
+        },
+      ],
+    }),
+  );
 
   it('translates fixed specialities and procedures from their canonical names', () => {
     const service = TestBed.inject(CatalogDisplayNameService);
 
-    expect(service.speciality({ name: 'Pediatric Dentistry', displayName: 'Pediatric Dentistry' })).toBe('Odontopediatria');
+    expect(
+      service.speciality({ name: 'Pediatric Dentistry', displayName: 'Pediatric Dentistry' }),
+    ).toBe('Odontopediatria');
     expect(service.procedure({ name: 'Local anesthesia' })).toBe('Anestesia local');
   });
 
   it('uses the API display name for catalogue values without a known translation', () => {
     const service = TestBed.inject(CatalogDisplayNameService);
 
-    expect(service.speciality({ name: 'Custom speciality', displayName: 'Especialidade personalizada' })).toBe('Especialidade personalizada');
+    expect(
+      service.speciality({ name: 'Custom speciality', displayName: 'Especialidade personalizada' }),
+    ).toBe('Especialidade personalizada');
   });
 
   it('localizes valid country codes and safely falls back for invalid ones', () => {

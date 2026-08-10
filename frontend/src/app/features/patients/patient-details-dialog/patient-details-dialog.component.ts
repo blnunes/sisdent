@@ -20,10 +20,14 @@ export class PatientDetailsDialog {
   private readonly translate = inject(TranslateService);
   readonly catalogNames = inject(CatalogDisplayNameService);
 
-  value(key: string): string { return String(this.patient[key] ?? '—'); }
+  value(key: string): string {
+    return String(this.patient[key] ?? '—');
+  }
   object(key: string): PatientRecord {
     const value = this.patient[key];
-    return value && typeof value === 'object' && !Array.isArray(value) ? value as PatientRecord : {};
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as PatientRecord)
+      : {};
   }
   administrativeDivisionName(): string {
     const division = this.object('address')['administrativeDivision'];
@@ -33,19 +37,29 @@ export class PatientDetailsDialog {
   }
   specialities(): PatientRecord[] {
     const value = this.patient['specialities'];
-    return Array.isArray(value) ? value as PatientRecord[] : [];
+    return Array.isArray(value) ? (value as PatientRecord[]) : [];
   }
-  initials(): string { return this.value('name').split(/\s+/).map(part => part[0]).slice(0, 2).join('').toUpperCase(); }
+  initials(): string {
+    return this.value('name')
+      .split(/\s+/)
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+  }
   formattedDate(): string {
     const value = this.value('birthDate');
-    return value === '—' ? value : new Intl.DateTimeFormat(
-      this.translate.getCurrentLang() ?? 'en',
-      { dateStyle: 'long' },
-    ).format(new Date(`${value}T00:00:00`));
+    return value === '—'
+      ? value
+      : new Intl.DateTimeFormat(this.translate.getCurrentLang() ?? 'en', {
+          dateStyle: 'long',
+        }).format(new Date(`${value}T00:00:00`));
   }
   documentType(): string {
     const type = this.value('identificationType');
     return type === '—' ? type : this.translate.instant(`PATIENTS.DETAILS.DOCUMENT_TYPES.${type}`);
   }
-  close(): void { this.ref.close(); }
+  close(): void {
+    this.ref.close();
+  }
 }

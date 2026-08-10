@@ -1,4 +1,9 @@
-export type ProcedureOption = { id?: number; name: string; displayName?: string; translations?: Readonly<Record<string, string>> };
+export type ProcedureOption = {
+  id?: number;
+  name: string;
+  displayName?: string;
+  translations?: Readonly<Record<string, string>>;
+};
 export function parseProcedures(value: string): ProcedureOption[] {
   try {
     const procedures = JSON.parse(value) as unknown;
@@ -8,9 +13,18 @@ export function parseProcedures(value: string): ProcedureOption[] {
       const { id, name, displayName, translations } = procedure as Record<string, unknown>;
       const normalizedName = String(name ?? '').trim();
       if (!normalizedName) return [];
-      return [{ ...(typeof id === 'number' ? { id } : {}), name: normalizedName,
-        ...(typeof displayName === 'string' ? { displayName } : {}),
-        ...(translations && typeof translations === 'object' ? { translations: translations as Record<string, string> } : {}) }];
+      return [
+        {
+          ...(typeof id === 'number' ? { id } : {}),
+          name: normalizedName,
+          ...(typeof displayName === 'string' ? { displayName } : {}),
+          ...(translations && typeof translations === 'object'
+            ? { translations: translations as Record<string, string> }
+            : {}),
+        },
+      ];
     });
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }

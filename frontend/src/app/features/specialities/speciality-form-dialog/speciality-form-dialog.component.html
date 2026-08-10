@@ -1,11 +1,142 @@
-<header><div><p>{{ (data.name ? 'SPECIALITIES.FORM.UPDATE_SUBTITLE' : 'SPECIALITIES.FORM.CREATE_SUBTITLE') | translate }}</p><h2 mat-dialog-title>{{ data.title | translate }}</h2></div><button mat-icon-button mat-dialog-close [attr.aria-label]="'RESOURCE.CLOSE' | translate"><mat-icon>close</mat-icon></button></header>
-<mat-dialog-content><form [formGroup]="form">
-  <mat-form-field appearance="outline"><mat-label>{{ 'SPECIALITIES.FORM.NAME' | translate }}</mat-label><input matInput formControlName="name" required />@if (form.controls.name.hasError('required') && form.controls.name.touched) {<mat-error>{{ 'SPECIALITIES.FORM.NAME_REQUIRED' | translate }}</mat-error>}<mat-hint>{{ 'SPECIALITIES.FORM.CANONICAL_HINT' | translate }}</mat-hint></mat-form-field>
-  <section><h3>{{ 'SPECIALITIES.FORM.PROCEDURES' | translate }}</h3><p class="section-description">{{ 'SPECIALITIES.FORM.PROCEDURES_DESCRIPTION' | translate }}</p><div class="procedure-add"><mat-form-field appearance="outline"><mat-label>{{ 'SPECIALITIES.FORM.ADD_PROCEDURE' | translate }}</mat-label><input matInput formControlName="procedureName" (keydown.enter)="$event.preventDefault(); addProcedure()" /></mat-form-field><button mat-stroked-button type="button" (click)="addProcedure()" [disabled]="!form.controls.procedureName.value.trim()"><mat-icon>add</mat-icon>{{ 'SPECIALITIES.FORM.ADD_PROCEDURE' | translate }}</button></div>@if (procedures().length) {<div class="procedures" role="region" [attr.aria-label]="'SPECIALITIES.FORM.SELECTED_PROCEDURES' | translate">@for (procedure of procedures(); track procedure.id ?? procedure.name) {<div><span>{{ catalogNames.procedure(procedure) }}</span><button mat-icon-button type="button" [attr.aria-label]="'SPECIALITIES.FORM.REMOVE_PROCEDURE' | translate:{ name: catalogNames.procedure(procedure) }" (click)="removeProcedure($index)"><mat-icon>delete_outline</mat-icon></button></div>}</div>} @else {<p class="empty" [class.validation-error]="proceduresTouched()">{{ 'SPECIALITIES.FORM.MIN_PROCEDURE' | translate }}</p>}</section>
-  <mat-expansion-panel class="translation-panel" [expanded]="translationsOpen()" (opened)="translationsOpen.set(true)" (closed)="translationsOpen.set(false)"><mat-expansion-panel-header><mat-panel-title><mat-icon>translate</mat-icon>{{ 'SPECIALITIES.FORM.TRANSLATIONS' | translate }}</mat-panel-title><mat-panel-description>{{ 'SPECIALITIES.FORM.TRANSLATIONS_OPTIONAL' | translate }}</mat-panel-description></mat-expansion-panel-header>
-    <p class="section-description">{{ 'SPECIALITIES.FORM.TRANSLATIONS_HELP' | translate }}</p>
-    <h4>{{ 'SPECIALITIES.FORM.SPECIALITY_NAME' | translate }}</h4><div class="translation-grid"><mat-form-field appearance="outline"><mat-label>{{ 'CATALOG_TRANSLATIONS.LOCALES.en' | translate }}</mat-label><input matInput formControlName="translationEn" /></mat-form-field><mat-form-field appearance="outline"><mat-label>{{ 'CATALOG_TRANSLATIONS.LOCALES.pt-PT' | translate }}</mat-label><input matInput formControlName="translationPt" /></mat-form-field><mat-form-field appearance="outline"><mat-label>{{ 'CATALOG_TRANSLATIONS.LOCALES.nl' | translate }}</mat-label><input matInput formControlName="translationNl" /></mat-form-field></div>
-    @if (procedures().length) {<h4>{{ 'SPECIALITIES.FORM.PROCEDURE_TRANSLATIONS' | translate }}</h4><div class="procedure-translations">@for (procedure of procedures(); track procedure.id ?? procedure.name; let procedureIndex = $index) {<article><strong>{{ procedure.name }}</strong><div class="translation-grid">@for (locale of locales; track locale) {<mat-form-field appearance="outline"><mat-label>{{ ('CATALOG_TRANSLATIONS.LOCALES.' + locale) | translate }}</mat-label><input matInput [value]="procedureTranslation(procedureIndex, locale)" (input)="updateProcedureTranslation(procedureIndex, locale, $any($event.target).value)" /></mat-form-field>}</div></article>}</div>}
-  </mat-expansion-panel>
-</form></mat-dialog-content>
-<mat-dialog-actions align="end"><button mat-button mat-dialog-close>{{ 'SPECIALITIES.FORM.CANCEL' | translate }}</button><button mat-flat-button (click)="save()"><mat-icon>save</mat-icon>{{ 'SPECIALITIES.FORM.SAVE' | translate }}</button></mat-dialog-actions>
+<header>
+  <div>
+    <p>
+      {{
+        (data.name ? 'SPECIALITIES.FORM.UPDATE_SUBTITLE' : 'SPECIALITIES.FORM.CREATE_SUBTITLE')
+          | translate
+      }}
+    </p>
+    <h2 mat-dialog-title>{{ data.title | translate }}</h2>
+  </div>
+  <button mat-icon-button mat-dialog-close [attr.aria-label]="'RESOURCE.CLOSE' | translate">
+    <mat-icon>close</mat-icon>
+  </button>
+</header>
+<mat-dialog-content
+  ><form [formGroup]="form">
+    <mat-form-field appearance="outline"
+      ><mat-label>{{ 'SPECIALITIES.FORM.NAME' | translate }}</mat-label
+      ><input matInput formControlName="name" required />
+      @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+        <mat-error>{{ 'SPECIALITIES.FORM.NAME_REQUIRED' | translate }}</mat-error>
+      }
+      <mat-hint>{{ 'SPECIALITIES.FORM.CANONICAL_HINT' | translate }}</mat-hint></mat-form-field
+    >
+    <section>
+      <h3>{{ 'SPECIALITIES.FORM.PROCEDURES' | translate }}</h3>
+      <p class="section-description">
+        {{ 'SPECIALITIES.FORM.PROCEDURES_DESCRIPTION' | translate }}
+      </p>
+      <div class="procedure-add">
+        <mat-form-field appearance="outline"
+          ><mat-label>{{ 'SPECIALITIES.FORM.ADD_PROCEDURE' | translate }}</mat-label
+          ><input
+            matInput
+            formControlName="procedureName"
+            (keydown.enter)="$event.preventDefault(); addProcedure()" /></mat-form-field
+        ><button
+          mat-stroked-button
+          type="button"
+          (click)="addProcedure()"
+          [disabled]="!form.controls.procedureName.value.trim()"
+        >
+          <mat-icon>add</mat-icon>{{ 'SPECIALITIES.FORM.ADD_PROCEDURE' | translate }}
+        </button>
+      </div>
+      @if (procedures().length) {
+        <div
+          class="procedures"
+          role="region"
+          [attr.aria-label]="'SPECIALITIES.FORM.SELECTED_PROCEDURES' | translate"
+        >
+          @for (procedure of procedures(); track procedure.id ?? procedure.name) {
+            <div>
+              <span>{{ catalogNames.procedure(procedure) }}</span
+              ><button
+                mat-icon-button
+                type="button"
+                [attr.aria-label]="
+                  'SPECIALITIES.FORM.REMOVE_PROCEDURE'
+                    | translate: { name: catalogNames.procedure(procedure) }
+                "
+                (click)="removeProcedure($index)"
+              >
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="empty" [class.validation-error]="proceduresTouched()">
+          {{ 'SPECIALITIES.FORM.MIN_PROCEDURE' | translate }}
+        </p>
+      }
+    </section>
+    <mat-expansion-panel
+      class="translation-panel"
+      [expanded]="translationsOpen()"
+      (opened)="translationsOpen.set(true)"
+      (closed)="translationsOpen.set(false)"
+      ><mat-expansion-panel-header
+        ><mat-panel-title
+          ><mat-icon>translate</mat-icon
+          >{{ 'SPECIALITIES.FORM.TRANSLATIONS' | translate }}</mat-panel-title
+        ><mat-panel-description>{{
+          'SPECIALITIES.FORM.TRANSLATIONS_OPTIONAL' | translate
+        }}</mat-panel-description></mat-expansion-panel-header
+      >
+      <p class="section-description">{{ 'SPECIALITIES.FORM.TRANSLATIONS_HELP' | translate }}</p>
+      <h4>{{ 'SPECIALITIES.FORM.SPECIALITY_NAME' | translate }}</h4>
+      <div class="translation-grid">
+        <mat-form-field appearance="outline"
+          ><mat-label>{{ 'CATALOG_TRANSLATIONS.LOCALES.en' | translate }}</mat-label
+          ><input matInput formControlName="translationEn" /></mat-form-field
+        ><mat-form-field appearance="outline"
+          ><mat-label>{{ 'CATALOG_TRANSLATIONS.LOCALES.pt-PT' | translate }}</mat-label
+          ><input matInput formControlName="translationPt" /></mat-form-field
+        ><mat-form-field appearance="outline"
+          ><mat-label>{{ 'CATALOG_TRANSLATIONS.LOCALES.nl' | translate }}</mat-label
+          ><input matInput formControlName="translationNl"
+        /></mat-form-field>
+      </div>
+      @if (procedures().length) {
+        <h4>{{ 'SPECIALITIES.FORM.PROCEDURE_TRANSLATIONS' | translate }}</h4>
+        <div class="procedure-translations">
+          @for (
+            procedure of procedures();
+            track procedure.id ?? procedure.name;
+            let procedureIndex = $index
+          ) {
+            <article>
+              <strong>{{ procedure.name }}</strong>
+              <div class="translation-grid">
+                @for (locale of locales; track locale) {
+                  <mat-form-field appearance="outline"
+                    ><mat-label>{{
+                      'CATALOG_TRANSLATIONS.LOCALES.' + locale | translate
+                    }}</mat-label
+                    ><input
+                      matInput
+                      [value]="procedureTranslation(procedureIndex, locale)"
+                      (input)="
+                        updateProcedureTranslation(
+                          procedureIndex,
+                          locale,
+                          $any($event.target).value
+                        )
+                      "
+                  /></mat-form-field>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </mat-expansion-panel></form
+></mat-dialog-content>
+<mat-dialog-actions align="end"
+  ><button mat-button mat-dialog-close>{{ 'SPECIALITIES.FORM.CANCEL' | translate }}</button
+  ><button mat-flat-button (click)="save()">
+    <mat-icon>save</mat-icon>{{ 'SPECIALITIES.FORM.SAVE' | translate }}
+  </button></mat-dialog-actions
+>

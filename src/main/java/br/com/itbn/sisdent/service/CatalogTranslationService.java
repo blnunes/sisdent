@@ -43,7 +43,11 @@ public class CatalogTranslationService {
     }
 
     @Transactional(readOnly = true)
-    public String resolve(CatalogResourceType type, Long resourceId, String canonicalName, Locale requestedLocale) {
+    public String resolve(
+            CatalogResourceType type,
+            Long resourceId,
+            String canonicalName,
+            Locale requestedLocale) {
         String locale = supportedTag(requestedLocale);
         return translations.findByResourceTypeAndResourceIdAndLocale(type, resourceId, locale)
                 .map(CatalogTranslation::getTranslatedName)
@@ -52,36 +56,54 @@ public class CatalogTranslationService {
     }
 
     @Transactional(readOnly = true)
-    public Map<String, String> effectiveTranslations(CatalogResourceType type, Long resourceId, String canonicalName) {
-        return effectiveTranslations(type, canonicalName,
+    public Map<String, String> effectiveTranslations(
+            CatalogResourceType type,
+            Long resourceId,
+            String canonicalName) {
+        return effectiveTranslations(
+                type,
+                canonicalName,
                 translations.findByResourceTypeAndResourceId(type, resourceId));
     }
 
-    private Map<String, String> effectiveTranslations(CatalogResourceType type, String canonicalName,
-                                                      List<CatalogTranslation> customTranslations) {
+    private Map<String, String> effectiveTranslations(
+            CatalogResourceType type,
+            String canonicalName,
+            List<CatalogTranslation> customTranslations) {
         Map<String, String> customValues = customTranslations.stream()
-                .collect(java.util.stream.Collectors.toMap(CatalogTranslation::getLocale,
+                .collect(java.util.stream.Collectors.toMap(
+                        CatalogTranslation::getLocale,
                         CatalogTranslation::getTranslatedName));
         Map<String, String> result = new LinkedHashMap<>();
         for (String locale : SUPPORTED_LOCALES) {
             String customValue = customValues.get(locale);
-            if (customValue != null) result.put(locale, customValue);
-            else builtIn(type, canonicalName, locale).ifPresent(value -> result.put(locale, value));
+            if (customValue != null) {
+                result.put(locale, customValue);
+            } else {
+                builtIn(type, canonicalName, locale)
+                        .ifPresent(value -> result.put(locale, value));
+            }
         }
         return Map.copyOf(result);
     }
 
     @Transactional
-    public CatalogTranslationEntryResponse replace(CatalogResourceType type, Long resourceId,
-                                                    Map<String, String> values) {
+    public CatalogTranslationEntryResponse replace(
+            CatalogResourceType type,
+            Long resourceId,
+            Map<String, String> values) {
         rejectUnsupportedLocales(values.keySet());
         Resource resource = requireResource(type, resourceId);
-        List<CatalogTranslation> existing = translations.findByResourceTypeAndResourceId(type, resourceId);
+        List<CatalogTranslation> existing = translations.findByResourceTypeAndResourceId(
+                type,
+                resourceId);
         for (String locale : SUPPORTED_LOCALES) {
             CatalogTranslation current = existing.stream()
                     .filter(item -> item.getLocale().equals(locale)).findFirst().orElse(null);
             String value = clean(values.get(locale));
-            if (value == null && current != null) translations.delete(current);
+            if (value == null && current != null) {
+                translations.delete(current);
+            }
             else if (value != null && current == null) {
                 translations.save(new CatalogTranslation(type, resourceId, locale, value));
             } else if (value != null) current.rename(value);
@@ -92,17 +114,22 @@ public class CatalogTranslationService {
 
     @Transactional
     public void merge(CatalogResourceType type, Long resourceId, Map<String, String> values) {
-        if (values == null || values.isEmpty() || resourceId == null) return;
+        if (values == null || values.isEmpty() || resourceId == null) {
+            return;
+        }
         rejectUnsupportedLocales(values.keySet());
         requireResource(type, resourceId);
         values.forEach((locale, rawValue) -> {
             String value = clean(rawValue);
             CatalogTranslation current = translations
                     .findByResourceTypeAndResourceIdAndLocale(type, resourceId, locale).orElse(null);
-            if (value == null && current != null) translations.delete(current);
-            else if (value != null && current == null) translations.save(
-                    new CatalogTranslation(type, resourceId, locale, value));
-            else if (value != null) current.rename(value);
+            if (value == null && current != null) {
+                translations.delete(current);
+            } else if (value != null && current == null) {
+                translations.save(new CatalogTranslation(type, resourceId, locale, value));
+            } else if (value != null) {
+                current.rename(value);
+            }
         });
     }
 
@@ -114,33 +141,67 @@ public class CatalogTranslationService {
         if (type == null || type == CatalogResourceType.SPECIALITY) {
             specialities.findAll().stream()
                     .filter(item -> matches(item.getName(), term))
-                    .map(item -> entry(CatalogResourceType.SPECIALITY, item.getId(), null, item.getName(), allTranslations))
+                    .map(item -> entry(
+                            CatalogResourceType.SPECIALITY,
+                            item.getId(),
+                            null,
+                            item.getName(),
+                            allTranslations))
                     .forEach(result::add);
         }
         if (type == null || type == CatalogResourceType.PROCEDURE) {
             procedures.findAll().stream()
                     .filter(item -> matches(item.getName(), term))
-                    .map(item -> entry(CatalogResourceType.PROCEDURE, item.getId(), item.getSpeciality().getId(), item.getName(), allTranslations))
+                    .map(item -> entry(
+                            CatalogResourceType.PROCEDURE,
+                            item.getId(),
+                            item.getSpeciality().getId(),
+                            item.getName(),
+                            allTranslations))
                     .forEach(result::add);
         }
-        return result.stream().sorted(java.util.Comparator.comparing(CatalogTranslationEntryResponse::canonicalName)).toList();
+        return result.stream()
+                .sorted(java.util.Comparator.comparing(
+                        CatalogTranslationEntryResponse::canonicalName))
+                .toList();
     }
 
-    private CatalogTranslationEntryResponse entry(CatalogResourceType type, Long id, Long parentId, String name) {
-        return entry(type, id, parentId, name, translations.findByResourceTypeAndResourceId(type, id));
+    private CatalogTranslationEntryResponse entry(
+            CatalogResourceType type,
+            Long id,
+            Long parentId,
+            String name) {
+        return entry(
+                type,
+                id,
+                parentId,
+                name,
+                translations.findByResourceTypeAndResourceId(type, id));
     }
 
-    private CatalogTranslationEntryResponse entry(CatalogResourceType type, Long id, Long parentId, String name,
-                                                   List<CatalogTranslation> availableTranslations) {
+    private CatalogTranslationEntryResponse entry(
+            CatalogResourceType type,
+            Long id,
+            Long parentId,
+            String name,
+            List<CatalogTranslation> availableTranslations) {
         List<CatalogTranslation> custom = availableTranslations.stream()
                 .filter(item -> item.getResourceType() == type && item.getResourceId().equals(id)).toList();
         Map<String, String> effective = effectiveTranslations(type, name, custom);
         Set<String> customized = custom.stream()
-                .map(CatalogTranslation::getLocale).collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
-        Set<String> missing = SUPPORTED_LOCALES.stream().filter(locale -> !effective.containsKey(locale))
+                .map(CatalogTranslation::getLocale)
                 .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
-        return new CatalogTranslationEntryResponse(type, id, parentId, name, effective,
-                Set.copyOf(customized), Set.copyOf(missing));
+        Set<String> missing = SUPPORTED_LOCALES.stream()
+                .filter(locale -> !effective.containsKey(locale))
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        return new CatalogTranslationEntryResponse(
+                type,
+                id,
+                parentId,
+                name,
+                effective,
+                Set.copyOf(customized),
+                Set.copyOf(missing));
     }
 
     private java.util.Optional<String> builtIn(CatalogResourceType type, String name, String locale) {
@@ -170,13 +231,26 @@ public class CatalogTranslationService {
         return "en";
     }
 
-    private String clean(String value) { return value == null || value.isBlank() ? null : value.strip(); }
-    private boolean matches(String name, String term) { return term.isEmpty() || name.toLowerCase(Locale.ROOT).contains(term); }
-    private ResponseStatusException notFound() { return new ResponseStatusException(HttpStatus.NOT_FOUND, "Catalog resource not found"); }
-    private String slug(String value) {
-        return Normalizer.normalize(value, Normalizer.Form.NFD).replaceAll("\\p{M}", "")
-                .toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
+    private String clean(String value) {
+        return value == null || value.isBlank() ? null : value.strip();
     }
 
-    private record Resource(Long id, Long parentId, String name) {}
+    private boolean matches(String name, String term) {
+        return term.isEmpty() || name.toLowerCase(Locale.ROOT).contains(term);
+    }
+
+    private ResponseStatusException notFound() {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND, "Catalog resource not found");
+    }
+
+    private String slug(String value) {
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-|-$)", "");
+    }
+
+    private record Resource(Long id, Long parentId, String name) {
+    }
 }

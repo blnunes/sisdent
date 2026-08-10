@@ -20,7 +20,9 @@ import java.util.List;
 public class CatalogTranslationController {
     private final CatalogTranslationService service;
 
-    public CatalogTranslationController(CatalogTranslationService service) { this.service = service; }
+    public CatalogTranslationController(CatalogTranslationService service) {
+        this.service = service;
+    }
 
     @GetMapping
     public List<CatalogTranslationEntryResponse> findAll(
@@ -30,9 +32,10 @@ public class CatalogTranslationController {
     }
 
     @PutMapping("/{type}/{id}")
-    public CatalogTranslationEntryResponse replace(@PathVariable CatalogResourceType type,
-                                                   @PathVariable Long id,
-                                                   @Valid @RequestBody CatalogTranslationRequest request) {
+    public CatalogTranslationEntryResponse replace(
+            @PathVariable CatalogResourceType type,
+            @PathVariable Long id,
+            @Valid @RequestBody CatalogTranslationRequest request) {
         return service.replace(type, id, request.translations());
     }
 }

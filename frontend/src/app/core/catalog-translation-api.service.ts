@@ -22,7 +22,9 @@ export class CatalogTranslationApiService {
     let params = new HttpParams();
     if (type) params = params.set('type', type);
     if (query.trim()) params = params.set('query', query.trim());
-    return this.http.get<CatalogTranslationEntry[]>('/api/platform/catalog-translations', { params });
+    return this.http.get<CatalogTranslationEntry[]>('/api/platform/catalog-translations', {
+      params,
+    });
   }
 
   replace(entry: CatalogTranslationEntry, translations: CatalogTranslations) {

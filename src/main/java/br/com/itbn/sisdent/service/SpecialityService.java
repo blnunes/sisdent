@@ -34,16 +34,20 @@ import java.util.stream.Collectors;
 
 @Service
 public class SpecialityService {
-    private static final SortDefinition SORT_DEFINITION = new SortDefinition("name", java.util.Set.of("id", "name"));
+    private static final SortDefinition SORT_DEFINITION = new SortDefinition(
+            "name",
+            java.util.Set.of("id", "name"));
 
     private final SpecialityRepository specialityRepository;
     private final PageableFactory pageableFactory;
     private final CatalogNameLocalizer<Speciality> nameLocalizer;
     private final CatalogTranslationService translations;
 
-    public SpecialityService(SpecialityRepository specialityRepository, PageableFactory pageableFactory,
-                             CatalogNameLocalizer<Speciality> nameLocalizer,
-                             CatalogTranslationService translations) {
+    public SpecialityService(
+            SpecialityRepository specialityRepository,
+            PageableFactory pageableFactory,
+            CatalogNameLocalizer<Speciality> nameLocalizer,
+            CatalogTranslationService translations) {
         this.specialityRepository = specialityRepository;
         this.pageableFactory = pageableFactory;
         this.nameLocalizer = nameLocalizer;
@@ -58,9 +62,14 @@ public class SpecialityService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<SpecialityResponse> findPage(PageQuery query, SpecialityFilter filter, Locale locale) {
-        return PageResponse.from(specialityRepository.findAll(
-                SpecialitySpecifications.matching(filter), pageableFactory.create(query, SORT_DEFINITION)),
+    public PageResponse<SpecialityResponse> findPage(
+            PageQuery query,
+            SpecialityFilter filter,
+            Locale locale) {
+        return PageResponse.from(
+                specialityRepository.findAll(
+                        SpecialitySpecifications.matching(filter),
+                        pageableFactory.create(query, SORT_DEFINITION)),
                 speciality -> toResponse(speciality, locale));
     }
 
@@ -190,20 +199,36 @@ public class SpecialityService {
         return ResponseMapper.toResponse(
                 speciality,
                 nameLocalizer.localize(speciality, locale),
-                procedure -> translations.resolve(CatalogResourceType.PROCEDURE, procedure.getId(), procedure.getName(), locale),
-                translations.effectiveTranslations(CatalogResourceType.SPECIALITY, speciality.getId(), speciality.getName()),
-                procedure -> translations.effectiveTranslations(CatalogResourceType.PROCEDURE, procedure.getId(), procedure.getName()));
+                procedure -> translations.resolve(
+                        CatalogResourceType.PROCEDURE,
+                        procedure.getId(),
+                        procedure.getName(),
+                        locale),
+                translations.effectiveTranslations(
+                        CatalogResourceType.SPECIALITY,
+                        speciality.getId(),
+                        speciality.getName()),
+                procedure -> translations.effectiveTranslations(
+                        CatalogResourceType.PROCEDURE,
+                        procedure.getId(),
+                        procedure.getName()));
     }
 
     private void persistTranslations(Speciality speciality, SpecialityRequest request) {
-        translations.merge(CatalogResourceType.SPECIALITY, speciality.getId(), request.translations());
+        translations.merge(
+                CatalogResourceType.SPECIALITY,
+                speciality.getId(),
+                request.translations());
         for (DentalProcedureRequest procedureRequest : request.procedures()) {
             DentalProcedure procedure = procedureRequest.id() == null
                     ? speciality.getProcedures().stream()
                         .filter(item -> item.getName().equalsIgnoreCase(procedureRequest.name().strip()))
                         .findFirst().orElseThrow()
                     : speciality.findProcedure(procedureRequest.id()).orElseThrow();
-            translations.merge(CatalogResourceType.PROCEDURE, procedure.getId(), procedureRequest.translations());
+            translations.merge(
+                    CatalogResourceType.PROCEDURE,
+                    procedure.getId(),
+                    procedureRequest.translations());
         }
     }
 }

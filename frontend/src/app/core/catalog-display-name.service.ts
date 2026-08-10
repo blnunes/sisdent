@@ -20,14 +20,20 @@ export class CatalogDisplayNameService {
     const code = String(record['code'] ?? '').toUpperCase();
     if (!/^[A-Z]{2}$/.test(code)) return fallback;
     try {
-      return new Intl.DisplayNames([this.translate.getCurrentLang() ?? 'en'], { type: 'region' }).of(code)
-        ?? fallback;
+      return (
+        new Intl.DisplayNames([this.translate.getCurrentLang() ?? 'en'], { type: 'region' }).of(
+          code,
+        ) ?? fallback
+      );
     } catch {
       return fallback;
     }
   }
 
-  private translatedCatalogName(group: 'SPECIALITIES' | 'PROCEDURES', record: CatalogRecord): string {
+  private translatedCatalogName(
+    group: 'SPECIALITIES' | 'PROCEDURES',
+    record: CatalogRecord,
+  ): string {
     const fallback = this.fallback(record);
     const canonical = String(record['name'] ?? '');
     if (record['displayName'] && fallback !== canonical) return fallback;
@@ -41,7 +47,11 @@ export class CatalogDisplayNameService {
   }
 
   private slug(value: string): string {
-    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
   }
 }

@@ -48,10 +48,25 @@ public class CountryController {
         return List.of(Continent.values());
     }
 
-    @PostMapping @ResponseStatus(HttpStatus.CREATED)
-    public CountryResponse create(@Valid @RequestBody CountryRequest request, Locale locale) { return countryService.create(request, locale); }
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public CountryResponse create(
+            @Valid @RequestBody CountryRequest request,
+            Locale locale) {
+        return countryService.create(request, locale);
+    }
+
     @PutMapping("/{id}")
-    public CountryResponse update(@PathVariable Long id, @Valid @RequestBody CountryRequest request, Locale locale) { return countryService.update(id, request, locale); }
-    @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) { countryService.delete(id); }
+    public CountryResponse update(
+            @PathVariable Long id,
+            @Valid @RequestBody CountryRequest request,
+            Locale locale) {
+        return countryService.update(id, request, locale);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
+        countryService.delete(id);
+    }
 }

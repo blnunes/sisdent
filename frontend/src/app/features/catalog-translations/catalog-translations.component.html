@@ -1,5 +1,147 @@
-<div class="app-shell"><app-header (menuClick)="drawer.toggle()" /><mat-sidenav-container class="drawer-container"><mat-sidenav #drawer mode="over" class="side-drawer"><div class="drawer-brand"><mat-icon>dentistry</mat-icon><strong>Sisdent</strong></div><app-module-navigation active="catalogTranslations" (navigate)="drawer.close()" /></mat-sidenav><mat-sidenav-content><main class="content">
-  <header class="page-header"><div><span class="eyebrow">{{ 'CATALOG_TRANSLATIONS.ADMINISTRATION' | translate }}</span><h1>{{ 'CATALOG_TRANSLATIONS.TITLE' | translate }}</h1><p>{{ 'CATALOG_TRANSLATIONS.DESCRIPTION' | translate }}</p></div><div class="summary" [class.warning]="missingCount()"><strong>{{ missingCount() }}</strong><span>{{ 'CATALOG_TRANSLATIONS.MISSING_SUMMARY' | translate }}</span></div></header>
-  <mat-card appearance="outlined" class="toolbar"><mat-form-field appearance="outline"><mat-label>{{ 'CATALOG_TRANSLATIONS.SEARCH' | translate }}</mat-label><input matInput [value]="query()" (input)="query.set($any($event.target).value)" (keydown.enter)="load()" /></mat-form-field><mat-form-field appearance="outline"><mat-label>{{ 'CATALOG_TRANSLATIONS.RESOURCE_TYPE' | translate }}</mat-label><mat-select [value]="type()" (valueChange)="type.set($event); load()"><mat-option value="">{{ 'CATALOG_TRANSLATIONS.ALL_TYPES' | translate }}</mat-option><mat-option value="SPECIALITY">{{ 'CATALOG_TRANSLATIONS.TYPES.SPECIALITY' | translate }}</mat-option><mat-option value="PROCEDURE">{{ 'CATALOG_TRANSLATIONS.TYPES.PROCEDURE' | translate }}</mat-option></mat-select></mat-form-field><button mat-stroked-button (click)="missingOnly.set(!missingOnly())" [class.selected]="missingOnly()"><mat-icon>warning_amber</mat-icon>{{ 'CATALOG_TRANSLATIONS.MISSING_ONLY' | translate }}</button><button mat-flat-button (click)="load()"><mat-icon>search</mat-icon>{{ 'RESOURCE.FILTER.APPLY' | translate }}</button><button mat-button (click)="clear()">{{ 'RESOURCE.FILTER.CLEAR' | translate }}</button></mat-card>
-  @if (loading()) {<div class="state"><mat-spinner diameter="42" /><p>{{ 'CATALOG_TRANSLATIONS.LOADING' | translate }}</p></div>} @else if (error()) {<div class="state error"><mat-icon>cloud_off</mat-icon><p>{{ error() }}</p><button mat-button (click)="load()">{{ 'USERS.TRY_AGAIN' | translate }}</button></div>} @else {<section class="entry-list">@for (entry of visibleEntries(); track entry.resourceType + '-' + entry.resourceId) {<mat-card appearance="outlined" class="entry"><div class="entry-heading"><div><span class="type-label">{{ typeLabel(entry.resourceType) }}</span><h2>{{ entry.canonicalName }}</h2></div>@if (entry.missingLocales.length) {<mat-chip class="missing-chip"><mat-icon>warning_amber</mat-icon>{{ 'CATALOG_TRANSLATIONS.MISSING_COUNT' | translate:{ count: entry.missingLocales.length } }}</mat-chip>} @else {<mat-chip class="complete-chip"><mat-icon>check_circle</mat-icon>{{ 'CATALOG_TRANSLATIONS.COMPLETE' | translate }}</mat-chip>}</div><div class="locale-grid">@for (locale of ['en', 'pt-PT', 'nl']; track locale) {<div [class.missing]="entry.missingLocales.includes(locale)"><span>{{ localeLabel(locale) }}</span><strong>{{ entry.translations[locale] || ('CATALOG_TRANSLATIONS.NOT_TRANSLATED' | translate) }}</strong></div>}</div><div class="entry-actions"><button mat-stroked-button (click)="edit(entry)"><mat-icon>edit</mat-icon>{{ 'CATALOG_TRANSLATIONS.EDIT' | translate }}</button></div></mat-card>} @empty {<div class="state"><mat-icon>translate</mat-icon><p>{{ 'CATALOG_TRANSLATIONS.EMPTY' | translate }}</p></div>}</section>}
-</main></mat-sidenav-content></mat-sidenav-container></div>
+<div class="app-shell">
+  <app-header (menuClick)="drawer.toggle()" />
+
+  <mat-sidenav-container class="drawer-container">
+    <mat-sidenav #drawer mode="over" class="side-drawer">
+      <div class="drawer-brand">
+        <mat-icon>dentistry</mat-icon>
+        <strong>Sisdent</strong>
+      </div>
+
+      <app-module-navigation
+        active="catalogTranslations"
+        (navigate)="drawer.close()" />
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+      <main class="content">
+        <header class="page-header">
+          <div>
+            <span class="eyebrow">
+              {{ 'CATALOG_TRANSLATIONS.ADMINISTRATION' | translate }}
+            </span>
+            <h1>{{ 'CATALOG_TRANSLATIONS.TITLE' | translate }}</h1>
+            <p>{{ 'CATALOG_TRANSLATIONS.DESCRIPTION' | translate }}</p>
+          </div>
+
+          <div class="summary" [class.warning]="missingCount()">
+            <strong>{{ missingCount() }}</strong>
+            <span>{{ 'CATALOG_TRANSLATIONS.MISSING_SUMMARY' | translate }}</span>
+          </div>
+        </header>
+
+        <mat-card appearance="outlined" class="toolbar">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'CATALOG_TRANSLATIONS.SEARCH' | translate }}</mat-label>
+            <input
+              matInput
+              [value]="query()"
+              (input)="query.set($any($event.target).value)"
+              (keydown.enter)="load()" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'CATALOG_TRANSLATIONS.RESOURCE_TYPE' | translate }}</mat-label>
+            <mat-select [value]="type()" (valueChange)="type.set($event); load()">
+              <mat-option value="">
+                {{ 'CATALOG_TRANSLATIONS.ALL_TYPES' | translate }}
+              </mat-option>
+              <mat-option value="SPECIALITY">
+                {{ 'CATALOG_TRANSLATIONS.TYPES.SPECIALITY' | translate }}
+              </mat-option>
+              <mat-option value="PROCEDURE">
+                {{ 'CATALOG_TRANSLATIONS.TYPES.PROCEDURE' | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button
+            mat-stroked-button
+            [class.selected]="missingOnly()"
+            (click)="missingOnly.set(!missingOnly())">
+            <mat-icon>warning_amber</mat-icon>
+            {{ 'CATALOG_TRANSLATIONS.MISSING_ONLY' | translate }}
+          </button>
+
+          <button mat-flat-button (click)="load()">
+            <mat-icon>search</mat-icon>
+            {{ 'RESOURCE.FILTER.APPLY' | translate }}
+          </button>
+
+          <button mat-button (click)="clear()">
+            {{ 'RESOURCE.FILTER.CLEAR' | translate }}
+          </button>
+        </mat-card>
+
+        @if (loading()) {
+          <div class="state">
+            <mat-spinner diameter="42" />
+            <p>{{ 'CATALOG_TRANSLATIONS.LOADING' | translate }}</p>
+          </div>
+        } @else if (error()) {
+          <div class="state error">
+            <mat-icon>cloud_off</mat-icon>
+            <p>{{ error() }}</p>
+            <button mat-button (click)="load()">
+              {{ 'USERS.TRY_AGAIN' | translate }}
+            </button>
+          </div>
+        } @else {
+          <section class="entry-list">
+            @for (entry of visibleEntries(); track entry.resourceType + '-' + entry.resourceId) {
+              <mat-card appearance="outlined" class="entry">
+                <div class="entry-heading">
+                  <div>
+                    <span class="type-label">{{ typeLabel(entry.resourceType) }}</span>
+                    <h2>{{ entry.canonicalName }}</h2>
+                  </div>
+
+                  @if (entry.missingLocales.length) {
+                    <mat-chip class="missing-chip">
+                      <mat-icon>warning_amber</mat-icon>
+                      {{
+                        'CATALOG_TRANSLATIONS.MISSING_COUNT'
+                          | translate: { count: entry.missingLocales.length }
+                      }}
+                    </mat-chip>
+                  } @else {
+                    <mat-chip class="complete-chip">
+                      <mat-icon>check_circle</mat-icon>
+                      {{ 'CATALOG_TRANSLATIONS.COMPLETE' | translate }}
+                    </mat-chip>
+                  }
+                </div>
+
+                <div class="locale-grid">
+                  @for (locale of ['en', 'pt-PT', 'nl']; track locale) {
+                    <div [class.missing]="entry.missingLocales.includes(locale)">
+                      <span>{{ localeLabel(locale) }}</span>
+                      <strong>
+                        {{
+                          entry.translations[locale] ||
+                            ('CATALOG_TRANSLATIONS.NOT_TRANSLATED' | translate)
+                        }}
+                      </strong>
+                    </div>
+                  }
+                </div>
+
+                <div class="entry-actions">
+                  <button mat-stroked-button (click)="edit(entry)">
+                    <mat-icon>edit</mat-icon>
+                    {{ 'CATALOG_TRANSLATIONS.EDIT' | translate }}
+                  </button>
+                </div>
+              </mat-card>
+            } @empty {
+              <div class="state">
+                <mat-icon>translate</mat-icon>
+                <p>{{ 'CATALOG_TRANSLATIONS.EMPTY' | translate }}</p>
+              </div>
+            }
+          </section>
+        }
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

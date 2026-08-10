@@ -167,11 +167,10 @@ export class PatientFormDialog {
       this.postalCodeSuggestions.set([]);
       return;
     }
-    this.api.postalCodeSuggestions(countryCode, query)
-      .subscribe({
-        next: (addresses) => this.postalCodeSuggestions.set(addresses),
-        error: () => this.postalCodeSuggestions.set([]),
-      });
+    this.api.postalCodeSuggestions(countryCode, query).subscribe({
+      next: (addresses) => this.postalCodeSuggestions.set(addresses),
+      error: () => this.postalCodeSuggestions.set([]),
+    });
   }
 
   onCountryCodeInput(): void {
@@ -197,9 +196,7 @@ export class PatientFormDialog {
   }
 
   onAdministrativeDivisionSelected(code: string): void {
-    const division = this.availableAdministrativeDivisions().find(
-      (option) => option.code === code,
-    );
+    const division = this.availableAdministrativeDivisions().find((option) => option.code === code);
     this.selectedAddressId.set('');
     this.form.patchValue({
       administrativeDivisionName: division?.name ?? '',
@@ -287,9 +284,7 @@ export class PatientFormDialog {
   private clearSelectedAddress(): void {
     if (!this.selectedAddressId()) return;
     this.selectedAddressId.set('');
-    this.patientAddressFieldKeys.forEach((key) =>
-      this.form.get(key)?.enable({ emitEvent: false }),
-    );
+    this.patientAddressFieldKeys.forEach((key) => this.form.get(key)?.enable({ emitEvent: false }));
     this.form.patchValue({
       street: '',
       district: '',
@@ -339,8 +334,17 @@ export class PatientFormDialog {
   private initialProcedures(): ProcedureOption[] {
     try {
       const value = JSON.parse(this.data.values?.['procedures'] ?? '[]') as unknown;
-      return Array.isArray(value) ? value.filter((item): item is ProcedureOption => !!item && typeof item === 'object' && typeof (item as ProcedureOption).name === 'string') : [];
-    } catch { return []; }
+      return Array.isArray(value)
+        ? value.filter(
+            (item): item is ProcedureOption =>
+              !!item &&
+              typeof item === 'object' &&
+              typeof (item as ProcedureOption).name === 'string',
+          )
+        : [];
+    } catch {
+      return [];
+    }
   }
 
   private syncProceduresControl(): void {

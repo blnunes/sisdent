@@ -41,7 +41,10 @@ public class SpecialityController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String procedure,
             Locale locale) {
-        return specialityService.findPage(new PageQuery(page, size, sort, direction), new SpecialityFilter(name, procedure), locale);
+        return specialityService.findPage(
+                new PageQuery(page, size, sort, direction),
+                new SpecialityFilter(name, procedure),
+                locale);
     }
 
     @GetMapping("/filter-options")
@@ -67,5 +70,7 @@ public class SpecialityController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) { specialityService.delete(id); }
+    public void delete(@PathVariable Long id) {
+        specialityService.delete(id);
+    }
 }

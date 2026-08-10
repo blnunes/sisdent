@@ -11,8 +11,11 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "catalog_translations", uniqueConstraints = @UniqueConstraint(
-        name = "uk_catalog_translation", columnNames = {"resource_type", "resource_id", "locale"}))
+@Table(
+        name = "catalog_translations",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_catalog_translation",
+                columnNames = {"resource_type", "resource_id", "locale"}))
 public class CatalogTranslation extends AuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,7 +37,11 @@ public class CatalogTranslation extends AuditableEntity {
     protected CatalogTranslation() {
     }
 
-    public CatalogTranslation(CatalogResourceType resourceType, Long resourceId, String locale, String translatedName) {
+    public CatalogTranslation(
+            CatalogResourceType resourceType,
+            Long resourceId,
+            String locale,
+            String translatedName) {
         this.resourceType = resourceType;
         this.resourceId = resourceId;
         this.locale = locale;
@@ -45,8 +52,19 @@ public class CatalogTranslation extends AuditableEntity {
         this.translatedName = translatedName;
     }
 
-    public CatalogResourceType getResourceType() { return resourceType; }
-    public Long getResourceId() { return resourceId; }
-    public String getLocale() { return locale; }
-    public String getTranslatedName() { return translatedName; }
+    public CatalogResourceType getResourceType() {
+        return resourceType;
+    }
+
+    public Long getResourceId() {
+        return resourceId;
+    }
+
+    public String getLocale() {
+        return locale;
+    }
+
+    public String getTranslatedName() {
+        return translatedName;
+    }
 }

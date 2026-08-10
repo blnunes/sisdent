@@ -33,40 +33,79 @@
             } @else if (field.key === 'countryCode' && isPatientForm()) {
               <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
                 <mat-label>{{ field.label }}</mat-label>
-                <mat-select #countrySelect [formControlName]="field.key" (selectionChange)="onCountrySelected($event.value); countrySelect.close()">
+                <mat-select
+                  #countrySelect
+                  [formControlName]="field.key"
+                  (selectionChange)="onCountrySelected($event.value); countrySelect.close()"
+                >
                   @for (country of countriesWithAdministrativeDivisions(); track country.code) {
-                    <mat-option [value]="country.code">{{ catalogNames.country(country) }} ({{ country.code }})</mat-option>
+                    <mat-option [value]="country.code"
+                      >{{ catalogNames.country(country) }} ({{ country.code }})</mat-option
+                    >
                   }
                 </mat-select>
               </mat-form-field>
-            } @else if ((field.key === 'nationalityCode' || field.key === 'documentIssuerCountryCode') && isPatientForm()) {
+            } @else if (
+              (field.key === 'nationalityCode' || field.key === 'documentIssuerCountryCode') &&
+              isPatientForm()
+            ) {
               <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
                 <mat-label>{{ field.label }}</mat-label>
-                <mat-select #countryReferenceSelect [formControlName]="field.key" (selectionChange)="countryReferenceSelect.close()">
+                <mat-select
+                  #countryReferenceSelect
+                  [formControlName]="field.key"
+                  (selectionChange)="countryReferenceSelect.close()"
+                >
                   @for (country of data.countries ?? []; track country.code) {
-                    <mat-option [value]="country.code">{{ catalogNames.country(country) }} ({{ country.code }})</mat-option>
+                    <mat-option [value]="country.code"
+                      >{{ catalogNames.country(country) }} ({{ country.code }})</mat-option
+                    >
                   }
                 </mat-select>
               </mat-form-field>
             } @else if (field.key === 'administrativeDivisionCode' && isPatientForm()) {
               <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
                 <mat-label>Administrative division</mat-label>
-                <mat-select #divisionSelect [formControlName]="field.key" (selectionChange)="onAdministrativeDivisionSelected($event.value); divisionSelect.close()">
+                <mat-select
+                  #divisionSelect
+                  [formControlName]="field.key"
+                  (selectionChange)="
+                    onAdministrativeDivisionSelected($event.value); divisionSelect.close()
+                  "
+                >
                   @for (division of availableAdministrativeDivisions(); track division.id) {
-                    <mat-option [value]="division.code">{{ division.name }} ({{ division.code }})</mat-option>
+                    <mat-option [value]="division.code"
+                      >{{ division.name }} ({{ division.code }})</mat-option
+                    >
                   }
                 </mat-select>
               </mat-form-field>
             } @else if (field.key === 'postalCode' && isPatientForm()) {
               <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
                 <mat-label>{{ field.label }}</mat-label>
-                <input matInput [formControlName]="field.key" [required]="field.required ?? false" [matAutocomplete]="postalCodeAddresses" (input)="onPostalCodeInput($any($event.target).value)" />
+                <input
+                  matInput
+                  [formControlName]="field.key"
+                  [required]="field.required ?? false"
+                  [matAutocomplete]="postalCodeAddresses"
+                  (input)="onPostalCodeInput($any($event.target).value)"
+                />
                 @if (isAddressLocked()) {
-                  <mat-hint>Address details are locked. Change the country or postal code to select another address.</mat-hint>
+                  <mat-hint
+                    >Address details are locked. Change the country or postal code to select another
+                    address.</mat-hint
+                  >
                 } @else {
-                  <mat-hint>Select a country, then enter at least 2 characters to reuse a registered address.</mat-hint>
+                  <mat-hint
+                    >Select a country, then enter at least 2 characters to reuse a registered
+                    address.</mat-hint
+                  >
                 }
-                <mat-autocomplete #postalCodeAddresses="matAutocomplete" [displayWith]="postalCodeDisplayValue" (optionSelected)="selectPostalCodeAddress($event.option.value)">
+                <mat-autocomplete
+                  #postalCodeAddresses="matAutocomplete"
+                  [displayWith]="postalCodeDisplayValue"
+                  (optionSelected)="selectPostalCodeAddress($event.option.value)"
+                >
                   @for (address of postalCodeSuggestions(); track address.id) {
                     <mat-option [value]="address">
                       {{ postalCodeAddressLabel(address) }}
@@ -84,7 +123,9 @@
                     <mat-label>Add speciality</mat-label>
                     <mat-select [value]="specialityToAdd()" (valueChange)="addSpeciality($event)">
                       @for (speciality of availableSpecialities(); track speciality.id) {
-                        <mat-option [value]="speciality.id">{{ catalogNames.speciality(speciality) }}</mat-option>
+                        <mat-option [value]="speciality.id">{{
+                          catalogNames.speciality(speciality)
+                        }}</mat-option>
                       }
                     </mat-select>
                   </mat-form-field>
@@ -106,7 +147,9 @@
                         @for (speciality of selectedSpecialities(); track speciality.id) {
                           <tr>
                             <td>
-                              <span class="speciality-chip">{{ catalogNames.speciality(speciality) }}</span>
+                              <span class="speciality-chip">{{
+                                catalogNames.speciality(speciality)
+                              }}</span>
                             </td>
                             <td>
                               <button
@@ -138,9 +181,19 @@
                 <div class="procedure-add">
                   <mat-form-field appearance="outline">
                     <mat-label>Add procedure</mat-label>
-                    <input matInput [value]="procedureNameToAdd()" (input)="setProcedureName($any($event.target).value)" (keydown.enter)="$event.preventDefault(); addProcedure()" />
+                    <input
+                      matInput
+                      [value]="procedureNameToAdd()"
+                      (input)="setProcedureName($any($event.target).value)"
+                      (keydown.enter)="$event.preventDefault(); addProcedure()"
+                    />
                   </mat-form-field>
-                  <button mat-stroked-button type="button" (click)="addProcedure()" [disabled]="!procedureNameToAdd().trim()">
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    (click)="addProcedure()"
+                    [disabled]="!procedureNameToAdd().trim()"
+                  >
                     <mat-icon>add</mat-icon>Add procedure
                   </button>
                   <p>Add one procedure at a time. You can remove an item before saving.</p>
@@ -148,19 +201,45 @@
                 @if (selectedProcedures().length) {
                   <div class="procedures-table" role="region" aria-label="Selected procedures">
                     <table>
-                      <thead><tr><th>Procedure</th><th aria-label="Actions"></th></tr></thead>
+                      <thead>
+                        <tr>
+                          <th>Procedure</th>
+                          <th aria-label="Actions"></th>
+                        </tr>
+                      </thead>
                       <tbody>
-                        @for (procedure of selectedProcedures(); track procedure.id ?? procedure.name) {
+                        @for (
+                          procedure of selectedProcedures();
+                          track procedure.id ?? procedure.name
+                        ) {
                           <tr>
-                            <td><span class="procedure-chip">{{ procedure.name }}</span></td>
-                            <td><button mat-icon-button type="button" class="remove-procedure" [attr.aria-label]="'Remove procedure: ' + procedure.name" matTooltip="Remove procedure" (click)="removeProcedure(procedure)"><mat-icon>delete_outline</mat-icon></button></td>
+                            <td>
+                              <span class="procedure-chip">{{ procedure.name }}</span>
+                            </td>
+                            <td>
+                              <button
+                                mat-icon-button
+                                type="button"
+                                class="remove-procedure"
+                                [attr.aria-label]="'Remove procedure: ' + procedure.name"
+                                matTooltip="Remove procedure"
+                                (click)="removeProcedure(procedure)"
+                              >
+                                <mat-icon>delete_outline</mat-icon>
+                              </button>
+                            </td>
                           </tr>
                         }
                       </tbody>
                     </table>
                   </div>
                 } @else {
-                  <p class="empty-procedures" [class.validation-error]="form.get('procedures')?.touched">Add at least one procedure.</p>
+                  <p
+                    class="empty-procedures"
+                    [class.validation-error]="form.get('procedures')?.touched"
+                  >
+                    Add at least one procedure.
+                  </p>
                 }
               </div>
             } @else if (field.type === 'date') {
@@ -177,13 +256,26 @@
               <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
                 <mat-label>{{ field.label }}</mat-label>
                 @if (field.options) {
-                  <mat-select #fieldSelect [formControlName]="field.key" (selectionChange)="fieldSelect.close()">
+                  <mat-select
+                    #fieldSelect
+                    [formControlName]="field.key"
+                    (selectionChange)="fieldSelect.close()"
+                  >
                     @for (option of field.options; track option.value) {
                       <mat-option [value]="option.value">{{ option.label }}</mat-option>
                     }
                   </mat-select>
                 } @else {
-                  <input matInput [formControlName]="field.key" [readonly]="isPatientAddressField(field) && isAddressLocked()" (input)="isPatientForm() && field.section === 'Address' ? onAddressFieldInput(field.key) : undefined" />
+                  <input
+                    matInput
+                    [formControlName]="field.key"
+                    [readonly]="isPatientAddressField(field) && isAddressLocked()"
+                    (input)="
+                      isPatientForm() && field.section === 'Address'
+                        ? onAddressFieldInput(field.key)
+                        : undefined
+                    "
+                  />
                 }
                 @if (form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
                   <mat-error>{{ field.label }} is required</mat-error>
