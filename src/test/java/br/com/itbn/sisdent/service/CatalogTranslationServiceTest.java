@@ -52,6 +52,17 @@ class CatalogTranslationServiceTest {
     }
 
     @Test
+    void resolvesBuiltInTranslationUsingNormalizedSlugWithoutEdgeHyphens() {
+        when(repository.findByResourceTypeAndResourceIdAndLocale(CatalogResourceType.SPECIALITY, 9L, "en"))
+                .thenReturn(Optional.empty());
+        when(messages.getMessage("catalog.speciality.implantologia-digital", null, null, Locale.ENGLISH))
+                .thenReturn("Digital implantology");
+
+        assertThat(service.resolve(CatalogResourceType.SPECIALITY, 9L, "--Implantologia digital--", Locale.ENGLISH))
+                .isEqualTo("Digital implantology");
+    }
+
+    @Test
     void replacesTranslationsAndReportsMissingLocales() {
         Speciality speciality = mock(Speciality.class);
         when(speciality.getId()).thenReturn(4L);

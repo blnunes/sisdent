@@ -248,7 +248,7 @@ public class CatalogTranslationService {
                 .replaceAll("\\p{M}", "")
                 .toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9]+", "-")
-                .replaceAll("(^-|-$)", "");
+                .replaceAll("(^-)|(-$)", "");
     }
 
     private record Resource(Long id, Long parentId, String name) {
