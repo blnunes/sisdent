@@ -29,12 +29,11 @@ th {
   overflow-wrap: anywhere;
   vertical-align: top;
 }
+col.actions-column {
+  width: 184px;
+}
 th.mat-column-actions,
 td.mat-column-actions {
-  box-sizing: border-box;
-  width: 184px;
-  min-width: 184px;
-  max-width: 184px;
   overflow: visible;
 }
 .actions {
