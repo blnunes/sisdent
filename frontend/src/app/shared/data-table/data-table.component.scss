@@ -29,17 +29,26 @@ th {
   overflow-wrap: anywhere;
   vertical-align: top;
 }
-.mat-column-actions {
-  width: 168px;
+th.mat-column-actions,
+td.mat-column-actions {
+  box-sizing: border-box;
+  width: 184px;
+  min-width: 184px;
+  max-width: 184px;
+  overflow: visible;
 }
 .actions {
   display: flex;
-  min-width: 120px;
+  width: 148px;
+  min-width: 148px;
+  flex-wrap: nowrap;
   justify-content: flex-end;
   gap: 2px;
 }
 .actions button {
-  flex: 0 0 40px;
+  flex: 0 0 48px;
+  width: 48px;
+  min-width: 48px;
 }
 .delete {
   color: #b34250;
