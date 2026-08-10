@@ -1,1 +1,203 @@
-:host { display:block; min-height:100%; color:var(--app-text); }.workspace-shell,.workspace-container{min-height:100vh;background:var(--app-canvas)}.workspace-main{width:min(1120px,calc(100% - 40px));margin:0 auto;padding:54px 0 76px}.page-header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:28px}.eyebrow{color:var(--app-primary);font-size:.78rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase}h1{margin:8px 0;font-size:clamp(2.2rem,4vw,3.3rem);letter-spacing:-.04em}.page-header p{margin:0;color:var(--app-text-muted)}.header-actions{display:flex;gap:10px;flex-wrap:wrap}.workspace-grid{display:grid;grid-template-columns:1.4fr .9fr;gap:20px;align-items:start}.list-card,.form-card{border-color:var(--app-border);border-radius:20px;background:var(--app-surface)!important;overflow:hidden}.card-heading{display:flex;justify-content:space-between;align-items:center;padding:22px 24px;border-bottom:1px solid var(--app-border)}.card-heading h2{margin:0;font-size:1.1rem}.card-heading span{color:var(--app-text-muted)}form{display:grid;gap:4px;padding:24px}mat-form-field{width:100%}form button{justify-self:start;min-height:43px}.unit-list>div,.practitioner-list article{display:flex;align-items:center;gap:13px;padding:17px 24px;border-top:1px solid var(--app-border)}.unit-list mat-icon{color:var(--app-primary)}.state{display:grid;min-height:220px;place-items:center;align-content:center;gap:10px;color:var(--app-text-muted);text-align:center;padding:25px}.state mat-icon{font-size:38px;width:38px;height:38px;color:var(--app-primary)}.error-banner{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:13px 16px;border:1px solid color-mix(in srgb,var(--app-danger) 50%,var(--app-border));border-radius:14px;color:var(--app-danger);background:color-mix(in srgb,var(--app-danger) 8%,var(--app-surface))}.practitioner-list article>div:first-child{display:grid;gap:3px;flex:1;min-width:0}.practitioner-list span{color:var(--app-text-muted);font-size:.85rem}.lifecycle{padding:5px 9px;border-radius:999px;background:var(--app-primary-subtle);color:var(--app-primary)!important;font-weight:700}.lifecycle.inactive{color:var(--app-danger)!important;background:color-mix(in srgb,var(--app-danger) 10%,var(--app-surface))}.row-actions{display:flex;gap:4px}.danger{color:var(--app-danger)}.dialog-error{color:var(--app-danger)}@media(max-width:700px){.workspace-main{width:min(100% - 28px,1120px);padding-top:34px}.page-header{align-items:flex-start;flex-direction:column}.workspace-grid{grid-template-columns:1fr}.practitioner-list article{align-items:flex-start;flex-wrap:wrap}.row-actions{width:100%}}
+:host {
+    display: block;
+    min-height: 100%;
+    color: var(--app-text);
+}
+
+.workspace-shell,
+.workspace-container {
+    min-height: 100vh;
+    background: var(--app-canvas)
+}
+
+.workspace-main {
+    width: min(1120px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 54px 0 76px
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    margin-bottom: 28px
+}
+
+.eyebrow {
+    color: var(--app-primary);
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .11em;
+    text-transform: uppercase
+}
+
+h1 {
+    margin: 8px 0;
+    font-size: clamp(2.2rem, 4vw, 3.3rem);
+    letter-spacing: -.04em
+}
+
+.page-header p {
+    margin: 0;
+    color: var(--app-text-muted)
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap
+}
+
+.workspace-grid {
+    display: grid;
+    grid-template-columns: 1.4fr .9fr;
+    gap: 20px;
+    align-items: start
+}
+
+.list-card,
+.form-card {
+    border-color: var(--app-border);
+    border-radius: 20px;
+    background: var(--app-surface) !important;
+    overflow: hidden
+}
+
+.card-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--app-border)
+}
+
+.card-heading h2 {
+    margin: 0;
+    font-size: 1.1rem
+}
+
+.card-heading span {
+    color: var(--app-text-muted)
+}
+
+form {
+    display: grid;
+    gap: 4px;
+    padding: 24px
+}
+
+mat-form-field {
+    width: 100%
+}
+
+form button {
+    justify-self: start;
+    min-height: 43px
+}
+
+.unit-list>div,
+.practitioner-list article {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 17px 24px;
+    border-top: 1px solid var(--app-border)
+}
+
+.unit-list mat-icon {
+    color: var(--app-primary)
+}
+
+.state {
+    display: grid;
+    min-height: 220px;
+    place-items: center;
+    align-content: center;
+    gap: 10px;
+    color: var(--app-text-muted);
+    text-align: center;
+    padding: 25px
+}
+
+.state mat-icon {
+    font-size: 38px;
+    width: 38px;
+    height: 38px;
+    color: var(--app-primary)
+}
+
+.error-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 13px 16px;
+    border: 1px solid color-mix(in srgb, var(--app-danger) 50%, var(--app-border));
+    border-radius: 14px;
+    color: var(--app-danger);
+    background: color-mix(in srgb, var(--app-danger) 8%, var(--app-surface))
+}
+
+.practitioner-list article>div:first-child {
+    display: grid;
+    gap: 3px;
+    flex: 1;
+    min-width: 0
+}
+
+.practitioner-list span {
+    color: var(--app-text-muted);
+    font-size: .85rem
+}
+
+.lifecycle {
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: var(--app-primary-subtle);
+    color: var(--app-primary) !important;
+    font-weight: 700
+}
+
+.lifecycle.inactive {
+    color: var(--app-danger) !important;
+    background: color-mix(in srgb, var(--app-danger) 10%, var(--app-surface))
+}
+
+.row-actions {
+    display: flex;
+    gap: 4px
+}
+
+.danger {
+    color: var(--app-danger)
+}
+
+.dialog-error {
+    color: var(--app-danger)
+}
+
+@media(max-width:700px) {
+    .workspace-main {
+        width: min(100% - 28px, 1120px);
+        padding-top: 34px
+    }
+
+    .page-header {
+        align-items: flex-start;
+        flex-direction: column
+    }
+
+    .workspace-grid {
+        grid-template-columns: 1fr
+    }
+
+    .practitioner-list article {
+        align-items: flex-start;
+        flex-wrap: wrap
+    }
+
+    .row-actions {
+        width: 100%
+    }
+}

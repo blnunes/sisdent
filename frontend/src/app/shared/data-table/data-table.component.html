@@ -8,11 +8,6 @@
   } @else {
     <div class="table-scroll">
     <table mat-table [dataSource]="rows()" matSort [matSortActive]="sortActive()" [matSortDirection]="sortDirection()" (matSortChange)="onSort($event)">
-      <colgroup>
-        @for (column of columns(); track column.key) {
-          <col [style.width]="column.key === 'actions' ? '184px' : null" />
-        }
-      </colgroup>
       @for (column of columns(); track column.key) {
           <ng-container [matColumnDef]="column.key">
             <th mat-header-cell *matHeaderCellDef [mat-sort-header]="column.key" [disabled]="!column.sortable">{{ column.label | translate }}</th>

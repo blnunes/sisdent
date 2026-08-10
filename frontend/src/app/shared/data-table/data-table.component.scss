@@ -13,7 +13,7 @@
 table {
   width: 100%;
   min-width: 660px;
-  table-layout: fixed;
+  table-layout: auto;
 }
 th {
   color: #688087;
@@ -31,17 +31,17 @@ th {
 }
 th.mat-column-actions,
 td.mat-column-actions {
+  white-space: nowrap;
   overflow: visible;
 }
 .actions {
   display: flex;
-  width: 148px;
-  min-width: 148px;
+  width: max-content;
   flex-wrap: nowrap;
   justify-content: flex-end;
   gap: 2px;
 }
-.actions button {
+mat-column-actions.actions button {
   flex: 0 0 48px;
   width: 48px;
   min-width: 48px;
