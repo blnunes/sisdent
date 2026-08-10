@@ -14,6 +14,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 
 import java.util.UUID;
+import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,10 +29,10 @@ class ControllerDelegationTest {
         AddressService addresses = mock(AddressService.class);
         SpecialityService specialities = mock(SpecialityService.class);
 
-        new CountryController(countries).findAll(0, 10, "name", "asc");
+        new CountryController(countries).findAll(0, 10, "name", "asc", Locale.ENGLISH);
         new CountryController(countries).continents();
-        new CountryController(countries).create(null);
-        new CountryController(countries).update(1L, null);
+        new CountryController(countries).create(null, Locale.ENGLISH);
+        new CountryController(countries).update(1L, null, Locale.ENGLISH);
         new CountryController(countries).delete(1L);
         new AdministrativeDivisionController(divisions).findAll(0, 10, "name", "asc");
         new AdministrativeDivisionController(divisions).create(null);
@@ -43,15 +44,15 @@ class ControllerDelegationTest {
         new AddressController(addresses).create(null);
         new AddressController(addresses).update(1L, null);
         new AddressController(addresses).delete(1L);
-        new SpecialityController(specialities).findAll(0, 10, "name", "asc", "endo", "root");
+        new SpecialityController(specialities).findAll(0, 10, "name", "asc", "endo", "root", Locale.ENGLISH);
         new SpecialityController(specialities).findFilterOptions("name", "endo");
-        new SpecialityController(specialities).create(null);
-        new SpecialityController(specialities).update(1L, null);
+        new SpecialityController(specialities).create(null, Locale.ENGLISH);
+        new SpecialityController(specialities).update(1L, null, Locale.ENGLISH);
         new SpecialityController(specialities).delete(1L);
 
-        verify(countries).findPage(any());
-        verify(countries).create(null);
-        verify(countries).update(1L, null);
+        verify(countries).findPage(any(), any());
+        verify(countries).create(null, Locale.ENGLISH);
+        verify(countries).update(1L, null, Locale.ENGLISH);
         verify(countries).delete(1L);
         verify(divisions).findPage(any());
         verify(divisions).delete(1L);

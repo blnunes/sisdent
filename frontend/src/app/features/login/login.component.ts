@@ -9,8 +9,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth.service';
-import { LanguageSelectorComponent } from '../../shared/language-selector.component';
-import { ThemeToggleComponent } from '../../shared/theme-toggle.component';
+import { LanguageSelectorComponent } from '../../shared/preferences/language-selector/language-selector.component';
+import { ThemeToggleComponent } from '../../shared/preferences/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-login',

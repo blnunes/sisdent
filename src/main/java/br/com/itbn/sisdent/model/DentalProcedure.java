@@ -67,4 +67,8 @@ public class DentalProcedure extends AuditableEntity {
     public CatalogStatus getStatus() {
         return status;
     }
+
+    public Speciality getSpeciality() {
+        return speciality;
+    }
 }

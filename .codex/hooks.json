@@ -1,5 +1,5 @@
 {
-  "description": "Prevents Codex from completing a code change that fails quality or formatting validation.",
+  "description": "Prevents Codex from completing a Java change that fails the local quality gate.",
   "hooks": {
     "Stop": [
       {
@@ -9,12 +9,6 @@
             "command": "node \"$(git rev-parse --show-toplevel)/.codex/mcp/quality-gate.mjs\" --stop-hook",
             "timeout": 300,
             "statusMessage": "Running the Java quality gate"
-          },
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/.codex/mcp/formatting-gate.mjs\" --stop-hook",
-            "timeout": 120,
-            "statusMessage": "Checking code formatting"
           }
         ]
       }

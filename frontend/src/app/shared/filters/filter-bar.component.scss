@@ -1,0 +1,12 @@
+:host { display: block; margin-bottom: 22px; }
+.filter-card { padding: 22px 28px; border-color: var(--app-border); border-radius: 22px; }
+form { display: grid; grid-template-columns: 1fr auto; gap: 14px 18px; }
+.filter-heading { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 12px; }
+.filter-heading h2, .filter-heading p { margin: 0; }
+.filter-heading p { color: var(--app-text-muted); }
+.filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.filter-actions { display: flex; align-items: center; gap: 6px; }
+.date-control { display: flex; align-items: center; width: 100%; }
+.date-control input { min-width: 0; flex: 1; }
+.advanced { grid-column: 1 / -1; padding-top: 16px; border-top: 1px solid var(--app-border); }
+@media (max-width: 800px) { form { grid-template-columns: 1fr; }.filter-heading { display: block; }.filter-actions { flex-wrap: wrap; }.advanced { grid-column: auto; } }

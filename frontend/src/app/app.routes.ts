@@ -1,26 +1,40 @@
 import { Routes } from '@angular/router';
-import { anyPermissionsGuard, authGuard, organizationAdministrationGuard, practitionerManagementGuard } from './core/auth.guard';
+import {
+  anyPermissionsGuard,
+  authGuard,
+  organizationAdministrationGuard,
+  platformAdministrationGuard,
+  practitionerManagementGuard,
+} from './core/auth.guard';
 
 export const routes: Routes = [
   {
     path: 'clinic-units',
     canActivate: [authGuard, organizationAdministrationGuard],
-    loadComponent: () => import('./features/organization/clinic-units.component').then((m) => m.ClinicUnitsComponent),
+    loadComponent: () =>
+      import('./features/organization/clinic-units.component').then((m) => m.ClinicUnitsComponent),
   },
   {
     path: 'practitioners',
     canActivate: [authGuard, practitionerManagementGuard],
-    loadComponent: () => import('./features/organization/practitioners.component').then((m) => m.PractitionersComponent),
+    loadComponent: () =>
+      import('./features/organization/practitioners.component').then(
+        (m) => m.PractitionersComponent,
+      ),
   },
   {
     path: 'appointments',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/appointments/appointments.component').then((m) => m.AppointmentsComponent),
+    loadComponent: () =>
+      import('./features/appointments/appointments.component').then((m) => m.AppointmentsComponent),
   },
   {
     path: 'clinical',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/clinical/clinical-workspace.component').then((m) => m.ClinicalWorkspaceComponent),
+    loadComponent: () =>
+      import('./features/clinical/clinical-workspace.component').then(
+        (m) => m.ClinicalWorkspaceComponent,
+      ),
   },
   {
     path: 'login',
@@ -34,56 +48,51 @@ export const routes: Routes = [
   {
     path: 'accounts',
     canActivate: [authGuard],
-    loadComponent: () => import('./features/accounts/accounts.component').then((m) => m.AccountsComponent),
+    loadComponent: () =>
+      import('./features/accounts/accounts.component').then((m) => m.AccountsComponent),
+  },
+  {
+    path: 'settings/translations',
+    canActivate: [authGuard, platformAdministrationGuard],
+    loadComponent: () =>
+      import('./features/catalog-translations/catalog-translations.component').then(
+        (m) => m.CatalogTranslationsComponent,
+      ),
   },
   {
     path: 'patients',
     canActivate: [authGuard, anyPermissionsGuard('READ_PATIENTS', 'MAINTAIN_PATIENTS')],
-    loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
-    data: {
-      key: 'patients', endpoint: '', title: 'MODULES.PATIENTS', description: 'MODULES.PATIENTS_DESCRIPTION', maintainPermission: 'MAINTAIN_PATIENTS',
-      filters: [
-        { key: 'name', label: 'RESOURCE.FILTER.NAME', type: 'autocomplete' },
-        { key: 'birthDate', label: 'RESOURCE.FILTER.BIRTH_DATE', type: 'date', placement: 'advanced' },
-        { key: 'active', label: 'RESOURCE.FILTER.STATUS', type: 'select', options: [{ value: 'true', label: 'RESOURCE.FILTER.ACTIVE' }, { value: 'false', label: 'RESOURCE.FILTER.INACTIVE' }] },
-        { key: 'gender', label: 'RESOURCE.FILTER.GENDER', type: 'select', placement: 'advanced', options: [{ value: 'FEMALE', label: 'RESOURCE.FILTER.FEMALE' }, { value: 'MALE', label: 'RESOURCE.FILTER.MALE' }, { value: 'OTHER', label: 'RESOURCE.FILTER.OTHER' }] },
-        { key: 'taxId', label: 'RESOURCE.FILTER.TAX_ID', type: 'autocomplete', placement: 'advanced' },
-        { key: 'identificationType', label: 'RESOURCE.FILTER.IDENTIFICATION_TYPE', type: 'select', placement: 'advanced', options: [{ value: 'NATIONAL_ID_CARD', label: 'RESOURCE.FILTER.NATIONAL_ID' }, { value: 'PASSPORT', label: 'RESOURCE.FILTER.PASSPORT' }] },
-        { key: 'nationalityCode', label: 'RESOURCE.FILTER.NATIONALITY', type: 'select', placement: 'advanced' },
-        { key: 'addressId', label: 'RESOURCE.FILTER.ADDRESS', type: 'autocomplete', selectionRequired: true, placement: 'advanced' },
-        { key: 'specialityId', label: 'RESOURCE.FILTER.SPECIALITY', type: 'autocomplete', selectionRequired: true },
-      ],
-    },
+    loadComponent: () =>
+      import('./features/patients/patients.component').then((m) => m.PatientsComponent),
   },
   {
     path: 'specialities',
     canActivate: [authGuard, anyPermissionsGuard('READ_SPECIALITIES', 'MAINTAIN_SPECIALITIES')],
-    loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
-    data: {
-      key: 'specialities', endpoint: '/api/specialities', title: 'MODULES.SPECIALITIES', description: 'MODULES.SPECIALITIES_DESCRIPTION', maintainPermission: 'MAINTAIN_SPECIALITIES',
-      filters: [
-        { key: 'name', label: 'RESOURCE.FILTER.NAME', type: 'autocomplete' },
-        { key: 'procedure', label: 'Procedures', type: 'autocomplete' },
-      ],
-    },
+    loadComponent: () =>
+      import('./features/specialities/specialities.component').then((m) => m.SpecialitiesComponent),
   },
   {
     path: 'addresses',
     canActivate: [authGuard, anyPermissionsGuard('READ_ADDRESSES', 'MAINTAIN_ADDRESSES')],
-    loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
-    data: { key: 'addresses', endpoint: '/api/addresses', title: 'MODULES.ADDRESSES', description: 'MODULES.ADDRESSES_DESCRIPTION', maintainPermission: 'MAINTAIN_ADDRESSES' },
+    loadComponent: () =>
+      import('./features/addresses/addresses.component').then((m) => m.AddressesComponent),
   },
   {
     path: 'countries',
     canActivate: [authGuard, anyPermissionsGuard('READ_COUNTRIES', 'MAINTAIN_COUNTRIES')],
-    loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
-    data: { key: 'countries', endpoint: '/api/countries', title: 'MODULES.COUNTRIES', description: 'MODULES.COUNTRIES_DESCRIPTION', maintainPermission: 'MAINTAIN_COUNTRIES' },
+    loadComponent: () =>
+      import('./features/countries/countries.component').then((m) => m.CountriesComponent),
   },
   {
     path: 'administrative-divisions',
-    canActivate: [authGuard, anyPermissionsGuard('READ_ADMINISTRATIVE_DIVISIONS', 'MAINTAIN_ADMINISTRATIVE_DIVISIONS')],
-    loadComponent: () => import('./features/resources/resource-list.component').then((m) => m.ResourceListComponent),
-    data: { key: 'administrativeDivisions', endpoint: '/api/administrative-divisions', title: 'MODULES.ADMINISTRATIVE_DIVISIONS', description: 'MODULES.ADMINISTRATIVE_DIVISIONS_DESCRIPTION', maintainPermission: 'MAINTAIN_ADMINISTRATIVE_DIVISIONS' },
+    canActivate: [
+      authGuard,
+      anyPermissionsGuard('READ_ADMINISTRATIVE_DIVISIONS', 'MAINTAIN_ADMINISTRATIVE_DIVISIONS'),
+    ],
+    loadComponent: () =>
+      import('./features/administrative-divisions/administrative-divisions.component').then(
+        (m) => m.AdministrativeDivisionsComponent,
+      ),
   },
   {
     path: 'not-found',
@@ -93,7 +102,9 @@ export const routes: Routes = [
   {
     path: 'translation-error',
     loadComponent: () =>
-      import('./features/translation-error/translation-error.component').then((m) => m.TranslationErrorComponent),
+      import('./features/translation-error/translation-error.component').then(
+        (m) => m.TranslationErrorComponent,
+      ),
   },
   { path: '', pathMatch: 'full', redirectTo: 'home' },
   { path: '**', redirectTo: 'not-found' },

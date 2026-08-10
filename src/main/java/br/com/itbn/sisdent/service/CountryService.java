@@ -4,6 +4,7 @@ import br.com.itbn.sisdent.dto.CountryResponse;
 import br.com.itbn.sisdent.dto.CountryRequest;
 import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.mapper.ResponseMapper;
+import br.com.itbn.sisdent.localization.CatalogNameLocalizer;
 import br.com.itbn.sisdent.pagination.PageQuery;
 import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.pagination.SortDefinition;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class CountryService {
@@ -23,22 +25,26 @@ public class CountryService {
 
     private final CountryRepository countryRepository;
     private final PageableFactory pageableFactory;
+    private final CatalogNameLocalizer<Country> nameLocalizer;
 
-    public CountryService(CountryRepository countryRepository, PageableFactory pageableFactory) {
+    public CountryService(CountryRepository countryRepository, PageableFactory pageableFactory,
+                          CatalogNameLocalizer<Country> nameLocalizer) {
         this.countryRepository = countryRepository;
         this.pageableFactory = pageableFactory;
+        this.nameLocalizer = nameLocalizer;
     }
 
     @Transactional(readOnly = true)
     public List<CountryResponse> findAll() {
         return countryRepository.findAll(Sort.by("name")).stream()
-                .map(ResponseMapper::toResponse)
+                .map(country -> toResponse(country, Locale.ENGLISH))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<CountryResponse> findPage(PageQuery query) {
-        return PageResponse.from(countryRepository.findAll(pageableFactory.create(query, SORT_DEFINITION)), ResponseMapper::toResponse);
+    public PageResponse<CountryResponse> findPage(PageQuery query, Locale locale) {
+        return PageResponse.from(countryRepository.findAll(pageableFactory.create(query, SORT_DEFINITION)),
+                country -> toResponse(country, locale));
     }
 
     @Transactional(readOnly = true)
@@ -48,18 +54,25 @@ public class CountryService {
     }
 
     @Transactional
-    public CountryResponse create(CountryRequest request) { return ResponseMapper.toResponse(countryRepository.saveAndFlush(new Country(request.name(), request.code(), request.continent()))); }
+    public CountryResponse create(CountryRequest request, Locale locale) {
+        return toResponse(countryRepository.saveAndFlush(
+                new Country(request.name(), request.code(), request.continent())), locale);
+    }
 
     @Transactional
-    public CountryResponse update(Long id, CountryRequest request) {
+    public CountryResponse update(Long id, CountryRequest request, Locale locale) {
         Country country = countryRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         country.update(request.name(), request.code(), request.continent());
-        return ResponseMapper.toResponse(countryRepository.saveAndFlush(country));
+        return toResponse(countryRepository.saveAndFlush(country), locale);
     }
 
     @Transactional
     public void delete(Long id) {
         if (!countryRepository.existsById(id)) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         countryRepository.deleteById(id);
+    }
+
+    private CountryResponse toResponse(Country country, Locale locale) {
+        return ResponseMapper.toResponse(country, nameLocalizer.localize(country, locale));
     }
 }

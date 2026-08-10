@@ -3,6 +3,7 @@ package br.com.itbn.sisdent.service;
 import br.com.itbn.sisdent.dto.CountryRequest;
 import br.com.itbn.sisdent.model.Continent;
 import br.com.itbn.sisdent.model.Country;
+import br.com.itbn.sisdent.localization.CatalogNameLocalizer;
 import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.repository.CountryRepository;
 import org.junit.jupiter.api.Test;
@@ -11,9 +12,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -25,6 +29,7 @@ import static org.mockito.Mockito.when;
 class CountryServiceTest {
     @Mock CountryRepository countries;
     @Mock PageableFactory pageableFactory;
+    @Mock CatalogNameLocalizer<Country> nameLocalizer;
     @InjectMocks CountryService service;
 
     @Test
@@ -32,6 +37,7 @@ class CountryServiceTest {
         Country portugal = country();
         when(countries.findAll(org.springframework.data.domain.Sort.by("name"))).thenReturn(List.of(portugal));
         when(countries.findByCode("PT")).thenReturn(Optional.of(portugal));
+        when(nameLocalizer.localize(portugal, Locale.ENGLISH)).thenReturn("Portugal");
 
         assertThat(service.findAll()).singleElement().extracting(response -> response.code()).isEqualTo("PT");
         assertThat(service.requireByCode("PT")).isSameAs(portugal);
@@ -46,10 +52,28 @@ class CountryServiceTest {
         when(countries.findById(1L)).thenReturn(Optional.of(portugal));
         when(countries.existsById(1L)).thenReturn(true);
 
-        assertThat(service.create(request).name()).isEqualTo("Portugal");
-        assertThat(service.update(1L, request).code()).isEqualTo("PT");
+        when(nameLocalizer.localize(any(Country.class), org.mockito.ArgumentMatchers.eq(Locale.forLanguageTag("pt-PT"))))
+                .thenReturn("Portugal");
+
+        assertThat(service.create(request, Locale.forLanguageTag("pt-PT")).displayName()).isEqualTo("Portugal");
+        assertThat(service.update(1L, request, Locale.forLanguageTag("pt-PT")).code()).isEqualTo("PT");
         service.delete(1L);
         verify(countries).deleteById(1L);
+    }
+
+    @Test
+    void returnsCanonicalAndLocalizedNamesOnPagedResponses() {
+        Country netherlands = new Country("Netherlands", "NL", Continent.EUROPE);
+        PageRequest pageable = PageRequest.of(0, 10);
+        when(pageableFactory.create(any(), any())).thenReturn(pageable);
+        when(countries.findAll(pageable)).thenReturn(new PageImpl<>(List.of(netherlands), pageable, 1));
+        when(nameLocalizer.localize(netherlands, Locale.forLanguageTag("nl"))).thenReturn("Nederland");
+
+        var response = service.findPage(new br.com.itbn.sisdent.pagination.PageQuery(0, 10, "name", "asc"),
+                Locale.forLanguageTag("nl")).content().getFirst();
+
+        assertThat(response.name()).isEqualTo("Netherlands");
+        assertThat(response.displayName()).isEqualTo("Nederland");
     }
 
     @Test
@@ -58,7 +82,7 @@ class CountryServiceTest {
         when(countries.existsById(2L)).thenReturn(false);
         CountryRequest request = new CountryRequest("Portugal", "PT", Continent.EUROPE);
 
-        assertThatThrownBy(() -> service.update(1L, request)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> service.update(1L, request, Locale.ENGLISH)).isInstanceOf(ResponseStatusException.class);
         assertThatThrownBy(() -> service.delete(2L)).isInstanceOf(ResponseStatusException.class);
     }
 
