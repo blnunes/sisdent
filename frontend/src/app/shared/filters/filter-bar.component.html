@@ -1,0 +1,107 @@
+@if (filters().length) {
+  <mat-card
+    appearance="outlined"
+    class="filter-card"
+    role="region"
+    [attr.aria-label]="ariaLabel() | translate"
+    ><form (submit)="$event.preventDefault(); apply.emit()">
+      <div class="filter-heading">
+        <h2>{{ key('FILTER.TITLE') | translate }}</h2>
+        <p>{{ key('FILTER.DESCRIPTION') | translate }}</p>
+      </div>
+      <div class="filter-grid">
+        @for (filter of primary(); track filter.key) {
+          <ng-container *ngTemplateOutlet="control; context: { $implicit: filter }" />
+        }
+      </div>
+      <div class="filter-actions">
+        <button mat-flat-button type="submit">
+          <mat-icon>search</mat-icon>{{ key('FILTER.APPLY') | translate }}
+        </button>
+        @if (advanced().length) {
+          <button mat-stroked-button type="button" (click)="advancedOpen.set(!advancedOpen())">
+            <mat-icon>tune</mat-icon
+            >{{ key(advancedOpen() ? 'FILTER.LESS' : 'FILTER.MORE') | translate }}
+          </button>
+        }
+        <button
+          mat-button
+          type="button"
+          [attr.aria-label]="clearAllAriaLabel() | translate"
+          (click)="clearAll.emit()"
+        >
+          {{ key('FILTER.CLEAR') | translate }}
+        </button>
+      </div>
+      @if (advancedOpen()) {
+        <div class="advanced">
+          <div class="filter-grid">
+            @for (filter of advanced(); track filter.key) {
+              <ng-container *ngTemplateOutlet="control; context: { $implicit: filter }" />
+            }
+          </div>
+        </div>
+      }</form
+  ></mat-card>
+}
+
+<ng-template #control let-filter>
+  <mat-form-field appearance="outline"
+    ><mat-label>{{ filter.label | translate }}</mat-label>
+    @if (filter.type === 'select') {
+      <mat-select
+        [value]="values()[filter.key] ?? ''"
+        (valueChange)="valueChange.emit({ key: filter.key, value: $event }); apply.emit()"
+        ><mat-option value="">{{ key('FILTER.ALL') | translate }}</mat-option>
+        @for (option of filter.options ?? []; track option.value) {
+          <mat-option [value]="option.value">{{ option.label | translate }}</mat-option>
+        }
+      </mat-select>
+    } @else if (filter.type === 'autocomplete') {
+      <input
+        matInput
+        [value]="displayValues()[filter.key] ?? ''"
+        [matAutocomplete]="autocomplete"
+        (input)="autocompleteChange.emit({ filter, query: $any($event.target).value })"
+      /><mat-autocomplete
+        #autocomplete="matAutocomplete"
+        (optionSelected)="
+          optionSelected.emit({
+            key: filter.key,
+            value: $event.option.value.value,
+            label: $event.option.value.label,
+          })
+        "
+      >
+        @for (option of autocompleteOptions()[filter.key] ?? []; track option.value) {
+          <mat-option [value]="option">{{ option.label }}</mat-option>
+        }
+      </mat-autocomplete>
+    } @else if (filter.type === 'date') {
+      <div class="date-control">
+        <input
+          matInput
+          readonly
+          [matDatepicker]="picker"
+          [value]="dateValue(values()[filter.key])"
+          (dateChange)="onDate(filter.key, $event.value); apply.emit()"
+        /><mat-datepicker-toggle [for]="picker" /><mat-datepicker
+          #picker
+          [startAt]="dateStart(filter)"
+        />
+      </div>
+    } @else {
+      <input
+        matInput
+        [type]="filter.type"
+        [value]="values()[filter.key] ?? ''"
+        (input)="valueChange.emit({ key: filter.key, value: $any($event.target).value })"
+      />
+    }
+    @if (values()[filter.key] || displayValues()[filter.key]) {
+      <button mat-icon-button matSuffix type="button" (click)="clear.emit(filter.key)">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </mat-form-field>
+</ng-template>

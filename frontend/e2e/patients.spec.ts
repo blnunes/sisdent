@@ -103,7 +103,7 @@ test.describe('Patient management', () => {
 
     await filters.getByRole('button', { name: 'More filters' }).click();
 
-    response = await selectBirthDateFilter(page, filters, 'April 18, 1992');
+    response = await selectBirthDateFilter(page, filters);
     expectFilterParameter(response, 'birthDate', '1992-04-18');
     await expectPatientResults(page, response, (entry) => entry.birthDate === '1992-04-18');
     await resetFilters(page, filters);
@@ -118,7 +118,7 @@ test.describe('Patient management', () => {
     await expectPatientResults(page, response, (entry) => entry.taxId === '10000000001');
     await resetFilters(page, filters);
 
-    response = await applySelectFilter(page, filters, 'Identification type', 'National ID card');
+    response = await applySelectFilter(page, filters, 'Identification type', 'National ID');
     expectFilterParameter(response, 'identificationType', 'NATIONAL_ID_CARD');
     await expectPatientResults(page, response, (entry) => entry.identificationType === 'NATIONAL_ID_CARD');
     await resetFilters(page, filters);
@@ -174,8 +174,11 @@ async function applyTextFilter(page: Page, filters: Locator, label: string, valu
 
 async function applySelectFilter(page: Page, filters: Locator, label: string, option: string): Promise<Response> {
   const response = waitForPatientResults(page);
-  await filters.getByRole('combobox', { name: label, exact: true }).click();
+  const select = filters.getByRole('combobox', { name: label, exact: true });
+  await select.focus();
+  await select.press('Enter');
   await page.getByRole('option', { name: option, exact: true }).click();
+  await settleSelectOverlay(page);
   return response;
 }
 
@@ -188,14 +191,15 @@ async function selectAutocompleteFilter(page: Page, filters: Locator, label: str
   return response;
 }
 
-async function selectBirthDateFilter(page: Page, filters: Locator, dateLabel: string): Promise<Response> {
+async function selectBirthDateFilter(page: Page, filters: Locator): Promise<Response> {
   const field = filters.getByLabel('Birth date', { exact: true });
   await field.locator('xpath=..').getByRole('button', { name: 'Open calendar' }).click();
   const calendar = page.locator('mat-calendar');
   await calendar.locator('.mat-calendar-period-button').click();
   await calendar.getByText('1992', { exact: true }).click();
+  await calendar.locator('button.mat-calendar-body-cell').nth(3).click();
   const response = waitForPatientResults(page);
-  await calendar.getByRole('button', { name: dateLabel, exact: true }).click();
+  await calendar.getByRole('button', { name: /^(18 de abril de 1992|April 18, 1992)$/i }).click();
   return response;
 }
 
@@ -232,8 +236,18 @@ async function expectPatientResults(page: Page, response: Response, predicate: (
 }
 
 async function selectOption(page: Page, label: string, option: string): Promise<void> {
-  await page.getByRole('dialog').getByRole('combobox', { name: label, exact: true }).click();
+  const select = page.getByRole('dialog').getByRole('combobox', { name: label, exact: true });
+  await select.focus();
+  await select.press('Enter');
   await page.getByRole('option', { name: option, exact: true }).click();
+  await settleSelectOverlay(page);
+}
+
+async function settleSelectOverlay(page: Page): Promise<void> {
+  const backdrop = page.locator('.cdk-overlay-backdrop');
+  const expectedCount = (await page.getByRole('dialog').count()) ? 1 : 0;
+  if ((await backdrop.count()) > expectedCount) await page.keyboard.press('Escape');
+  await expect(backdrop).toHaveCount(expectedCount);
 }
 
 async function selectBirthDate(page: Page): Promise<void> {

@@ -1,0 +1,16 @@
+.dialog-header { display: flex; align-items: center; gap: 14px; padding: 24px 28px 14px; }
+.dialog-header > button { margin-left: auto; }
+.dialog-header p, .dialog-header h2 { margin: 0; }
+form { min-width: min(600px, 80vw); }
+section { padding: 18px 0; border-top: 1px solid var(--app-border); }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 16px; }
+.form-grid mat-form-field { width: 100%; }
+mat-label { pointer-events: none; }
+:host ::ng-deep .mdc-floating-label { pointer-events: none; }
+.full-width { grid-column: 1 / -1; }
+.specialities-editor, .procedures-editor { display: grid; gap: 12px; }
+.speciality-add, .procedure-add { padding: 16px; border: 1px solid var(--app-border); border-radius: 14px; background: var(--app-surface-subtle); }
+.specialities-table table, .procedures-table table { width: 100%; border-collapse: collapse; }
+.specialities-table th, .specialities-table td, .procedures-table th, .procedures-table td { padding: 8px 14px; border: 1px solid var(--app-border); }
+mat-dialog-actions { padding: 14px 28px 22px; }
+@media (max-width: 560px) { form { min-width: 0; }.form-grid { grid-template-columns: 1fr; }.full-width { grid-column: auto; } }

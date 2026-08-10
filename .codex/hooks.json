@@ -1,0 +1,17 @@
+{
+  "description": "Prevents Codex from completing a Java change that fails the local quality gate.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.codex/mcp/quality-gate.mjs\" --stop-hook",
+            "timeout": 300,
+            "statusMessage": "Running the Java quality gate"
+          }
+        ]
+      }
+    ]
+  }
+}

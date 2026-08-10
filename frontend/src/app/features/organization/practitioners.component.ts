@@ -12,8 +12,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountApiService, PractitionerWrite } from '../../core/account-api.service';
 import { AuthService } from '../../core/auth.service';
 import { Practitioner } from '../../core/models';
-import { AppHeaderComponent } from '../../shared/app-header.component';
-import { ModuleNavigationComponent } from '../../shared/module-navigation.component';
+import { AppHeaderComponent } from '../../core/layout/app-header/app-header.component';
+import { ModuleNavigationComponent } from '../../core/layout/module-navigation/module-navigation.component';
 
 @Component({ selector: 'app-practitioners', standalone: true, imports: [MatButtonModule, MatCardModule, MatDialogModule, MatIconModule, MatProgressSpinnerModule, MatSidenavModule, TranslatePipe, AppHeaderComponent, ModuleNavigationComponent], templateUrl: './practitioners.component.html', styleUrl: './organization-workspace.component.scss' })
 export class PractitionersComponent {
