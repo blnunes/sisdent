@@ -17,7 +17,9 @@ describe('DataTableComponent', () => {
     fixture.componentRef.setInput('rows', [{ id: 7, cells: { name: 'Ana' }, actions: [{ key: 'view', label: 'View', icon: 'visibility' }, { key: 'edit', label: 'Edit', icon: 'edit' }, { key: 'delete', label: 'Delete', icon: 'delete_outline', destructive: true }] }]); fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Ana');
     expect(fixture.nativeElement.querySelector('col.actions-column')).toBeTruthy();
-    expect(fixture.nativeElement.querySelectorAll('.actions button')).toHaveLength(3);
+    const actionButtons = fixture.nativeElement.querySelectorAll('.actions button');
+    expect(actionButtons).toHaveLength(3);
+    expect(fixture.nativeElement.querySelector('.actions')?.children).toHaveLength(3);
   });
 
   it('emits page, sort, row-action, and retry events', () => {
