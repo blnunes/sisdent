@@ -30,12 +30,16 @@ th {
   vertical-align: top;
 }
 .mat-column-actions {
-  width: 112px;
+  width: 168px;
 }
 .actions {
   display: flex;
+  min-width: 120px;
   justify-content: flex-end;
   gap: 2px;
+}
+.actions button {
+  flex: 0 0 40px;
 }
 .delete {
   color: #b34250;
