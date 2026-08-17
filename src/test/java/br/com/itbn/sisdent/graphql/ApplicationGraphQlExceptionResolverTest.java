@@ -21,12 +21,18 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.AfterEach;
+import org.slf4j.MDC;
 
 class ApplicationGraphQlExceptionResolverTest {
 
     private final DataFetchingEnvironment environment = environment();
     private final ApplicationGraphQlExceptionResolver resolver =
-            new ApplicationGraphQlExceptionResolver(messages());
+            new ApplicationGraphQlExceptionResolver(messages(), new SimpleMeterRegistry());
+
+    @AfterEach
+    void clearMdc() { MDC.clear(); }
 
     @ParameterizedTest
     @MethodSource("applicationExceptions")

@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Tag;
@@ -60,6 +61,18 @@ class RestErrorIntegrationTests {
     }
 
     @Test
+    void restErrorUsesTheSameCorrelationIdAsItsResponseHeader() throws Exception {
+        mockMvc.perform(get("/api/countries").param("size", "101")
+                        .header("X-Correlation-ID", "rest-error-42")
+                        .header("Authorization", bearer(adminToken())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("Pagination values are invalid."))
+                .andExpect(jsonPath("$.code").value("PAGINATION.INVALID_VALUES"))
+                .andExpect(jsonPath("$.correlationId").value("rest-error-42"))
+                .andExpect(header().string("X-Correlation-ID", "rest-error-42"));
+    }
+
+    @Test
     void beanValidationProvidesSafeFieldViolations() throws Exception {
         mockMvc.perform(post("/api/countries").header("Authorization", bearer(adminToken()))
                         .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"\",\"code\":\"x\"}"))
@@ -90,10 +103,11 @@ class RestErrorIntegrationTests {
 
     @Test
     void unauthenticatedAndUnauthorizedRequestsUseTheProblemContract() throws Exception {
-        mockMvc.perform(get("/api/countries"))
+        mockMvc.perform(get("/api/countries").header("X-Correlation-ID", "unauthenticated-42"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("AUTHENTICATION.FAILED"))
-                .andExpect(jsonPath("$.detail").value("Authentication is required to access this resource."));
+                .andExpect(jsonPath("$.detail").value("Authentication is required to access this resource."))
+                .andExpect(header().string("X-Correlation-ID", "unauthenticated-42"));
 
         mockMvc.perform(get("/api/countries").header("Authorization", bearer(login("group.admin@sisdent.demo", "odonto2026@O"))))
                 .andExpect(status().isForbidden())

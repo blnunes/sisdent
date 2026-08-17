@@ -4,6 +4,8 @@ import br.com.itbn.sisdent.error.ApplicationException;
 import br.com.itbn.sisdent.error.ErrorCategory;
 import br.com.itbn.sisdent.error.ErrorCode;
 import br.com.itbn.sisdent.service.SchedulingConflictException;
+import br.com.itbn.sisdent.observability.CorrelationIds;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
@@ -21,6 +23,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -39,12 +44,15 @@ import tools.jackson.databind.ObjectMapper;
 public class RestExceptionTranslator {
 
     private static final String TYPE_PREFIX = "urn:sisdent:error:";
+    private static final Logger LOGGER = LoggerFactory.getLogger(RestExceptionTranslator.class);
     private final MessageSource messages;
     private final ObjectMapper objectMapper;
+    private final MeterRegistry meterRegistry;
 
-    public RestExceptionTranslator(MessageSource messages, ObjectMapper objectMapper) {
+    public RestExceptionTranslator(MessageSource messages, ObjectMapper objectMapper, MeterRegistry meterRegistry) {
         this.messages = messages;
         this.objectMapper = objectMapper;
+        this.meterRegistry = meterRegistry;
     }
 
     @ExceptionHandler(ApplicationException.class)
@@ -114,6 +122,8 @@ public class RestExceptionTranslator {
 
     @ExceptionHandler(Exception.class)
     ProblemDetail unexpected(Exception exception, Locale locale) {
+        LOGGER.error("unexpected_error transport={} status={} correlationId={}", transport(), 500,
+                CorrelationIds.current(), exception);
         return problem(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR, locale, Map.of(), List.of());
     }
 
@@ -137,9 +147,11 @@ public class RestExceptionTranslator {
         problem.setType(URI.create(TYPE_PREFIX + code.value().toLowerCase(Locale.ROOT)));
         problem.setTitle(message("title." + code.value(), status.getReasonPhrase(), locale));
         problem.setProperty("code", code.value());
+        problem.setProperty("correlationId", CorrelationIds.current());
         if (!violations.isEmpty()) {
             problem.setProperty("violations", violations);
         }
+        if (code != ErrorCode.INTERNAL_ERROR) recordKnownError(code, status);
         return problem;
     }
 
@@ -155,6 +167,31 @@ public class RestExceptionTranslator {
     private Map<String, String> violation(FieldError error, Locale locale) {
         String detail = messages.getMessage(new DefaultMessageSourceResolvable(error), locale);
         return Map.of("field", error.getField(), "message", detail);
+    }
+
+    private void recordKnownError(ErrorCode code, HttpStatus status) {
+        String category = categoryFor(code);
+        String transport = transport();
+        meterRegistry.counter("sisdent.error.count", "code", code.value(), "transport", transport).increment();
+        LOGGER.warn("known_error code={} category={} transport={} status={} correlationId={}",
+                code.value(), category, transport, status.value(), CorrelationIds.current());
+    }
+
+    private String transport() { return "/graphql".equals(MDC.get("requestPath")) ? "graphql" : "rest"; }
+
+    private String categoryFor(ErrorCode code) {
+        return switch (code) {
+            case RESOURCE_NOT_FOUND, CATALOG_UNKNOWN_COUNTRY -> ErrorCategory.RESOURCE_NOT_FOUND.name();
+            case VALIDATION_FAILED, PAGINATION_INVALID_VALUES, PAGINATION_UNSUPPORTED_SORT,
+                    PAGINATION_UNSUPPORTED_DIRECTION, CATALOG_UNSUPPORTED_LOCALE,
+                    REQUEST_MALFORMED, REQUEST_PARAMETER_INVALID -> ErrorCategory.VALIDATION.name();
+            case BUSINESS_RULE_VIOLATION, SCHEDULING_PRACTITIONER_UNAVAILABLE -> ErrorCategory.BUSINESS_RULE_VIOLATION.name();
+            case CONFLICT -> ErrorCategory.CONFLICT.name();
+            case AUTHENTICATION_FAILED -> ErrorCategory.AUTHENTICATION.name();
+            case AUTHORIZATION_DENIED -> ErrorCategory.AUTHORIZATION.name();
+            case INFRASTRUCTURE_FAILURE -> ErrorCategory.INFRASTRUCTURE.name();
+            case INTERNAL_ERROR -> "UNEXPECTED";
+        };
     }
 
     private HttpStatus statusFor(ErrorCategory category) {

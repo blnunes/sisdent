@@ -31,7 +31,10 @@ REST translates failures in `controller/RestExceptionTranslator` to RFC 9457
 responses. Its `code` property is stable, while `detail` and validation
 violations are localized. Authentication and authorization that security
 rejects before controller execution remain HTTP 401/403 problem responses.
-No correlation ID is currently part of either public error contract.
+Every HTTP request accepts a validated `X-Correlation-ID`, otherwise receives a generated
+UUID. The final value is returned in that response header and REST problems expose it as
+`correlationId`; GraphQL execution errors expose it as `errors[].extensions.correlationId`.
+It is request-scoped in SLF4J MDC and cleared in a `finally` block.
 
 GraphQL uses `graphql/ApplicationGraphQlExceptionResolver` as its single
 public error translator. It covers both execution exceptions and parse or
@@ -42,6 +45,22 @@ metadata is exposed only as `errors[].extensions.metadata`; exception messages,
 causes, SQL details, and request data are never exposed. Pagination uses the
 `PAGINATION.*` codes, and unsupported locales use
 `CATALOG.UNSUPPORTED_LOCALE`.
+
+## Operational observability
+
+Request completion logs contain only method, normalized route, status, duration, and
+correlation ID. Known-error logs add stable code, category, transport and status;
+unexpected errors add the server-side stack trace but retain the same safe public fields.
+GraphQL logs and metrics use only recognised schema operations and operation types, never
+the document variables. Bodies, authorization headers, credentials, tokens, patient data,
+clinical notes, and business identifiers are not logged or used as metric labels.
+
+Micrometer records HTTP request count/duration by transport, normalized route and status,
+GraphQL execution count by recognised operation/type/outcome, and known-error count by
+stable code and transport. Correlation and business identifiers are deliberately excluded
+from metric labels. Actuator is dependency-backed but security permits only `/actuator/health`;
+additional endpoints require explicit authorization and configuration. Distributed tracing is
+deferred: an OpenTelemetry exporter may later bridge this correlation ID/MDC integration.
 
 Some pre-existing service methods still throw Spring HTTP exceptions. They are
 legacy REST-only paths and are safely translated by the REST adapter, but must

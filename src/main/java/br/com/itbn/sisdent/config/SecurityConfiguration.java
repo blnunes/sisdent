@@ -24,9 +24,11 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import br.com.itbn.sisdent.controller.RestExceptionTranslator;
+import br.com.itbn.sisdent.observability.RequestCorrelationFilter;
 
 import java.nio.charset.StandardCharsets;
 
@@ -38,6 +40,7 @@ public class SecurityConfiguration {
             HttpSecurity http,
             JwtAuthenticationConverter jwtAuthenticationConverter,
             AccountStateJwtFilter accountStateJwtFilter,
+            RequestCorrelationFilter requestCorrelationFilter,
             RestExceptionTranslator exceptionTranslator) {
         http
                 // This API is stateless and uses JWT Bearer tokens for auth, so CSRF protection is not required.
@@ -85,6 +88,7 @@ public class SecurityConfiguration {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, exception) -> exceptionTranslator.authentication(request, response))
                         .accessDeniedHandler((request, response, exception) -> exceptionTranslator.authorization(request, response)))
+                .addFilterBefore(requestCorrelationFilter, SecurityContextHolderFilter.class)
                 .addFilterAfter(accountStateJwtFilter, BearerTokenAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
         return http.build();
@@ -100,6 +104,14 @@ public class SecurityConfiguration {
             AccountStateJwtFilter filter) {
         FilterRegistrationBean<AccountStateJwtFilter> registration =
                 new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    FilterRegistrationBean<RequestCorrelationFilter> disableCorrelationContainerRegistration(
+            RequestCorrelationFilter filter) {
+        FilterRegistrationBean<RequestCorrelationFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setEnabled(false);
         return registration;
     }

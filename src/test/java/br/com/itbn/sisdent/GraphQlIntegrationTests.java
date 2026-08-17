@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.jackson.databind.json.JsonMapper;
@@ -101,12 +102,15 @@ class GraphQlIntegrationTests {
     void missingCountryUsesTheSharedNotFoundErrorContract() throws Exception {
         mockMvc.perform(post("/graphql")
                         .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .header("X-Correlation-ID", "graphql-error-42")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{ \"query\": \"{ country(code: \\\"ZZ\\\") { code } }\" }"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.country").doesNotExist())
                 .andExpect(jsonPath("$.errors[0].message").value("The requested country is not available."))
-                .andExpect(jsonPath("$.errors[0].extensions.code").value("CATALOG.UNKNOWN_COUNTRY"));
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("CATALOG.UNKNOWN_COUNTRY"))
+                .andExpect(jsonPath("$.errors[0].extensions.correlationId").value("graphql-error-42"))
+                .andExpect(header().string("X-Correlation-ID", "graphql-error-42"));
     }
 
     @Test
