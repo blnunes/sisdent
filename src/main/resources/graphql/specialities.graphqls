@@ -1,0 +1,40 @@
+extend type Query {
+    specialities(
+        page: CataloguePageInput
+        filter: SpecialityFilterInput
+        """BCP 47 language tag. en, pt and nl language families are supported."""
+        locale: String
+    ): SpecialityPage!
+}
+
+input SpecialityFilterInput {
+    name: String
+    procedure: String
+}
+
+type SpecialityPage {
+    content: [Speciality!]!
+    page: Int!
+    size: Int!
+    totalElements: Int!
+    totalPages: Int!
+}
+
+type Speciality {
+    id: ID!
+    name: String!
+    displayName: String!
+    status: CatalogStatus!
+    procedures: [DentalProcedure!]!
+}
+
+type DentalProcedure {
+    id: ID!
+    name: String!
+    displayName: String!
+}
+
+enum CatalogStatus {
+    ACTIVE
+    INACTIVE
+}

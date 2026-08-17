@@ -15,14 +15,20 @@ describe('authInterceptor', () => {
   const router = { navigateByUrl: vi.fn(() => Promise.resolve(true)) };
 
   beforeEach(() => {
-    clearSystemUnavailable(); token.set('valid-token'); clearSession.mockClear(); router.navigateByUrl.mockClear();
+    clearSystemUnavailable();
+    token.set('valid-token');
+    clearSession.mockClear();
+    router.navigateByUrl.mockClear();
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(withInterceptors([authInterceptor])), provideHttpClientTesting(),
-        { provide: AuthService, useValue: { token, clearSession } }, { provide: Router, useValue: router },
+        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClientTesting(),
+        { provide: AuthService, useValue: { token, clearSession } },
+        { provide: Router, useValue: router },
       ],
     });
-    http = TestBed.inject(HttpClient); controller = TestBed.inject(HttpTestingController);
+    http = TestBed.inject(HttpClient);
+    controller = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => controller.verify());
@@ -39,15 +45,26 @@ describe('authInterceptor', () => {
 
   it('keeps an authenticated session for authorization errors', () => {
     http.get('/api/patients').subscribe({ error: () => undefined });
-    controller.expectOne('/api/patients').flush('forbidden', { status: 403, statusText: 'Forbidden' });
+    controller
+      .expectOne('/api/patients')
+      .flush('forbidden', { status: 403, statusText: 'Forbidden' });
 
     expect(clearSession).not.toHaveBeenCalled();
     expect(router.navigateByUrl).not.toHaveBeenCalled();
   });
 
+  it('preserves JWT authentication for GraphQL requests', () => {
+    http.post('/graphql', { query: 'query Countries { countries { page } }' }).subscribe();
+    const request = controller.expectOne('/graphql');
+    expect(request.request.headers.get('Authorization')).toBe('Bearer valid-token');
+    request.flush({ data: { countries: { page: 0 } } });
+  });
+
   it('moves to the unavailable screen when an authenticated API request cannot reach the server', () => {
     http.get('/api/patients').subscribe({ error: () => undefined });
-    controller.expectOne('/api/patients').flush('down', { status: 503, statusText: 'Service Unavailable' });
+    controller
+      .expectOne('/api/patients')
+      .flush('down', { status: 503, statusText: 'Service Unavailable' });
 
     expect(clearSession).toHaveBeenCalledOnce();
     expect(wasSystemUnavailable()).toBe(true);

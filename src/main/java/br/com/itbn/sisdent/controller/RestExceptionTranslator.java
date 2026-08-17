@@ -122,8 +122,9 @@ public class RestExceptionTranslator {
 
     @ExceptionHandler(Exception.class)
     ProblemDetail unexpected(Exception exception, Locale locale) {
+        // Do not log exception messages or stack traces here: they can contain request data or PII.
         LOGGER.error("unexpected_error transport={} status={} correlationId={}", transport(), 500,
-                CorrelationIds.current(), exception);
+                CorrelationIds.current());
         return problem(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR, locale, Map.of(), List.of());
     }
 
@@ -148,6 +149,9 @@ public class RestExceptionTranslator {
         problem.setTitle(message("title." + code.value(), status.getReasonPhrase(), locale));
         problem.setProperty("code", code.value());
         problem.setProperty("correlationId", CorrelationIds.current());
+        if (!metadata.isEmpty()) {
+            problem.setProperty("metadata", metadata);
+        }
         if (!violations.isEmpty()) {
             problem.setProperty("violations", violations);
         }
@@ -177,7 +181,7 @@ public class RestExceptionTranslator {
                 code.value(), category, transport, status.value(), CorrelationIds.current());
     }
 
-    private String transport() { return "/graphql".equals(MDC.get("requestPath")) ? "graphql" : "rest"; }
+    private String transport() { return "graphql".equals(MDC.get("transport")) ? "graphql" : "rest"; }
 
     private String categoryFor(ErrorCode code) {
         return switch (code) {

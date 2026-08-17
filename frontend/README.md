@@ -46,6 +46,21 @@ Password: admin
   Organization Administrators and `/practitioners` for organization-wide
   Organization Administrators, Managers, and Practitioner Managers.
 
+## GraphQL BFF boundary (Phase 7)
+
+REST remains the primary supported API. Angular uses `POST /graphql` only for the
+read-only country and speciality catalogue list flows. Components call typed domain
+services (`CountryCatalogGraphqlService` and `SpecialityCatalogGraphqlService`), never
+the GraphQL client or `HttpClient` directly. `GraphQlClientService` owns the common
+request/error envelope and maps `errors[].extensions.code` and `correlationId` into
+the safe frontend error model; the regular authentication interceptor attaches the
+JWT Bearer token.
+
+Country and speciality writes, speciality filter autocomplete, and all other flows
+remain REST in this phase. The UI sends typed page/filter variables and the active
+catalogue locale; it accepts `en`, `pt`, and `nl` plus valid regional variants, while
+the backend remains authoritative for validation and error codes.
+
 ## Validation
 
 ```bash

@@ -43,8 +43,9 @@ public class ApplicationGraphQlExceptionResolver extends DataFetcherExceptionRes
             return applicationError(applicationException, environment);
         }
         String field = environment.getField() == null ? "unknown" : environment.getField().getName();
+        // Do not log exception messages or stack traces: resolver failures can originate in clinical services.
         LOGGER.error("unexpected_error transport=graphql status=200 correlationId={} field={}",
-                CorrelationIds.current(), field, exception);
+                CorrelationIds.current(), field);
         return error(ErrorCode.INTERNAL_ERROR, Map.of(), environment.getLocale());
     }
 

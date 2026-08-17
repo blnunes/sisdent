@@ -36,7 +36,7 @@ class GraphQlIntegrationTests {
                         .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                { "query": "{ countries(page: 0, size: 1, sort: \\"name\\", locale: \\"pt-PT\\") { content { code name displayName continent } page size totalElements totalPages } }" }
+                                { "query": "{ countries(page: { page: 0, size: 1, sort: \\"name\\", direction: ASC }, locale: \\"pt-PT\\") { content { code name displayName continent } page size totalElements totalPages } }" }
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.errors").doesNotExist())
@@ -78,11 +78,10 @@ class GraphQlIntegrationTests {
 
     private static Stream<Arguments> invalidPaginationQueries() {
         return Stream.of(
-                Arguments.of("{ countries(page: -1) { page } }", "PAGINATION.INVALID_VALUES", "Pagination values are invalid."),
-                Arguments.of("{ countries(size: 0) { page } }", "PAGINATION.INVALID_VALUES", "Pagination values are invalid."),
-                Arguments.of("{ countries(size: 101) { page } }", "PAGINATION.INVALID_VALUES", "Pagination values are invalid."),
-                Arguments.of("{ countries(sort: \"unknown\") { page } }", "PAGINATION.UNSUPPORTED_SORT", "The requested sort field is not supported."),
-                Arguments.of("{ countries(direction: \"sideways\") { page } }", "PAGINATION.UNSUPPORTED_DIRECTION", "The requested sort direction is not supported."));
+                Arguments.of("{ countries(page: { page: -1 }) { page } }", "PAGINATION.INVALID_VALUES", "Pagination values are invalid."),
+                Arguments.of("{ countries(page: { size: 0 }) { page } }", "PAGINATION.INVALID_VALUES", "Pagination values are invalid."),
+                Arguments.of("{ countries(page: { size: 101 }) { page } }", "PAGINATION.INVALID_VALUES", "Pagination values are invalid."),
+                Arguments.of("{ countries(page: { sort: \"unknown\" }) { page } }", "PAGINATION.UNSUPPORTED_SORT", "The requested sort field is not supported."));
     }
 
     @Test
@@ -94,8 +93,9 @@ class GraphQlIntegrationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.countries").doesNotExist())
                 .andExpect(jsonPath("$.errors[0].message").value(
-                        "The requested locale \"zh-CN\" is not supported. Supported locales are: en, nl, pt."))
-                .andExpect(jsonPath("$.errors[0].extensions.code").value("CATALOG.UNSUPPORTED_LOCALE"));
+                        "The requested catalogue locale is not supported. Supported locales are: en, nl, pt."))
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("CATALOG.UNSUPPORTED_LOCALE"))
+                .andExpect(jsonPath("$.errors[0].extensions.metadata.supportedLocales").value("en, nl, pt"));
     }
 
     @Test
@@ -130,7 +130,7 @@ class GraphQlIntegrationTests {
         mockMvc.perform(post("/graphql")
                         .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"query\": \"{ countries(page: \\\"zero\\\") { page } }\" }"))
+                        .content("{ \"query\": \"{ countries(page: { page: \\\"zero\\\" }) { page } }\" }"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.errors[0].message").value("One or more fields are invalid."))
                 .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
@@ -142,10 +142,24 @@ class GraphQlIntegrationTests {
                         .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
                         .header("Accept-Language", "pt-PT")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"query\": \"{ countries(size: 101) { page } }\" }"))
+                        .content("{ \"query\": \"{ countries(page: { size: 101 }) { page } }\" }"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.errors[0].message").value("Os valores de paginação são inválidos."))
                 .andExpect(jsonPath("$.errors[0].extensions.code").value("PAGINATION.INVALID_VALUES"));
+    }
+
+    @Test
+    void platformAdministratorCanQueryLocalizedFilteredSpecialities() throws Exception {
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .header("X-Correlation-ID", "specialities-graphql-42")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ specialities(page: { page: 0, size: 10, sort: \\\"name\\\", direction: ASC }, filter: { name: \\\"a\\\" }, locale: \\\"nl-BE\\\") { content { id displayName procedures { displayName } } page totalElements } }\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.specialities.page").value(0))
+                .andExpect(jsonPath("$.data.specialities.content").isArray())
+                .andExpect(header().string("X-Correlation-ID", "specialities-graphql-42"));
     }
 
     private String emailLogin(String email, String password) throws Exception {

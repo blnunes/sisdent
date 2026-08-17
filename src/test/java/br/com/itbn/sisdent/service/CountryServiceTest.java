@@ -1,6 +1,9 @@
 package br.com.itbn.sisdent.service;
 
 import br.com.itbn.sisdent.dto.CountryRequest;
+import br.com.itbn.sisdent.error.ErrorCode;
+import br.com.itbn.sisdent.error.ResourceNotFoundException;
+import br.com.itbn.sisdent.error.ValidationException;
 import br.com.itbn.sisdent.model.Continent;
 import br.com.itbn.sisdent.model.Country;
 import br.com.itbn.sisdent.localization.CatalogNameLocalizer;
@@ -11,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
@@ -82,8 +84,23 @@ class CountryServiceTest {
         when(countries.existsById(2L)).thenReturn(false);
         CountryRequest request = new CountryRequest("Portugal", "PT", Continent.EUROPE);
 
-        assertThatThrownBy(() -> service.update(1L, request, Locale.ENGLISH)).isInstanceOf(ResponseStatusException.class);
-        assertThatThrownBy(() -> service.delete(2L)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> service.update(1L, request, Locale.ENGLISH))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .extracting(exception -> ((ResourceNotFoundException) exception).errorCode())
+                .isEqualTo(ErrorCode.RESOURCE_NOT_FOUND);
+        assertThatThrownBy(() -> service.delete(2L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .extracting(exception -> ((ResourceNotFoundException) exception).errorCode())
+                .isEqualTo(ErrorCode.RESOURCE_NOT_FOUND);
+    }
+
+    @Test
+    void rejectsUnsupportedCatalogueLocaleWithoutPassingItToTheLocalizer() {
+        assertThatThrownBy(() -> service.findPage(new br.com.itbn.sisdent.pagination.PageQuery(0, 10, "name", "asc"),
+                Locale.forLanguageTag("zh-CN")))
+                .isInstanceOf(ValidationException.class)
+                .extracting(exception -> ((ValidationException) exception).errorCode())
+                .isEqualTo(ErrorCode.CATALOG_UNSUPPORTED_LOCALE);
     }
 
     private Country country() {

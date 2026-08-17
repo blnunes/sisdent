@@ -21,41 +21,41 @@ class CountryQueryControllerTest {
     @Test
     void delegatesPaginationAndRequestedLocaleToCountryService() {
         CountryService service = mock(CountryService.class);
-        CountryQueryController controller = new CountryQueryController(service);
+        CountryQueryController controller = new CountryQueryController(service, new CatalogueLocaleArgument());
         PageResponse<CountryResponse> expected = new PageResponse<>(List.of(), 1, 5, 0, 0);
         when(service.findPage(any(), any())).thenReturn(expected);
 
-        PageResponse<CountryResponse> actual = controller.countries(1, 5, "code", "desc", "pt-PT");
+        PageResponse<CountryResponse> actual = controller.countries(
+                new CataloguePageInput(1, 5, "code", SortDirection.DESC), "pt-PT");
 
         assertThat(actual).isSameAs(expected);
-        verify(service).findPage(new br.com.itbn.sisdent.pagination.PageQuery(1, 5, "code", "desc"),
+        verify(service).findPage(new br.com.itbn.sisdent.pagination.PageQuery(1, 5, "code", "DESC"),
                 Locale.forLanguageTag("pt-PT"));
     }
 
     @Test
-    void defaultsBlankLocaleToEnglish() {
+    void rejectsBlankLocaleWithTheStableUnsupportedLocaleCode() {
         CountryService service = mock(CountryService.class);
-        CountryQueryController controller = new CountryQueryController(service);
-        when(service.findPage(any(), any())).thenReturn(new PageResponse<>(List.of(), 0, 10, 0, 0));
-
-        controller.countries(null, null, null, null, " ");
-
-        verify(service).findPage(any(), org.mockito.ArgumentMatchers.eq(Locale.ENGLISH));
+        CountryQueryController controller = new CountryQueryController(service, new CatalogueLocaleArgument());
+        assertThatThrownBy(() -> controller.countries(null, " "))
+                .isInstanceOf(ValidationException.class)
+                .extracting(exception -> ((ValidationException) exception).errorCode())
+                .isEqualTo(ErrorCode.CATALOG_UNSUPPORTED_LOCALE);
     }
 
     @Test
     void rejectsAnUnsupportedLocaleWithItsStableErrorCode() {
         CountryService service = mock(CountryService.class);
-        CountryQueryController controller = new CountryQueryController(service);
+        CountryQueryController controller = new CountryQueryController(service, new CatalogueLocaleArgument());
 
-        assertThatThrownBy(() -> controller.countries(0, 10, "name", "asc", "zh-CN"))
+        assertThatThrownBy(() -> controller.countries(new CataloguePageInput(0, 10, "name", SortDirection.ASC), "zh-CN"))
                 .isInstanceOf(ValidationException.class)
                 .satisfies(throwable -> {
                     ValidationException exception = (ValidationException) throwable;
                     assertThat(exception.errorCode()).isEqualTo(ErrorCode.CATALOG_UNSUPPORTED_LOCALE);
                     assertThat(exception.getMessage()).isEqualTo("CATALOG.UNSUPPORTED_LOCALE");
-                    assertThat(exception.safeMetadata()).containsExactlyInAnyOrderEntriesOf(
-                            java.util.Map.of("locale", "zh-CN", "supportedLocales", "en, nl, pt"));
+                    assertThat(exception.safeMetadata())
+                            .containsExactlyInAnyOrderEntriesOf(java.util.Map.of("supportedLocales", "en, nl, pt"));
                 });
     }
 }

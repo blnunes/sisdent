@@ -21,6 +21,7 @@ class RequestCorrelationFilterTest {
 
         assertThat(response.getHeader(CorrelationIds.HEADER)).isEqualTo("edge-42.trace_1");
         assertThat(MDC.get(CorrelationIds.MDC_KEY)).isNull();
+        assertThat(MDC.get("transport")).isNull();
     }
 
     @Test
@@ -46,6 +47,22 @@ class RequestCorrelationFilterTest {
                 .matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
         assertThat(registry.get("sisdent.http.request.count").counter().getId().getTags())
                 .allSatisfy(tag -> assertThat(tag.getValue()).doesNotContain("secret-token", "private", "password"));
+    }
+
+    @Test
+    void clearsAllRequestMdcValuesWhenTheFilterChainFails() {
+        RequestCorrelationFilter filter = new RequestCorrelationFilter(new SimpleMeterRegistry());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> filter.doFilter(
+                        request(), new MockHttpServletResponse(), (ignoredRequest, ignoredResponse) -> {
+                            assertThat(MDC.get("transport")).isEqualTo("rest");
+                            throw new jakarta.servlet.ServletException("failure");
+                        }))
+                .isInstanceOf(jakarta.servlet.ServletException.class)
+                .hasMessage("failure");
+
+        assertThat(MDC.get(CorrelationIds.MDC_KEY)).isNull();
+        assertThat(MDC.get("transport")).isNull();
     }
 
     private MockHttpServletRequest request() { return new MockHttpServletRequest("POST", "/api/patients/123"); }

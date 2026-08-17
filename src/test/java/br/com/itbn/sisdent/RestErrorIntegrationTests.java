@@ -61,6 +61,20 @@ class RestErrorIntegrationTests {
     }
 
     @Test
+    void unsupportedCatalogueLocaleUsesTheRequestLocaleForTheErrorMessage() throws Exception {
+        mockMvc.perform(get("/api/countries").header("Authorization", bearer(adminToken()))
+                        .header("X-Correlation-ID", "locale-rest-42")
+                        .header("Accept-Language", "zh-CN"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("CATALOG.UNSUPPORTED_LOCALE"))
+                .andExpect(jsonPath("$.detail").value(
+                        "The requested catalogue locale is not supported. Supported locales are: en, nl, pt."))
+                .andExpect(jsonPath("$.metadata.supportedLocales").value("en, nl, pt"))
+                .andExpect(jsonPath("$.correlationId").value("locale-rest-42"))
+                .andExpect(header().string("X-Correlation-ID", "locale-rest-42"));
+    }
+
+    @Test
     void restErrorUsesTheSameCorrelationIdAsItsResponseHeader() throws Exception {
         mockMvc.perform(get("/api/countries").param("size", "101")
                         .header("X-Correlation-ID", "rest-error-42")

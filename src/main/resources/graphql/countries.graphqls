@@ -1,15 +1,25 @@
 type Query {
     """A paginated platform country catalogue. Requires ROLE_PLATFORM_ADMIN."""
     countries(
-        page: Int
-        size: Int
-        sort: String
-        direction: String
+        page: CataloguePageInput
         """BCP 47 language tag, for example pt-PT or nl. Defaults to en."""
         locale: String
     ): CountryPage!
     """Looks up an existing country catalogue entry by its ISO code."""
     country(code: String!, locale: String): Country!
+}
+
+"""The transport-neutral pagination and ordering contract for catalogue queries."""
+input CataloguePageInput {
+    page: Int
+    size: Int
+    sort: String
+    direction: SortDirection
+}
+
+enum SortDirection {
+    ASC
+    DESC
 }
 
 type CountryPage {

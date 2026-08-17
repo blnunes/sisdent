@@ -29,14 +29,15 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         String correlationId = CorrelationIds.from(request.getHeader(CorrelationIds.HEADER));
         long startedAt = System.nanoTime();
         MDC.put(CorrelationIds.MDC_KEY, correlationId);
-        MDC.put("requestPath", request.getRequestURI());
+        // Keep only a bounded, normalized value in MDC. Request URIs can contain identifiers.
+        MDC.put("transport", transport(request));
         response.setHeader(CorrelationIds.HEADER, correlationId);
         try {
             chain.doFilter(request, response);
         } finally {
             long duration = System.nanoTime() - startedAt;
             String route = route(request);
-            String transport = "/graphql".equals(request.getRequestURI()) ? "graphql" : "rest";
+            String transport = transport(request);
             String status = Integer.toString(response.getStatus());
             Timer.builder("sisdent.http.request.duration").description("HTTP request duration")
                     .tags("transport", transport, "route", route, "status", status).register(meterRegistry)
@@ -47,8 +48,12 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
                     request.getMethod(), route, status, TimeUnit.NANOSECONDS.toMillis(duration), correlationId);
             response.setHeader(CorrelationIds.HEADER, correlationId);
             MDC.remove(CorrelationIds.MDC_KEY);
-            MDC.remove("requestPath");
+            MDC.remove("transport");
         }
+    }
+
+    private String transport(HttpServletRequest request) {
+        return "/graphql".equals(request.getRequestURI()) ? "graphql" : "rest";
     }
 
     private String route(HttpServletRequest request) {
