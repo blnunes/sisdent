@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -15,6 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest @AutoConfigureMockMvc @Transactional
+@ActiveProfiles("test")
 class Phase5ClinicalRecordsIntegrationTests {
  @Autowired MockMvc mvc; @Autowired PersonRepository persons; @Autowired AccountRepository accounts; @Autowired OrganizationRepository organizations; @Autowired ClinicUnitRepository clinics; @Autowired MembershipRepository memberships; @Autowired PatientRepository patients; @Autowired PatientOrganizationLinkRepository links; @Autowired PasswordEncoder encoder; @Autowired JsonMapper json;
  @Test void preservesFinalEncounterAndVoidReplaceOdontogramHistory() throws Exception {

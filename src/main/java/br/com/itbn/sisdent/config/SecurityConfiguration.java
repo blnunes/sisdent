@@ -1,7 +1,6 @@
 package br.com.itbn.sisdent.config;
 
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
-import com.nimbusds.jose.proc.SecurityContext;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,6 +8,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,7 +40,7 @@ public class SecurityConfiguration {
         http
                 // This API is stateless and uses JWT Bearer tokens for auth, so CSRF protection is not required.
                 // Keep CSRF disabled only while authentication relies on Authorization headers rather than cookies/sessions.
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
@@ -60,6 +61,10 @@ public class SecurityConfiguration {
                                 "/api/administrative-divisions/**", "/api/states/**",
                                 "/api/platform/catalog-translations/**")
                         .hasAuthority("ROLE_PLATFORM_ADMIN")
+                        // GraphQL is an additional transport for platform catalogues. Individual
+                        // resolvers must still delegate to services, where business rules live.
+                        .requestMatchers("/graphql")
+                        .hasAuthority("ROLE_PLATFORM_ADMIN")
                         // Single-page application shell, static assets, and client-side routes.
                         // The SPA bundle contains no secrets; data authorization is enforced on
                         // the /api/** matchers above. Client-side route protection is handled by
@@ -75,7 +80,7 @@ public class SecurityConfiguration {
                 .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
                 .addFilterAfter(accountStateJwtFilter, BearerTokenAuthenticationFilter.class)
-                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+                .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
         return http.build();
     }
 
@@ -103,7 +108,7 @@ public class SecurityConfiguration {
 
     @Bean
     JwtEncoder jwtEncoder(SecretKey secretKey) {
-        return new NimbusJwtEncoder(new ImmutableSecret<SecurityContext>(secretKey));
+        return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey));
     }
 
     @Bean
