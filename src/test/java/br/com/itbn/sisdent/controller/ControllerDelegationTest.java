@@ -10,8 +10,6 @@ import br.com.itbn.sisdent.service.PractitionerService;
 import br.com.itbn.sisdent.service.SessionService;
 import br.com.itbn.sisdent.service.SpecialityService;
 import org.junit.jupiter.api.Test;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.OptimisticLockingFailureException;
 
 import java.util.UUID;
 import java.util.Locale;
@@ -82,16 +80,6 @@ class ControllerDelegationTest {
         verify(patients).search(any(), any(), any(), any());
         verify(patients).filterOptions(organization, clinic, "name", "Ana");
         verify(patients).delete(organization, clinic, patient);
-    }
-
-    @Test
-    void mapsDatabaseConflictsToConflictProblemDetails() {
-        DatabaseConflictHandler handler = new DatabaseConflictHandler();
-        assertThat(handler.handleDataIntegrityViolation().getStatus()).isEqualTo(409);
-        assertThat(handler.handleOptimisticLockingFailure().getStatus()).isEqualTo(409);
-        assertThat(new AuthorizationProblemHandler().handleAccessDenied(
-                new org.springframework.security.access.AccessDeniedException("forbidden")).getStatus()).isEqualTo(403);
-        assertThat(new SchedulingProblemHandler().conflict().getStatus()).isEqualTo(409);
     }
 
     @Test

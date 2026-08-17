@@ -98,6 +98,41 @@ class GraphQlIntegrationTests {
     }
 
     @Test
+    void missingCountryUsesTheSharedNotFoundErrorContract() throws Exception {
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ country(code: \\\"ZZ\\\") { code } }\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.country").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].message").value("The requested country is not available."))
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("CATALOG.UNKNOWN_COUNTRY"));
+    }
+
+    @Test
+    void malformedGraphQlDocumentUsesASafeLocalizedError() throws Exception {
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ countries( { page } }\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors[0].message").value(
+                        "The request body is malformed or cannot be read."))
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("REQUEST.MALFORMED"));
+    }
+
+    @Test
+    void invalidGraphQlArgumentUsesASafeValidationError() throws Exception {
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ countries(page: \\\"zero\\\") { page } }\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors[0].message").value("One or more fields are invalid."))
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
+    }
+
+    @Test
     void paginationErrorUsesTheRequestLocaleForItsFriendlyMessage() throws Exception {
         mockMvc.perform(post("/graphql")
                         .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))

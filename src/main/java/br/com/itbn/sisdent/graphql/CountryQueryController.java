@@ -35,6 +35,15 @@ public class CountryQueryController {
             @Argument String sort,
             @Argument String direction,
             @Argument String locale) {
+        return countryService.findPage(new PageQuery(page, size, sort, direction), requestedLocale(locale));
+    }
+
+    @QueryMapping
+    public CountryResponse country(@Argument String code, @Argument String locale) {
+        return countryService.findByCode(code, requestedLocale(locale));
+    }
+
+    private Locale requestedLocale(String locale) {
         Locale requestedLocale = locale == null || locale.isBlank()
                 ? Locale.ENGLISH
                 : Locale.forLanguageTag(locale);
@@ -42,6 +51,6 @@ public class CountryQueryController {
             throw new ValidationException(ErrorCode.CATALOG_UNSUPPORTED_LOCALE,
                     Map.of("locale", locale, "supportedLocales", SupportedCatalogLocale.supportedLanguageTags()));
         }
-        return countryService.findPage(new PageQuery(page, size, sort, direction), requestedLocale);
+        return requestedLocale;
     }
 }

@@ -27,20 +27,27 @@ Expected application failures use the transport-neutral types in
 business or validation failure. Clients must branch on the error code, not on
 the human-readable message.
 
-GraphQL translates `ApplicationException` instances through
-`graphql/ApplicationGraphQlExceptionResolver`. Execution failures return a
-friendly message from the application message bundle and the stable
-`errors[].extensions.code`. The first migrated shared concern is pagination:
-invalid values, an unsupported sort field, and an unsupported direction use
-the `PAGINATION.*` codes. The country catalogue also rejects unsupported
-locales (supported languages: `en`, `nl`, and `pt`) with
-`CATALOG.UNSUPPORTED_LOCALE`, rather than silently applying a fallback.
+REST translates failures in `controller/RestExceptionTranslator` to RFC 9457
+responses. Its `code` property is stable, while `detail` and validation
+violations are localized. Authentication and authorization that security
+rejects before controller execution remain HTTP 401/403 problem responses.
+No correlation ID is currently part of either public error contract.
 
-REST's existing error handlers and the remaining service exceptions are legacy
-paths to be migrated incrementally to this same model. Correlation IDs,
-structured error logging, and a unified RFC 9457 REST response are the next
-observability/error-handling slice; they are not yet part of the public
-contract.
+GraphQL uses `graphql/ApplicationGraphQlExceptionResolver` as its single
+public error translator. It covers both execution exceptions and parse or
+validation errors that happen before data fetching. Execution failures retain
+the GraphQL `errors` envelope; every translated error has a friendly localized
+`message` and stable `errors[].extensions.code`. Explicitly safe application
+metadata is exposed only as `errors[].extensions.metadata`; exception messages,
+causes, SQL details, and request data are never exposed. Pagination uses the
+`PAGINATION.*` codes, and unsupported locales use
+`CATALOG.UNSUPPORTED_LOCALE`.
+
+Some pre-existing service methods still throw Spring HTTP exceptions. They are
+legacy REST-only paths and are safely translated by the REST adapter, but must
+be converted to `ApplicationException` before being exposed through another
+transport. The country lookup used by GraphQL has been migrated and returns
+`CATALOG.UNKNOWN_COUNTRY` when absent.
 
 ## GraphQL learning example
 

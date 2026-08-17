@@ -49,9 +49,11 @@ class Phase4SchedulingIntegrationTests {
         String appointment = mvc.perform(post("/api/organizations/{organizationId}/appointments", organization.getGlobalId())
                         .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(request))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
-        String appointmentId = json.readTree(appointment).get("globalId").asText();
+        String appointmentId = json.readTree(appointment).get("globalId").asString();
         mvc.perform(post("/api/organizations/{organizationId}/appointments", organization.getGlobalId()).header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON).content(request))
-                .andExpect(status().isConflict()).andExpect(jsonPath("$.type").value("urn:sisdent:scheduling-conflict"));
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.type").value("urn:sisdent:error:scheduling.practitioner_unavailable"))
+                .andExpect(jsonPath("$.code").value("SCHEDULING.PRACTITIONER_UNAVAILABLE"));
         mvc.perform(post("/api/organizations/{organizationId}/appointments/{id}/complete", organization.getGlobalId(), appointmentId).param("clinicUnitId", clinic.getGlobalId().toString()).header("Authorization", "Bearer " + token)).andExpect(status().isOk());
         mvc.perform(post("/api/organizations/{organizationId}/appointments/{id}/cancel", organization.getGlobalId(), appointmentId).param("clinicUnitId", clinic.getGlobalId().toString()).header("Authorization", "Bearer " + token)).andExpect(status().isConflict());
     }

@@ -53,6 +53,11 @@ public class CountryService {
                 .orElseThrow(() -> new UnknownCountryException(code));
     }
 
+    @Transactional(readOnly = true)
+    public CountryResponse findByCode(String code, Locale locale) {
+        return toResponse(requireByCode(code), locale);
+    }
+
     @Transactional
     public CountryResponse create(CountryRequest request, Locale locale) {
         return toResponse(countryRepository.saveAndFlush(

@@ -8,6 +8,8 @@ type Query {
         """BCP 47 language tag, for example pt-PT or nl. Defaults to en."""
         locale: String
     ): CountryPage!
+    """Looks up an existing country catalogue entry by its ISO code."""
+    country(code: String!, locale: String): Country!
 }
 
 type CountryPage {

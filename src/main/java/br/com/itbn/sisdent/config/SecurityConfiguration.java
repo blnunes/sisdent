@@ -26,6 +26,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import br.com.itbn.sisdent.controller.RestExceptionTranslator;
 
 import java.nio.charset.StandardCharsets;
 
@@ -36,7 +37,8 @@ public class SecurityConfiguration {
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             JwtAuthenticationConverter jwtAuthenticationConverter,
-            AccountStateJwtFilter accountStateJwtFilter) {
+            AccountStateJwtFilter accountStateJwtFilter,
+            RestExceptionTranslator exceptionTranslator) {
         http
                 // This API is stateless and uses JWT Bearer tokens for auth, so CSRF protection is not required.
                 // Keep CSRF disabled only while authentication relies on Authorization headers rather than cookies/sessions.
@@ -78,7 +80,11 @@ public class SecurityConfiguration {
                         .permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
+                        .authenticationEntryPoint((request, response, exception) -> exceptionTranslator.authentication(request, response)))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, exception) -> exceptionTranslator.authentication(request, response))
+                        .accessDeniedHandler((request, response, exception) -> exceptionTranslator.authorization(request, response)))
                 .addFilterAfter(accountStateJwtFilter, BearerTokenAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
         return http.build();
