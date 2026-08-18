@@ -68,6 +68,7 @@ public class CountryService {
 
     @Transactional
     public CountryResponse create(CountryRequest request, Locale locale) {
+        authorization.requirePlatformAdministrator();
         validateCatalogLocale(locale);
         return toResponse(countryRepository.saveAndFlush(
                 new Country(request.name(), request.code(), request.continent())), locale);
@@ -75,6 +76,7 @@ public class CountryService {
 
     @Transactional
     public CountryResponse update(Long id, CountryRequest request, Locale locale) {
+        authorization.requirePlatformAdministrator();
         validateCatalogLocale(locale);
         Country country = countryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND));
@@ -84,6 +86,7 @@ public class CountryService {
 
     @Transactional
     public void delete(Long id) {
+        authorization.requirePlatformAdministrator();
         if (!countryRepository.existsById(id)) throw new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND);
         countryRepository.deleteById(id);
     }

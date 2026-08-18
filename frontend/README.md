@@ -46,20 +46,19 @@ Password: admin
   Organization Administrators and `/practitioners` for organization-wide
   Organization Administrators, Managers, and Practitioner Managers.
 
-## GraphQL BFF boundary (Phase 7)
+## GraphQL BFF boundary (Phase 10)
 
-REST remains the primary supported API. Angular uses `POST /graphql` only for the
-read-only country and speciality catalogue list flows. Components call typed domain
-services (`CountryCatalogGraphqlService` and `SpecialityCatalogGraphqlService`), never
-the GraphQL client or `HttpClient` directly. `GraphQlClientService` owns the common
-request/error envelope and maps `errors[].extensions.code` and `correlationId` into
-the safe frontend error model; the regular authentication interceptor attaches the
-JWT Bearer token.
+GraphQL is the primary frontend API for migrated flows. Components call typed
+domain services, never the GraphQL client directly. `GraphQlClientService` owns
+the common request/error envelope and maps `errors[].extensions.code` and
+`correlationId` into the safe frontend error model; the regular authentication
+interceptor attaches the JWT Bearer token.
 
-Country and speciality writes, speciality filter autocomplete, and all other flows
-remain REST in this phase. The UI sends typed page/filter variables and the active
-catalogue locale; it accepts `en`, `pt`, and `nl` plus valid regional variants, while
-the backend remains authoritative for validation and error codes.
+Country and speciality reads/writes, clinic-unit reads/creation, practitioner
+workspace reads/writes, and patient edits have GraphQL adapters. Authentication,
+session bootstrap, health checks, and every workflow without a verified GraphQL
+replacement remain HTTP. The full route decision and deprecation window are in
+[`docs/REST_RETIREMENT_INVENTORY.md`](../docs/REST_RETIREMENT_INVENTORY.md).
 
 ## Validation
 

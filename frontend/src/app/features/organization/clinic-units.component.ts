@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { AccountApiService } from '../../core/account-api.service';
+import { OrganizationMutationGraphqlService } from '../../core/organization-mutation-graphql.service';
 import { OrganizationReadGraphqlService } from '../../core/organization-read-graphql.service';
 import { AuthService } from '../../core/auth.service';
 import { ClinicUnit } from '../../core/models';
@@ -21,7 +21,8 @@ import { ModuleNavigationComponent } from '../../core/layout/module-navigation/m
   templateUrl: './clinic-units.component.html', styleUrl: './organization-workspace.component.scss',
 })
 export class ClinicUnitsComponent {
-  readonly auth = inject(AuthService); private readonly api = inject(AccountApiService);
+  readonly auth = inject(AuthService);
+  private readonly mutations = inject(OrganizationMutationGraphqlService);
   private readonly reads = inject(OrganizationReadGraphqlService);
   private readonly forms = inject(FormBuilder); private readonly translate = inject(TranslateService);
   readonly units = signal<ClinicUnit[]>([]); readonly loading = signal(true); readonly error = signal(''); readonly saving = signal(false);
@@ -38,6 +39,6 @@ export class ClinicUnitsComponent {
     const membership = this.auth.activeMembership();
     if (!membership || this.form.invalid || this.saving()) return;
     this.saving.set(true);
-    this.api.createClinicUnit(membership.organizationId, this.form.getRawValue()).subscribe({ next: () => { this.form.reset(); this.saving.set(false); this.load(); }, error: () => { this.error.set(this.translate.instant('ORGANIZATION.ERROR.CREATE_UNIT')); this.saving.set(false); } });
+    this.mutations.createClinicUnit(membership.organizationId, this.form.getRawValue()).subscribe({ next: () => { this.form.reset(); this.saving.set(false); this.load(); }, error: () => { this.error.set(this.translate.instant('ORGANIZATION.ERROR.CREATE_UNIT')); this.saving.set(false); } });
   }
 }

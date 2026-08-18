@@ -96,6 +96,7 @@ public class SpecialityService {
 
     @Transactional
     public SpecialityResponse create(SpecialityRequest request, Locale locale) {
+        authorization.requirePlatformAdministrator();
         validateProcedureNames(request.procedures());
         if (request.procedures().stream().anyMatch(procedure -> procedure.id() != null)) {
             throw new ResponseStatusException(
@@ -117,6 +118,7 @@ public class SpecialityService {
 
     @Transactional
     public SpecialityResponse update(Long specialityId, SpecialityRequest request, Locale locale) {
+        authorization.requirePlatformAdministrator();
         validateProcedureNames(request.procedures());
         Speciality speciality = specialityRepository.findById(specialityId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -157,6 +159,7 @@ public class SpecialityService {
 
     @Transactional
     public void delete(Long id) {
+        authorization.requirePlatformAdministrator();
         Speciality speciality = specialityRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Speciality not found"));
         speciality.deactivate();

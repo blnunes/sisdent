@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountApiService, PractitionerWrite } from '../../core/account-api.service';
+import { OrganizationMutationGraphqlService } from '../../core/organization-mutation-graphql.service';
 import { OrganizationReadGraphqlService } from '../../core/organization-read-graphql.service';
 import { AuthService } from '../../core/auth.service';
 import { Practitioner } from '../../core/models';
@@ -28,8 +29,8 @@ export class PractitionersComponent {
 
 @Component({ selector: 'app-practitioner-dialog', standalone: true, imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatIconModule, MatInputModule, TranslatePipe], templateUrl: './practitioner-dialog.component.html' })
 export class PractitionerDialog {
-  readonly practitioner = inject<Practitioner | undefined>(MAT_DIALOG_DATA); private readonly ref = inject(MatDialogRef<PractitionerDialog, boolean>); private readonly api = inject(AccountApiService); private readonly auth = inject(AuthService); private readonly forms = inject(FormBuilder); private readonly translate = inject(TranslateService); readonly saving = signal(false); readonly error = signal('');
+  readonly practitioner = inject<Practitioner | undefined>(MAT_DIALOG_DATA); private readonly ref = inject(MatDialogRef<PractitionerDialog, boolean>); private readonly mutations = inject(OrganizationMutationGraphqlService); private readonly auth = inject(AuthService); private readonly forms = inject(FormBuilder); private readonly translate = inject(TranslateService); readonly saving = signal(false); readonly error = signal('');
   readonly form = this.forms.nonNullable.group({ displayName: [this.practitioner?.displayName ?? '', [Validators.required, Validators.maxLength(255)]], registrationNumber: [this.practitioner?.registrationNumber ?? '', Validators.maxLength(128)] });
-  save(): void { const membership = this.auth.activeMembership(); if (!membership || this.form.invalid || this.saving()) return; this.saving.set(true); const request: PractitionerWrite = { ...this.form.getRawValue(), specialityIds: this.practitioner?.specialityIds ?? [], accountId: this.practitioner?.accountId ?? null }; const response = this.practitioner ? this.api.updatePractitioner(membership.organizationId, this.practitioner.globalId, request) : this.api.createPractitioner(membership.organizationId, request); response.subscribe({ next: () => this.ref.close(true), error: () => { this.error.set(this.translate.instant('ORGANIZATION.ERROR.SAVE_PRACTITIONER')); this.saving.set(false); } }); }
+  save(): void { const membership = this.auth.activeMembership(); if (!membership || this.form.invalid || this.saving()) return; this.saving.set(true); const request: PractitionerWrite = { ...this.form.getRawValue(), specialityIds: this.practitioner?.specialityIds ?? [], accountId: this.practitioner?.accountId ?? null }; this.mutations.savePractitioner(membership.organizationId, this.practitioner?.globalId, request).subscribe({ next: () => this.ref.close(true), error: () => { this.error.set(this.translate.instant('ORGANIZATION.ERROR.SAVE_PRACTITIONER')); this.saving.set(false); } }); }
   close(): void { this.ref.close(false); }
 }

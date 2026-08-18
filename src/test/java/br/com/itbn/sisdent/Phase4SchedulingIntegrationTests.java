@@ -36,7 +36,7 @@ class Phase4SchedulingIntegrationTests {
                         .header("Authorization", "Bearer " + token).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"displayName\":\"Dr. Scope\",\"specialityIds\":[]}"))
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
-        String practitionerId = json.readTree(practitioner).get("globalId").asText();
+        String practitionerId = json.readTree(practitioner).get("globalId").asString();
         String request = """
                 {"clinicUnitId":"%s","patientId":"%s","practitionerId":"%s",
                  "startAt":"2030-01-01T09:00:00Z","endAt":"2030-01-01T10:00:00Z","schedulingTimezone":"Europe/Lisbon"}
@@ -57,5 +57,5 @@ class Phase4SchedulingIntegrationTests {
         mvc.perform(post("/api/organizations/{organizationId}/appointments/{id}/complete", organization.getGlobalId(), appointmentId).param("clinicUnitId", clinic.getGlobalId().toString()).header("Authorization", "Bearer " + token)).andExpect(status().isOk());
         mvc.perform(post("/api/organizations/{organizationId}/appointments/{id}/cancel", organization.getGlobalId(), appointmentId).param("clinicUnitId", clinic.getGlobalId().toString()).header("Authorization", "Bearer " + token)).andExpect(status().isConflict());
     }
-    private String login() throws Exception { String body=mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content("{\"email\":\"scheduler@example.com\",\"password\":\"phase4-password\"}")).andReturn().getResponse().getContentAsString(); return json.readTree(body).get("accessToken").asText(); }
+    private String login() throws Exception { String body=mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON).content("{\"email\":\"scheduler@example.com\",\"password\":\"phase4-password\"}")).andReturn().getResponse().getContentAsString(); return json.readTree(body).get("accessToken").asString(); }
 }

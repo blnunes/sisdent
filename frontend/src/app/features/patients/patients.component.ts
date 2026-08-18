@@ -14,6 +14,7 @@ import {
   ResourceRecord,
 } from '../resource-support/resource-list.controller';
 import { PatientApiService } from './patient-api.service';
+import { PatientMutationGraphqlService } from './patient-mutation-graphql.service';
 import {
   PATIENT_FIELDS,
   PatientFormValues,
@@ -101,6 +102,7 @@ export const PATIENT_FILTERS: readonly FilterDefinition[] = [
 })
 export class PatientsComponent extends ResourceListController {
   private readonly api = inject(PatientApiService);
+  private readonly mutations = inject(PatientMutationGraphqlService);
   readonly activeKey = 'patients';
   readonly title = 'MODULES.PATIENTS';
   readonly description = 'MODULES.PATIENTS_DESCRIPTION';
@@ -261,7 +263,7 @@ export class PatientsComponent extends ResourceListController {
             const membership = this.auth.activeMembership();
             if (!membership) return;
             const request = record
-              ? this.api.update(membership, String(record['globalId']), patientRequest(values))
+              ? this.mutations.update(membership, String(record['globalId']), patientRequest(values) as Record<string, unknown>)
               : this.api.create(membership, patientRequest(values));
             request.subscribe({ next: () => this.load(), error: () => this.error.set(true) });
           }),

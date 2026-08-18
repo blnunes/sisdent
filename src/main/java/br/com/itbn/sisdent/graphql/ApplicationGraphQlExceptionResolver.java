@@ -22,6 +22,9 @@ import org.springframework.graphql.support.DefaultExecutionGraphQlResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.validation.BindException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import jakarta.validation.ConstraintViolationException;
 import reactor.core.publisher.Mono;
 
 /** Translates expected application errors into the public GraphQL error contract. */
@@ -49,6 +52,9 @@ public class ApplicationGraphQlExceptionResolver extends DataFetcherExceptionRes
         }
         if (exception instanceof ResponseStatusException responseStatusException) {
             return error(errorCode(responseStatusException), Map.of(), environment.getLocale());
+        }
+        if (exception instanceof ConstraintViolationException || exception instanceof BindException) {
+            return error(ErrorCode.VALIDATION_FAILED, Map.of(), environment.getLocale());
         }
         String field = environment.getField() == null ? "unknown" : environment.getField().getName();
         // Do not log exception messages or stack traces: resolver failures can originate in clinical services.

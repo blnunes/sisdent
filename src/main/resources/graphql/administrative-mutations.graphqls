@@ -1,0 +1,39 @@
+type Mutation {
+    createCountry(input: CountryMutationInput!, locale: String): Country!
+    updateCountry(id: ID!, input: CountryMutationInput!, locale: String): Country!
+    createSpeciality(input: SpecialityMutationInput!, locale: String): Speciality!
+    updateSpeciality(id: ID!, input: SpecialityMutationInput!, locale: String): Speciality!
+    createClinicUnit(organizationId: ID!, input: ClinicUnitMutationInput!): ClinicUnit!
+    createPractitioner(organizationId: ID!, input: PractitionerMutationInput!): Practitioner!
+    updatePractitioner(organizationId: ID!, practitionerId: ID!, input: PractitionerMutationInput!): Practitioner!
+    updatePatient(organizationId: ID!, clinicUnitId: ID, patientId: ID!, input: PatientUpdateMutationInput!): PatientMutationResult!
+}
+
+input CountryMutationInput { name: String!, code: String!, continent: Continent! }
+input CatalogTranslationMutationInput { locale: String!, value: String! }
+input DentalProcedureMutationInput { id: ID, name: String!, translations: [CatalogTranslationMutationInput!] }
+input SpecialityMutationInput {
+    name: String!
+    procedures: [DentalProcedureMutationInput!]!
+    translations: [CatalogTranslationMutationInput!]
+}
+input ClinicUnitMutationInput { name: String! }
+input PractitionerMutationInput {
+    displayName: String!
+    registrationNumber: String
+    accountId: ID
+    specialityIds: [ID!]!
+}
+input PatientAddressMutationInput {
+    street: String!, district: String, city: String!, additionalInfo: String, block: String, postalCode: String!
+    administrativeDivision: AdministrativeDivisionMutationInput, countryCode: String!
+}
+input AdministrativeDivisionMutationInput { name: String!, code: String!, type: String! }
+input PatientUpdateMutationInput {
+    name: String!, birthDate: String!, active: Boolean!, gender: Gender!, taxId: String,
+    identificationType: DocumentType!, identificationNumber: String!, documentIssuerCountryCode: String!,
+    nationalityCode: String!, addressId: ID, address: PatientAddressMutationInput, specialityIds: [ID!]!
+}
+type PatientMutationResult { globalId: ID!, name: String!, active: Boolean! }
+enum Gender { FEMALE MALE OTHER }
+enum DocumentType { NATIONAL_ID_CARD PASSPORT }

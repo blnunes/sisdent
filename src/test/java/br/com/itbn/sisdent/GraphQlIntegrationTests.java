@@ -66,6 +66,60 @@ class GraphQlIntegrationTests {
                 .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
     }
 
+    @Test
+    void countryMutationUsesTheExistingServiceWorkflowAndSafeErrors() throws Exception {
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .header("X-Correlation-ID", "country-mutation-42")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { createCountry(input: { name: \\"GraphQL Isles\\", code: \\"GI\\", continent: EUROPE }) { id name code continent } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.createCountry.name").value("GraphQL Isles"))
+                .andExpect(jsonPath("$.data.createCountry.code").value("GI"))
+                .andExpect(header().string("X-Correlation-ID", "country-mutation-42"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { createCountry(input: { name: \\"Invalid\\", code: \\"invalid\\", continent: EUROPE }) { id } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.createCountry").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
+    }
+
+    @Test
+    void organizationMutationPreservesAuthorizationAndTenantIsolation() throws Exception {
+        String northstarId = organizationId("Northstar Dental Group");
+        String outsideScopeId = "00000000-0000-0000-0000-000000000001";
+        String token = bearer(emailLogin("group.admin@sisdent.demo", "odonto2026@O"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { createClinicUnit(organizationId: \\"%s\\", input: { name: \\"GraphQL unit\\" }) { organizationId name active } }" }
+                                """.formatted(northstarId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.createClinicUnit.organizationId").value(northstarId))
+                .andExpect(jsonPath("$.data.createClinicUnit.name").value("GraphQL unit"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { createClinicUnit(organizationId: \\"%s\\", input: { name: \\"Outside scope\\" }) { id } }" }
+                                """.formatted(outsideScopeId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.createClinicUnit").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
+    }
+
     @ParameterizedTest
     @MethodSource("invalidPaginationQueries")
     void invalidPaginationIsReportedAsAGraphQlError(

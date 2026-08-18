@@ -14,6 +14,7 @@ import {
 import { CatalogDisplayNameService } from '../../core/catalog-display-name.service';
 import { SpecialityCatalogGraphqlService } from '../../core/speciality-catalog-graphql.service';
 import { GraphQlUserError } from '../../core/graphql-client.service';
+import { CatalogueMutationGraphqlService, SpecialityWrite } from '../../core/catalogue-mutation-graphql.service';
 import { inject } from '@angular/core';
 
 const COLUMNS: readonly DataTableColumn[] = [
@@ -33,6 +34,7 @@ const FILTERS: readonly FilterDefinition[] = [
 })
 export class SpecialitiesComponent extends ResourceListController {
   private readonly specialitiesGraphql = inject(SpecialityCatalogGraphqlService);
+  private readonly mutations = inject(CatalogueMutationGraphqlService);
   readonly activeKey = 'specialities';
   readonly title = 'MODULES.SPECIALITIES';
   readonly description = 'MODULES.SPECIALITIES_DESCRIPTION';
@@ -79,6 +81,15 @@ export class SpecialitiesComponent extends ResourceListController {
   }
   protected override edit(record: ResourceRecord): void {
     this.openSpecialityEditor(record);
+  }
+  protected override save(record: ResourceRecord | undefined, body: unknown): void {
+    this.mutations.saveSpeciality(record as never, body as SpecialityWrite).subscribe({
+      next: () => this.load(),
+      error: (error: unknown) => {
+        this.error.set(true);
+        this.errorMessage.set(error instanceof GraphQlUserError ? error.message : 'The speciality could not be saved.');
+      },
+    });
   }
   private openSpecialityEditor(record?: ResourceRecord): void {
     this.dialog

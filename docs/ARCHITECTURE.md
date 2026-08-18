@@ -1,5 +1,17 @@
 # Sisdent architecture
 
+## Phase 10
+
+GraphQL at `POST /graphql` is now the primary frontend API. REST is retained
+only for explicitly tracked operational, integration, and not-yet-migrated
+workflows; it is not eligible for a global mechanical removal. The authoritative
+route-by-route decision, consumers, GraphQL replacements, deprecation window,
+and removal gate are in [REST retirement inventory](REST_RETIREMENT_INVENTORY.md).
+`POST /api/auth/login`, `GET /api/session`, `GET /actuator/health`, REST OpenAPI
+documentation, and development-only H2 support deliberately remain HTTP
+endpoints. JWT issuance and GraphQL authentication continue to use the existing
+Bearer-token security path.
+
 ## Phase 8
 
 Phase 8 objective: incrementally migrate approved Angular read flows to a frontend-oriented GraphQL BFF while REST remains active and fully compatible during the transition.

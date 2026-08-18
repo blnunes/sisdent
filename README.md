@@ -30,7 +30,14 @@ npm start
 Open `http://localhost:4200` and use `NATIONAL_ID / ADMIN / admin`. See
 [`frontend/README.md`](frontend/README.md) for frontend details.
 
-## Endpoints
+## API surface
+
+GraphQL (`POST /graphql`) is the primary frontend API. Retained REST endpoints
+serve explicitly documented operational and not-yet-migrated workflows. The
+complete endpoint inventory, GraphQL replacements, and deprecation window are
+in [`docs/REST_RETIREMENT_INVENTORY.md`](docs/REST_RETIREMENT_INVENTORY.md).
+
+The following are examples of retained REST paths, not a complete REST API list:
 
 ```text
 GET /api/administrative-divisions

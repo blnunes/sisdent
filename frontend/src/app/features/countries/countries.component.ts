@@ -6,6 +6,7 @@ import { RESOURCE_PAGE_IMPORTS } from '../resource-support/resource-page.imports
 import { ResourceRecord } from '../resource-support/resource-list.controller';
 import { CountryCatalogGraphqlService } from '../../core/country-catalog-graphql.service';
 import { GraphQlUserError } from '../../core/graphql-client.service';
+import { CatalogueMutationGraphqlService } from '../../core/catalogue-mutation-graphql.service';
 import { inject } from '@angular/core';
 
 const COLUMNS: readonly DataTableColumn[] = [
@@ -26,6 +27,7 @@ const BASE_FIELDS: readonly FormDialogField[] = [
 })
 export class CountriesComponent extends CatalogueListController {
   private readonly countriesGraphql = inject(CountryCatalogGraphqlService);
+  private readonly mutations = inject(CatalogueMutationGraphqlService);
   readonly activeKey = 'countries';
   readonly title = 'MODULES.COUNTRIES';
   readonly description = 'MODULES.COUNTRIES_DESCRIPTION';
@@ -88,6 +90,13 @@ export class CountriesComponent extends CatalogueListController {
   }
   override create(): void {
     this.openWithContinents();
+  }
+  protected override save(record: ResourceRecord | undefined, body: unknown): void {
+    this.mutations.saveCountry(record as never, body as { name: string; code: string; continent: string })
+      .subscribe({ next: () => this.load(), error: (error: unknown) => {
+        this.error.set(true);
+        this.errorMessage.set(error instanceof GraphQlUserError ? error.message : 'The country could not be saved.');
+      } });
   }
   protected override edit(record: ResourceRecord): void {
     this.openWithContinents(record);

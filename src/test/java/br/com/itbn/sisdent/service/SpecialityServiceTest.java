@@ -1,16 +1,14 @@
 package br.com.itbn.sisdent.service;
 
-import br.com.itbn.sisdent.dto.DentalProcedureRequest;
-import br.com.itbn.sisdent.dto.SpecialityRequest;
-import br.com.itbn.sisdent.dto.SpecialityResponse;
+import br.com.itbn.sisdent.dto.*;
 import br.com.itbn.sisdent.model.Speciality;
 import br.com.itbn.sisdent.model.CatalogStatus;
 import br.com.itbn.sisdent.localization.CatalogNameLocalizer;
 import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
@@ -48,8 +46,13 @@ class SpecialityServiceTest {
     @Mock
     private ScopeAuthorizationService authorization;
 
-    @InjectMocks
     private SpecialityService specialityService;
+
+    @BeforeEach
+    void setUp() {
+        specialityService = new SpecialityService(
+                specialityRepository, pageableFactory, nameLocalizer, translations, authorization);
+    }
 
     @Test
     void returnsSpecialitiesSortedByName() {
@@ -65,7 +68,7 @@ class SpecialityServiceTest {
                 .extracting(SpecialityResponse::name)
                 .isEqualTo("Endontia");
         assertThat(responses.getFirst().procedures())
-                .extracting(procedure -> procedure.name())
+                .extracting(DentalProcedureResponse::name)
                 .containsExactly("Pulpotomy", "Root canal treatment");
     }
 
@@ -85,7 +88,7 @@ class SpecialityServiceTest {
 
         assertThat(response.name()).isEqualTo("Implant Dentistry");
         assertThat(response.procedures())
-                .extracting(procedure -> procedure.name())
+                .extracting(DentalProcedureResponse::name)
                 .containsExactly("Bone graft", "Implant placement");
     }
 
@@ -94,7 +97,8 @@ class SpecialityServiceTest {
         Speciality speciality = new Speciality("Pediatric Dentistry");
         PageRequest pageable = PageRequest.of(0, 10);
         when(pageableFactory.create(any(), any())).thenReturn(pageable);
-        when(specialityRepository.findAll(any(Specification.class), eq(pageable)))
+        when(specialityRepository.findAll(
+                org.mockito.ArgumentMatchers.<Specification<Speciality>>any(), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(speciality), pageable, 1));
         when(nameLocalizer.localize(speciality, Locale.forLanguageTag("pt-PT"))).thenReturn("Odontopediatria");
 
@@ -126,9 +130,9 @@ class SpecialityServiceTest {
                 .thenReturn(List.of("Implant placement"));
 
         assertThat(specialityService.findFilterOptions("name", " implant ")).singleElement()
-                .extracting(response -> response.value()).isEqualTo("Implant Dentistry");
+                .extracting(FilterOptionResponse::value).isEqualTo("Implant Dentistry");
         assertThat(specialityService.findFilterOptions("procedure", " implant ")).singleElement()
-                .extracting(response -> response.value()).isEqualTo("Implant placement");
+                .extracting(FilterOptionResponse::value).isEqualTo("Implant placement");
         assertThatThrownBy(() -> specialityService.findFilterOptions("status", null))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("Unsupported");
     }
