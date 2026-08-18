@@ -66,10 +66,10 @@ public class SecurityConfiguration {
                                 "/api/administrative-divisions/**", "/api/states/**",
                                 "/api/platform/catalog-translations/**")
                         .hasAuthority("ROLE_PLATFORM_ADMIN")
-                        // GraphQL is an additional transport for platform catalogues. Individual
-                        // resolvers must still delegate to services, where business rules live.
+                        // GraphQL contains both platform and organization-scoped reads. Individual
+                        // resolvers delegate to services, which remain the authorization authority.
                         .requestMatchers("/graphql")
-                        .hasAuthority("ROLE_PLATFORM_ADMIN")
+                        .authenticated()
                         // Single-page application shell, static assets, and client-side routes.
                         // The SPA bundle contains no secrets; data authorization is enforced on
                         // the /api/** matchers above. Client-side route protection is handled by

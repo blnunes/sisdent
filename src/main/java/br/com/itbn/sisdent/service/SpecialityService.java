@@ -45,16 +45,19 @@ public class SpecialityService {
     private final PageableFactory pageableFactory;
     private final CatalogNameLocalizer<Speciality> nameLocalizer;
     private final CatalogTranslationService translations;
+    private final ScopeAuthorizationService authorization;
 
     public SpecialityService(
             SpecialityRepository specialityRepository,
             PageableFactory pageableFactory,
             CatalogNameLocalizer<Speciality> nameLocalizer,
-            CatalogTranslationService translations) {
+            CatalogTranslationService translations,
+            ScopeAuthorizationService authorization) {
         this.specialityRepository = specialityRepository;
         this.pageableFactory = pageableFactory;
         this.nameLocalizer = nameLocalizer;
         this.translations = translations;
+        this.authorization = authorization;
     }
 
     @Transactional(readOnly = true)
@@ -69,6 +72,7 @@ public class SpecialityService {
             PageQuery query,
             SpecialityFilter filter,
             Locale locale) {
+        authorization.requirePlatformAdministrator();
         validateCatalogLocale(locale);
         return PageResponse.from(
                 specialityRepository.findAll(

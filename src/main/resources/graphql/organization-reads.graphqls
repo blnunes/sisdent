@@ -1,0 +1,22 @@
+extend type Query {
+    """Active clinic units visible in an authorized organization scope."""
+    clinicUnits(organizationId: ID!, clinicUnitId: ID): [ClinicUnit!]!
+    """Active and inactive practitioners visible to authorized practitioner managers."""
+    practitioners(organizationId: ID!): [Practitioner!]!
+}
+
+type ClinicUnit {
+    id: ID!
+    organizationId: ID!
+    name: String!
+    active: Boolean!
+}
+
+type Practitioner {
+    globalId: ID!
+    displayName: String!
+    registrationNumber: String
+    accountId: ID
+    active: Boolean!
+    specialityIds: [ID!]!
+}

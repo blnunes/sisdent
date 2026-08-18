@@ -20,6 +20,8 @@ import org.springframework.graphql.server.WebGraphQlRequest;
 import org.springframework.graphql.server.WebGraphQlResponse;
 import org.springframework.graphql.support.DefaultExecutionGraphQlResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 /** Translates expected application errors into the public GraphQL error contract. */
@@ -41,6 +43,12 @@ public class ApplicationGraphQlExceptionResolver extends DataFetcherExceptionRes
         if (exception instanceof ApplicationException applicationException) {
             recordKnownError(applicationException.errorCode(), applicationException.category().name());
             return applicationError(applicationException, environment);
+        }
+        if (exception instanceof AccessDeniedException) {
+            return error(ErrorCode.AUTHORIZATION_DENIED, Map.of(), environment.getLocale());
+        }
+        if (exception instanceof ResponseStatusException responseStatusException) {
+            return error(errorCode(responseStatusException), Map.of(), environment.getLocale());
         }
         String field = environment.getField() == null ? "unknown" : environment.getField().getName();
         // Do not log exception messages or stack traces: resolver failures can originate in clinical services.
@@ -74,6 +82,17 @@ public class ApplicationGraphQlExceptionResolver extends DataFetcherExceptionRes
 
     private GraphQLError applicationError(ApplicationException exception, DataFetchingEnvironment environment) {
         return error(exception.errorCode(), exception.safeMetadata(), environment.getLocale());
+    }
+
+    private ErrorCode errorCode(ResponseStatusException exception) {
+        return switch (exception.getStatusCode().value()) {
+            case 400 -> ErrorCode.VALIDATION_FAILED;
+            case 401 -> ErrorCode.AUTHENTICATION_FAILED;
+            case 403 -> ErrorCode.AUTHORIZATION_DENIED;
+            case 404 -> ErrorCode.RESOURCE_NOT_FOUND;
+            case 409 -> ErrorCode.CONFLICT;
+            default -> ErrorCode.INTERNAL_ERROR;
+        };
     }
 
     private GraphQLError error(ErrorCode errorCode, Map<String, String> safeMetadata, java.util.Locale locale) {

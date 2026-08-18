@@ -21,6 +21,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.server.ResponseStatusException;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.slf4j.MDC;
@@ -88,6 +91,22 @@ class ApplicationGraphQlExceptionResolverTest {
 
     static Stream<Arguments> unexpectedExceptions() {
         return Stream.of(Arguments.of(new IllegalStateException("database password and clinical note")));
+    }
+
+    @ParameterizedTest
+    @MethodSource("legacyScopedExceptions")
+    void translatesLegacyScopedServiceFailuresWithoutLeakingTheirReason(
+            Throwable exception, String expectedCode) {
+        GraphQLError error = resolver.resolveException(exception, environment).block().getFirst();
+
+        assertThat(error.getExtensions()).containsEntry("code", expectedCode);
+        assertThat(error.getMessage()).doesNotContain("organization scope", "clinical data");
+    }
+
+    static Stream<Arguments> legacyScopedExceptions() {
+        return Stream.of(
+                Arguments.of(new AccessDeniedException("organization scope"), "AUTHORIZATION.DENIED"),
+                Arguments.of(new ResponseStatusException(HttpStatus.NOT_FOUND, "clinical data"), "RESOURCE.NOT_FOUND"));
     }
 
     private static DataFetchingEnvironment environment() {

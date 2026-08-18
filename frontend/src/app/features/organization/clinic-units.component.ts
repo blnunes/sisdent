@@ -9,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountApiService } from '../../core/account-api.service';
+import { OrganizationReadGraphqlService } from '../../core/organization-read-graphql.service';
 import { AuthService } from '../../core/auth.service';
 import { ClinicUnit } from '../../core/models';
 import { AppHeaderComponent } from '../../core/layout/app-header/app-header.component';
@@ -21,6 +22,7 @@ import { ModuleNavigationComponent } from '../../core/layout/module-navigation/m
 })
 export class ClinicUnitsComponent {
   readonly auth = inject(AuthService); private readonly api = inject(AccountApiService);
+  private readonly reads = inject(OrganizationReadGraphqlService);
   private readonly forms = inject(FormBuilder); private readonly translate = inject(TranslateService);
   readonly units = signal<ClinicUnit[]>([]); readonly loading = signal(true); readonly error = signal(''); readonly saving = signal(false);
   readonly form = this.forms.nonNullable.group({ name: ['', [Validators.required, Validators.maxLength(255)]] });
@@ -30,7 +32,7 @@ export class ClinicUnitsComponent {
     const membership = this.auth.activeMembership();
     if (!membership || !this.auth.canAdministerOrganization()) return;
     this.loading.set(true); this.error.set('');
-    this.api.listClinicUnits(membership.organizationId).subscribe({ next: units => { this.units.set(units); this.loading.set(false); }, error: () => { this.error.set(this.translate.instant('ORGANIZATION.ERROR.LOAD_UNITS')); this.loading.set(false); } });
+    this.reads.listClinicUnits(membership.organizationId).subscribe({ next: units => { this.units.set(units); this.loading.set(false); }, error: () => { this.error.set(this.translate.instant('ORGANIZATION.ERROR.LOAD_UNITS')); this.loading.set(false); } });
   }
   create(): void {
     const membership = this.auth.activeMembership();

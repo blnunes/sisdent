@@ -1,8 +1,8 @@
 # Sisdent architecture
 
-## Phase 7
+## Phase 8
 
-Phase 7 objective: establish GraphQL as a frontend-oriented BFF foundation while REST remains the primary supported API during the transition.
+Phase 8 objective: incrementally migrate approved Angular read flows to a frontend-oriented GraphQL BFF while REST remains active and fully compatible during the transition.
 
 Sisdent is a Spring Boot REST API with an Angular single-page application.
 Authentication uses email/password and stateless JWT Bearer tokens. `Account`
@@ -102,17 +102,17 @@ signalling and is caught/mapped by their services; configuration-time validation
 
 ## GraphQL BFF foundation
 
-REST remains the primary supported API. GraphQL is available alongside it at `POST /graphql`
-as a read-only frontend BFF boundary, not as a global REST replacement. It currently exposes
-the platform `countries` and `specialities` catalogue listing flows. Like their REST endpoints,
-it requires a JWT with `ROLE_PLATFORM_ADMIN`; the standard Angular authentication interceptor
-sends that Bearer token to `/graphql` too. Security can reject malformed, absent, or unauthorized
-Bearer credentials before GraphQL execution, in which case the normal safe 401/403 transport
-response applies. Angular maps those responses into the same safe user-error model.
+REST remains active alongside GraphQL at `POST /graphql`; GraphQL has not replaced REST globally.
+It is a read-only frontend BFF boundary. The endpoint requires an authenticated JWT and each
+resolver delegates exclusively to its established service, where platform, organization, clinic,
+active-link, and role authorization remains authoritative. The standard Angular authentication
+interceptor sends its Bearer token to `/graphql` as it does for REST. Missing or malformed
+credentials are rejected before execution; service authorization failures use the safe GraphQL
+error envelope.
 
 Schemas are organized by domain under `src/main/resources/graphql` (`countries.graphqls`,
-`specialities.graphqls`). Queries use plural collection names and singular item lookups;
-mutations are intentionally absent in Phase 7. Collection queries take the reusable
+`specialities.graphqls`, `organization-reads.graphqls`). Queries use plural collection names and singular item lookups;
+mutations are intentionally absent in Phase 8. Collection queries take the reusable
 `CataloguePageInput` (page, size, sort, `SortDirection`) and domain-specific typed filters,
 not REST query-string conventions. All catalogue queries accept an optional `locale` BCP 47
 argument. `en`, `pt`, and `nl`, including valid regional variants, are supported; omitted locale
@@ -156,9 +156,25 @@ Mutations should only be introduced after their REST/service validations and tra
 behaviour are already understood.
 
 Angular components never make GraphQL requests directly. `GraphQlClientService` owns transport
-and safe error mapping; typed domain services own exact operations and variables. The migrated
-read flows are country catalogue listing and speciality catalogue listing. Country creation,
-editing, deletion, and continent lookup remain REST; speciality create/update/delete and filter
-autocomplete remain REST; all other frontend flows intentionally remain REST in Phase 7. No
-GraphQL mutations are introduced until their REST validation, authorization, and transactions are
-explicitly approved and covered.
+and safe error mapping; typed domain services own exact operations and variables.
+
+### Phase 8 migration inventory
+
+| Frontend read flow | GraphQL boundary | REST status |
+| --- | --- | --- |
+| Country catalogue list | `countries(page, locale)` | Create, edit, delete, item lookup, and continent lookup remain REST. |
+| Speciality catalogue list | `specialities(page, filter, locale)` | Create, update, deactivate, and filter autocomplete remain REST. |
+| Clinic-unit workspace list | `clinicUnits(organizationId, clinicUnitId)` | Create and account-management dialog lookup remain REST. |
+| Practitioner workspace list | `practitioners(organizationId)` | Create, update, and deactivate remain REST. |
+| Organizations, patients, appointments, and clinical models | Not yet migrated | Their REST reads remain intentional until scope, pagination, batching, and field contracts are approved. |
+
+`clinicUnits` returns active units only and accepts an optional clinic-unit scope. `practitioners`
+returns only list-screen fields; account emails, memberships, and internal persistence state are
+not in the schema. The existing practitioner repository entity graph provides speciality data in
+the collection query, avoiding a per-practitioner load. These operational collections do not yet
+paginate in REST, so no artificial page contract was added; pagination is deferred until the
+corresponding REST/service contract changes.
+
+No GraphQL mutations are introduced in Phase 8. The generic client maps
+`errors[].extensions.code`, friendly messages, and optional correlation IDs into the safe
+user-error model. REST continues to serve every non-migrated flow and every write.

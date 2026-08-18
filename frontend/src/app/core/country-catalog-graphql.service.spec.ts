@@ -99,7 +99,7 @@ describe('CountryCatalogGraphqlService', () => {
     expect(failure).toHaveBeenCalledWith(
       expect.objectContaining({
         code: 'AUTHORIZATION.FORBIDDEN',
-        message: 'You are not authorized to view the country catalogue.',
+        message: 'You are not authorized to view this information.',
       }),
     );
   });

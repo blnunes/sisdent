@@ -18,6 +18,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.springframework.transaction.annotation.Transactional;
 
 import tools.jackson.databind.json.JsonMapper;
+import br.com.itbn.sisdent.repository.OrganizationRepository;
+import br.com.itbn.sisdent.repository.ClinicUnitRepository;
 import java.util.stream.Stream;
 
 @SpringBootTest
@@ -29,6 +31,8 @@ class GraphQlIntegrationTests {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private JsonMapper jsonMapper;
+    @Autowired private OrganizationRepository organizationRepository;
+    @Autowired private ClinicUnitRepository clinicUnitRepository;
 
     @Test
     void platformAdministratorCanQueryLocalizedCountries() throws Exception {
@@ -57,7 +61,9 @@ class GraphQlIntegrationTests {
                         .header("Authorization", bearer(emailLogin("group.admin@sisdent.demo", "odonto2026@O")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{ \"query\": \"{ countries { page } }\" }"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.countries").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
     }
 
     @ParameterizedTest
@@ -160,6 +166,49 @@ class GraphQlIntegrationTests {
                 .andExpect(jsonPath("$.data.specialities.page").value(0))
                 .andExpect(jsonPath("$.data.specialities.content").isArray())
                 .andExpect(header().string("X-Correlation-ID", "specialities-graphql-42"));
+    }
+
+    @Test
+    void organizationReadsPreserveServiceAuthorizationAndTenantIsolation() throws Exception {
+        String northstarId = organizationId("Northstar Dental Group");
+        String harborId = organizationId("Harbor Dental Clinic");
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("northstar.practitioners@sisdent.demo", "odonto2026@O")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ practitioners(organizationId: \\\"%s\\\") { globalId displayName specialityIds } }\" }".formatted(northstarId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.practitioners[0].displayName").isNotEmpty())
+                .andExpect(jsonPath("$.data.practitioners[0].registrationNumber").doesNotExist());
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("northstar.practitioners@sisdent.demo", "odonto2026@O")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ practitioners(organizationId: \\\"%s\\\") { displayName } }\" }".formatted(harborId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.practitioners").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
+    }
+
+    @Test
+    void clinicUnitQueryUsesOrganizationAndOptionalClinicScope() throws Exception {
+        String northstarId = organizationId("Northstar Dental Group");
+        String clinicUnitId = clinicUnitRepository
+                .findAllByOrganization_GlobalIdAndActiveTrueOrderByName(java.util.UUID.fromString(northstarId))
+                .getFirst().getGlobalId().toString();
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("northstar.scheduler@sisdent.demo", "odonto2026@O")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ clinicUnits(organizationId: \\\"%s\\\", clinicUnitId: \\\"%s\\\") { id organizationId name active } }\" }".formatted(northstarId, clinicUnitId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.clinicUnits[0].organizationId").value(northstarId))
+                .andExpect(jsonPath("$.data.clinicUnits[0].id").value(clinicUnitId));
+    }
+
+    private String organizationId(String name) {
+        return organizationRepository.findByName(name).orElseThrow().getGlobalId().toString();
     }
 
     private String emailLogin(String email, String password) throws Exception {

@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountApiService, PractitionerWrite } from '../../core/account-api.service';
+import { OrganizationReadGraphqlService } from '../../core/organization-read-graphql.service';
 import { AuthService } from '../../core/auth.service';
 import { Practitioner } from '../../core/models';
 import { AppHeaderComponent } from '../../core/layout/app-header/app-header.component';
@@ -17,10 +18,10 @@ import { ModuleNavigationComponent } from '../../core/layout/module-navigation/m
 
 @Component({ selector: 'app-practitioners', standalone: true, imports: [MatButtonModule, MatCardModule, MatDialogModule, MatIconModule, MatProgressSpinnerModule, MatSidenavModule, TranslatePipe, AppHeaderComponent, ModuleNavigationComponent], templateUrl: './practitioners.component.html', styleUrl: './organization-workspace.component.scss' })
 export class PractitionersComponent {
-  readonly auth = inject(AuthService); private readonly api = inject(AccountApiService); private readonly dialog = inject(MatDialog); private readonly translate = inject(TranslateService);
+  readonly auth = inject(AuthService); private readonly api = inject(AccountApiService); private readonly reads = inject(OrganizationReadGraphqlService); private readonly dialog = inject(MatDialog); private readonly translate = inject(TranslateService);
   readonly practitioners = signal<Practitioner[]>([]); readonly loading = signal(true); readonly error = signal('');
   constructor() { effect(() => { this.auth.activeMembership(); untracked(() => this.load()); }); }
-  load(): void { const membership = this.auth.activeMembership(); if (!membership || !this.auth.canManagePractitioners()) return; this.loading.set(true); this.error.set(''); this.api.listPractitioners(membership.organizationId).subscribe({ next: records => { this.practitioners.set(records); this.loading.set(false); }, error: () => { this.error.set(this.translate.instant('ORGANIZATION.ERROR.LOAD_PRACTITIONERS')); this.loading.set(false); } }); }
+  load(): void { const membership = this.auth.activeMembership(); if (!membership || !this.auth.canManagePractitioners()) return; this.loading.set(true); this.error.set(''); this.reads.listPractitioners(membership.organizationId).subscribe({ next: records => { this.practitioners.set(records); this.loading.set(false); }, error: () => { this.error.set(this.translate.instant('ORGANIZATION.ERROR.LOAD_PRACTITIONERS')); this.loading.set(false); } }); }
   open(practitioner?: Practitioner): void { this.dialog.open(PractitionerDialog, { width: '520px', maxWidth: '94vw', data: practitioner }).afterClosed().subscribe(changed => { if (changed) this.load(); }); }
   deactivate(practitioner: Practitioner): void { const membership = this.auth.activeMembership(); if (!membership || !practitioner.active) return; this.api.deactivatePractitioner(membership.organizationId, practitioner.globalId).subscribe({ next: () => this.load(), error: () => this.error.set(this.translate.instant('ORGANIZATION.ERROR.DEACTIVATE_PRACTITIONER')) }); }
 }

@@ -40,7 +40,7 @@ export class GraphQlClientService {
           () =>
             new GraphQlUserError(
               'GRAPHQL.INVALID_RESPONSE',
-              'The catalogue response could not be processed.',
+              'The requested information could not be processed.',
             ),
         );
       }),
@@ -69,12 +69,12 @@ export class GraphQlClientService {
       if (error.status === 403)
         return new GraphQlUserError(
           'AUTHORIZATION.FORBIDDEN',
-          'You are not authorized to view the country catalogue.',
+          'You are not authorized to view this information.',
         );
     }
     return new GraphQlUserError(
       'GRAPHQL.REQUEST_FAILED',
-      'The catalogue request could not be completed.',
+      'The requested information could not be completed.',
     );
   }
 }

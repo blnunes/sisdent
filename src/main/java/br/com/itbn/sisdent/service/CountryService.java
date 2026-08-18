@@ -28,12 +28,14 @@ public class CountryService {
     private final CountryRepository countryRepository;
     private final PageableFactory pageableFactory;
     private final CatalogNameLocalizer<Country> nameLocalizer;
+    private final ScopeAuthorizationService authorization;
 
     public CountryService(CountryRepository countryRepository, PageableFactory pageableFactory,
-                          CatalogNameLocalizer<Country> nameLocalizer) {
+                          CatalogNameLocalizer<Country> nameLocalizer, ScopeAuthorizationService authorization) {
         this.countryRepository = countryRepository;
         this.pageableFactory = pageableFactory;
         this.nameLocalizer = nameLocalizer;
+        this.authorization = authorization;
     }
 
     @Transactional(readOnly = true)
@@ -45,6 +47,7 @@ public class CountryService {
 
     @Transactional(readOnly = true)
     public PageResponse<CountryResponse> findPage(PageQuery query, Locale locale) {
+        authorization.requirePlatformAdministrator();
         validateCatalogLocale(locale);
         return PageResponse.from(countryRepository.findAll(pageableFactory.create(query, SORT_DEFINITION)),
                 country -> toResponse(country, locale));
@@ -58,6 +61,7 @@ public class CountryService {
 
     @Transactional(readOnly = true)
     public CountryResponse findByCode(String code, Locale locale) {
+        authorization.requirePlatformAdministrator();
         validateCatalogLocale(locale);
         return toResponse(requireByCode(code), locale);
     }

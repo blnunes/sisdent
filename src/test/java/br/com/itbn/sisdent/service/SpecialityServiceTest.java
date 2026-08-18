@@ -45,6 +45,9 @@ class SpecialityServiceTest {
     @Mock
     private CatalogTranslationService translations;
 
+    @Mock
+    private ScopeAuthorizationService authorization;
+
     @InjectMocks
     private SpecialityService specialityService;
 
@@ -102,6 +105,7 @@ class SpecialityServiceTest {
 
         assertThat(response.name()).isEqualTo("Pediatric Dentistry");
         assertThat(response.displayName()).isEqualTo("Odontopediatria");
+        verify(authorization).requirePlatformAdministrator();
     }
 
     @Test

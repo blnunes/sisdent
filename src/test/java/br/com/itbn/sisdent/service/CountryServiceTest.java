@@ -32,6 +32,7 @@ class CountryServiceTest {
     @Mock CountryRepository countries;
     @Mock PageableFactory pageableFactory;
     @Mock CatalogNameLocalizer<Country> nameLocalizer;
+    @Mock ScopeAuthorizationService authorization;
     @InjectMocks CountryService service;
 
     @Test
@@ -76,6 +77,7 @@ class CountryServiceTest {
 
         assertThat(response.name()).isEqualTo("Netherlands");
         assertThat(response.displayName()).isEqualTo("Nederland");
+        verify(authorization).requirePlatformAdministrator();
     }
 
     @Test
