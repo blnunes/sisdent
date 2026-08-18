@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -17,8 +18,9 @@ import { AppHeaderComponent } from '../../core/layout/app-header/app-header.comp
 import { ModuleNavigationComponent } from '../../core/layout/module-navigation/module-navigation.component';
 
 type PatientOption = { globalId: string; name: string };
+type Choice = { value: string; labelKey: string };
 
-@Component({ selector: 'app-clinical-workspace', standalone: true, imports: [DatePipe, FormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSidenavModule, TranslatePipe, AppHeaderComponent, ModuleNavigationComponent], templateUrl: './clinical-workspace.component.html', styleUrl: './clinical-workspace.component.scss' })
+@Component({ selector: 'app-clinical-workspace', standalone: true, imports: [DatePipe, FormsModule, MatAutocompleteModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSidenavModule, TranslatePipe, AppHeaderComponent, ModuleNavigationComponent], templateUrl: './clinical-workspace.component.html', styleUrl: './clinical-workspace.component.scss' })
 export class ClinicalWorkspaceComponent {
   readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
@@ -33,7 +35,13 @@ export class ClinicalWorkspaceComponent {
   readonly history = signal<OdontogramFinding[]>([]);
   readonly error = signal('');
   readonly selectedEncounter = signal<ClinicalEncounter | null>(null);
-  patientId = ''; clinicUnitId = ''; narrative = ''; administrativeNote = ''; amendmentReason = '';
+  readonly teeth: string[] = [
+    ...[1, 2, 3, 4].flatMap(quadrant => Array.from({ length: 8 }, (_, index) => `${quadrant}${index + 1}`)),
+    ...[5, 6, 7, 8].flatMap(quadrant => Array.from({ length: 5 }, (_, index) => `${quadrant}${index + 1}`)),
+  ];
+  readonly conditions: Choice[] = ['SOUND', 'CARIES', 'RESTORATION', 'CROWN', 'MISSING', 'IMPLANT', 'EXTRACTED'].map(value => ({ value, labelKey: `CONDITIONS.${value}` }));
+  readonly surfaces: Choice[] = ['WHOLE_TOOTH', 'MESIAL', 'DISTAL', 'BUCCAL', 'LINGUAL_PALATAL', 'OCCLUSAL_INCISAL'].map(value => ({ value, labelKey: `SURFACES.${value}` }));
+  patientId = ''; clinicUnitId = ''; patientInput: PatientOption | string = ''; narrative = ''; administrativeNote = ''; amendmentReason = '';
   toothCode = ''; condition = 'SOUND'; surface = 'WHOLE_TOOTH'; clinicalNote = ''; voidReason = ''; replacementForId = '';
 
   constructor() {
@@ -41,7 +49,7 @@ export class ClinicalWorkspaceComponent {
   }
 
   reset(): void {
-    this.patientId = ''; this.clinicUnitId = ''; this.patients.set([]); this.clinics.set([]); this.clearClinicalData(); this.error.set('');
+    this.patientId = ''; this.patientInput = ''; this.clinicUnitId = ''; this.patients.set([]); this.clinics.set([]); this.clearClinicalData(); this.error.set('');
     const membership = this.membership();
     if (!membership || !this.auth.canReadClinical()) return;
     if (membership.clinicUnitId) { this.clinicUnitId = membership.clinicUnitId; this.loadPatients(); return; }
@@ -51,16 +59,27 @@ export class ClinicalWorkspaceComponent {
     });
   }
 
-  changeClinic(): void { this.patientId = ''; this.clearClinicalData(); this.loadPatients(); }
+  changeClinic(): void { this.patientId = ''; this.patientInput = ''; this.clearClinicalData(); this.loadPatients(); }
 
-  loadPatients(): void {
+  loadPatients(name?: string): void {
     const membership = this.membership();
     if (!membership || !this.clinicUnitId) { this.error.set(this.t('NO_CLINIC')); return; }
-    this.http.get<PageResponse<PatientOption>>(`/api/organizations/${membership.organizationId}/patients`, { params: { clinicUnitId: this.clinicUnitId, size: '100' } }).subscribe({
-      next: response => { this.patients.set(response.content); if (!response.content.length) this.error.set(this.t('NO_PATIENT')); },
+    const params: Record<string, string> = { clinicUnitId: this.clinicUnitId, size: '20' };
+    if (name) params['name'] = name;
+    this.http.get<PageResponse<PatientOption>>(`/api/organizations/${membership.organizationId}/patients`, { params }).subscribe({
+      next: response => { this.patients.set(response.content); if (!response.content.length && !name) this.error.set(this.t('NO_PATIENT')); },
       error: error => this.fail(error, 'LOAD'),
     });
   }
+
+  displayPatient(patient: PatientOption | string | null): string { return typeof patient === 'string' ? patient : patient?.name ?? ''; }
+  onPatientInput(value: PatientOption | string): void {
+    if (typeof value !== 'string') return;
+    this.patientId = ''; this.clearClinicalData();
+    const query = value.trim();
+    if (query.length >= 2) this.loadPatients(query); else this.patients.set([]);
+  }
+  choosePatient(patient: PatientOption): void { this.patientInput = patient; this.patientId = patient.globalId; this.selectPatient(); }
 
   selectPatient(): void {
     this.clearClinicalData(); this.error.set('');
