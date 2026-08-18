@@ -100,7 +100,7 @@ process.stdin.on('data', (chunk) => {
     if (!line) continue;
     const request = JSON.parse(line);
     if (request.method === 'initialize') {
-      respond({ jsonrpc: '2.0', id: request.id, result: { protocolVersion: request.params?.protocolVersion ?? '2025-03-26', capabilities: { tools: {} }, serverInfo: { name: 'sisdent-quality-gate', version: '1.0.0' }, instructions: 'Before completing Java work, call verify_quality. Add focused tests for every changed behaviour; fix coverage and Sonar findings rather than suppressing them.' } });
+      respond({ jsonrpc: '2.0', id: request.id, result: { protocolVersion: request.params?.protocolVersion ?? '2025-03-26', capabilities: { tools: {} }, serverInfo: { name: 'sisdent-quality-gate', version: '1.0.0' }, instructions: 'Before completing Java work, call verify_quality. Add focused tests for every changed behaviour; fix coverage and Sonar findings rather than suppressing them. Prefer a method reference over an equivalent lambda when it is clearer, for example DentalProcedureResponse::name instead of procedure -> procedure.name(); keep the lambda when the method reference would be less readable.' } });
     } else if (request.method === 'notifications/initialized') {
       // MCP notification; no response required.
     } else if (request.method === 'tools/list') {
