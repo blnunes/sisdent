@@ -64,6 +64,11 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'settings/account',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/account-settings/account-settings.component').then((m) => m.AccountSettingsComponent),
+  },
+  {
     path: 'patients',
     canActivate: [authGuard, anyPermissionsGuard('READ_PATIENTS', 'MAINTAIN_PATIENTS')],
     loadComponent: () =>

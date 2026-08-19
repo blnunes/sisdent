@@ -137,6 +137,11 @@ export class AuthService {
     this.activeMembershipId.set(selectedMembership?.id ?? null);
   }
 
+  updateDisplayName(displayName: string): void {
+    const session = this.sessionState();
+    if (session) this.sessionState.set({ ...session, displayName });
+  }
+
   logout(): void {
     this.clearSession();
     void this.router.navigateByUrl('/login');

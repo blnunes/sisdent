@@ -80,6 +80,10 @@ public class Account extends AuditableEntity {
         this.platformAdministrator = platformAdministrator;
     }
 
+    public void changePassword(String password) {
+        this.password = password;
+    }
+
     public void assignAccountManagementOrganizationIfAbsent(Organization organization) {
         if (accountManagementOrganization == null) accountManagementOrganization = organization;
     }

@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSelectModule } from '@angular/material/select';
+import { MatMenuModule } from '@angular/material/menu';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../auth.service';
 import { LanguageSelectorComponent } from '../../../shared/preferences/language-selector/language-selector.component';
@@ -11,7 +12,7 @@ import { ThemeToggleComponent } from '../../../shared/preferences/theme-toggle/t
 
 @Component({
   selector: 'app-header',
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatToolbarModule, MatSelectModule, TranslatePipe, LanguageSelectorComponent, ThemeToggleComponent],
+  imports: [RouterLink, MatButtonModule, MatIconModule, MatToolbarModule, MatSelectModule, MatMenuModule, TranslatePipe, LanguageSelectorComponent, ThemeToggleComponent],
   templateUrl: './app-header.component.html',
   styleUrl: './app-header.component.scss',
 })

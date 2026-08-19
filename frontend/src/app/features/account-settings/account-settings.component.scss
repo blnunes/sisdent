@@ -1,0 +1,5 @@
+:host { display:block; min-height:100%; background:var(--app-canvas); color:var(--app-text); }
+.settings-page { width:min(100% - 32px, 960px); margin:0 auto; padding:48px 0 64px; }
+header { margin-bottom:28px; } .eyebrow { color:var(--app-primary); font-weight:700; text-transform:uppercase; font-size:.8rem; letter-spacing:.08em; } h1 { margin:8px 0; font-size:clamp(2rem,4vw,2.8rem); } header p, mat-card-subtitle { color:var(--app-text-muted); }
+.cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; } mat-card { background:var(--app-surface) !important; border-color:var(--app-border); } mat-card-content { padding-top:20px; } form { display:grid; gap:8px; } mat-form-field { width:100%; } button[mat-flat-button] { justify-self:start; min-height:42px; } .message { margin:0; color:var(--app-primary); } .message.error { color:var(--app-danger); } .loading { display:flex; align-items:center; gap:12px; } mat-spinner { display:inline-block; }
+@media (max-width:720px) { .settings-page { width:min(100% - 24px,960px); padding-top:28px; } .cards { grid-template-columns:1fr; } }

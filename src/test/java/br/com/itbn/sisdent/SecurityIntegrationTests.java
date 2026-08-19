@@ -18,6 +18,7 @@ import tools.jackson.databind.json.JsonMapper;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -75,6 +76,34 @@ class SecurityIntegrationTests {
 
         mockMvc.perform(get("/api/platform/catalog-translations").header("Authorization", bearer(token)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void anyAuthenticatedUserCanChangeOnlyTheirOwnSettingsAndPassword() throws Exception {
+        String oldPassword = "odonto2026@O";
+        String newPassword = "changed-password-2026";
+        String token = emailLogin("northstar.readonly@sisdent.demo", oldPassword);
+        String settings = mockMvc.perform(get("/api/account/settings").header("Authorization", bearer(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("northstar.readonly@sisdent.demo"))
+                .andReturn().getResponse().getContentAsString();
+        long version = jsonMapper.readTree(settings).get("version").asLong();
+
+        mockMvc.perform(patch("/api/account/settings/profile").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"displayName\":\"Own settings user\",\"version\":%d}".formatted(version)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.displayName").value("Own settings user"));
+        mockMvc.perform(patch("/api/account/settings/password").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"currentPassword\":\"%s\",\"newPassword\":\"%s\"}".formatted(oldPassword, newPassword)))
+                .andExpect(status().isNoContent());
+
+        emailLogin("northstar.readonly@sisdent.demo", newPassword);
+        mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"northstar.readonly@sisdent.demo\",\"password\":\"%s\"}".formatted(oldPassword)))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/account/settings")).andExpect(status().isUnauthorized());
     }
 
     @Test

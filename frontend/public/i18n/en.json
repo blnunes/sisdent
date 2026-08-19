@@ -648,6 +648,9 @@
       "NO_REGISTRATION": "No registration number"
     }
   },
+  "ACCOUNT_SETTINGS": {
+    "OPEN_MENU": "Open account menu", "MENU": "Account settings", "OVERTITLE": "Your account", "TITLE": "Account settings", "DESCRIPTION": "Manage your profile and password.", "LOADING": "Loading settings…", "LOAD_ERROR": "Unable to load account settings.", "PROFILE_TITLE": "Personal details", "PROFILE_DESCRIPTION": "Update the name shown across Sisdent.", "EMAIL": "Email", "DISPLAY_NAME": "Display name", "DISPLAY_NAME_REQUIRED": "Enter a display name.", "SAVE_PROFILE": "Save profile", "PROFILE_SUCCESS": "Your profile was updated.", "PROFILE_ERROR": "Unable to update your profile.", "PASSWORD_TITLE": "Change password", "PASSWORD_DESCRIPTION": "Choose a new password for your account.", "CURRENT_PASSWORD": "Current password", "NEW_PASSWORD": "New password", "CONFIRM_PASSWORD": "Confirm new password", "PASSWORD_LENGTH": "Use between 8 and 128 characters.", "PASSWORD_MISMATCH": "The passwords do not match.", "SAVE_PASSWORD": "Update password", "PASSWORD_SUCCESS": "Your password was updated.", "PASSWORD_ERROR": "Unable to update your password.", "SHOW_PASSWORD": "Show password", "HIDE_PASSWORD": "Hide password"
+  },
   "PERMISSION_GROUPS": {
     "USERS": "Users",
     "PATIENTS": "Patients",

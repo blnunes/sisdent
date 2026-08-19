@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,6 +97,11 @@ public class RestExceptionTranslator {
     @ExceptionHandler(AccessDeniedException.class)
     ProblemDetail authorization(Locale locale) {
         return problem(HttpStatus.FORBIDDEN, ErrorCode.AUTHORIZATION_DENIED, locale, Map.of(), List.of());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    ProblemDetail authenticationFailure(Locale locale) {
+        return problem(HttpStatus.UNAUTHORIZED, ErrorCode.AUTHENTICATION_FAILED, locale, Map.of(), List.of());
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -190,7 +196,8 @@ public class RestExceptionTranslator {
                     PAGINATION_UNSUPPORTED_DIRECTION, CATALOG_UNSUPPORTED_LOCALE,
                     REQUEST_MALFORMED, REQUEST_PARAMETER_INVALID -> ErrorCategory.VALIDATION.name();
             case BUSINESS_RULE_VIOLATION, SCHEDULING_PRACTITIONER_UNAVAILABLE -> ErrorCategory.BUSINESS_RULE_VIOLATION.name();
-            case CONFLICT -> ErrorCategory.CONFLICT.name();
+            case CONFLICT, ACCOUNT_PROFILE_VERSION_CONFLICT -> ErrorCategory.CONFLICT.name();
+            case ACCOUNT_CURRENT_PASSWORD_INVALID, ACCOUNT_DISPLAY_NAME_INVALID -> ErrorCategory.VALIDATION.name();
             case AUTHENTICATION_FAILED -> ErrorCategory.AUTHENTICATION.name();
             case AUTHORIZATION_DENIED -> ErrorCategory.AUTHORIZATION.name();
             case INFRASTRUCTURE_FAILURE -> ErrorCategory.INFRASTRUCTURE.name();

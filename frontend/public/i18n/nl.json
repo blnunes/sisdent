@@ -651,6 +651,9 @@
       "NO_REGISTRATION": "Geen registratienummer"
     }
   },
+  "ACCOUNT_SETTINGS": {
+    "OPEN_MENU": "Accountmenu openen", "MENU": "Accountinstellingen", "OVERTITLE": "Uw account", "TITLE": "Accountinstellingen", "DESCRIPTION": "Beheer uw profiel en wachtwoord.", "LOADING": "Instellingen laden…", "LOAD_ERROR": "Accountinstellingen kunnen niet worden geladen.", "PROFILE_TITLE": "Persoonlijke gegevens", "PROFILE_DESCRIPTION": "Werk de naam bij die in Sisdent wordt getoond.", "EMAIL": "E-mail", "DISPLAY_NAME": "Weergavenaam", "DISPLAY_NAME_REQUIRED": "Voer een weergavenaam in.", "SAVE_PROFILE": "Profiel opslaan", "PROFILE_SUCCESS": "Uw profiel is bijgewerkt.", "PROFILE_ERROR": "Profiel kan niet worden bijgewerkt.", "PASSWORD_TITLE": "Wachtwoord wijzigen", "PASSWORD_DESCRIPTION": "Kies een nieuw wachtwoord voor uw account.", "CURRENT_PASSWORD": "Huidig wachtwoord", "NEW_PASSWORD": "Nieuw wachtwoord", "CONFIRM_PASSWORD": "Nieuw wachtwoord bevestigen", "PASSWORD_LENGTH": "Gebruik tussen 8 en 128 tekens.", "PASSWORD_MISMATCH": "De wachtwoorden komen niet overeen.", "SAVE_PASSWORD": "Wachtwoord bijwerken", "PASSWORD_SUCCESS": "Uw wachtwoord is bijgewerkt.", "PASSWORD_ERROR": "Wachtwoord kan niet worden bijgewerkt.", "SHOW_PASSWORD": "Wachtwoord tonen", "HIDE_PASSWORD": "Wachtwoord verbergen"
+  },
   "PERMISSION_GROUPS": {
     "USERS": "Gebruikers",
     "PATIENTS": "Patiënten",

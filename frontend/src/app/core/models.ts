@@ -75,6 +75,8 @@ export interface Session {
   memberships: Membership[];
 }
 
+export interface CurrentAccountSettings { id: string; displayName: string; email: string; version: number; }
+
 export interface PageResponse<T> {
   content: T[];
   page: number;
