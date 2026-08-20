@@ -5,16 +5,18 @@ import { AccountSettingsComponent } from './account-settings.component';
 import { AccountSettingsApiService } from '../../core/account-settings-api.service';
 import { AuthService } from '../../core/auth.service';
 import { LanguageService } from '../../core/language.service';
+import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AccountSettingsComponent', () => {
   let fixture: ComponentFixture<AccountSettingsComponent>;
   let component: AccountSettingsComponent;
   const api = { current: vi.fn(), updateProfile: vi.fn(), updatePreferredLanguage: vi.fn(), changePassword: vi.fn() };
-  const auth = { updateDisplayName: vi.fn(), updatePreferredLanguage: vi.fn() };
-  const language = { set: vi.fn() };
+  const auth = { updateDisplayName: vi.fn(), updatePreferredLanguage: vi.fn(), updateAvatar: vi.fn(), session: vi.fn(() => null), activeMembership: vi.fn(() => null), isAdmin: vi.fn(() => false), isPlatformAdministrator: vi.fn(() => false), hasAnyPermission: vi.fn(() => false), canReadAppointments: vi.fn(() => false), canReadClinical: vi.fn(() => false), canAdministerOrganization: vi.fn(() => false), canManagePractitioners: vi.fn(() => false), canManageOrganizationAccess: vi.fn(() => false), logout: vi.fn() };
+  const language = { current: vi.fn(() => 'en'), set: vi.fn(), isSupported: vi.fn(() => true) };
   beforeEach(async () => {
     api.current.mockReturnValue(of({ id: 'me', email: 'me@example.com', displayName: 'Me', preferredLanguage: 'en', version: 1 }));
-    await TestBed.configureTestingModule({ imports: [AccountSettingsComponent], providers: [provideTranslateService(), { provide: AccountSettingsApiService, useValue: api }, { provide: AuthService, useValue: auth }, { provide: LanguageService, useValue: language }] }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [AccountSettingsComponent], providers: [provideHttpClient(), provideRouter([]), provideTranslateService(), { provide: AccountSettingsApiService, useValue: api }, { provide: AuthService, useValue: auth }, { provide: LanguageService, useValue: language }] }).compileComponents();
     fixture = TestBed.createComponent(AccountSettingsComponent); component = fixture.componentInstance; fixture.detectChanges();
   });
 

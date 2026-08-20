@@ -1,4 +1,5 @@
-<main class="settings-page">
+<div class="settings-shell"><mat-sidenav-container class="settings-container"><mat-sidenav #drawer mode="over" class="settings-drawer" [autoFocus]="true" (openedChange)="onDrawerChange($event, drawerScroll)"><div #drawerScroll class="settings-drawer-scroll"><div class="drawer-brand"><mat-icon>dentistry</mat-icon><strong>Sisdent</strong></div><app-module-navigation active="settings" (navigate)="closeMenu(drawer)" /></div></mat-sidenav><mat-sidenav-content class="settings-content"><app-header (menuClick)="drawer.toggle()" />
+<main class="settings-page" tabindex="-1">
   <header><span class="eyebrow">{{ 'ACCOUNT_SETTINGS.OVERTITLE' | translate }}</span><h1 #heading tabindex="-1">{{ 'ACCOUNT_SETTINGS.TITLE' | translate }}</h1><p>{{ 'ACCOUNT_SETTINGS.DESCRIPTION' | translate }}</p></header>
   @if (loading()) { <div class="loading"><mat-spinner diameter="36" /><span>{{ 'ACCOUNT_SETTINGS.LOADING' | translate }}</span></div> }
   @else if (settings(); as account) { <div class="cards">
@@ -16,3 +17,4 @@
     </mat-card-content></mat-card>
   </div> }
 </main>
+</mat-sidenav-content></mat-sidenav-container></div>

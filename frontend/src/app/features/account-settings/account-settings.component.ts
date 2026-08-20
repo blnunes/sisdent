@@ -7,11 +7,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountSettingsApiService } from '../../core/account-settings-api.service';
 import { AuthService } from '../../core/auth.service';
 import { CurrentAccountSettings } from '../../core/models';
 import { Language, LanguageService, LANGUAGE_OPTIONS } from '../../core/language.service';
+import { AppHeaderComponent } from '../../core/layout/app-header/app-header.component';
+import { ModuleNavigationComponent } from '../../core/layout/module-navigation/module-navigation.component';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   const { newPassword, confirmation } = control.value as { newPassword?: string; confirmation?: string };
@@ -20,7 +23,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-account-settings',
-  imports: [ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, TranslatePipe],
+  imports: [ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, MatSidenavModule, TranslatePipe, AppHeaderComponent, ModuleNavigationComponent],
   templateUrl: './account-settings.component.html',
   styleUrl: './account-settings.component.scss',
 })
@@ -31,6 +34,7 @@ export class AccountSettingsComponent implements OnInit, OnDestroy {
   private readonly translate = inject(TranslateService);
   private readonly language = inject(LanguageService);
   @ViewChild('heading') private readonly heading?: ElementRef<HTMLElement>;
+  @ViewChild(AppHeaderComponent) private readonly header?: AppHeaderComponent;
 
   readonly settings = signal<CurrentAccountSettings | null>(null);
   readonly loading = signal(true);
@@ -136,6 +140,8 @@ export class AccountSettingsComponent implements OnInit, OnDestroy {
   }
 
   initials(name: string): string { return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase(); }
+  onDrawerChange(opened: boolean, drawerScroll: HTMLElement): void { if (opened) drawerScroll.scrollTop = 0; else queueMicrotask(() => this.header?.focusMenuButton()); }
+  closeMenu(drawer: MatSidenav): void { void drawer.close(); }
   private revokePreview(): void { const preview = this.avatarPreview(); if (preview) URL.revokeObjectURL(preview); this.avatarPreview.set(null); }
   private loadAvatar(url?: string): void { this.revokeCurrent(); if (url) this.api.avatar().subscribe({ next: (blob) => this.avatarCurrent.set(URL.createObjectURL(blob)) }); }
   private revokeCurrent(): void { const current = this.avatarCurrent(); if (current) URL.revokeObjectURL(current); this.avatarCurrent.set(null); }
