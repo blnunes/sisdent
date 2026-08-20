@@ -35,6 +35,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import tools.jackson.databind.ObjectMapper;
@@ -89,9 +92,20 @@ public class RestExceptionTranslator {
         return problem(HttpStatus.BAD_REQUEST, ErrorCode.REQUEST_MALFORMED, locale, Map.of(), List.of());
     }
 
-    @ExceptionHandler({MethodArgumentTypeMismatchException.class, MissingServletRequestParameterException.class})
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, MissingServletRequestParameterException.class,
+            MissingServletRequestPartException.class})
     ProblemDetail invalidParameter(Exception exception, Locale locale) {
         return problem(HttpStatus.BAD_REQUEST, ErrorCode.REQUEST_PARAMETER_INVALID, locale, Map.of(), List.of());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ProblemDetail uploadTooLarge(MaxUploadSizeExceededException exception, Locale locale) {
+        return problem(HttpStatus.BAD_REQUEST, ErrorCode.ACCOUNT_AVATAR_TOO_LARGE, locale, Map.of(), List.of());
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    ProblemDetail malformedMultipart(MultipartException exception, Locale locale) {
+        return problem(HttpStatus.BAD_REQUEST, ErrorCode.REQUEST_MALFORMED, locale, Map.of(), List.of());
     }
 
     @ExceptionHandler(AccessDeniedException.class)

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, ViewChild, ElementRef, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -113,7 +114,7 @@ export class AccountSettingsComponent implements OnInit, OnDestroy {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     this.avatarMessage.set(''); this.avatarError.set(false);
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size === 0 || file.size > 5 * 1024 * 1024) {
+    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size === 0 || file.size > 5 * 1024 * 1024) {
       this.avatarError.set(true); this.avatarMessage.set(this.translate.instant('ACCOUNT_SETTINGS.AVATAR_INVALID_FILE')); return;
     }
     this.revokePreview();
@@ -126,7 +127,7 @@ export class AccountSettingsComponent implements OnInit, OnDestroy {
     this.avatarSubmitting.set(true); this.avatarError.set(false); this.avatarMessage.set('');
     this.api.uploadAvatar(file).subscribe({
       next: (settings) => { this.settings.set(settings); this.auth.updateAvatar(settings.avatarUrl); this.selectedAvatar.set(null); this.revokePreview(); this.loadAvatar(settings.avatarUrl); this.avatarMessage.set(this.translate.instant('ACCOUNT_SETTINGS.AVATAR_SUCCESS')); this.avatarSubmitting.set(false); },
-      error: () => { this.avatarError.set(true); this.avatarMessage.set(this.translate.instant('ACCOUNT_SETTINGS.AVATAR_ERROR')); this.avatarSubmitting.set(false); },
+      error: (error: unknown) => { this.avatarError.set(true); this.avatarMessage.set(this.avatarUploadError(error)); this.avatarSubmitting.set(false); },
     });
   }
 
@@ -143,6 +144,16 @@ export class AccountSettingsComponent implements OnInit, OnDestroy {
   onDrawerChange(opened: boolean, drawerScroll: HTMLElement): void { if (opened) drawerScroll.scrollTop = 0; else queueMicrotask(() => this.header?.focusMenuButton()); }
   closeMenu(drawer: MatSidenav): void { void drawer.close(); }
   private revokePreview(): void { const preview = this.avatarPreview(); if (preview) URL.revokeObjectURL(preview); this.avatarPreview.set(null); }
+  private avatarUploadError(error: unknown): string {
+    const code = error instanceof HttpErrorResponse && typeof error.error === 'object' && error.error !== null
+      ? (error.error as { code?: unknown }).code : undefined;
+    const key = typeof code === 'string' ? ({
+      'ACCOUNT.AVATAR_EMPTY': 'AVATAR_EMPTY', 'ACCOUNT.AVATAR_TOO_LARGE': 'AVATAR_TOO_LARGE',
+      'ACCOUNT.AVATAR_INVALID_TYPE': 'AVATAR_UNSUPPORTED_TYPE', 'ACCOUNT.AVATAR_INVALID_IMAGE': 'AVATAR_INVALID_IMAGE',
+      'AUTHENTICATION.FAILED': 'AVATAR_SESSION_EXPIRED', 'INFRASTRUCTURE.FAILURE': 'AVATAR_UNAVAILABLE',
+    } as Record<string, string>)[code] : undefined;
+    return this.translate.instant(`ACCOUNT_SETTINGS.${key ?? 'AVATAR_ERROR'}`);
+  }
   private loadAvatar(url?: string): void { this.revokeCurrent(); if (url) this.api.avatar().subscribe({ next: (blob) => this.avatarCurrent.set(URL.createObjectURL(blob)) }); }
   private revokeCurrent(): void { const current = this.avatarCurrent(); if (current) URL.revokeObjectURL(current); this.avatarCurrent.set(null); }
 }

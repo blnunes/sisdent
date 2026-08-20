@@ -9,6 +9,7 @@ import br.com.itbn.sisdent.model.Person;
 import br.com.itbn.sisdent.repository.AccountRepository;
 import br.com.itbn.sisdent.repository.PersonRepository;
 import br.com.itbn.sisdent.avatar.ProfileAvatarStorage;
+import br.com.itbn.sisdent.avatar.ProfileAvatarProcessor;
 import org.springframework.mock.web.MockMultipartFile;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +20,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.util.Base64;
+import br.com.itbn.sisdent.error.ErrorCode;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -155,10 +158,40 @@ class AccountSettingsServiceTest {
         verifyNoInteractions(avatarStorage, accounts);
     }
 
+    @Test
+    void acceptsRealPngAndJpegButRejectsUnsupportedWebpAndExcessiveDimensions() throws Exception {
+        when(currentAccountService.require()).thenReturn(new Account(new Person("Ana"), "ana@example.com", "stored", false));
+        when(accounts.saveAndFlush(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.uploadAvatar(image("image/png", "photo.png"));
+        service.uploadAvatar(image("image/jpeg", "photo.jpeg"));
+        ValidationException webp = org.junit.jupiter.api.Assertions.assertThrows(ValidationException.class,
+                () -> service.uploadAvatar(new MockMultipartFile("file", "photo.webp", "image/webp", webpHeader())));
+        assertThat(webp.errorCode()).isEqualTo(ErrorCode.ACCOUNT_AVATAR_INVALID_TYPE);
+
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        ImageIO.write(new BufferedImage(4097, 1, BufferedImage.TYPE_INT_RGB), "png", bytes);
+        assertThatThrownBy(() -> service.uploadAvatar(new MockMultipartFile("file", "wide.png", "image/png", bytes.toByteArray())))
+                .isInstanceOf(ValidationException.class);
+    }
+
+    @Test
+    void rejectsFilesOverFiveMiBBeforeStorage() {
+        when(currentAccountService.require()).thenReturn(new Account(new Person("Ana"), "ana@example.com", "stored", false));
+        assertThatThrownBy(() -> service.uploadAvatar(new MockMultipartFile("file", "large.png", "image/png",
+                new byte[(int) ProfileAvatarProcessor.MAX_UPLOAD_BYTES + 1])))
+                .isInstanceOf(ValidationException.class);
+        verifyNoInteractions(avatarStorage, accounts);
+    }
+
     private static MockMultipartFile image(String contentType, String name) throws Exception {
         BufferedImage image = new BufferedImage(800, 400, BufferedImage.TYPE_INT_RGB);
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        ImageIO.write(image, "png", bytes);
+        ImageIO.write(image, contentType.equals("image/jpeg") ? "jpeg" : "png", bytes);
         return new MockMultipartFile("file", name, contentType, bytes.toByteArray());
+    }
+
+    private static byte[] webpHeader() {
+        return Base64.getDecoder().decode("UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEAAUAmJaQAA3AA/vuUAAA=");
     }
 }

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.Path;
 
 @Component
@@ -16,14 +18,26 @@ public class LocalProfileAvatarStorage implements ProfileAvatarStorage {
 
     public LocalProfileAvatarStorage(@Value("${sisdent.avatar.storage-directory}") String directory) {
         this.root = Path.of(directory).toAbsolutePath().normalize();
+        initialize();
     }
 
     @Override public void save(String key, byte[] content) {
+        Path target = pathFor(key);
+        Path temporary = null;
         try {
-            Files.createDirectories(root);
-            Files.write(pathFor(key), content);
+            temporary = Files.createTempFile(root, ".avatar-", ".tmp");
+            Files.write(temporary, content);
+            try {
+                Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            } catch (AtomicMoveNotSupportedException exception) {
+                Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (IOException exception) {
             throw new InfrastructureException(ErrorCode.INFRASTRUCTURE_FAILURE);
+        } finally {
+            if (temporary != null) {
+                try { Files.deleteIfExists(temporary); } catch (IOException ignored) { /* cleaned up on startup */ }
+            }
         }
     }
 
@@ -40,6 +54,22 @@ public class LocalProfileAvatarStorage implements ProfileAvatarStorage {
     @Override public void delete(String key) {
         try { Files.deleteIfExists(pathFor(key)); }
         catch (IOException exception) { throw new InfrastructureException(ErrorCode.INFRASTRUCTURE_FAILURE); }
+    }
+
+    private void initialize() {
+        try {
+            Files.createDirectories(root);
+            if (!Files.isDirectory(root) || !Files.isWritable(root)) throw new IOException("Avatar directory is not writable");
+            try (var files = Files.list(root)) {
+                files.filter(path -> path.getFileName().toString().startsWith(".avatar-")
+                                && path.getFileName().toString().endsWith(".tmp"))
+                        .forEach(path -> {
+                            try { Files.deleteIfExists(path); } catch (IOException ignored) { /* retried next startup */ }
+                        });
+            }
+        } catch (IOException | SecurityException exception) {
+            throw new InfrastructureException(ErrorCode.INFRASTRUCTURE_FAILURE);
+        }
     }
 
     private Path pathFor(String key) {
