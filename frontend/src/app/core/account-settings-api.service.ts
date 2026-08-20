@@ -10,6 +10,9 @@ export class AccountSettingsApiService {
   updateProfile(request: { displayName: string; version: number }) {
     return this.http.patch<CurrentAccountSettings>('/api/account/settings/profile', request);
   }
+  updatePreferredLanguage(request: { preferredLanguage: string }) {
+    return this.http.patch<CurrentAccountSettings>('/api/account/settings/preferred-language', request);
+  }
   changePassword(request: { currentPassword: string; newPassword: string }) {
     return this.http.patch<void>('/api/account/settings/password', request);
   }

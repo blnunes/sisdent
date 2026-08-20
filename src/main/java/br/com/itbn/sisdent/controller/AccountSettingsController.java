@@ -3,6 +3,7 @@ package br.com.itbn.sisdent.controller;
 import br.com.itbn.sisdent.dto.ChangeOwnPasswordRequest;
 import br.com.itbn.sisdent.dto.CurrentAccountSettingsResponse;
 import br.com.itbn.sisdent.dto.UpdateOwnProfileRequest;
+import br.com.itbn.sisdent.dto.UpdateOwnPreferredLanguageRequest;
 import br.com.itbn.sisdent.service.AccountSettingsService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,11 @@ public class AccountSettingsController {
     @PatchMapping("/profile")
     public CurrentAccountSettingsResponse updateProfile(@Valid @RequestBody UpdateOwnProfileRequest request) {
         return settings.updateProfile(request);
+    }
+
+    @PatchMapping("/preferred-language")
+    public CurrentAccountSettingsResponse updatePreferredLanguage(@RequestBody UpdateOwnPreferredLanguageRequest request) {
+        return settings.updatePreferredLanguage(request);
     }
 
     @PatchMapping("/password")

@@ -5,11 +5,13 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountSettingsApiService } from '../../core/account-settings-api.service';
 import { AuthService } from '../../core/auth.service';
 import { CurrentAccountSettings } from '../../core/models';
+import { Language, LanguageService, LANGUAGE_OPTIONS } from '../../core/language.service';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   const { newPassword, confirmation } = control.value as { newPassword?: string; confirmation?: string };
@@ -18,7 +20,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-account-settings',
-  imports: [ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule, MatProgressSpinnerModule, TranslatePipe],
+  imports: [ReactiveFormsModule, MatButtonModule, MatCardModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, TranslatePipe],
   templateUrl: './account-settings.component.html',
   styleUrl: './account-settings.component.scss',
 })
@@ -27,6 +29,7 @@ export class AccountSettingsComponent implements OnInit {
   private readonly api = inject(AccountSettingsApiService);
   private readonly auth = inject(AuthService);
   private readonly translate = inject(TranslateService);
+  private readonly language = inject(LanguageService);
   @ViewChild('heading') private readonly heading?: ElementRef<HTMLElement>;
 
   readonly settings = signal<CurrentAccountSettings | null>(null);
@@ -37,6 +40,10 @@ export class AccountSettingsComponent implements OnInit {
   readonly passwordMessage = signal('');
   readonly profileError = signal(false);
   readonly passwordError = signal(false);
+  readonly languageSubmitting = signal(false);
+  readonly languageMessage = signal('');
+  readonly languageError = signal(false);
+  readonly languageOptions = LANGUAGE_OPTIONS;
   readonly hideCurrent = signal(true);
   readonly hideNew = signal(true);
   readonly hideConfirmation = signal(true);
@@ -44,14 +51,30 @@ export class AccountSettingsComponent implements OnInit {
   readonly passwordForm = this.fb.nonNullable.group({
     currentPassword: ['', Validators.required], newPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128)]], confirmation: ['', Validators.required],
   }, { validators: passwordsMatch });
+  readonly languageForm = this.fb.nonNullable.group({ preferredLanguage: ['en' as Language] });
 
   ngOnInit(): void { this.load(); }
 
   load(): void {
     this.loading.set(true);
     this.api.current().subscribe({
-      next: (settings) => { this.settings.set(settings); this.profileForm.setValue({ displayName: settings.displayName, version: settings.version }); this.loading.set(false); queueMicrotask(() => this.heading?.nativeElement.focus()); },
+      next: (settings) => { this.settings.set(settings); this.profileForm.setValue({ displayName: settings.displayName, version: settings.version }); this.languageForm.setValue({ preferredLanguage: settings.preferredLanguage }); this.loading.set(false); queueMicrotask(() => this.heading?.nativeElement.focus()); },
       error: () => { this.profileError.set(true); this.profileMessage.set(this.translate.instant('ACCOUNT_SETTINGS.LOAD_ERROR')); this.loading.set(false); },
+    });
+  }
+
+  savePreferredLanguage(): void {
+    if (this.languageSubmitting()) return;
+    const preferredLanguage = this.languageForm.getRawValue().preferredLanguage;
+    if (preferredLanguage === this.settings()?.preferredLanguage) return;
+    this.languageSubmitting.set(true); this.languageMessage.set(''); this.languageError.set(false);
+    this.api.updatePreferredLanguage({ preferredLanguage }).subscribe({
+      next: (settings) => {
+        this.settings.set(settings); this.languageForm.setValue({ preferredLanguage: settings.preferredLanguage });
+        this.language.set(settings.preferredLanguage); this.auth.updatePreferredLanguage(settings.preferredLanguage);
+        this.languageMessage.set(this.translate.instant('ACCOUNT_SETTINGS.LANGUAGE_SUCCESS')); this.languageSubmitting.set(false);
+      },
+      error: () => { this.languageError.set(true); this.languageMessage.set(this.translate.instant('ACCOUNT_SETTINGS.LANGUAGE_ERROR')); this.languageSubmitting.set(false); },
     });
   }
 

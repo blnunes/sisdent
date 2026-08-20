@@ -22,6 +22,7 @@ public class SessionService {
         return new SessionResponse(account.getGlobalId(), account.getEmail(), account.getPerson().getDisplayName(),
                 account.isPlatformAdministrator(),
                 account.getAccountManagementOrganization() == null ? null : account.getAccountManagementOrganization().getGlobalId(),
+                account.getPreferredLanguage(),
                 membershipRepository.findAllByAccount_IdAndActiveTrue(account.getId()).stream()
                         .map(OrganizationService::toResponse).toList());
     }

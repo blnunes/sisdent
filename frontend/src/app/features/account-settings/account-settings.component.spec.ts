@@ -4,15 +4,17 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { AccountSettingsComponent } from './account-settings.component';
 import { AccountSettingsApiService } from '../../core/account-settings-api.service';
 import { AuthService } from '../../core/auth.service';
+import { LanguageService } from '../../core/language.service';
 
 describe('AccountSettingsComponent', () => {
   let fixture: ComponentFixture<AccountSettingsComponent>;
   let component: AccountSettingsComponent;
-  const api = { current: vi.fn(), updateProfile: vi.fn(), changePassword: vi.fn() };
-  const auth = { updateDisplayName: vi.fn() };
+  const api = { current: vi.fn(), updateProfile: vi.fn(), updatePreferredLanguage: vi.fn(), changePassword: vi.fn() };
+  const auth = { updateDisplayName: vi.fn(), updatePreferredLanguage: vi.fn() };
+  const language = { set: vi.fn() };
   beforeEach(async () => {
-    api.current.mockReturnValue(of({ id: 'me', email: 'me@example.com', displayName: 'Me', version: 1 }));
-    await TestBed.configureTestingModule({ imports: [AccountSettingsComponent], providers: [provideTranslateService(), { provide: AccountSettingsApiService, useValue: api }, { provide: AuthService, useValue: auth }] }).compileComponents();
+    api.current.mockReturnValue(of({ id: 'me', email: 'me@example.com', displayName: 'Me', preferredLanguage: 'en', version: 1 }));
+    await TestBed.configureTestingModule({ imports: [AccountSettingsComponent], providers: [provideTranslateService(), { provide: AccountSettingsApiService, useValue: api }, { provide: AuthService, useValue: auth }, { provide: LanguageService, useValue: language }] }).compileComponents();
     fixture = TestBed.createComponent(AccountSettingsComponent); component = fixture.componentInstance; fixture.detectChanges();
   });
 
@@ -35,5 +37,26 @@ describe('AccountSettingsComponent', () => {
     component.passwordForm.setValue({ currentPassword: 'current', newPassword: 'new-password', confirmation: 'new-password' });
     component.savePassword();
     expect(component.passwordError()).toBe(true);
+  });
+
+  it('persists a selected language and updates the local session and language cache on success', () => {
+    api.updatePreferredLanguage.mockReturnValue(of({ id: 'me', email: 'me@example.com', displayName: 'Me', preferredLanguage: 'nl', version: 1 }));
+    component.languageForm.setValue({ preferredLanguage: 'nl' });
+
+    component.savePreferredLanguage();
+
+    expect(api.updatePreferredLanguage).toHaveBeenCalledWith({ preferredLanguage: 'nl' });
+    expect(language.set).toHaveBeenCalledWith('nl');
+    expect(auth.updatePreferredLanguage).toHaveBeenCalledWith('nl');
+  });
+
+  it('keeps the selected language and exposes an error when saving fails', () => {
+    api.updatePreferredLanguage.mockReturnValue(throwError(() => new Error('failed')));
+    component.languageForm.setValue({ preferredLanguage: 'nl' });
+
+    component.savePreferredLanguage();
+
+    expect(component.languageForm.getRawValue().preferredLanguage).toBe('nl');
+    expect(component.languageError()).toBe(true);
   });
 });

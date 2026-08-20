@@ -2,6 +2,7 @@ package br.com.itbn.sisdent.service;
 
 import br.com.itbn.sisdent.dto.ChangeOwnPasswordRequest;
 import br.com.itbn.sisdent.dto.UpdateOwnProfileRequest;
+import br.com.itbn.sisdent.dto.UpdateOwnPreferredLanguageRequest;
 import br.com.itbn.sisdent.error.ValidationException;
 import br.com.itbn.sisdent.model.Account;
 import br.com.itbn.sisdent.model.Person;
@@ -79,5 +80,33 @@ class AccountSettingsServiceTest {
                 .isInstanceOf(ValidationException.class);
         verify(accounts, never()).saveAndFlush(any());
         verify(passwords, never()).encode(any());
+    }
+
+    @Test
+    void changesOnlyTheAuthenticatedAccountsPreferredLanguage() {
+        Account current = new Account(new Person("Ana"), "ana@example.com", "stored", false);
+        Account other = new Account(new Person("Bia"), "bia@example.com", "stored", false);
+        when(currentAccountService.require()).thenReturn(current);
+        when(accounts.saveAndFlush(current)).thenReturn(current);
+
+        var response = service.updatePreferredLanguage(new UpdateOwnPreferredLanguageRequest("pt-PT"));
+
+        assertThat(response.preferredLanguage()).isEqualTo("pt-PT");
+        assertThat(current.getPreferredLanguage()).isEqualTo("pt-PT");
+        assertThat(other.getPreferredLanguage()).isEqualTo("en");
+        verify(accounts).saveAndFlush(current);
+        verifyNoInteractions(persons, passwords);
+    }
+
+    @Test
+    void rejectsInvalidPreferredLanguagesWithoutPersisting() {
+        Account account = new Account(new Person("Ana"), "ana@example.com", "stored", false);
+        when(currentAccountService.require()).thenReturn(account);
+
+        for (String language : new String[] {null, "", "pt", "pt-BR", "en-US", "nl-BE"}) {
+            assertThatThrownBy(() -> service.updatePreferredLanguage(new UpdateOwnPreferredLanguageRequest(language)))
+                    .isInstanceOf(ValidationException.class);
+        }
+        verify(accounts, never()).saveAndFlush(any());
     }
 }

@@ -107,6 +107,23 @@ class SecurityIntegrationTests {
     }
 
     @Test
+    void authenticatedUserPersistsOwnPreferredLanguageAcrossSessions() throws Exception {
+        String token = emailLogin("northstar.readonly@sisdent.demo", "odonto2026@O");
+
+        mockMvc.perform(patch("/api/account/settings/preferred-language").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"preferredLanguage\":\"nl\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.preferredLanguage").value("nl"));
+        mockMvc.perform(get("/api/session").header("Authorization", bearer(token)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.preferredLanguage").value("nl"));
+        String renewedToken = emailLogin("northstar.readonly@sisdent.demo", "odonto2026@O");
+        mockMvc.perform(get("/api/session").header("Authorization", bearer(renewedToken)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.preferredLanguage").value("nl"));
+        mockMvc.perform(patch("/api/account/settings/preferred-language")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"preferredLanguage\":\"pt-BR\"}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void catalogueUsesTheRequestedPortugueseLocaleOverHttp() throws Exception {
         String token = emailLogin("admin@sisdent.local", "admin");
 

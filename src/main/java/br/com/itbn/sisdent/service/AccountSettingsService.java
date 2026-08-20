@@ -3,6 +3,7 @@ package br.com.itbn.sisdent.service;
 import br.com.itbn.sisdent.dto.ChangeOwnPasswordRequest;
 import br.com.itbn.sisdent.dto.CurrentAccountSettingsResponse;
 import br.com.itbn.sisdent.dto.UpdateOwnProfileRequest;
+import br.com.itbn.sisdent.dto.UpdateOwnPreferredLanguageRequest;
 import br.com.itbn.sisdent.error.ConflictException;
 import br.com.itbn.sisdent.error.ErrorCode;
 import br.com.itbn.sisdent.error.ValidationException;
@@ -60,6 +61,18 @@ public class AccountSettingsService {
         accounts.saveAndFlush(account);
     }
 
+    @Transactional
+    public CurrentAccountSettingsResponse updatePreferredLanguage(UpdateOwnPreferredLanguageRequest request) {
+        Account account = currentAccountService.require();
+        try {
+            account.changePreferredLanguage(request == null ? null : request.preferredLanguage());
+        } catch (IllegalArgumentException exception) {
+            throw new ValidationException(ErrorCode.ACCOUNT_PREFERRED_LANGUAGE_INVALID);
+        }
+        accounts.saveAndFlush(account);
+        return response(account);
+    }
+
     private static void validatePasswordRequest(ChangeOwnPasswordRequest request) {
         if (request.currentPassword() == null || request.currentPassword().isBlank()
                 || request.newPassword() == null || request.newPassword().length() < 8
@@ -70,6 +83,6 @@ public class AccountSettingsService {
 
     private static CurrentAccountSettingsResponse response(Account account) {
         Person person = account.getPerson();
-        return new CurrentAccountSettingsResponse(account.getGlobalId(), person.getDisplayName(), account.getEmail(), person.getVersion());
+        return new CurrentAccountSettingsResponse(account.getGlobalId(), person.getDisplayName(), account.getEmail(), account.getPreferredLanguage(), person.getVersion());
     }
 }

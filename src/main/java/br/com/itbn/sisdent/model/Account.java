@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import br.com.itbn.sisdent.localization.PreferredLanguage;
 
 import java.util.Locale;
 import java.util.UUID;
@@ -40,6 +41,9 @@ public class Account extends AuditableEntity {
     @Column(name = "platform_administrator", nullable = false)
     private boolean platformAdministrator;
 
+    @Column(name = "preferred_language", nullable = false, length = 5)
+    private String preferredLanguage = PreferredLanguage.DEFAULT;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_management_organization_id")
     private Organization accountManagementOrganization;
@@ -65,6 +69,7 @@ public class Account extends AuditableEntity {
     public String getPassword() { return password; }
     public boolean isActive() { return active; }
     public boolean isPlatformAdministrator() { return platformAdministrator; }
+    public String getPreferredLanguage() { return preferredLanguage == null ? PreferredLanguage.DEFAULT : preferredLanguage; }
     public Organization getAccountManagementOrganization() { return accountManagementOrganization; }
     public void changeActive(boolean active) {
         if (this.active == active) {
@@ -82,6 +87,10 @@ public class Account extends AuditableEntity {
 
     public void changePassword(String password) {
         this.password = password;
+    }
+
+    public void changePreferredLanguage(String preferredLanguage) {
+        this.preferredLanguage = PreferredLanguage.require(preferredLanguage);
     }
 
     public void assignAccountManagementOrganizationIfAbsent(Organization organization) {

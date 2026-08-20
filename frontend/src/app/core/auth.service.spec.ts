@@ -3,21 +3,33 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AuthService } from './auth.service';
+import { LanguageService } from './language.service';
 
 describe('AuthService', () => {
   let service: AuthService;
   let http: HttpTestingController;
+  const language = { set: vi.fn(), isSupported: vi.fn((value: string) => ['pt-PT', 'en', 'nl'].includes(value)) };
 
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), { provide: LanguageService, useValue: language }],
     });
     service = TestBed.inject(AuthService);
     http = TestBed.inject(HttpTestingController);
   });
 
   afterEach(() => http.verify());
+
+  it('applies the preferred language returned by the authenticated session and falls back to English for invalid values', () => {
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({ accountId: 'account-1', email: 'user@example.com', displayName: 'User', platformAdministrator: false, preferredLanguage: 'nl', memberships: [] });
+    expect(language.set).toHaveBeenCalledWith('nl');
+
+    service.loadSession().subscribe();
+    http.expectOne('/api/session').flush({ accountId: 'account-1', email: 'user@example.com', displayName: 'User', platformAdministrator: false, preferredLanguage: 'invalid', memberships: [] });
+    expect(language.set).toHaveBeenCalledWith('en');
+  });
 
   it('stores a valid admin token after login', () => {
     service
