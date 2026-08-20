@@ -31,29 +31,34 @@ public class AppointmentService {
     private final PatientOrganizationLinkRepository links;
     private final OrganizationRepository organizations;
     private final ScopeAuthorizationService authorization;
+    private final AppointmentAvailabilityService availability;
 
     public AppointmentService(AppointmentRepository appointments, PractitionerRepository practitioners,
             PatientOrganizationLinkRepository links, OrganizationRepository organizations,
-            ScopeAuthorizationService authorization) {
+            ScopeAuthorizationService authorization, AppointmentAvailabilityService availability) {
         this.appointments = appointments;
         this.practitioners = practitioners;
         this.links = links;
         this.organizations = organizations;
         this.authorization = authorization;
+        this.availability = availability;
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<AppointmentResponse> list(UUID organizationId, UUID clinicUnitId, Instant from, Instant to,
+    public PageResponse<AppointmentResponse> list(UUID organizationId, UUID clinicUnitId, Instant from, Instant to, java.util.List<UUID> practitionerIds,
             int page, int size) {
         authorization.requireAppointmentRead(organizationId, clinicUnitId);
         validListRange(from, to);
         if (clinicUnitId != null) {
             authorization.requireClinicInOrganization(organizationId, clinicUnitId);
         }
+        if (practitionerIds != null) practitionerIds.stream().distinct().forEach(id -> practitioners
+                .findByGlobalIdAndOrganization_GlobalId(id, organizationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
         PageRequest pageable = PageRequest.of(page, Math.min(size, 100), Sort.by("startAt"));
         return PageResponse.from(to == null
-                ? appointments.findFrom(organizationId, clinicUnitId, from, pageable)
-                : appointments.findScoped(organizationId, clinicUnitId, from, to, pageable), this::response);
+                ? appointments.findFrom(organizationId, clinicUnitId, practitionerIds == null || practitionerIds.isEmpty() ? null : practitionerIds, from, pageable)
+                : appointments.findScoped(organizationId, clinicUnitId, practitionerIds == null || practitionerIds.isEmpty() ? null : practitionerIds, from, to, pageable), this::response);
     }
 
     @Transactional
@@ -63,9 +68,10 @@ public class AppointmentService {
         Organization organization = organizations.findByGlobalId(organizationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ClinicUnit clinic = authorization.requireClinicInOrganization(organizationId, request.clinicUnitId());
+        requireClinicTimezone(clinic, request.schedulingTimezone());
         Practitioner practitioner = lockActive(organizationId, request.practitionerId());
         PatientOrganizationLink link = activeLink(organizationId, request.patientId(), request.clinicUnitId());
-        conflict(practitioner, request.startAt(), request.endAt(), null);
+        availability.requireAvailable(organizationId, clinic, practitioner, request.startAt(), request.endAt(), null);
         return response(appointments.save(new Appointment(organization, clinic, link, practitioner,
                 request.startAt(), request.endAt(), zone(request.schedulingTimezone()))));
     }
@@ -84,6 +90,7 @@ public class AppointmentService {
         valid(request);
         Appointment appointment = require(organizationId, appointmentId);
         checkClinic(appointment, request.clinicUnitId());
+        requireClinicTimezone(appointment.getClinicUnit(), request.schedulingTimezone());
         PatientOrganizationLink link = activeLink(organizationId, request.patientId(), request.clinicUnitId());
         if (!appointment.getPatientLink().getId().equals(link.getId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -92,7 +99,7 @@ public class AppointmentService {
         if (!practitioner.getId().equals(appointment.getPractitioner().getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Practitioner cannot be changed when rescheduling");
         }
-        conflict(practitioner, request.startAt(), request.endAt(), appointment.getId());
+        availability.requireAvailable(organizationId, appointment.getClinicUnit(), practitioner, request.startAt(), request.endAt(), appointment.getId());
         appointment.reschedule(request.startAt(), request.endAt(), zone(request.schedulingTimezone()));
         return response(appointment);
     }
@@ -146,6 +153,11 @@ public class AppointmentService {
     private String zone(String value) {
         try { return ZoneId.of(value.strip()).getId(); }
         catch (Exception _) { throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A valid IANA timezone is required"); }
+    }
+    private void requireClinicTimezone(ClinicUnit clinic, String value) {
+        if (!clinic.getTimezone().equals(zone(value))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Scheduling timezone must match the clinic unit timezone");
+        }
     }
     private void checkClinic(Appointment appointment, UUID clinicUnitId) {
         if (clinicUnitId != null && !appointment.getClinicUnit().getGlobalId().equals(clinicUnitId)) {

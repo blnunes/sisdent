@@ -31,6 +31,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.doThrow;
 
 @ExtendWith(MockitoExtension.class)
 class AppointmentServiceTest {
@@ -39,6 +40,7 @@ class AppointmentServiceTest {
     @Mock PatientOrganizationLinkRepository links;
     @Mock OrganizationRepository organizations;
     @Mock ScopeAuthorizationService authorization;
+    @Mock AppointmentAvailabilityService availability;
     @InjectMocks AppointmentService service;
 
     private final UUID organizationId = UUID.randomUUID();
@@ -67,6 +69,7 @@ class AppointmentServiceTest {
         lenient().when(patient.getGlobalId()).thenReturn(patientId);
         lenient().when(patient.getName()).thenReturn("Patient");
         lenient().when(clinic.getGlobalId()).thenReturn(clinicId);
+        lenient().when(clinic.getTimezone()).thenReturn("Europe/Lisbon");
     }
 
     @Test
@@ -76,7 +79,6 @@ class AppointmentServiceTest {
         when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
         when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
         when(links.findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(patientId, organizationId, clinicId)).thenReturn(Optional.of(link));
-        when(appointments.hasOverlap(1L, start, end, null)).thenReturn(false);
         when(appointments.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         assertThat(service.create(organizationId, request).schedulingTimezone()).isEqualTo("Europe/Lisbon");
@@ -94,7 +96,7 @@ class AppointmentServiceTest {
         when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
         when(links.findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(patientId, organizationId, clinicId))
                 .thenReturn(Optional.of(link));
-        when(appointments.hasOverlap(1L, start, end, null)).thenReturn(true);
+        doThrow(new SchedulingConflictException()).when(availability).requireAvailable(any(), any(), any(), any(), any(), any());
         assertThatThrownBy(() -> service.create(organizationId, request)).isInstanceOf(SchedulingConflictException.class);
     }
 
@@ -113,26 +115,25 @@ class AppointmentServiceTest {
     @Test
     void listsAndReschedulesAppointmentsWithinTheAuthorizedClinic() {
         Appointment appointment = new Appointment(new Organization("Alpha"), clinic, link, practitioner, start, end, "Europe/Lisbon");
-        when(appointments.findScoped(any(), any(), any(), any(), any())).thenReturn(Page.empty());
+        when(appointments.findScoped(any(), any(), any(), any(), any(), any())).thenReturn(Page.empty());
         when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
         when(appointments.findByGlobalIdAndOrganization_GlobalId(appointment.getGlobalId(), organizationId)).thenReturn(Optional.of(appointment));
         when(links.findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(patientId, organizationId, clinicId))
                 .thenReturn(Optional.of(link));
         when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
-        when(appointments.hasOverlap(1L, start, end, null)).thenReturn(false);
 
-        assertThat(service.list(organizationId, clinicId, start, end, 0, 200).content()).isEmpty();
+        assertThat(service.list(organizationId, clinicId, start, end, null, 0, 200).content()).isEmpty();
         assertThat(service.reschedule(organizationId, appointment.getGlobalId(), request).status()).isEqualTo(AppointmentStatus.SCHEDULED);
     }
 
     @Test
     void listsAppointmentsFromTheRequestedDayWithoutAnUpperDateLimit() {
-        when(appointments.findFrom(any(), any(), any(), any())).thenReturn(Page.empty());
+        when(appointments.findFrom(any(), any(), any(), any(), any())).thenReturn(Page.empty());
         when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
 
-        assertThat(service.list(organizationId, clinicId, start, null, 1, 10).content()).isEmpty();
+        assertThat(service.list(organizationId, clinicId, start, null, null, 1, 10).content()).isEmpty();
 
-        verify(appointments).findFrom(any(), any(), any(), any());
+        verify(appointments).findFrom(any(), any(), any(), any(), any());
     }
 
     @Test
