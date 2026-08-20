@@ -1,6 +1,10 @@
 package br.com.itbn.sisdent.service;
 
 import br.com.itbn.sisdent.dto.CatalogTranslationEntryResponse;
+import br.com.itbn.sisdent.error.ErrorCode;
+import br.com.itbn.sisdent.error.ResourceNotFoundException;
+import br.com.itbn.sisdent.error.ValidationException;
+import br.com.itbn.sisdent.localization.SupportedCatalogLocale;
 import br.com.itbn.sisdent.model.CatalogResourceType;
 import br.com.itbn.sisdent.model.CatalogTranslation;
 import br.com.itbn.sisdent.model.DentalProcedure;
@@ -9,10 +13,8 @@ import br.com.itbn.sisdent.repository.CatalogTranslationRepository;
 import br.com.itbn.sisdent.repository.DentalProcedureRepository;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.springframework.context.MessageSource;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ import java.util.Set;
 
 @Service
 public class CatalogTranslationService {
-    public static final List<String> SUPPORTED_LOCALES = List.of("en", "pt-PT", "nl");
+    private static final List<String> SUPPORTED_LOCALES = List.of("en", "pt-PT", "nl");
 
     private final CatalogTranslationRepository translations;
     private final SpecialityRepository specialities;
@@ -48,7 +50,7 @@ public class CatalogTranslationService {
             Long resourceId,
             String canonicalName,
             Locale requestedLocale) {
-        String locale = supportedTag(requestedLocale);
+        String locale = SupportedCatalogLocale.catalogTag(requestedLocale);
         return translations.findByResourceTypeAndResourceIdAndLocale(type, resourceId, locale)
                 .map(CatalogTranslation::getTranslatedName)
                 .or(() -> builtIn(type, canonicalName, locale))
@@ -221,14 +223,8 @@ public class CatalogTranslationService {
 
     private void rejectUnsupportedLocales(Set<String> locales) {
         if (!SUPPORTED_LOCALES.containsAll(locales)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported catalog translation locale");
+            throw unsupportedLocale();
         }
-    }
-
-    private String supportedTag(Locale locale) {
-        if (locale != null && locale.getLanguage().equals("pt")) return "pt-PT";
-        if (locale != null && locale.getLanguage().equals("nl")) return "nl";
-        return "en";
     }
 
     private String clean(String value) {
@@ -239,8 +235,13 @@ public class CatalogTranslationService {
         return term.isEmpty() || name.toLowerCase(Locale.ROOT).contains(term);
     }
 
-    private ResponseStatusException notFound() {
-        return new ResponseStatusException(HttpStatus.NOT_FOUND, "Catalog resource not found");
+    private ResourceNotFoundException notFound() {
+        return new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND);
+    }
+
+    private ValidationException unsupportedLocale() {
+        return new ValidationException(ErrorCode.CATALOG_UNSUPPORTED_LOCALE,
+                Map.of("supportedLocales", SupportedCatalogLocale.supportedLanguageTags()));
     }
 
     private String slug(String value) {

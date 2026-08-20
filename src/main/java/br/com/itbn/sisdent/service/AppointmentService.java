@@ -46,12 +46,14 @@ public class AppointmentService {
     public PageResponse<AppointmentResponse> list(UUID organizationId, UUID clinicUnitId, Instant from, Instant to,
             int page, int size) {
         authorization.requireAppointmentRead(organizationId, clinicUnitId);
-        validRange(from, to);
+        validListRange(from, to);
         if (clinicUnitId != null) {
             authorization.requireClinicInOrganization(organizationId, clinicUnitId);
         }
-        return PageResponse.from(appointments.findScoped(organizationId, clinicUnitId, from, to,
-                PageRequest.of(page, Math.min(size, 100), Sort.by("startAt"))), this::response);
+        PageRequest pageable = PageRequest.of(page, Math.min(size, 100), Sort.by("startAt"));
+        return PageResponse.from(to == null
+                ? appointments.findFrom(organizationId, clinicUnitId, from, pageable)
+                : appointments.findScoped(organizationId, clinicUnitId, from, to, pageable), this::response);
     }
 
     @Transactional
@@ -133,6 +135,11 @@ public class AppointmentService {
     private void valid(AppointmentRequest request) { validRange(request.startAt(), request.endAt()); zone(request.schedulingTimezone()); }
     private void validRange(Instant start, Instant end) {
         if (start == null || end == null || !end.isAfter(start)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment end must be after start");
+        }
+    }
+    private void validListRange(Instant from, Instant to) {
+        if (from == null || (to != null && !to.isAfter(from))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment end must be after start");
         }
     }

@@ -6,6 +6,7 @@ import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.service.CountryService;
 import br.com.itbn.sisdent.pagination.PageQuery;
 import br.com.itbn.sisdent.model.Continent;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,6 +33,8 @@ public class CountryController {
         this.countryService = countryService;
     }
 
+    @Deprecated(since = "2026-08-18", forRemoval = false)
+    @Operation(deprecated = true, description = "Use the GraphQL countries query. Scheduled for review after 2027-02-18.")
     @GetMapping
     public PageResponse<CountryResponse> findAll(
             @RequestParam(required = false) Integer page,
@@ -48,6 +51,8 @@ public class CountryController {
         return List.of(Continent.values());
     }
 
+    @Deprecated(since = "2026-08-18", forRemoval = false)
+    @Operation(deprecated = true, description = "Use the GraphQL createCountry mutation. Scheduled for review after 2027-02-18.")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CountryResponse create(
@@ -56,6 +61,8 @@ public class CountryController {
         return countryService.create(request, locale);
     }
 
+    @Deprecated(since = "2026-08-18", forRemoval = false)
+    @Operation(deprecated = true, description = "Use the GraphQL updateCountry mutation. Scheduled for review after 2027-02-18.")
     @PutMapping("/{id}")
     public CountryResponse update(
             @PathVariable Long id,

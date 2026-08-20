@@ -6,6 +6,9 @@ import br.com.itbn.sisdent.dto.SpecialityResponse;
 import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.mapper.ResponseMapper;
 import br.com.itbn.sisdent.localization.CatalogNameLocalizer;
+import br.com.itbn.sisdent.localization.SupportedCatalogLocale;
+import br.com.itbn.sisdent.error.ErrorCode;
+import br.com.itbn.sisdent.error.ValidationException;
 import br.com.itbn.sisdent.pagination.PageQuery;
 import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.pagination.SortDefinition;
@@ -42,16 +45,19 @@ public class SpecialityService {
     private final PageableFactory pageableFactory;
     private final CatalogNameLocalizer<Speciality> nameLocalizer;
     private final CatalogTranslationService translations;
+    private final ScopeAuthorizationService authorization;
 
     public SpecialityService(
             SpecialityRepository specialityRepository,
             PageableFactory pageableFactory,
             CatalogNameLocalizer<Speciality> nameLocalizer,
-            CatalogTranslationService translations) {
+            CatalogTranslationService translations,
+            ScopeAuthorizationService authorization) {
         this.specialityRepository = specialityRepository;
         this.pageableFactory = pageableFactory;
         this.nameLocalizer = nameLocalizer;
         this.translations = translations;
+        this.authorization = authorization;
     }
 
     @Transactional(readOnly = true)
@@ -66,6 +72,8 @@ public class SpecialityService {
             PageQuery query,
             SpecialityFilter filter,
             Locale locale) {
+        authorization.requirePlatformAdministrator();
+        validateCatalogLocale(locale);
         return PageResponse.from(
                 specialityRepository.findAll(
                         SpecialitySpecifications.matching(filter),
@@ -88,6 +96,7 @@ public class SpecialityService {
 
     @Transactional
     public SpecialityResponse create(SpecialityRequest request, Locale locale) {
+        authorization.requirePlatformAdministrator();
         validateProcedureNames(request.procedures());
         if (request.procedures().stream().anyMatch(procedure -> procedure.id() != null)) {
             throw new ResponseStatusException(
@@ -109,6 +118,7 @@ public class SpecialityService {
 
     @Transactional
     public SpecialityResponse update(Long specialityId, SpecialityRequest request, Locale locale) {
+        authorization.requirePlatformAdministrator();
         validateProcedureNames(request.procedures());
         Speciality speciality = specialityRepository.findById(specialityId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -149,6 +159,7 @@ public class SpecialityService {
 
     @Transactional
     public void delete(Long id) {
+        authorization.requirePlatformAdministrator();
         Speciality speciality = specialityRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Speciality not found"));
         speciality.deactivate();
@@ -212,6 +223,13 @@ public class SpecialityService {
                         CatalogResourceType.PROCEDURE,
                         procedure.getId(),
                         procedure.getName()));
+    }
+
+    private void validateCatalogLocale(Locale locale) {
+        if (!SupportedCatalogLocale.supports(locale)) {
+            throw new ValidationException(ErrorCode.CATALOG_UNSUPPORTED_LOCALE,
+                    java.util.Map.of("supportedLocales", SupportedCatalogLocale.supportedLanguageTags()));
+        }
     }
 
     private void persistTranslations(Speciality speciality, SpecialityRequest request) {

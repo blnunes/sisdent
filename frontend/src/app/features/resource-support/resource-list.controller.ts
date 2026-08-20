@@ -56,6 +56,7 @@ export abstract class ResourceListController {
   protected readonly translate = inject(TranslateService);
   readonly loading = signal(true);
   readonly error = signal(false);
+  readonly errorMessage = signal('');
   readonly records = signal<ResourceRecord[]>([]);
   readonly page = signal(0);
   readonly pageSize = signal(10);
@@ -92,6 +93,7 @@ export abstract class ResourceListController {
     }
     this.loading.set(true);
     this.error.set(false);
+    this.errorMessage.set('');
     this.http
       .get<PageResponse<ResourceRecord>>(endpoint, {
         params: this.tableQuery.toHttpParams({

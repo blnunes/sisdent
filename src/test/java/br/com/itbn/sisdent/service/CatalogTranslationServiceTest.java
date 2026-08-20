@@ -3,13 +3,15 @@ package br.com.itbn.sisdent.service;
 import br.com.itbn.sisdent.model.CatalogResourceType;
 import br.com.itbn.sisdent.model.CatalogTranslation;
 import br.com.itbn.sisdent.model.Speciality;
+import br.com.itbn.sisdent.error.ErrorCode;
+import br.com.itbn.sisdent.error.ResourceNotFoundException;
+import br.com.itbn.sisdent.error.ValidationException;
 import br.com.itbn.sisdent.repository.CatalogTranslationRepository;
 import br.com.itbn.sisdent.repository.DentalProcedureRepository;
 import br.com.itbn.sisdent.repository.SpecialityRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.MessageSource;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Locale;
@@ -44,11 +46,9 @@ class CatalogTranslationServiceTest {
                 .isEqualTo("Implantologia digital");
         verify(messages, never()).getMessage(any(), any(), any(), any(Locale.class));
 
-        when(repository.findByResourceTypeAndResourceIdAndLocale(CatalogResourceType.SPECIALITY, 8L, "en"))
-                .thenReturn(Optional.empty());
-        when(messages.getMessage(any(), any(), any(), any(Locale.class))).thenReturn(null);
-        assertThat(service.resolve(CatalogResourceType.SPECIALITY, 8L, "Custom name", Locale.FRENCH))
-                .isEqualTo("Custom name");
+        assertThatThrownBy(() -> service.resolve(CatalogResourceType.SPECIALITY, 8L, "Custom name", Locale.FRENCH))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Unsupported catalogue locale");
     }
 
     @Test
@@ -86,7 +86,9 @@ class CatalogTranslationServiceTest {
     void rejectsUnsupportedLocalesAndUnknownResources() {
         when(specialities.findById(99L)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.replace(CatalogResourceType.SPECIALITY, 99L, Map.of("en", "Name")))
-                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("Catalog resource not found");
+                .isInstanceOf(ResourceNotFoundException.class)
+                .extracting(exception -> ((ResourceNotFoundException) exception).errorCode())
+                .isEqualTo(ErrorCode.RESOURCE_NOT_FOUND);
 
         Speciality speciality = mock(Speciality.class);
         when(speciality.getId()).thenReturn(4L);
@@ -94,6 +96,8 @@ class CatalogTranslationServiceTest {
         when(specialities.findById(4L)).thenReturn(Optional.of(speciality));
         when(repository.findByResourceTypeAndResourceId(CatalogResourceType.SPECIALITY, 4L)).thenReturn(List.of());
         assertThatThrownBy(() -> service.replace(CatalogResourceType.SPECIALITY, 4L, Map.of("fr", "Nom")))
-                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("Unsupported");
+                .isInstanceOf(ValidationException.class)
+                .extracting(exception -> ((ValidationException) exception).errorCode())
+                .isEqualTo(ErrorCode.CATALOG_UNSUPPORTED_LOCALE);
     }
 }

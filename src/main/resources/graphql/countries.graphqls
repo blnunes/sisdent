@@ -1,0 +1,50 @@
+type Query {
+    """A paginated platform country catalogue. Requires ROLE_PLATFORM_ADMIN."""
+    countries(
+        page: CataloguePageInput
+        """BCP 47 language tag, for example pt-PT or nl. Defaults to en."""
+        locale: String
+    ): CountryPage!
+    """Looks up an existing country catalogue entry by its ISO code."""
+    country(code: String!, locale: String): Country!
+}
+
+"""The transport-neutral pagination and ordering contract for catalogue queries."""
+input CataloguePageInput {
+    page: Int
+    size: Int
+    sort: String
+    direction: SortDirection
+}
+
+enum SortDirection {
+    ASC
+    DESC
+}
+
+type CountryPage {
+    content: [Country!]!
+    page: Int!
+    size: Int!
+    # GraphQL's built-in Int scalar is sufficient for this learning catalogue.
+    # Introduce a custom Long scalar before exposing a collection that can exceed it.
+    totalElements: Int!
+    totalPages: Int!
+}
+
+type Country {
+    id: ID!
+    name: String!
+    displayName: String!
+    code: String!
+    continent: Continent!
+}
+
+enum Continent {
+    AFRICA
+    ASIA
+    EUROPE
+    NORTH_AMERICA
+    OCEANIA
+    SOUTH_AMERICA
+}

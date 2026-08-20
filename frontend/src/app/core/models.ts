@@ -72,8 +72,12 @@ export interface Session {
   displayName: string;
   platformAdministrator: boolean;
   accountManagementOrganizationId?: string;
+  preferredLanguage?: 'pt-PT' | 'en' | 'nl';
+  avatarUrl?: string;
   memberships: Membership[];
 }
+
+export interface CurrentAccountSettings { id: string; displayName: string; email: string; preferredLanguage: 'pt-PT' | 'en' | 'nl'; avatarUrl?: string; version: number; }
 
 export interface PageResponse<T> {
   content: T[];

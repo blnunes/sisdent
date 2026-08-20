@@ -41,6 +41,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/login/login.component').then((m) => m.LoginComponent),
   },
   {
+    path: 'unavailable',
+    loadComponent: () => import('./features/unavailable/unavailable.component').then((m) => m.UnavailableComponent),
+  },
+  {
     path: 'home',
     canActivate: [authGuard],
     loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
@@ -58,6 +62,11 @@ export const routes: Routes = [
       import('./features/catalog-translations/catalog-translations.component').then(
         (m) => m.CatalogTranslationsComponent,
       ),
+  },
+  {
+    path: 'settings/account',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/account-settings/account-settings.component').then((m) => m.AccountSettingsComponent),
   },
   {
     path: 'patients',

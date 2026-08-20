@@ -9,13 +9,12 @@ import { AdministrativeDivisionsComponent } from './administrative-divisions/adm
 import { CountriesComponent } from './countries/countries.component';
 import { SpecialitiesComponent } from './specialities/specialities.component';
 import { LANGUAGE_CHANGED_EVENT } from '../core/language.service';
+import { LanguageService } from '../core/language.service';
 import { provideTranslateService } from '@ngx-translate/core';
 
 describe('catalogue feature endpoints', () => {
   const cases: [Type<unknown>, string][] = [
-    [SpecialitiesComponent, '/api/specialities'],
     [AddressesComponent, '/api/addresses'],
-    [CountriesComponent, '/api/countries'],
     [AdministrativeDivisionsComponent, '/api/administrative-divisions'],
   ];
 
@@ -41,6 +40,63 @@ describe('catalogue feature endpoints', () => {
     TestBed.resetTestingModule();
   });
 
+  it('loads the country catalogue through GraphQL', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTranslateService(),
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+        { provide: LanguageService, useValue: { current: signal('en') } },
+        {
+          provide: AuthService,
+          useValue: { activeMembership: signal(null), hasPermission: () => true },
+        },
+      ],
+    });
+    TestBed.runInInjectionContext(() => new CountriesComponent());
+    const request = TestBed.inject(HttpTestingController).expectOne('/graphql');
+    expect(request.request.body.variables).toEqual({
+      page: { page: 0, size: 10, sort: 'id', direction: 'ASC' },
+      locale: 'en',
+    });
+    request.flush({
+      data: { countries: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } },
+    });
+    TestBed.inject(HttpTestingController).verify();
+  });
+
+  it('shows the safe GraphQL error message for the country catalogue', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTranslateService(),
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+        { provide: LanguageService, useValue: { current: signal('en') } },
+        {
+          provide: AuthService,
+          useValue: { activeMembership: signal(null), hasPermission: () => true },
+        },
+      ],
+    });
+    const component = TestBed.runInInjectionContext(() => new CountriesComponent());
+    TestBed.inject(HttpTestingController)
+      .expectOne('/graphql')
+      .flush({
+        errors: [
+          {
+            message: 'That sort field is not supported.',
+            extensions: { code: 'PAGINATION.UNSUPPORTED_SORT', correlationId: 'support-42' },
+          },
+        ],
+      });
+
+    expect(component.error()).toBe(true);
+    expect(component.errorMessage()).toBe('That sort field is not supported.');
+    TestBed.inject(HttpTestingController).verify();
+  });
+
   it('surfaces the continent lookup error without opening the country dialog', () => {
     const dialog = { open: vi.fn() };
     TestBed.configureTestingModule({
@@ -49,6 +105,7 @@ describe('catalogue feature endpoints', () => {
         provideHttpClientTesting(),
         provideTranslateService(),
         { provide: MatDialog, useValue: dialog },
+        { provide: LanguageService, useValue: { current: signal('en') } },
         {
           provide: AuthService,
           useValue: { activeMembership: signal(null), hasPermission: () => true },
@@ -57,9 +114,9 @@ describe('catalogue feature endpoints', () => {
     });
     const component = TestBed.runInInjectionContext(() => new CountriesComponent());
     const http = TestBed.inject(HttpTestingController);
-    http
-      .expectOne((candidate) => candidate.url === '/api/countries')
-      .flush({ content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 });
+    http.expectOne('/graphql').flush({
+      data: { countries: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } },
+    });
     component.create();
     http
       .expectOne('/api/countries/continents')
@@ -75,6 +132,7 @@ describe('catalogue feature endpoints', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideTranslateService(),
+        { provide: LanguageService, useValue: { current: signal('en') } },
         { provide: MatDialog, useValue: { open: vi.fn() } },
         {
           provide: AuthService,
@@ -85,14 +143,14 @@ describe('catalogue feature endpoints', () => {
     TestBed.runInInjectionContext(() => new SpecialitiesComponent());
     const http = TestBed.inject(HttpTestingController);
     http
-      .expectOne((candidate) => candidate.url === '/api/specialities')
-      .flush({ content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 });
+      .expectOne('/graphql')
+      .flush({ data: { specialities: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } } });
 
     window.dispatchEvent(new Event(LANGUAGE_CHANGED_EVENT));
 
     http
-      .expectOne((candidate) => candidate.url === '/api/specialities')
-      .flush({ content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 });
+      .expectOne('/graphql')
+      .flush({ data: { specialities: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } } });
     http.verify();
   });
 
@@ -102,6 +160,7 @@ describe('catalogue feature endpoints', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideTranslateService(),
+        { provide: LanguageService, useValue: { current: signal('en') } },
         { provide: MatDialog, useValue: { open: vi.fn() } },
         {
           provide: AuthService,
@@ -112,8 +171,9 @@ describe('catalogue feature endpoints', () => {
     const component = TestBed.runInInjectionContext(() => new SpecialitiesComponent());
     const http = TestBed.inject(HttpTestingController);
     http
-      .expectOne((candidate) => candidate.url === '/api/specialities')
+      .expectOne('/graphql')
       .flush({
+        data: { specialities: {
         content: [
           { id: 1, name: 'Pediatric Dentistry', displayName: 'Odontopediatria', procedures: [] },
         ],
@@ -121,6 +181,7 @@ describe('catalogue feature endpoints', () => {
         size: 10,
         totalElements: 1,
         totalPages: 1,
+        } },
       });
 
     expect(component.rows()[0].cells['name']).toBe('Odontopediatria');

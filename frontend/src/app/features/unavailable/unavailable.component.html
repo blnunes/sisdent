@@ -1,0 +1,12 @@
+<main class="unavailable-page">
+  <div class="preferences"><app-language-selector /><app-theme-toggle /></div>
+  <mat-card appearance="outlined" class="unavailable-card">
+    <div class="brand"><mat-icon>dentistry</mat-icon><strong>Sisdent</strong></div>
+    <div class="illustration" aria-hidden="true"><mat-icon>cloud_off</mat-icon></div>
+    <span class="eyebrow">{{ 'UNAVAILABLE.OVERTITLE' | translate }}</span>
+    <h1>{{ 'UNAVAILABLE.TITLE' | translate }}</h1>
+    <p>{{ 'UNAVAILABLE.DESCRIPTION' | translate }}</p>
+    <button mat-flat-button type="button" (click)="retry()"><mat-icon>refresh</mat-icon>{{ 'UNAVAILABLE.RETRY' | translate }}</button>
+    <small>{{ 'UNAVAILABLE.HELP' | translate }}</small>
+  </mat-card>
+</main>

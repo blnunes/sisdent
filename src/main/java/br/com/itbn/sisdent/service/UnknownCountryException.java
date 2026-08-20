@@ -1,12 +1,14 @@
 package br.com.itbn.sisdent.service;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import br.com.itbn.sisdent.error.ErrorCode;
+import br.com.itbn.sisdent.error.ApplicationException;
+import br.com.itbn.sisdent.error.ErrorCategory;
+import java.util.Map;
 
-@ResponseStatus(HttpStatus.BAD_REQUEST)
-public class UnknownCountryException extends RuntimeException {
+/** A country code supplied by a client was not found in the catalogue. */
+public class UnknownCountryException extends ApplicationException {
 
     public UnknownCountryException(String code) {
-        super("Unknown country code: " + code);
+        super(ErrorCode.CATALOG_UNKNOWN_COUNTRY, ErrorCategory.RESOURCE_NOT_FOUND, Map.of(), null);
     }
 }

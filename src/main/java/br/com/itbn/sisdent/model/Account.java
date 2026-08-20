@@ -9,8 +9,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import br.com.itbn.sisdent.localization.PreferredLanguage;
 
 import java.util.Locale;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -40,6 +42,18 @@ public class Account extends AuditableEntity {
     @Column(name = "platform_administrator", nullable = false)
     private boolean platformAdministrator;
 
+    @Column(name = "preferred_language", nullable = false, length = 5)
+    private String preferredLanguage = PreferredLanguage.DEFAULT;
+
+    @Column(name = "avatar_key", length = 160)
+    private String avatarKey;
+
+    @Column(name = "avatar_content_type", length = 80)
+    private String avatarContentType;
+
+    @Column(name = "avatar_updated_at")
+    private Instant avatarUpdatedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_management_organization_id")
     private Organization accountManagementOrganization;
@@ -65,6 +79,11 @@ public class Account extends AuditableEntity {
     public String getPassword() { return password; }
     public boolean isActive() { return active; }
     public boolean isPlatformAdministrator() { return platformAdministrator; }
+    public String getPreferredLanguage() { return preferredLanguage == null ? PreferredLanguage.DEFAULT : preferredLanguage; }
+    public String getAvatarKey() { return avatarKey; }
+    public String getAvatarContentType() { return avatarContentType; }
+    public Instant getAvatarUpdatedAt() { return avatarUpdatedAt; }
+    public boolean hasAvatar() { return avatarKey != null; }
     public Organization getAccountManagementOrganization() { return accountManagementOrganization; }
     public void changeActive(boolean active) {
         if (this.active == active) {
@@ -78,6 +97,30 @@ public class Account extends AuditableEntity {
             throw new IllegalStateException("Account already has the requested platform-administrator state");
         }
         this.platformAdministrator = platformAdministrator;
+    }
+
+    public void changePassword(String password) {
+        this.password = password;
+    }
+
+    public void changePreferredLanguage(String preferredLanguage) {
+        this.preferredLanguage = PreferredLanguage.require(preferredLanguage);
+    }
+
+    /** Storage keys are generated only by the server-side avatar service. */
+    public void replaceAvatar(String key, String contentType, Instant updatedAt) {
+        if (key == null || key.isBlank() || contentType == null || contentType.isBlank() || updatedAt == null) {
+            throw new IllegalArgumentException("Avatar metadata is required");
+        }
+        this.avatarKey = key;
+        this.avatarContentType = contentType;
+        this.avatarUpdatedAt = updatedAt;
+    }
+
+    public void removeAvatar() {
+        this.avatarKey = null;
+        this.avatarContentType = null;
+        this.avatarUpdatedAt = null;
     }
 
     public void assignAccountManagementOrganizationIfAbsent(Organization organization) {

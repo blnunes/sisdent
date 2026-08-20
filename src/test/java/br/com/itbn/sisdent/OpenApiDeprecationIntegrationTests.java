@@ -1,0 +1,35 @@
+package br.com.itbn.sisdent;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.web.servlet.MockMvc;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+class OpenApiDeprecationIntegrationTests {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Test
+    void publishesOnlyGraphqlReplacedRestOperationsAsDeprecated() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/countries'].get.deprecated").value(true))
+                .andExpect(jsonPath("$.paths['/api/countries'].post.deprecated").value(true))
+                .andExpect(jsonPath("$.paths['/api/countries/{id}'].put.deprecated").value(true))
+                .andExpect(jsonPath("$.paths['/api/specialities'].get.deprecated").value(true))
+                .andExpect(jsonPath("$.paths['/api/specialities'].post.deprecated").value(true))
+                .andExpect(jsonPath("$.paths['/api/specialities/{id}'].put.deprecated").value(true))
+                .andExpect(jsonPath("$.paths['/api/organizations/{organizationId}/patients/{patientId}'].put.deprecated")
+                        .value(true))
+                .andExpect(jsonPath("$.paths['/api/countries/{id}'].delete.deprecated").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/specialities/{id}'].delete.deprecated").doesNotExist());
+    }
+}

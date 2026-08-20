@@ -46,6 +46,20 @@ Password: admin
   Organization Administrators and `/practitioners` for organization-wide
   Organization Administrators, Managers, and Practitioner Managers.
 
+## GraphQL BFF boundary (Phase 10)
+
+GraphQL is the primary frontend API for migrated flows. Components call typed
+domain services, never the GraphQL client directly. `GraphQlClientService` owns
+the common request/error envelope and maps `errors[].extensions.code` and
+`correlationId` into the safe frontend error model; the regular authentication
+interceptor attaches the JWT Bearer token.
+
+Country and speciality reads/writes, clinic-unit reads/creation, practitioner
+workspace reads/writes, and patient edits have GraphQL adapters. Authentication,
+session bootstrap, health checks, and every workflow without a verified GraphQL
+replacement remain HTTP. The full route decision and deprecation window are in
+[`docs/REST_RETIREMENT_INVENTORY.md`](../docs/REST_RETIREMENT_INVENTORY.md).
+
 ## Validation
 
 ```bash

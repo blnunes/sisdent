@@ -32,5 +32,6 @@ class SessionServiceTest {
         assertThat(response.email()).isEqualTo("ana@example.com");
         assertThat(response.memberships()).isEmpty();
         assertThat(response.accountManagementOrganizationId()).isNull();
+        assertThat(response.preferredLanguage()).isEqualTo("en");
     }
 }

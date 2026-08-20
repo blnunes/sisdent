@@ -10,6 +10,7 @@ import {
   Session,
   TokenResponse,
 } from './models';
+import { Language, LanguageService } from './language.service';
 
 const TOKEN_KEY = 'sisdent.access-token';
 const MEMBERSHIP_KEY = 'sisdent.active-membership';
@@ -18,6 +19,7 @@ const MEMBERSHIP_KEY = 'sisdent.active-membership';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly language = inject(LanguageService);
   private readonly tokenState = signal<string | null>(localStorage.getItem(TOKEN_KEY));
   private readonly sessionState = signal<Session | null>(null);
   private readonly activeMembershipId = signal<string | null>(localStorage.getItem(MEMBERSHIP_KEY));
@@ -120,6 +122,8 @@ export class AuthService {
     return this.http.get<Session>('/api/session').pipe(
       tap((session) => {
         this.sessionState.set(session);
+        if (session.preferredLanguage && this.language.isSupported(session.preferredLanguage)) this.language.set(session.preferredLanguage);
+        else if (session.preferredLanguage) this.language.set('en');
         if (!session.memberships.some(({ id }) => id === this.activeMembershipId())) {
           this.selectMembership(session.memberships[0] ?? null);
         }
@@ -135,6 +139,21 @@ export class AuthService {
     if (selectedMembership) localStorage.setItem(MEMBERSHIP_KEY, selectedMembership.id);
     else localStorage.removeItem(MEMBERSHIP_KEY);
     this.activeMembershipId.set(selectedMembership?.id ?? null);
+  }
+
+  updateDisplayName(displayName: string): void {
+    const session = this.sessionState();
+    if (session) this.sessionState.set({ ...session, displayName });
+  }
+
+  updatePreferredLanguage(preferredLanguage: Language): void {
+    const session = this.sessionState();
+    if (session) this.sessionState.set({ ...session, preferredLanguage });
+  }
+
+  updateAvatar(avatarUrl?: string): void {
+    const session = this.sessionState();
+    if (session) this.sessionState.set({ ...session, avatarUrl });
   }
 
   logout(): void {

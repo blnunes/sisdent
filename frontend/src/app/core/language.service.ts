@@ -8,7 +8,12 @@ import { DateAdapter } from '@angular/material/core';
 export type Language = 'pt-PT' | 'en' | 'nl';
 
 const STORAGE_KEY = 'sisdent.language';
-const SUPPORTED_LANGUAGES: readonly Language[] = ['pt-PT', 'en', 'nl'];
+export const SUPPORTED_LANGUAGES: readonly Language[] = ['pt-PT', 'en', 'nl'];
+export const LANGUAGE_OPTIONS: readonly { value: Language; label: string }[] = [
+  { value: 'pt-PT', label: 'Português (Portugal)' },
+  { value: 'en', label: 'English' },
+  { value: 'nl', label: 'Nederlands' },
+];
 export const LANGUAGE_CHANGED_EVENT = 'sisdent-language-changed';
 
 @Injectable({ providedIn: 'root' })
@@ -24,18 +29,19 @@ export class LanguageService {
     this.set(this.current());
   }
 
-  set(language: Language): void {
-    const changed = this.current() !== language;
-    this.current.set(language);
-    localStorage.setItem(STORAGE_KEY, language);
-    this.document.documentElement.lang = language;
-    this.dateAdapter.setLocale(language === 'en' ? 'en-US' : language);
-    this.translate.use(language).subscribe({
+  set(language: Language | string): void {
+    const selected = this.isSupported(language) ? language : 'en';
+    const changed = this.current() !== selected;
+    this.current.set(selected);
+    localStorage.setItem(STORAGE_KEY, selected);
+    this.document.documentElement.lang = selected;
+    this.dateAdapter.setLocale(selected === 'en' ? 'en-US' : selected);
+    this.translate.use(selected).subscribe({
       next: () => {
         this.setTitle();
         if (changed) window.dispatchEvent(new Event(LANGUAGE_CHANGED_EVENT));
       },
-      error: (error) => this.reportLoadFailure(language, error),
+      error: (error) => this.reportLoadFailure(selected, error),
     });
   }
 
@@ -54,6 +60,10 @@ export class LanguageService {
 
   private savedLanguage(): Language {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return SUPPORTED_LANGUAGES.includes(saved as Language) ? (saved as Language) : 'en';
+    return this.isSupported(saved) ? saved : 'en';
+  }
+
+  isSupported(value: string | null | undefined): value is Language {
+    return SUPPORTED_LANGUAGES.includes(value as Language);
   }
 }

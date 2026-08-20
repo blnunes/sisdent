@@ -5,6 +5,10 @@ import br.com.itbn.sisdent.dto.CountryRequest;
 import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.mapper.ResponseMapper;
 import br.com.itbn.sisdent.localization.CatalogNameLocalizer;
+import br.com.itbn.sisdent.localization.SupportedCatalogLocale;
+import br.com.itbn.sisdent.error.ErrorCode;
+import br.com.itbn.sisdent.error.ResourceNotFoundException;
+import br.com.itbn.sisdent.error.ValidationException;
 import br.com.itbn.sisdent.pagination.PageQuery;
 import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.pagination.SortDefinition;
@@ -13,8 +17,6 @@ import br.com.itbn.sisdent.repository.CountryRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Locale;
@@ -26,12 +28,14 @@ public class CountryService {
     private final CountryRepository countryRepository;
     private final PageableFactory pageableFactory;
     private final CatalogNameLocalizer<Country> nameLocalizer;
+    private final ScopeAuthorizationService authorization;
 
     public CountryService(CountryRepository countryRepository, PageableFactory pageableFactory,
-                          CatalogNameLocalizer<Country> nameLocalizer) {
+                          CatalogNameLocalizer<Country> nameLocalizer, ScopeAuthorizationService authorization) {
         this.countryRepository = countryRepository;
         this.pageableFactory = pageableFactory;
         this.nameLocalizer = nameLocalizer;
+        this.authorization = authorization;
     }
 
     @Transactional(readOnly = true)
@@ -43,6 +47,8 @@ public class CountryService {
 
     @Transactional(readOnly = true)
     public PageResponse<CountryResponse> findPage(PageQuery query, Locale locale) {
+        authorization.requirePlatformAdministrator();
+        validateCatalogLocale(locale);
         return PageResponse.from(countryRepository.findAll(pageableFactory.create(query, SORT_DEFINITION)),
                 country -> toResponse(country, locale));
     }
@@ -53,26 +59,46 @@ public class CountryService {
                 .orElseThrow(() -> new UnknownCountryException(code));
     }
 
+    @Transactional(readOnly = true)
+    public CountryResponse findByCode(String code, Locale locale) {
+        authorization.requirePlatformAdministrator();
+        validateCatalogLocale(locale);
+        return toResponse(requireByCode(code), locale);
+    }
+
     @Transactional
     public CountryResponse create(CountryRequest request, Locale locale) {
+        authorization.requirePlatformAdministrator();
+        validateCatalogLocale(locale);
         return toResponse(countryRepository.saveAndFlush(
                 new Country(request.name(), request.code(), request.continent())), locale);
     }
 
     @Transactional
     public CountryResponse update(Long id, CountryRequest request, Locale locale) {
-        Country country = countryRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        authorization.requirePlatformAdministrator();
+        validateCatalogLocale(locale);
+        Country country = countryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND));
         country.update(request.name(), request.code(), request.continent());
         return toResponse(countryRepository.saveAndFlush(country), locale);
     }
 
     @Transactional
     public void delete(Long id) {
-        if (!countryRepository.existsById(id)) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        authorization.requirePlatformAdministrator();
+        if (!countryRepository.existsById(id)) throw new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND);
         countryRepository.deleteById(id);
     }
 
     private CountryResponse toResponse(Country country, Locale locale) {
         return ResponseMapper.toResponse(country, nameLocalizer.localize(country, locale));
+    }
+
+    private void validateCatalogLocale(Locale locale) {
+        if (!SupportedCatalogLocale.supports(locale)) {
+            throw new ValidationException(ErrorCode.CATALOG_UNSUPPORTED_LOCALE,
+                    java.util.Map.of("supportedLocales", SupportedCatalogLocale.supportedLanguageTags()));
+        }
     }
 }

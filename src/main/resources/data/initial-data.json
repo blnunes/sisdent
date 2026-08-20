@@ -940,9 +940,7 @@
       "practitioners": [
         { "displayName": "Dr. Rowan Blake", "registrationNumber": "NS-1001", "specialityNames": ["Endodontics", "Periodontics"] },
         { "displayName": "Dr. Casey Monroe", "registrationNumber": "NS-1002", "specialityNames": ["Pediatric Dentistry", "Orthodontics and Dentofacial Orthopedics"] }
-      ],
-      "scheduledStart": "2030-01-15T09:00:00Z", "scheduledEnd": "2030-01-15T09:30:00Z",
-      "completedStart": "2025-01-15T09:00:00Z", "completedEnd": "2025-01-15T09:30:00Z"
+      ]
     },
     {
       "organizationName": "Northstar Dental Group",
@@ -951,9 +949,7 @@
       "practitioners": [
         { "displayName": "Dr. Parker Hayes", "registrationNumber": "NS-1003", "specialityNames": ["Orthodontics and Dentofacial Orthopedics", "Dental Public Health"] },
         { "displayName": "Dr. Reese Morgan", "registrationNumber": "NS-1004", "specialityNames": ["Oral Medicine", "Periodontics"] }
-      ],
-      "scheduledStart": "2030-01-15T10:00:00Z", "scheduledEnd": "2030-01-15T10:30:00Z",
-      "completedStart": "2025-01-15T10:00:00Z", "completedEnd": "2025-01-15T10:30:00Z"
+      ]
     },
     {
       "organizationName": "Harbor Dental Clinic",
@@ -962,9 +958,7 @@
       "practitioners": [
         { "displayName": "Dr. Jordan Ellis", "registrationNumber": "HB-2001", "specialityNames": ["Prosthodontics", "Oral Medicine"] },
         { "displayName": "Dr. Taylor Quinn", "registrationNumber": "HB-2002", "specialityNames": ["Oral and Maxillofacial Surgery"] }
-      ],
-      "scheduledStart": "2030-01-16T10:00:00Z", "scheduledEnd": "2030-01-16T10:30:00Z",
-      "completedStart": "2025-01-16T10:00:00Z", "completedEnd": "2025-01-16T10:30:00Z"
+      ]
     },
     {
       "organizationName": "Harbor Dental Clinic",
@@ -973,9 +967,7 @@
       "practitioners": [
         { "displayName": "Dr. Alex Bennett", "registrationNumber": "HB-2003", "specialityNames": ["Pediatric Dentistry", "Oral Medicine"] },
         { "displayName": "Dr. Skyler Brooks", "registrationNumber": "HB-2004", "specialityNames": ["Periodontics", "Prosthodontics"] }
-      ],
-      "scheduledStart": "2030-01-16T11:00:00Z", "scheduledEnd": "2030-01-16T11:30:00Z",
-      "completedStart": "2025-01-16T11:00:00Z", "completedEnd": "2025-01-16T11:30:00Z"
+      ]
     },
     {
       "organizationName": "Southstart Dental Group",
@@ -984,9 +976,7 @@
       "practitioners": [
         { "displayName": "Dr. Morgan Avery", "registrationNumber": "SS-3001", "specialityNames": ["Dental Anesthesiology", "Oral Medicine"] },
         { "displayName": "Dr. Cameron Reed", "registrationNumber": "SS-3002", "specialityNames": ["Dental Public Health", "Pediatric Dentistry"] }
-      ],
-      "scheduledStart": "2030-01-17T11:00:00Z", "scheduledEnd": "2030-01-17T11:30:00Z",
-      "completedStart": "2025-01-17T11:00:00Z", "completedEnd": "2025-01-17T11:30:00Z"
+      ]
     },
     {
       "organizationName": "Southstart Dental Group",
@@ -995,9 +985,7 @@
       "practitioners": [
         { "displayName": "Dr. Jamie Sutton", "registrationNumber": "SS-3003", "specialityNames": ["Endodontics", "Dental Anesthesiology"] },
         { "displayName": "Dr. Robin Foster", "registrationNumber": "SS-3004", "specialityNames": ["Oral and Maxillofacial Surgery", "Pediatric Dentistry"] }
-      ],
-      "scheduledStart": "2030-01-17T12:00:00Z", "scheduledEnd": "2030-01-17T12:30:00Z",
-      "completedStart": "2025-01-17T12:00:00Z", "completedEnd": "2025-01-17T12:30:00Z"
+      ]
     }
   ]
 }

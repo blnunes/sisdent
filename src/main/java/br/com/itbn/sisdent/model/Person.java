@@ -33,4 +33,8 @@ public class Person extends AuditableEntity {
     public Long getId() { return id; }
     public UUID getGlobalId() { return globalId; }
     public String getDisplayName() { return displayName; }
+
+    public void changeDisplayName(String displayName) {
+        this.displayName = displayName.trim();
+    }
 }

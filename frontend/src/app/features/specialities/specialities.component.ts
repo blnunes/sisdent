@@ -12,6 +12,10 @@ import {
   SpecialityFormResult,
 } from './speciality-form-dialog/speciality-form-dialog.component';
 import { CatalogDisplayNameService } from '../../core/catalog-display-name.service';
+import { SpecialityCatalogGraphqlService } from '../../core/speciality-catalog-graphql.service';
+import { GraphQlUserError } from '../../core/graphql-client.service';
+import { CatalogueMutationGraphqlService, SpecialityWrite } from '../../core/catalogue-mutation-graphql.service';
+import { inject } from '@angular/core';
 
 const COLUMNS: readonly DataTableColumn[] = [
   { key: 'name', label: 'SPECIALITIES.TABLE.NAME', sortable: true },
@@ -29,6 +33,8 @@ const FILTERS: readonly FilterDefinition[] = [
   styleUrl: '../resource-support/resource-page.component.scss',
 })
 export class SpecialitiesComponent extends ResourceListController {
+  private readonly specialitiesGraphql = inject(SpecialityCatalogGraphqlService);
+  private readonly mutations = inject(CatalogueMutationGraphqlService);
   readonly activeKey = 'specialities';
   readonly title = 'MODULES.SPECIALITIES';
   readonly description = 'MODULES.SPECIALITIES_DESCRIPTION';
@@ -49,8 +55,41 @@ export class SpecialitiesComponent extends ResourceListController {
   override create(): void {
     this.openSpecialityEditor();
   }
+  override load(): void {
+    this.loading.set(true);
+    this.error.set(false);
+    this.errorMessage.set('');
+    this.specialitiesGraphql.list({
+      page: this.page(),
+      size: this.pageSize(),
+      sort: this.sort(),
+      direction: this.sortDirection(),
+      filter: this.filterValues(),
+    }).subscribe({
+      next: (response) => {
+        this.records.set(response.content);
+        this.totalElements.set(response.totalElements);
+        this.loading.set(false);
+      },
+      error: (error: unknown) => {
+        this.error.set(true);
+        this.errorMessage.set(error instanceof GraphQlUserError
+          ? error.message : 'The speciality catalogue could not be loaded.');
+        this.loading.set(false);
+      },
+    });
+  }
   protected override edit(record: ResourceRecord): void {
     this.openSpecialityEditor(record);
+  }
+  protected override save(record: ResourceRecord | undefined, body: unknown): void {
+    this.mutations.saveSpeciality(record as never, body as SpecialityWrite).subscribe({
+      next: () => this.load(),
+      error: (error: unknown) => {
+        this.error.set(true);
+        this.errorMessage.set(error instanceof GraphQlUserError ? error.message : 'The speciality could not be saved.');
+      },
+    });
   }
   private openSpecialityEditor(record?: ResourceRecord): void {
     this.dialog

@@ -10,13 +10,70 @@
 
     <mat-sidenav-content class="home-content">
       <app-header (menuClick)="drawer.toggle()" />
-
       <main class="home-main" tabindex="-1">
-        <section class="welcome" aria-labelledby="welcome-title">
-          <span class="eyebrow">{{ 'HOME.OVERTITLE' | translate }}</span>
-          <h1 id="welcome-title">{{ 'HOME.WELCOME' | translate }}</h1>
-          <p>{{ 'HOME.DESCRIPTION' | translate }}</p>
-        </section>
+        <header class="dashboard-header">
+          <div>
+            <span class="eyebrow">{{ 'HOME.OVERTITLE' | translate }}</span>
+            @if (auth.session()?.displayName; as displayName) {<h1>{{ 'HOME.WELCOME_USER' | translate:{ name: displayName } }}</h1>}
+            @else {<h1>{{ 'HOME.WELCOME' | translate }}</h1>}
+            @if (membership()) {<p>{{ 'HOME.SCOPE' | translate:{ organization: membership()!.organizationName, clinic: membership()!.clinicUnitName || ('HOME.ALL_CLINICS' | translate) } }}</p>}
+            @else {<p>{{ 'HOME.DESCRIPTION' | translate }}</p>}
+          </div>
+          @if (auth.canManageAppointments()) {<a mat-flat-button class="primary-action" routerLink="/appointments"><mat-icon>add</mat-icon>{{ 'HOME.NEW_APPOINTMENT' | translate }}</a>}
+        </header>
+
+        @if (!membership()) {
+          <mat-card appearance="outlined" class="membership-empty"><mat-icon>domain_disabled</mat-icon><h2>{{ 'HOME.NO_MEMBERSHIP.TITLE' | translate }}</h2><p>{{ 'HOME.NO_MEMBERSHIP.DESCRIPTION' | translate }}</p></mat-card>
+        } @else {
+          @if (auth.canReadAppointments()) {
+            <section class="metrics" [attr.aria-label]="'HOME.TODAY_SUMMARY' | translate">
+              <mat-card appearance="outlined"><mat-icon>calendar_today</mat-icon><div><strong>{{ todayAppointments().length }}</strong><span>{{ 'HOME.TODAY_APPOINTMENTS' | translate }}</span></div></mat-card>
+              <mat-card appearance="outlined"><mat-icon>schedule</mat-icon><div><strong>{{ scheduledToday() }}</strong><span>{{ 'HOME.SCHEDULED_TODAY' | translate }}</span></div></mat-card>
+              <mat-card appearance="outlined"><mat-icon>event_upcoming</mat-icon><div><strong>{{ appointments().length }}</strong><span>{{ 'HOME.NEXT_7_DAYS' | translate }}</span></div></mat-card>
+            </section>
+          }
+
+          <section class="dashboard-grid">
+            @if (auth.canReadAppointments()) {
+              <mat-card appearance="outlined" class="agenda-card">
+                <div class="card-heading"><div><h2>{{ 'HOME.TODAY_AGENDA' | translate }}</h2><p>{{ 'HOME.TODAY_AGENDA_DESCRIPTION' | translate }}</p></div><a mat-button routerLink="/appointments">{{ 'HOME.VIEW_AGENDA' | translate }}<mat-icon>arrow_forward</mat-icon></a></div>
+                @if (loading()) {<div class="state"><mat-spinner diameter="32" /><span>{{ 'HOME.LOADING' | translate }}</span></div>}
+                @else if (loadError()) {<div class="state"><mat-icon>error_outline</mat-icon><p>{{ 'HOME.LOAD_ERROR' | translate }}</p><button mat-stroked-button type="button" (click)="loadDashboard()">{{ 'HOME.RETRY' | translate }}</button></div>}
+                @else if (!appointments().length) {<div class="state"><mat-icon>event_available</mat-icon><h3>{{ 'HOME.EMPTY_AGENDA.TITLE' | translate }}</h3><p>{{ 'HOME.EMPTY_AGENDA.DESCRIPTION' | translate }}</p>@if (auth.canManageAppointments()) {<a mat-stroked-button routerLink="/appointments">{{ 'HOME.NEW_APPOINTMENT' | translate }}</a>}</div>}
+                @else {<div class="agenda-list">@for (appointment of appointments(); track appointment.globalId) {<article class="appointment-row"><time>{{ appointment.startAt | date:'HH:mm' }}</time><div><strong>{{ appointment.patientName }}</strong><span>{{ appointment.practitionerName }}</span></div><span class="status" [class]="'status ' + appointment.status.toLowerCase()">{{ ('APPOINTMENTS.STATUS.' + appointment.status) | translate }}</span></article>}</div>}
+              </mat-card>
+            }
+
+            <aside class="side-column">
+              <mat-card appearance="outlined" class="next-card">
+                <div class="card-heading"><div><h2>{{ 'HOME.NEXT_APPOINTMENT' | translate }}</h2><p>{{ 'HOME.NEXT_APPOINTMENT_DESCRIPTION' | translate }}</p></div><mat-icon>notifications_active</mat-icon></div>
+                @if (auth.canReadAppointments() && nextAppointment(); as appointment) {<div class="next-content"><strong>{{ appointment.patientName }}</strong><span>{{ appointment.startAt | date:'EEEE, d MMM · HH:mm' }}</span><span>{{ appointment.practitionerName }}</span></div>}
+                @else {<p class="muted">{{ 'HOME.NO_NEXT_APPOINTMENT' | translate }}</p>}
+              </mat-card>
+
+              <mat-card appearance="outlined" class="quick-card">
+                <div class="card-heading"><div><h2>{{ 'HOME.QUICK_ACCESS' | translate }}</h2><p>{{ 'HOME.QUICK_ACCESS_DESCRIPTION' | translate }}</p></div></div>
+                <div class="quick-actions">
+                  @if (auth.canManageAppointments()) {<a routerLink="/appointments"><mat-icon>add_circle</mat-icon>{{ 'HOME.NEW_APPOINTMENT' | translate }}</a>}
+                  @if (auth.canReadAppointments()) {<a routerLink="/appointments"><mat-icon>calendar_month</mat-icon>{{ 'HOME.VIEW_AGENDA' | translate }}</a>}
+                  @if (auth.hasAnyPermission('READ_PATIENTS', 'MAINTAIN_PATIENTS')) {<a routerLink="/patients"><mat-icon>person_search</mat-icon>{{ 'HOME.SEARCH_PATIENTS' | translate }}</a>}
+                  @if (auth.canReadClinical()) {<a routerLink="/clinical"><mat-icon>clinical_notes</mat-icon>{{ 'HOME.CLINICAL_WORKSPACE' | translate }}</a>}
+                </div>
+              </mat-card>
+            </aside>
+          </section>
+
+          <section class="how-it-works" aria-labelledby="how-it-works-title">
+            <div><span class="eyebrow">{{ 'HOME.PRODUCT_OVERTITLE' | translate }}</span><h2 id="how-it-works-title">{{ 'HOME.HOW_IT_WORKS' | translate }}</h2><p>{{ 'HOME.HOW_IT_WORKS_DESCRIPTION' | translate }}</p></div>
+            <ol><li><span>1</span><div><strong>{{ 'HOME.STEP_ONE.TITLE' | translate }}</strong><p>{{ 'HOME.STEP_ONE.DESCRIPTION' | translate }}</p></div></li><li><span>2</span><div><strong>{{ 'HOME.STEP_TWO.TITLE' | translate }}</strong><p>{{ 'HOME.STEP_TWO.DESCRIPTION' | translate }}</p></div></li><li><span>3</span><div><strong>{{ 'HOME.STEP_THREE.TITLE' | translate }}</strong><p>{{ 'HOME.STEP_THREE.DESCRIPTION' | translate }}</p></div></li></ol>
+          </section>
+          @if (auth.canReadAppointments() && recentAppointments().length) {
+            <section class="recent-activity" aria-labelledby="recent-activity-title">
+              <div><span class="eyebrow">{{ 'HOME.RECENT_OVERTITLE' | translate }}</span><h2 id="recent-activity-title">{{ 'HOME.RECENT_ACTIVITY' | translate }}</h2><p>{{ 'HOME.RECENT_ACTIVITY_DESCRIPTION' | translate }}</p></div>
+              <div class="recent-list">@for (appointment of recentAppointments(); track appointment.globalId) {<article><mat-icon>{{ appointment.status === 'COMPLETED' ? 'task_alt' : 'event_note' }}</mat-icon><div><strong>{{ appointment.patientName }}</strong><span>{{ appointment.startAt | date:'d MMM · HH:mm' }} · {{ ('APPOINTMENTS.STATUS.' + appointment.status) | translate }}</span></div></article>}</div>
+            </section>
+          }
+        }
       </main>
     </mat-sidenav-content>
   </mat-sidenav-container>

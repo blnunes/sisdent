@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import br.com.itbn.sisdent.controller.RestExceptionTranslator;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -16,9 +17,11 @@ import java.util.UUID;
 @Component
 public class AccountStateJwtFilter extends OncePerRequestFilter {
     private final AccountRepository accountRepository;
+    private final RestExceptionTranslator exceptionTranslator;
 
-    public AccountStateJwtFilter(AccountRepository accountRepository) {
+    public AccountStateJwtFilter(AccountRepository accountRepository, RestExceptionTranslator exceptionTranslator) {
         this.accountRepository = accountRepository;
+        this.exceptionTranslator = exceptionTranslator;
     }
 
     @Override
@@ -33,7 +36,7 @@ public class AccountStateJwtFilter extends OncePerRequestFilter {
                     .orElse(false);
             if (!current) {
                 SecurityContextHolder.clearContext();
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                exceptionTranslator.authentication(request, response);
                 return;
             }
         }

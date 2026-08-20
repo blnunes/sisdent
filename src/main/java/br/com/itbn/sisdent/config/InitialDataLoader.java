@@ -49,13 +49,16 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.LocalDate;
 import java.time.Instant;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.random.RandomGenerator;
 import java.util.stream.Collectors;
 
 @Component
@@ -65,6 +68,8 @@ public class InitialDataLoader implements ApplicationRunner {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InitialDataLoader.class);
     private static final String INITIAL_DATA_PATH = "data/initial-data.json";
+    private static final Duration SEEDED_APPOINTMENT_DURATION = Duration.ofMinutes(30);
+    private static final Duration SCHEDULED_APPOINTMENT_WINDOW = Duration.ofHours(5);
 
     private final JsonMapper jsonMapper;
     private final CountryRepository countryRepository;
@@ -147,6 +152,7 @@ public class InitialDataLoader implements ApplicationRunner {
     }
 
     private void saveOperationalDemo(List<DemoOrganizationData> organizations, Map<String, Speciality> specialities) {
+        Instant seedTime = Instant.now();
         for (DemoOrganizationData data : organizations) {
             Organization organization = organizationRepository.findByName(data.organizationName()).orElseThrow();
             ClinicUnit clinic = clinicUnitRepository.findByOrganization_IdAndName(organization.getId(), data.clinicUnitName()).orElseThrow();
@@ -162,11 +168,12 @@ public class InitialDataLoader implements ApplicationRunner {
                             practitioner.registrationNumber(), practitioner.specialityNames().stream().map(specialities::get)
                                     .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)))))).toList();
             if (!appointmentRepository.existsByClinicUnit_Id(clinic.getId())) {
+                SeedAppointmentTimes times = randomAppointmentTimes(seedTime, ThreadLocalRandom.current());
                 Appointment scheduled = new Appointment(organization, clinic, links.getFirst(), practitioners.getFirst(),
-                        Instant.parse(data.scheduledStart()), Instant.parse(data.scheduledEnd()), "Europe/Lisbon");
+                        times.scheduledStart(), times.scheduledEnd(), "Europe/Lisbon");
                 appointmentRepository.save(scheduled);
                 Appointment completed = new Appointment(organization, clinic, links.get(Math.min(1, links.size() - 1)), practitioners.getFirst(),
-                        Instant.parse(data.completedStart()), Instant.parse(data.completedEnd()), "Europe/Lisbon");
+                        times.completedStart(), times.completedEnd(), "Europe/Lisbon");
                 completed.transition(AppointmentStatus.COMPLETED);
                 appointmentRepository.save(completed);
                 PerformedProcedure performedProcedure = new PerformedProcedure(
@@ -177,6 +184,18 @@ public class InitialDataLoader implements ApplicationRunner {
                 performedProcedureRepository.save(performedProcedure);
             }
         }
+    }
+
+    /** Creates distinct upcoming schedules without keeping clock-dependent data in the seed JSON. */
+    static SeedAppointmentTimes randomAppointmentTimes(Instant seedTime, RandomGenerator random) {
+        long offsetMinutes = random.nextLong(1, SCHEDULED_APPOINTMENT_WINDOW.toMinutes() + 1);
+        Instant scheduledStart = seedTime.plus(Duration.ofMinutes(offsetMinutes));
+        Instant completedStart = scheduledStart.minus(Duration.ofDays(1));
+        return new SeedAppointmentTimes(
+                scheduledStart,
+                scheduledStart.plus(SEEDED_APPOINTMENT_DURATION),
+                completedStart,
+                completedStart.plus(SEEDED_APPOINTMENT_DURATION));
     }
 
     private void saveDemoProfiles(List<DemoProfileData> profiles) {
@@ -430,8 +449,10 @@ public class InitialDataLoader implements ApplicationRunner {
     }
 
     public record DemoOrganizationData(String organizationName, String clinicUnitName, List<String> patientTaxIds,
-            List<DemoPractitionerData> practitioners, String scheduledStart, String scheduledEnd,
-            String completedStart, String completedEnd) {
+            List<DemoPractitionerData> practitioners) {
+    }
+
+    record SeedAppointmentTimes(Instant scheduledStart, Instant scheduledEnd, Instant completedStart, Instant completedEnd) {
     }
 
     public record DemoPractitionerData(String displayName, String registrationNumber, List<String> specialityNames) {

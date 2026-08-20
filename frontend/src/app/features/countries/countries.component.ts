@@ -4,6 +4,10 @@ import { FormDialogField } from '../../shared/dialogs/form-dialog-shell/form-dia
 import { CatalogueListController } from '../resource-support/catalogue-list.controller';
 import { RESOURCE_PAGE_IMPORTS } from '../resource-support/resource-page.imports';
 import { ResourceRecord } from '../resource-support/resource-list.controller';
+import { CountryCatalogGraphqlService } from '../../core/country-catalog-graphql.service';
+import { GraphQlUserError } from '../../core/graphql-client.service';
+import { CatalogueMutationGraphqlService } from '../../core/catalogue-mutation-graphql.service';
+import { inject } from '@angular/core';
 
 const COLUMNS: readonly DataTableColumn[] = [
   { key: 'name', label: 'Name', sortable: true },
@@ -22,6 +26,8 @@ const BASE_FIELDS: readonly FormDialogField[] = [
   styleUrl: '../resource-support/resource-page.component.scss',
 })
 export class CountriesComponent extends CatalogueListController {
+  private readonly countriesGraphql = inject(CountryCatalogGraphqlService);
+  private readonly mutations = inject(CatalogueMutationGraphqlService);
   readonly activeKey = 'countries';
   readonly title = 'MODULES.COUNTRIES';
   readonly description = 'MODULES.COUNTRIES_DESCRIPTION';
@@ -54,28 +60,61 @@ export class CountriesComponent extends CatalogueListController {
     );
     this.load();
   }
+  override load(): void {
+    this.loading.set(true);
+    this.error.set(false);
+    this.errorMessage.set('');
+    this.countriesGraphql
+      .list({
+        page: this.page(),
+        size: this.pageSize(),
+        sort: this.sort(),
+        direction: this.sortDirection(),
+      })
+      .subscribe({
+        next: (response) => {
+          this.records.set(response.content);
+          this.totalElements.set(response.totalElements);
+          this.loading.set(false);
+        },
+        error: (error: unknown) => {
+          this.error.set(true);
+          this.errorMessage.set(
+            error instanceof GraphQlUserError
+              ? error.message
+              : 'The country catalogue could not be loaded.',
+          );
+          this.loading.set(false);
+        },
+      });
+  }
   override create(): void {
     this.openWithContinents();
+  }
+  protected override save(record: ResourceRecord | undefined, body: unknown): void {
+    this.mutations.saveCountry(record as never, body as { name: string; code: string; continent: string })
+      .subscribe({ next: () => this.load(), error: (error: unknown) => {
+        this.error.set(true);
+        this.errorMessage.set(error instanceof GraphQlUserError ? error.message : 'The country could not be saved.');
+      } });
   }
   protected override edit(record: ResourceRecord): void {
     this.openWithContinents(record);
   }
   private openWithContinents(record?: ResourceRecord): void {
-    this.http
-      .get<string[]>('/api/countries/continents')
-      .subscribe({
-        next: (continents) =>
-          this.openEditor(record, [
-            ...BASE_FIELDS,
-            {
-              key: 'continent',
-              label: 'Continent',
-              required: true,
-              type: 'select',
-              options: continents.map((value) => ({ value, label: value })),
-            },
-          ]),
-        error: () => this.error.set(true),
-      });
+    this.http.get<string[]>('/api/countries/continents').subscribe({
+      next: (continents) =>
+        this.openEditor(record, [
+          ...BASE_FIELDS,
+          {
+            key: 'continent',
+            label: 'Continent',
+            required: true,
+            type: 'select',
+            options: continents.map((value) => ({ value, label: value })),
+          },
+        ]),
+      error: () => this.error.set(true),
+    });
   }
 }

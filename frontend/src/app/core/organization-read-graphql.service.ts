@@ -1,0 +1,37 @@
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { ClinicUnit, Practitioner } from './models';
+import { GraphQlClientService } from './graphql-client.service';
+
+const CLINIC_UNITS_QUERY = `query ClinicUnits($organizationId: ID!, $clinicUnitId: ID) {
+  clinicUnits(organizationId: $organizationId, clinicUnitId: $clinicUnitId) {
+    id organizationId name active
+  }
+}`;
+
+const PRACTITIONERS_QUERY = `query Practitioners($organizationId: ID!) {
+  practitioners(organizationId: $organizationId) {
+    globalId displayName registrationNumber accountId active specialityIds
+  }
+}`;
+
+/** Typed operations for the Phase 8 operational read boundary. Writes remain REST-only. */
+@Injectable({ providedIn: 'root' })
+export class OrganizationReadGraphqlService {
+  private readonly graphql = inject(GraphQlClientService);
+
+  listClinicUnits(organizationId: string, clinicUnitId?: string): Observable<ClinicUnit[]> {
+    return this.graphql
+      .query<{ clinicUnits: ClinicUnit[] }>(CLINIC_UNITS_QUERY, {
+        organizationId,
+        clinicUnitId: clinicUnitId ?? null,
+      })
+      .pipe(map(({ clinicUnits }) => clinicUnits));
+  }
+
+  listPractitioners(organizationId: string): Observable<Practitioner[]> {
+    return this.graphql
+      .query<{ practitioners: Practitioner[] }>(PRACTITIONERS_QUERY, { organizationId })
+      .pipe(map(({ practitioners }) => practitioners));
+  }
+}
