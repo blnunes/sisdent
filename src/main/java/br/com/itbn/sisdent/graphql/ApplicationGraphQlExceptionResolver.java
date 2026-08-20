@@ -10,6 +10,7 @@ import graphql.schema.DataFetchingEnvironment;
 import graphql.validation.ValidationError;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.validation.BindException;
-import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import jakarta.validation.ConstraintViolationException;
 import reactor.core.publisher.Mono;
 
@@ -32,7 +32,7 @@ import reactor.core.publisher.Mono;
 public class ApplicationGraphQlExceptionResolver extends DataFetcherExceptionResolverAdapter
         implements WebGraphQlInterceptor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationGraphQlExceptionResolver.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ApplicationGraphQlExceptionResolver.class);
     private final MessageSource messageSource;
     private final MeterRegistry meterRegistry;
 
@@ -56,9 +56,9 @@ public class ApplicationGraphQlExceptionResolver extends DataFetcherExceptionRes
         if (exception instanceof ConstraintViolationException || exception instanceof BindException) {
             return error(ErrorCode.VALIDATION_FAILED, Map.of(), environment.getLocale());
         }
-        String field = environment.getField() == null ? "unknown" : environment.getField().getName();
+        String field = Optional.ofNullable(environment.getField()).map(graphql.language.Field::getName).orElse("unknown");
         // Do not log exception messages or stack traces: resolver failures can originate in clinical services.
-        LOGGER.error("unexpected_error transport=graphql status=200 correlationId={} field={}",
+        LOG.error("unexpected_error transport=graphql status=200 correlationId={} field={}",
                 CorrelationIds.current(), field);
         return error(ErrorCode.INTERNAL_ERROR, Map.of(), environment.getLocale());
     }
@@ -136,7 +136,7 @@ public class ApplicationGraphQlExceptionResolver extends DataFetcherExceptionRes
 
     private void recordKnownError(ErrorCode code, String category) {
         meterRegistry.counter("sisdent.error.count", "code", code.value(), "transport", "graphql").increment();
-        LOGGER.warn("known_error code={} category={} transport=graphql status=200 correlationId={}",
+        LOG.warn("known_error code={} category={} transport=graphql status=200 correlationId={}",
                 code.value(), category, CorrelationIds.current());
     }
 
@@ -149,7 +149,7 @@ public class ApplicationGraphQlExceptionResolver extends DataFetcherExceptionRes
         String outcome = response.getExecutionResult().getErrors().isEmpty() ? "success" : "error";
         meterRegistry.counter("sisdent.graphql.execution.count", "operation", operation,
                 "operationType", operationType, "outcome", outcome).increment();
-        LOGGER.info("graphql_completed operation={} operationType={} outcome={} correlationId={}",
+        LOG.info("graphql_completed operation={} operationType={} outcome={} correlationId={}",
                 operation, operationType, outcome, CorrelationIds.current());
     }
 }

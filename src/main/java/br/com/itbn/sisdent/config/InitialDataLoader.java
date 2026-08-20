@@ -52,7 +52,7 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.util.concurrent.ThreadLocalRandom;
+import java.security.SecureRandom;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +70,7 @@ public class InitialDataLoader implements ApplicationRunner {
     private static final String INITIAL_DATA_PATH = "data/initial-data.json";
     private static final Duration SEEDED_APPOINTMENT_DURATION = Duration.ofMinutes(30);
     private static final Duration SCHEDULED_APPOINTMENT_WINDOW = Duration.ofHours(5);
+    private static final RandomGenerator SEED_RANDOM = new SecureRandom();
 
     private final JsonMapper jsonMapper;
     private final CountryRepository countryRepository;
@@ -168,7 +169,7 @@ public class InitialDataLoader implements ApplicationRunner {
                             practitioner.registrationNumber(), practitioner.specialityNames().stream().map(specialities::get)
                                     .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)))))).toList();
             if (!appointmentRepository.existsByClinicUnit_Id(clinic.getId())) {
-                SeedAppointmentTimes times = randomAppointmentTimes(seedTime, ThreadLocalRandom.current());
+                SeedAppointmentTimes times = randomAppointmentTimes(seedTime, SEED_RANDOM);
                 Appointment scheduled = new Appointment(organization, clinic, links.getFirst(), practitioners.getFirst(),
                         times.scheduledStart(), times.scheduledEnd(), "Europe/Lisbon");
                 appointmentRepository.save(scheduled);
