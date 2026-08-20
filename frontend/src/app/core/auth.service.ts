@@ -151,6 +151,11 @@ export class AuthService {
     if (session) this.sessionState.set({ ...session, preferredLanguage });
   }
 
+  updateAvatar(avatarUrl?: string): void {
+    const session = this.sessionState();
+    if (session) this.sessionState.set({ ...session, avatarUrl });
+  }
+
   logout(): void {
     this.clearSession();
     void this.router.navigateByUrl('/login');

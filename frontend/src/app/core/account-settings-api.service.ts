@@ -16,4 +16,10 @@ export class AccountSettingsApiService {
   changePassword(request: { currentPassword: string; newPassword: string }) {
     return this.http.patch<void>('/api/account/settings/password', request);
   }
+  uploadAvatar(file: File) {
+    const body = new FormData(); body.append('file', file);
+    return this.http.put<CurrentAccountSettings>('/api/account/settings/avatar', body);
+  }
+  removeAvatar() { return this.http.delete<void>('/api/account/settings/avatar'); }
+  avatar() { return this.http.get('/api/account/settings/avatar', { responseType: 'blob' }); }
 }

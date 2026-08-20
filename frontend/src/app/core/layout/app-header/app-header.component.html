@@ -20,7 +20,7 @@
   <app-theme-toggle />
   @if (auth.isAdmin()) {<span class="admin-badge"><mat-icon>shield_person</mat-icon>{{ 'USERS.ADMIN' | translate }}</span>}
   @if (auth.isPlatformAdministrator()) {<span class="admin-badge"><mat-icon>admin_panel_settings</mat-icon>{{ 'USERS.PLATFORM_ADMIN' | translate }}</span>}
-  <button mat-icon-button type="button" [matMenuTriggerFor]="profileMenu" [attr.aria-label]="'ACCOUNT_SETTINGS.OPEN_MENU' | translate"><mat-icon>account_circle</mat-icon></button>
+  <button mat-icon-button type="button" class="profile-button" [matMenuTriggerFor]="profileMenu" [attr.aria-label]="'ACCOUNT_SETTINGS.OPEN_MENU' | translate">@if (avatarSource(); as avatar) {<img [src]="avatar" alt="" />} @else {<span aria-hidden="true">{{ initials(auth.session()?.displayName) }}</span>}</button>
   <mat-menu #profileMenu="matMenu">
     @if (auth.session()?.displayName; as displayName) {<span class="mat-menu-item profile-name" aria-hidden="true">{{ displayName }}</span>}
     <a mat-menu-item routerLink="/settings/account"><mat-icon>manage_accounts</mat-icon>{{ 'ACCOUNT_SETTINGS.MENU' | translate }}</a>

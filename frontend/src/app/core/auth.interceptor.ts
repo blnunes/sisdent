@@ -6,6 +6,9 @@ import { AuthService } from './auth.service';
 import { clearSystemUnavailable, markSystemUnavailable } from './system-availability';
 
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
+  // Translation/assets are loaded while LanguageService can still be constructing.
+  // Avoid resolving AuthService for non-API requests, which would create a DI cycle.
+  if (!request.url.startsWith('/api/') && request.url !== '/graphql') return next(request);
   const auth = inject(AuthService);
   const router = inject(Router);
   const token = auth.token();

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ElementRef, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -24,7 +24,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   templateUrl: './account-settings.component.html',
   styleUrl: './account-settings.component.scss',
 })
-export class AccountSettingsComponent implements OnInit {
+export class AccountSettingsComponent implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(AccountSettingsApiService);
   private readonly auth = inject(AuthService);
@@ -47,6 +47,12 @@ export class AccountSettingsComponent implements OnInit {
   readonly hideCurrent = signal(true);
   readonly hideNew = signal(true);
   readonly hideConfirmation = signal(true);
+  readonly avatarPreview = signal<string | null>(null);
+  readonly avatarCurrent = signal<string | null>(null);
+  readonly selectedAvatar = signal<File | null>(null);
+  readonly avatarSubmitting = signal(false);
+  readonly avatarMessage = signal('');
+  readonly avatarError = signal(false);
   readonly profileForm = this.fb.nonNullable.group({ displayName: ['', [Validators.required, Validators.pattern(/.*\S.*/)]], version: [0] });
   readonly passwordForm = this.fb.nonNullable.group({
     currentPassword: ['', Validators.required], newPassword: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128)]], confirmation: ['', Validators.required],
@@ -54,11 +60,12 @@ export class AccountSettingsComponent implements OnInit {
   readonly languageForm = this.fb.nonNullable.group({ preferredLanguage: ['en' as Language] });
 
   ngOnInit(): void { this.load(); }
+  ngOnDestroy(): void { this.revokePreview(); this.revokeCurrent(); }
 
   load(): void {
     this.loading.set(true);
     this.api.current().subscribe({
-      next: (settings) => { this.settings.set(settings); this.profileForm.setValue({ displayName: settings.displayName, version: settings.version }); this.languageForm.setValue({ preferredLanguage: settings.preferredLanguage }); this.loading.set(false); queueMicrotask(() => this.heading?.nativeElement.focus()); },
+      next: (settings) => { this.settings.set(settings); this.profileForm.setValue({ displayName: settings.displayName, version: settings.version }); this.languageForm.setValue({ preferredLanguage: settings.preferredLanguage }); this.loadAvatar(settings.avatarUrl); this.loading.set(false); queueMicrotask(() => this.heading?.nativeElement.focus()); },
       error: () => { this.profileError.set(true); this.profileMessage.set(this.translate.instant('ACCOUNT_SETTINGS.LOAD_ERROR')); this.loading.set(false); },
     });
   }
@@ -97,4 +104,39 @@ export class AccountSettingsComponent implements OnInit {
       error: () => { this.passwordError.set(true); this.passwordMessage.set(this.translate.instant('ACCOUNT_SETTINGS.PASSWORD_ERROR')); this.passwordSubmitting.set(false); },
     });
   }
+
+  selectAvatar(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.avatarMessage.set(''); this.avatarError.set(false);
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size === 0 || file.size > 5 * 1024 * 1024) {
+      this.avatarError.set(true); this.avatarMessage.set(this.translate.instant('ACCOUNT_SETTINGS.AVATAR_INVALID_FILE')); return;
+    }
+    this.revokePreview();
+    this.selectedAvatar.set(file); this.avatarPreview.set(URL.createObjectURL(file));
+  }
+
+  uploadAvatar(): void {
+    const file = this.selectedAvatar();
+    if (!file || this.avatarSubmitting()) return;
+    this.avatarSubmitting.set(true); this.avatarError.set(false); this.avatarMessage.set('');
+    this.api.uploadAvatar(file).subscribe({
+      next: (settings) => { this.settings.set(settings); this.auth.updateAvatar(settings.avatarUrl); this.selectedAvatar.set(null); this.revokePreview(); this.loadAvatar(settings.avatarUrl); this.avatarMessage.set(this.translate.instant('ACCOUNT_SETTINGS.AVATAR_SUCCESS')); this.avatarSubmitting.set(false); },
+      error: () => { this.avatarError.set(true); this.avatarMessage.set(this.translate.instant('ACCOUNT_SETTINGS.AVATAR_ERROR')); this.avatarSubmitting.set(false); },
+    });
+  }
+
+  removeAvatar(): void {
+    if (this.avatarSubmitting()) return;
+    this.avatarSubmitting.set(true); this.avatarError.set(false); this.avatarMessage.set('');
+    this.api.removeAvatar().subscribe({
+      next: () => { const settings = this.settings(); if (settings) this.settings.set({ ...settings, avatarUrl: undefined }); this.auth.updateAvatar(); this.selectedAvatar.set(null); this.revokePreview(); this.revokeCurrent(); this.avatarMessage.set(this.translate.instant('ACCOUNT_SETTINGS.AVATAR_REMOVED')); this.avatarSubmitting.set(false); },
+      error: () => { this.avatarError.set(true); this.avatarMessage.set(this.translate.instant('ACCOUNT_SETTINGS.AVATAR_ERROR')); this.avatarSubmitting.set(false); },
+    });
+  }
+
+  initials(name: string): string { return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase(); }
+  private revokePreview(): void { const preview = this.avatarPreview(); if (preview) URL.revokeObjectURL(preview); this.avatarPreview.set(null); }
+  private loadAvatar(url?: string): void { this.revokeCurrent(); if (url) this.api.avatar().subscribe({ next: (blob) => this.avatarCurrent.set(URL.createObjectURL(blob)) }); }
+  private revokeCurrent(): void { const current = this.avatarCurrent(); if (current) URL.revokeObjectURL(current); this.avatarCurrent.set(null); }
 }
