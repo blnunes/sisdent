@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -130,8 +131,10 @@ class ScopeAuthorizationServiceTest {
         Account platformAdministrator = new Account(new Person("Admin"), "admin@example.com", "encoded", true);
         when(currentAccountService.require()).thenReturn(platformAdministrator);
 
-        service.requireOrganizationAdministration(organization.getGlobalId());
-        service.requireAccountAdministration(organization.getGlobalId());
+        assertThatCode(() -> {
+            service.requireOrganizationAdministration(organization.getGlobalId());
+            service.requireAccountAdministration(organization.getGlobalId());
+        }).doesNotThrowAnyException();
     }
 
     @Test

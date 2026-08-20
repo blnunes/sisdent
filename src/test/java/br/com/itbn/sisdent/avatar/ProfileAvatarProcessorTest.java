@@ -54,9 +54,9 @@ class ProfileAvatarProcessorTest {
         var first = new ProfileAvatarProcessor.ProcessedAvatar(new byte[] {1, 2}, "image/png");
         var second = new ProfileAvatarProcessor.ProcessedAvatar(new byte[] {1, 2}, "image/png");
 
-        assertThat(first).isEqualTo(second).hasSameHashCodeAs(second)
-                .hasToString("ProcessedAvatar[contentLength=2, contentType=image/png]");
-        assertThat(first)
+        assertThat(first).isEqualTo(second)
+                .hasSameHashCodeAs(second)
+                .hasToString("ProcessedAvatar[contentLength=2, contentType=image/png]")
                 .isNotEqualTo(new ProfileAvatarProcessor.ProcessedAvatar(new byte[] {2, 1}, "image/png"))
                 .isNotEqualTo(new ProfileAvatarProcessor.ProcessedAvatar(new byte[] {1, 2}, "image/jpeg"))
                 .isNotEqualTo("not an avatar");
