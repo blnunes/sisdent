@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -40,9 +41,18 @@ class SecurityIntegrationTests {
     }
 
     @Test
+    void providesAnAntiCsrfTokenForTheSinglePageApplication() throws Exception {
+        mockMvc.perform(get("/api/csrf"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.headerName").isNotEmpty());
+    }
+
+    @Test
     void rejectsUnsafeRequestsThatCarryASessionCookieWithoutACsrfToken() throws Exception {
         mockMvc.perform(post("/api/auth/login")
                         .cookie(new Cookie("JSESSIONID", "browser-session"))
+                        .with(csrf().useInvalidToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"admin@sisdent.local\",\"password\":\"admin\"}"))
                 .andExpect(status().isForbidden());

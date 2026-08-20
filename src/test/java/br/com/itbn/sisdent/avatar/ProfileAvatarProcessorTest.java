@@ -3,10 +3,13 @@ package br.com.itbn.sisdent.avatar;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.awt.image.BufferedImage;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import br.com.itbn.sisdent.error.ValidationException;
 
 class ProfileAvatarProcessorTest {
 
@@ -53,6 +56,17 @@ class ProfileAvatarProcessorTest {
 
         assertThat(first).isEqualTo(second).hasSameHashCodeAs(second)
                 .hasToString("ProcessedAvatar[contentLength=2, contentType=image/png]");
+    }
+
+    @Test
+    void rejectsEmptyAndInvalidlyDeclaredUploadsBeforeImageProcessing() {
+        ProfileAvatarProcessor processor = new ProfileAvatarProcessor();
+
+        assertThatThrownBy(() -> processor.process(new MockMultipartFile("file", new byte[0])))
+                .isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> processor.process(new MockMultipartFile(
+                "file", "avatar.png", "image/jpeg", new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a})))
+                .isInstanceOf(ValidationException.class);
     }
 
     private static java.util.List<Integer> pixels(BufferedImage image) {
