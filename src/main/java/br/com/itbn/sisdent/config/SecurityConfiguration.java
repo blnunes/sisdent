@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -24,6 +23,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -43,9 +43,12 @@ public class SecurityConfiguration {
             RequestCorrelationFilter requestCorrelationFilter,
             RestExceptionTranslator exceptionTranslator) {
         http
-                // This API is stateless and uses JWT Bearer tokens for auth, so CSRF protection is not required.
-                // Keep CSRF disabled only while authentication relies on Authorization headers rather than cookies/sessions.
-                .csrf(AbstractHttpConfigurer::disable)
+                // JWTs are sent in Authorization headers. CSRF is nevertheless enabled for any
+                // unsafe request that carries a session cookie, so a future cookie-based endpoint
+                // cannot silently inherit the API's bearer-token threat model.
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .requireCsrfProtectionMatcher(SecurityConfiguration::requiresCsrfProtection))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
@@ -151,5 +154,14 @@ public class SecurityConfiguration {
                 new JwtAuthenticationConverter();
         authenticationConverter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
         return authenticationConverter;
+    }
+
+    static boolean requiresCsrfProtection(jakarta.servlet.http.HttpServletRequest request) {
+        if (HttpMethod.GET.matches(request.getMethod()) || HttpMethod.HEAD.matches(request.getMethod())
+                || HttpMethod.OPTIONS.matches(request.getMethod()) || request.getCookies() == null) {
+            return false;
+        }
+        return java.util.Arrays.stream(request.getCookies())
+                .anyMatch(cookie -> "JSESSIONID".equals(cookie.getName()));
     }
 }

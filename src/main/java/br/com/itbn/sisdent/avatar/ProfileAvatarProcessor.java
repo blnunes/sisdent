@@ -17,14 +17,17 @@ import java.util.Locale;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Arrays;
 
 /** Validates image bytes and emits a metadata-free, bounded PNG avatar. */
 public final class ProfileAvatarProcessor {
     public static final long MAX_UPLOAD_BYTES = 5L * 1024 * 1024;
     private static final int MAX_INPUT_DIMENSION = 4096;
     private static final int AVATAR_SIZE = 256;
+    private static final String JPEG = "image/jpeg";
+    private static final String PNG = "image/png";
     private static final Map<String, Set<String>> EXTENSIONS = Map.of(
-            "image/jpeg", Set.of("jpg", "jpeg"), "image/png", Set.of("png"));
+            JPEG, Set.of("jpg", "jpeg"), PNG, Set.of("png"));
 
     public ProcessedAvatar process(MultipartFile file) {
         if (file == null || file.isEmpty()) throw new ValidationException(ErrorCode.ACCOUNT_AVATAR_EMPTY);
@@ -34,8 +37,8 @@ public final class ProfileAvatarProcessor {
             String type = detect(bytes);
             validateDeclaredType(file.getContentType(), type);
             validateExtension(file.getOriginalFilename(), type);
-            BufferedImage source = applyOrientation(readBounded(bytes), "image/jpeg".equals(type) ? exifOrientation(bytes) : 1);
-            return new ProcessedAvatar(toPng(square(source)), "image/png");
+            BufferedImage source = applyOrientation(readBounded(bytes), orientation(type, bytes));
+            return new ProcessedAvatar(toPng(square(source)), PNG);
         } catch (ValidationException exception) {
             throw exception;
         } catch (IOException | RuntimeException exception) {
@@ -43,11 +46,15 @@ public final class ProfileAvatarProcessor {
         }
     }
 
+    private static int orientation(String type, byte[] bytes) {
+        return JPEG.equals(type) ? exifOrientation(bytes) : 1;
+    }
+
     private static String detect(byte[] bytes) {
         if (bytes.length < 8) throw new ValidationException(ErrorCode.ACCOUNT_AVATAR_INVALID_IMAGE);
-        if ((bytes[0] & 0xff) == 0xff && (bytes[1] & 0xff) == 0xd8 && (bytes[2] & 0xff) == 0xff) return "image/jpeg";
+        if ((bytes[0] & 0xff) == 0xff && (bytes[1] & 0xff) == 0xd8 && (bytes[2] & 0xff) == 0xff) return JPEG;
         if ((bytes[0] & 0xff) == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4e && bytes[3] == 0x47
-                && bytes[4] == 0x0d && bytes[5] == 0x0a && bytes[6] == 0x1a && bytes[7] == 0x0a) return "image/png";
+                && bytes[4] == 0x0d && bytes[5] == 0x0a && bytes[6] == 0x1a && bytes[7] == 0x0a) return PNG;
         throw new ValidationException(ErrorCode.ACCOUNT_AVATAR_INVALID_TYPE);
     }
 
@@ -176,5 +183,22 @@ public final class ProfileAvatarProcessor {
         return output.toByteArray();
     }
 
-    public record ProcessedAvatar(byte[] content, String contentType) { }
+    public record ProcessedAvatar(byte[] content, String contentType) {
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof ProcessedAvatar avatar
+                    && Arrays.equals(content, avatar.content)
+                    && contentType.equals(avatar.contentType);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * Arrays.hashCode(content) + contentType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ProcessedAvatar[contentLength=" + content.length + ", contentType=" + contentType + ']';
+        }
+    }
 }

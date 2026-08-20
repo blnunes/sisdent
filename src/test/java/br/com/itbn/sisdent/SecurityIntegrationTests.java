@@ -1,6 +1,7 @@
 package br.com.itbn.sisdent;
 
 import java.util.List;
+import jakarta.servlet.http.Cookie;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,15 @@ class SecurityIntegrationTests {
     void requiresAuthenticationForBusinessEndpoints() throws Exception {
         mockMvc.perform(get("/api/patients"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void rejectsUnsafeRequestsThatCarryASessionCookieWithoutACsrfToken() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .cookie(new Cookie("JSESSIONID", "browser-session"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"admin@sisdent.local\",\"password\":\"admin\"}"))
+                .andExpect(status().isForbidden());
     }
 
     @Test

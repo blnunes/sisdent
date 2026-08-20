@@ -1,6 +1,8 @@
 package br.com.itbn.sisdent.avatar;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.awt.image.BufferedImage;
 
@@ -27,6 +29,36 @@ class ProfileAvatarProcessorTest {
     @Test
     void fallsBackToNormalOrientationForMalformedExif() {
         assertThat(ProfileAvatarProcessor.exifOrientation(new byte[] {(byte) 0xff, (byte) 0xd8, (byte) 0xff, (byte) 0xe1})).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {2, 3, 4, 5, 6, 7, 8})
+    void appliesEveryExifOrientationWithoutLosingPixels(int orientation) {
+        BufferedImage source = new BufferedImage(3, 2, BufferedImage.TYPE_INT_RGB);
+        source.setRGB(0, 0, 0xffff0000);
+        source.setRGB(1, 0, 0xff00ff00);
+        source.setRGB(2, 1, 0xff0000ff);
+
+        BufferedImage oriented = ProfileAvatarProcessor.applyOrientation(source, orientation);
+
+        assertThat(oriented.getWidth()).isEqualTo(orientation >= 5 ? 2 : 3);
+        assertThat(oriented.getHeight()).isEqualTo(orientation >= 5 ? 3 : 2);
+        assertThat(pixels(oriented)).containsExactlyInAnyOrderElementsOf(pixels(source));
+    }
+
+    @Test
+    void processedAvatarUsesArrayContentForValueEquality() {
+        var first = new ProfileAvatarProcessor.ProcessedAvatar(new byte[] {1, 2}, "image/png");
+        var second = new ProfileAvatarProcessor.ProcessedAvatar(new byte[] {1, 2}, "image/png");
+
+        assertThat(first).isEqualTo(second).hasSameHashCodeAs(second)
+                .hasToString("ProcessedAvatar[contentLength=2, contentType=image/png]");
+    }
+
+    private static java.util.List<Integer> pixels(BufferedImage image) {
+        return java.util.stream.IntStream.range(0, image.getWidth() * image.getHeight())
+                .map(index -> image.getRGB(index % image.getWidth(), index / image.getWidth()))
+                .boxed().toList();
     }
 
     private static byte[] jpegWithOrientation(int orientation) {
