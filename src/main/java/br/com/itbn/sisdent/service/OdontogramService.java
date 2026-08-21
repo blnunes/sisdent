@@ -1,11 +1,113 @@
 package br.com.itbn.sisdent.service;
-import br.com.itbn.sisdent.dto.*; import br.com.itbn.sisdent.model.*; import br.com.itbn.sisdent.repository.*; import java.time.*; import java.util.*; import org.springframework.data.domain.*; import org.springframework.http.*; import org.springframework.stereotype.*; import org.springframework.transaction.annotation.*; import org.springframework.web.server.ResponseStatusException;
-@Service public class OdontogramService {
- private final OdontogramFindingRepository findings; private final PatientOrganizationLinkRepository links; private final OrganizationRepository organizations; private final PractitionerRepository practitioners; private final ScopeAuthorizationService authorization; private final CurrentAccountService current;
- public OdontogramService(OdontogramFindingRepository f,PatientOrganizationLinkRepository l,OrganizationRepository o,PractitionerRepository p,ScopeAuthorizationService z,CurrentAccountService x){findings=f;links=l;organizations=o;practitioners=p;authorization=z;current=x;}
- @Transactional(readOnly=true) public List<OdontogramFindingResponse> current(UUID org,UUID clinic,UUID patient){authorization.requireClinicalRead(org,clinic);return findings.findAllByOrganization_GlobalIdAndPatientLink_Patient_GlobalIdAndClinicUnit_GlobalIdAndVoidedAtIsNullOrderByObservedAtDescCreatedAtDescGlobalIdDesc(org,patient,clinic).stream().collect(java.util.stream.Collectors.toMap(f->f.getToothCode()+":"+f.getSurface(),f->f,(a,b)->a,LinkedHashMap::new)).values().stream().map(this::response).toList();}
- @Transactional(readOnly=true) public PageResponse<OdontogramFindingResponse> history(UUID org,UUID clinic,UUID patient,int page,int size){authorization.requireClinicalRead(org,clinic);if(page<0||size<1)throw bad("Invalid page");return PageResponse.from(findings.findAllByOrganization_GlobalIdAndPatientLink_Patient_GlobalIdAndClinicUnit_GlobalId(org,patient,clinic,PageRequest.of(page,Math.min(size,100),Sort.by("observedAt").descending().and(Sort.by("globalId").ascending()))),this::response);}
- @Transactional public OdontogramFindingResponse create(UUID org,OdontogramFindingCreateRequest r){authorization.requireClinicalManagement(org,r.clinicUnitId());ClinicUnit clinic=authorization.requireClinicInOrganization(org,r.clinicUnitId());PatientOrganizationLink link=links.findFirstByPatient_GlobalIdAndOrganization_GlobalId(r.patientId(),org).filter(PatientOrganizationLink::isActive).orElseThrow(this::notFound);if(link.getClinicUnit()!=null&&!link.getClinicUnit().getGlobalId().equals(r.clinicUnitId()))throw notFound();Practitioner practitioner=null;if(r.practitionerId()!=null)practitioner=practitioners.findByGlobalIdAndOrganization_GlobalId(r.practitionerId(),org).filter(Practitioner::isActive).orElseThrow(this::notFound);OdontogramFinding replacement=null;if(r.replacementForId()!=null){replacement=require(org,r.replacementForId());if(!replacement.isVoided()||!replacement.getClinicUnit().getGlobalId().equals(r.clinicUnitId())||!replacement.getPatientLink().getId().equals(link.getId()))throw notFound();}String zone=zone(r.observationTimezone());Organization organization=organizations.findByGlobalId(org).orElseThrow(this::notFound);return response(findings.save(new OdontogramFinding(organization,clinic,link,practitioner,replacement,r.toothCode(),r.surface(),r.condition(),r.observedAt(),zone,blank(r.clinicalNote()))));}
- @Transactional public OdontogramFindingResponse voidRecord(UUID org,UUID clinic,UUID id,VoidOdontogramFindingRequest r){authorization.requireClinicalManagement(org,clinic);OdontogramFinding f=require(org,id);if(!f.getClinicUnit().getGlobalId().equals(clinic))throw notFound();if(r.version()==null||f.getVersion()!=r.version())throw new ResponseStatusException(HttpStatus.CONFLICT,"Stale odontogram finding version");try{f.voidRecord(r.reason(),current.require().getGlobalId().toString());}catch(IllegalStateException e){throw new ResponseStatusException(HttpStatus.CONFLICT,"Finding is already voided");}return response(f);}
- private OdontogramFinding require(UUID org,UUID id){return findings.findByGlobalIdAndOrganization_GlobalId(id,org).orElseThrow(this::notFound);} private String zone(String z){try{return ZoneId.of(z.strip()).getId();}catch(Exception e){throw bad("A valid IANA timezone is required");}} private ResponseStatusException bad(String m){return new ResponseStatusException(HttpStatus.BAD_REQUEST,m);} private ResponseStatusException notFound(){return new ResponseStatusException(HttpStatus.NOT_FOUND);} private String blank(String s){return s==null?null:s.strip();} private OdontogramFindingResponse response(OdontogramFinding f){return new OdontogramFindingResponse(f.getGlobalId(),f.getClinicUnit().getGlobalId(),f.getPatientLink().getPatient().getGlobalId(),f.getPractitioner()==null?null:f.getPractitioner().getGlobalId(),f.getReplacementFor()==null?null:f.getReplacementFor().getGlobalId(),f.getToothCode(),f.getSurface(),f.getCondition(),f.getObservedAt(),f.getObservationTimezone(),f.getClinicalNote(),f.getVoidedAt(),f.getVoidedBy(),f.getVoidReason(),f.getVersion());}
+
+import br.com.itbn.sisdent.dto.*;
+import br.com.itbn.sisdent.model.*;
+import br.com.itbn.sisdent.repository.*;
+
+import java.time.*;
+import java.util.*;
+
+import org.springframework.data.domain.*;
+import org.springframework.http.*;
+import org.springframework.stereotype.*;
+import org.springframework.transaction.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+@Service
+public class OdontogramService {
+    private final OdontogramFindingRepository findings;
+    private final PatientOrganizationLinkRepository links;
+    private final OrganizationRepository organizations;
+    private final PractitionerRepository practitioners;
+    private final ScopeAuthorizationService authorization;
+    private final CurrentAccountService current;
+
+    public OdontogramService(OdontogramFindingRepository f, PatientOrganizationLinkRepository l, OrganizationRepository o, PractitionerRepository p, ScopeAuthorizationService z, CurrentAccountService x) {
+        findings = f;
+        links = l;
+        organizations = o;
+        practitioners = p;
+        authorization = z;
+        current = x;
+    }
+
+    @Transactional(readOnly = true)
+    public List<OdontogramFindingResponse> current(UUID org, UUID clinic, UUID patient) {
+        authorization.requireClinicalRead(org, clinic);
+        return findings.findAllByOrganization_GlobalIdAndPatientLink_Patient_GlobalIdAndClinicUnit_GlobalIdAndVoidedAtIsNullOrderByObservedAtDescCreatedAtDescGlobalIdDesc(org, patient, clinic).stream().collect(java.util.stream.Collectors.toMap(f -> f.getToothCode() + ":" + f.getSurface(), f -> f, (a, b) -> a, LinkedHashMap::new)).values().stream().map(this::response).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<OdontogramFindingResponse> history(UUID org, UUID clinic, UUID patient, int page, int size) {
+        authorization.requireClinicalRead(org, clinic);
+        if (page < 0 || size < 1) throw bad("Invalid page");
+        return PageResponse.from(findings.findAllByOrganization_GlobalIdAndPatientLink_Patient_GlobalIdAndClinicUnit_GlobalId(org, patient, clinic, PageRequest.of(page, Math.min(size, 100), Sort.by("observedAt").descending().and(Sort.by("globalId").ascending()))), this::response);
+    }
+
+    @Transactional
+    public OdontogramFindingResponse create(UUID org, OdontogramFindingCreateRequest r) {
+        authorization.requireClinicalManagement(org, r.clinicUnitId());
+        ClinicUnit clinic = authorization.requireClinicInOrganization(org, r.clinicUnitId());
+        PatientOrganizationLink link = links.findFirstByPatient_GlobalIdAndOrganization_GlobalId(r.patientId(), org).filter(PatientOrganizationLink::isActive).orElseThrow(this::notFound);
+        if (link.getClinicUnit() != null && !link.getClinicUnit().getGlobalId().equals(r.clinicUnitId()))
+            throw notFound();
+        Practitioner practitioner = null;
+        if (r.practitionerId() != null)
+            practitioner = practitioners.findByGlobalIdAndOrganization_GlobalId(r.practitionerId(), org).filter(Practitioner::isActive).orElseThrow(this::notFound);
+        OdontogramFinding replacement = null;
+        if (r.replacementForId() != null) {
+            replacement = require(org, r.replacementForId());
+            if (!replacement.isVoided() || !replacement.getClinicUnit().getGlobalId().equals(r.clinicUnitId()) || !replacement.getPatientLink().getId().equals(link.getId()))
+                throw notFound();
+        }
+        String zone = zone(r.observationTimezone());
+        Organization organization = organizations.findByGlobalId(org).orElseThrow(this::notFound);
+        return response(findings.save(new OdontogramFinding(organization, clinic, link, practitioner, replacement, r.toothCode(), r.surface(), r.condition(), r.observedAt(), zone, blank(r.clinicalNote()))));
+    }
+
+    @Transactional
+    public OdontogramFindingResponse voidRecord(UUID org, UUID clinic, UUID id, VoidOdontogramFindingRequest r) {
+        authorization.requireClinicalManagement(org, clinic);
+        OdontogramFinding f = require(org, id);
+        if (!f.getClinicUnit().getGlobalId().equals(clinic)) {
+            throw notFound();
+        }
+        if (!Objects.equals(f.getVersion(), r.version())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Stale odontogram finding version");
+        }
+        try {
+            f.voidRecord(r.reason(), current.require().getGlobalId().toString());
+        } catch (IllegalStateException _) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Finding is already voided");
+        }
+        return response(f);
+    }
+
+    private OdontogramFinding require(UUID org, UUID id) {
+        return findings.findByGlobalIdAndOrganization_GlobalId(id, org).orElseThrow(this::notFound);
+    }
+
+    private String zone(String z) {
+        try {
+            return ZoneId.of(z.strip()).getId();
+        } catch (Exception _) {
+            throw bad("A valid IANA timezone is required");
+        }
+    }
+
+    private ResponseStatusException bad(String m) {
+        return new ResponseStatusException(HttpStatus.BAD_REQUEST, m);
+    }
+
+    private ResponseStatusException notFound() {
+        return new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+
+    private String blank(String s) {
+        return s == null ? null : s.strip();
+    }
+
+    private OdontogramFindingResponse response(OdontogramFinding f) {
+        return new OdontogramFindingResponse(f.getGlobalId(), f.getClinicUnit().getGlobalId(), f.getPatientLink().getPatient().getGlobalId(), f.getPractitioner() == null ? null : f.getPractitioner().getGlobalId(), f.getReplacementFor() == null ? null : f.getReplacementFor().getGlobalId(), f.getToothCode(), f.getSurface(), f.getCondition(), f.getObservedAt(), f.getObservationTimezone(), f.getClinicalNote(), f.getVoidedAt(), f.getVoidedBy(), f.getVoidReason(), f.getVersion());
+    }
 }

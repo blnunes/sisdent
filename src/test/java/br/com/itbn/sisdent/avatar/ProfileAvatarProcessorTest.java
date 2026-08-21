@@ -65,11 +65,14 @@ class ProfileAvatarProcessorTest {
     @Test
     void rejectsEmptyAndInvalidlyDeclaredUploadsBeforeImageProcessing() {
         ProfileAvatarProcessor processor = new ProfileAvatarProcessor();
+        MockMultipartFile emptyFile = new MockMultipartFile("file", new byte[0]);
+        MockMultipartFile wronglyDeclaredPng = new MockMultipartFile(
+                "file", "avatar.png", "image/jpeg",
+                new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a});
 
-        assertThatThrownBy(() -> processor.process(new MockMultipartFile("file", new byte[0])))
+        assertThatThrownBy(() -> processor.process(emptyFile))
                 .isInstanceOf(ValidationException.class);
-        assertThatThrownBy(() -> processor.process(new MockMultipartFile(
-                "file", "avatar.png", "image/jpeg", new byte[] {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a})))
+        assertThatThrownBy(() -> processor.process(wronglyDeclaredPng))
                 .isInstanceOf(ValidationException.class);
     }
 

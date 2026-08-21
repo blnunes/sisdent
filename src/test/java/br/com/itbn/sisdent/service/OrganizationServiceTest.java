@@ -1,10 +1,6 @@
 package br.com.itbn.sisdent.service;
 
-import br.com.itbn.sisdent.dto.ClinicUnitRequest;
-import br.com.itbn.sisdent.dto.AccountMembershipRequest;
-import br.com.itbn.sisdent.dto.MembershipRequest;
-import br.com.itbn.sisdent.dto.MembershipRoleUpdateRequest;
-import br.com.itbn.sisdent.dto.OrganizationRequest;
+import br.com.itbn.sisdent.dto.*;
 import br.com.itbn.sisdent.model.Account;
 import br.com.itbn.sisdent.model.ClinicUnit;
 import br.com.itbn.sisdent.model.Membership;
@@ -32,7 +28,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
@@ -55,7 +50,7 @@ class OrganizationServiceTest {
         when(organizations.findAll()).thenReturn(List.of(first));
 
         assertThat(service.createOrganization(new OrganizationRequest("Beta")).name()).isEqualTo("Beta");
-        assertThat(service.listOrganizationsForPlatform()).extracting(response -> response.name())
+        assertThat(service.listOrganizationsForPlatform()).extracting(OrganizationResponse::name)
                 .containsExactly("Alpha");
         verify(authorization, times(2)).requirePlatformAdministrator();
     }
@@ -123,9 +118,9 @@ class OrganizationServiceTest {
                 .thenReturn(List.of(first, second));
         when(authorization.isPlatformAdministrator()).thenReturn(false, true);
 
-        assertThat(service.listClinicUnits(organizationId, first.getGlobalId())).extracting(response -> response.name())
+        assertThat(service.listClinicUnits(organizationId, first.getGlobalId())).extracting(ClinicUnitResponse::name)
                 .containsExactly("Central");
-        assertThat(service.listClinicUnits(organizationId, null)).extracting(response -> response.name())
+        assertThat(service.listClinicUnits(organizationId, null)).extracting(ClinicUnitResponse::name)
                 .containsExactly("Central", "North");
         verify(authorization).requireAppointmentRead(organizationId, first.getGlobalId());
     }
@@ -146,8 +141,10 @@ class OrganizationServiceTest {
                 new AccountMembershipRequest("Member@example.com", clinic.getGlobalId(), MembershipRole.READ_ONLY));
         assertThat(response.clinicUnitId()).isEqualTo(clinic.getGlobalId());
 
-        assertThatThrownBy(() -> service.grantMembership(organizationId,
-                new AccountMembershipRequest("member@example.com", clinic.getGlobalId(), MembershipRole.ORGANIZATION_ADMIN)))
+        AccountMembershipRequest organizationAdministratorRequest = new AccountMembershipRequest(
+                "member@example.com", clinic.getGlobalId(), MembershipRole.ORGANIZATION_ADMIN);
+
+        assertThatThrownBy(() -> service.grantMembership(organizationId, organizationAdministratorRequest))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("organization-wide");
     }
 
@@ -157,17 +154,19 @@ class OrganizationServiceTest {
         Account account = new Account(new Person("Member"), "member@example.com", "encoded", false);
         Membership membership = new Membership(account, organization, null, MembershipRole.READ_ONLY);
         UUID organizationId = organization.getGlobalId();
-        when(memberships.findByGlobalId(membership.getGlobalId())).thenReturn(Optional.of(membership));
+        UUID membershipId = membership.getGlobalId();
+        when(memberships.findByGlobalId(membershipId)).thenReturn(Optional.of(membership));
         when(memberships.saveAndFlush(any(Membership.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertThat(service.changeMembershipRole(organizationId, membership.getGlobalId(),
+        assertThat(service.changeMembershipRole(organizationId, membershipId,
                 new MembershipRoleUpdateRequest(MembershipRole.MANAGER, 0L)).role()).isEqualTo(MembershipRole.MANAGER);
-        service.revokeMembership(organizationId, membership.getGlobalId());
+        service.revokeMembership(organizationId, membershipId);
         assertThat(membership.isActive()).isFalse();
         verify(memberships).save(membership);
 
-        assertThatThrownBy(() -> service.changeMembershipRole(organizationId, membership.getGlobalId(),
-                new MembershipRoleUpdateRequest(MembershipRole.READ_ONLY, 0L)))
+        MembershipRoleUpdateRequest staleRoleUpdate = new MembershipRoleUpdateRequest(MembershipRole.READ_ONLY, 0L);
+
+        assertThatThrownBy(() -> service.changeMembershipRole(organizationId, membershipId, staleRoleUpdate))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("changed by another request");
     }
 
@@ -180,8 +179,10 @@ class OrganizationServiceTest {
         when(accounts.findByEmail("platform@example.com")).thenReturn(Optional.of(platformAccount));
         when(authorization.isPlatformAdministrator()).thenReturn(false);
 
-        assertThatThrownBy(() -> service.grantMembership(organizationId,
-                new AccountMembershipRequest("platform@example.com", null, MembershipRole.READ_ONLY)))
+        AccountMembershipRequest platformAccountRequest = new AccountMembershipRequest(
+                "platform@example.com", null, MembershipRole.READ_ONLY);
+
+        assertThatThrownBy(() -> service.grantMembership(organizationId, platformAccountRequest))
                 .isInstanceOf(AccessDeniedException.class);
     }
 }

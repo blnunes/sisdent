@@ -1,3 +1,82 @@
 package br.com.itbn.sisdent.model;
-import jakarta.persistence.*; import java.time.*; import java.util.*;
-@Entity @Table(name="performed_procedures") public class PerformedProcedure extends AuditableEntity { @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id; @Column(name="global_id",nullable=false,unique=true,updatable=false) private UUID globalId=UUID.randomUUID(); @ManyToOne(fetch=FetchType.LAZY,optional=false) @JoinColumn(name="appointment_id") private Appointment appointment; @ManyToOne(fetch=FetchType.LAZY,optional=false) @JoinColumn(name="dental_procedure_id") private DentalProcedure dentalProcedure; private String procedureNameSnapshot; private Instant performedAt; private String administrativeNote; private Instant voidedAt; private String voidedBy; private String voidReason; protected PerformedProcedure(){} public PerformedProcedure(Appointment a,DentalProcedure d,Instant at,String note){appointment=a;dentalProcedure=d;procedureNameSnapshot=d.getName();performedAt=at;administrativeNote=note;} public UUID getGlobalId(){return globalId;} public Appointment getAppointment(){return appointment;} public DentalProcedure getDentalProcedure(){return dentalProcedure;} public String getProcedureNameSnapshot(){return procedureNameSnapshot;} public Instant getPerformedAt(){return performedAt;} public String getAdministrativeNote(){return administrativeNote;} public Instant getVoidedAt(){return voidedAt;} public String getVoidedBy(){return voidedBy;} public String getVoidReason(){return voidReason;} public void voidRecord(String reason,String actor){if(voidedAt!=null)throw new IllegalStateException("Performed procedure is already voided");voidedAt=Instant.now();voidedBy=actor;voidReason=reason.strip();}}
+
+import jakarta.persistence.*;
+
+import java.time.*;
+import java.util.*;
+
+@Entity
+@Table(name = "performed_procedures")
+public class PerformedProcedure extends AuditableEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(name = "global_id", nullable = false, unique = true, updatable = false)
+    private UUID globalId = UUID.randomUUID();
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "appointment_id")
+    private Appointment appointment;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "dental_procedure_id")
+    private DentalProcedure dentalProcedure;
+    private String procedureNameSnapshot;
+    private Instant performedAt;
+    private String administrativeNote;
+    private Instant voidedAt;
+    private String voidedBy;
+    private String voidReason;
+
+    protected PerformedProcedure() {
+    }
+
+    public PerformedProcedure(Appointment a, DentalProcedure d, Instant at, String note) {
+        appointment = a;
+        dentalProcedure = d;
+        procedureNameSnapshot = d.getName();
+        performedAt = at;
+        administrativeNote = note;
+    }
+
+    public UUID getGlobalId() {
+        return globalId;
+    }
+
+    public Appointment getAppointment() {
+        return appointment;
+    }
+
+    public DentalProcedure getDentalProcedure() {
+        return dentalProcedure;
+    }
+
+    public String getProcedureNameSnapshot() {
+        return procedureNameSnapshot;
+    }
+
+    public Instant getPerformedAt() {
+        return performedAt;
+    }
+
+    public String getAdministrativeNote() {
+        return administrativeNote;
+    }
+
+    public Instant getVoidedAt() {
+        return voidedAt;
+    }
+
+    public String getVoidedBy() {
+        return voidedBy;
+    }
+
+    public String getVoidReason() {
+        return voidReason;
+    }
+
+    public void voidRecord(String reason, String actor) {
+        if (voidedAt != null) throw new IllegalStateException("Performed procedure is already voided");
+        voidedAt = Instant.now();
+        voidedBy = actor;
+        voidReason = reason.strip();
+    }
+}

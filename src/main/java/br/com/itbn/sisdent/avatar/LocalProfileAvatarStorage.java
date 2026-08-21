@@ -26,18 +26,22 @@ public class LocalProfileAvatarStorage implements ProfileAvatarStorage {
         Path temporary = null;
         try {
             temporary = Files.createTempFile(root, ".avatar-", ".tmp");
-            Files.write(temporary, content);
-            try {
-                Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            } catch (AtomicMoveNotSupportedException exception) {
-                Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
-            }
-        } catch (IOException exception) {
+            moveFile(temporary, target, content);
+        } catch (IOException _) {
             throw new InfrastructureException(ErrorCode.INFRASTRUCTURE_FAILURE);
         } finally {
             if (temporary != null) {
-                try { Files.deleteIfExists(temporary); } catch (IOException ignored) { /* cleaned up on startup */ }
+                try { Files.deleteIfExists(temporary); } catch (IOException _) { /* cleaned up on startup */ }
             }
+        }
+    }
+
+    private static void moveFile(Path temporary, Path target, byte[] content) throws IOException {
+        try {
+            Files.write(temporary, content);
+            Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } catch (AtomicMoveNotSupportedException _) {
+            Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
@@ -46,14 +50,14 @@ public class LocalProfileAvatarStorage implements ProfileAvatarStorage {
         try {
             if (!Files.isRegularFile(path)) throw new ResourceNotFoundException(ErrorCode.ACCOUNT_AVATAR_NOT_FOUND);
             return new StoredProfileAvatar(Files.newInputStream(path), Files.size(path));
-        } catch (IOException exception) {
+        } catch (IOException _) {
             throw new InfrastructureException(ErrorCode.INFRASTRUCTURE_FAILURE);
         }
     }
 
     @Override public void delete(String key) {
         try { Files.deleteIfExists(pathFor(key)); }
-        catch (IOException exception) { throw new InfrastructureException(ErrorCode.INFRASTRUCTURE_FAILURE); }
+        catch (IOException _) { throw new InfrastructureException(ErrorCode.INFRASTRUCTURE_FAILURE); }
     }
 
     private void initialize() {
@@ -64,10 +68,10 @@ public class LocalProfileAvatarStorage implements ProfileAvatarStorage {
                 files.filter(path -> path.getFileName().toString().startsWith(".avatar-")
                                 && path.getFileName().toString().endsWith(".tmp"))
                         .forEach(path -> {
-                            try { Files.deleteIfExists(path); } catch (IOException ignored) { /* retried next startup */ }
+                            try { Files.deleteIfExists(path); } catch (IOException _) { /* retried next startup */ }
                         });
             }
-        } catch (IOException | SecurityException exception) {
+        } catch (IOException | SecurityException _) {
             throw new InfrastructureException(ErrorCode.INFRASTRUCTURE_FAILURE);
         }
     }

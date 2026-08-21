@@ -88,7 +88,7 @@ public class Speciality extends AuditableEntity {
                 .map(DentalProcedure::getName)
                 .collect(Collectors.toSet());
         procedureNames.stream()
-                .filter(name -> !existingNames.contains(name))
+                .filter(nameProcedure -> !existingNames.contains(nameProcedure))
                 .forEach(this::addProcedure);
     }
 

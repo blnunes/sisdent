@@ -1,9 +1,12 @@
 package br.com.itbn.sisdent.service;
 
 import br.com.itbn.sisdent.dto.ExactPatientMatchRequest;
+import br.com.itbn.sisdent.dto.FilterOptionResponse;
 import br.com.itbn.sisdent.dto.PatientLinkRequest;
 import br.com.itbn.sisdent.dto.PatientResponse;
+import br.com.itbn.sisdent.model.Address;
 import br.com.itbn.sisdent.model.ClinicUnit;
+import br.com.itbn.sisdent.model.Country;
 import br.com.itbn.sisdent.model.DocumentType;
 import br.com.itbn.sisdent.model.Organization;
 import br.com.itbn.sisdent.model.Patient;
@@ -28,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -85,6 +89,27 @@ class OrganizationPatientServiceTest {
     }
 
     @Test
+    void returnsNameOptionsFromTheAuthorizedOrganizationScope() {
+        Country country = mock(Country.class);
+        Address address = mock(Address.class);
+        PatientOrganizationLink link = new PatientOrganizationLink(patient, organization, null, PatientLinkBasis.INTAKE);
+        when(patient.getName()).thenReturn("Ana Silva");
+        when(patient.getDocumentIssuerCountry()).thenReturn(country);
+        when(patient.getNationality()).thenReturn(country);
+        when(patient.getAddress()).thenReturn(address);
+        when(address.getCountry()).thenReturn(country);
+        when(pageableFactory.create(any(), any())).thenReturn(PageRequest.of(0, 10));
+        when(links.findAll(org.mockito.ArgumentMatchers.<org.springframework.data.jpa.domain.Specification<PatientOrganizationLink>>any(),
+                org.mockito.ArgumentMatchers.<Pageable>any()))
+                .thenReturn(new PageImpl<>(List.of(link)));
+
+        assertThat(service.filterOptions(organization.getGlobalId(), null, "name", "Ana"))
+                .containsExactly(new FilterOptionResponse("Ana Silva", "Ana Silva"));
+
+        verify(authorization).requireRead(organization.getGlobalId(), null);
+    }
+
+    @Test
     void createsPatientAndOrganizationLinkInTheRequestedClinic() {
         PatientResponse response = response();
         when(patientService.create(any())).thenReturn(response);
@@ -105,8 +130,9 @@ class OrganizationPatientServiceTest {
         when(links.findAllByPatient_GlobalIdAndOrganization_GlobalIdAndActiveTrue(patientId, organization.getGlobalId()))
                 .thenReturn(List.of(new PatientOrganizationLink(patient, organization, null, PatientLinkBasis.INTAKE)));
         when(links.existsByPatient_IdAndOrganization_GlobalIdNotAndActiveTrue(10L, organization.getGlobalId())).thenReturn(true);
+        UUID organizationId = organization.getGlobalId();
 
-        assertThatThrownBy(() -> service.update(organization.getGlobalId(), null, patientId, null))
+        assertThatThrownBy(() -> service.update(organizationId, null, patientId, null))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("globally shared");
     }
 
@@ -129,8 +155,10 @@ class OrganizationPatientServiceTest {
         when(links.findAllByPatient_GlobalIdAndOrganization_GlobalIdAndActiveTrue(patientId, organization.getGlobalId()))
                 .thenReturn(List.of(clinicLink, organizationLink));
         when(links.existsByPatient_IdAndOrganization_GlobalIdNotAndActiveTrue(10L, organization.getGlobalId())).thenReturn(false);
+        UUID organizationId = organization.getGlobalId();
+        UUID clinicId = clinic.getGlobalId();
 
-        assertThatThrownBy(() -> service.update(organization.getGlobalId(), clinic.getGlobalId(), patientId, null))
+        assertThatThrownBy(() -> service.update(organizationId, clinicId, patientId, null))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("another clinic unit");
     }
 
@@ -172,15 +200,16 @@ class OrganizationPatientServiceTest {
     @Test
     void linksAnExistingUnlinkedPatientAndRejectsMissingOrDuplicatePatients() {
         PatientLinkRequest request = linkRequest(null);
+        UUID organizationId = organization.getGlobalId();
         when(patients.findByIdentificationTypeAndDocumentIssuerCountry_CodeAndIdentificationNumber(
                 DocumentType.PASSPORT, "PT", "AB123")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> service.link(organization.getGlobalId(), request))
+        assertThatThrownBy(() -> service.link(organizationId, request))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("No exact patient match");
 
         when(patients.findByIdentificationTypeAndDocumentIssuerCountry_CodeAndIdentificationNumber(
                 DocumentType.PASSPORT, "PT", "AB123")).thenReturn(Optional.of(patient));
         when(links.existsByPatient_IdAndOrganization_IdAndActiveTrue(10L, null)).thenReturn(true);
-        assertThatThrownBy(() -> service.link(organization.getGlobalId(), request))
+        assertThatThrownBy(() -> service.link(organizationId, request))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("already linked");
 
         when(links.existsByPatient_IdAndOrganization_IdAndActiveTrue(10L, null)).thenReturn(false);

@@ -93,8 +93,9 @@ class PatientServiceTest {
 
     @Test
     void rejectsMissingAndInactivePatientsDuringMutations() {
+        PatientRequest request = patientRequest();
         when(patientRepository.findById(1L)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> patientService.update(1L, patientRequest()))
+        assertThatThrownBy(() -> patientService.update(1L, request))
                 .isInstanceOf(ResponseStatusException.class);
 
         Country portugal = country();

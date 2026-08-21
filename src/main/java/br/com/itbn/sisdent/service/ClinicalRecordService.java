@@ -135,7 +135,7 @@ public class ClinicalRecordService {
     private String zone(String z) {
         try {
             return ZoneId.of(z.strip()).getId();
-        } catch (Exception e) {
+        } catch (Exception _) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A valid IANA timezone is required");
         }
     }

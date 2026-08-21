@@ -162,14 +162,16 @@ class SpecialityServiceTest {
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("unique within");
 
         Speciality existing = new Speciality("Existing");
+        SpecialityRequest existingNameRequest = new SpecialityRequest("Existing", List.of());
         when(specialityRepository.findByName("Existing")).thenReturn(java.util.Optional.of(existing));
-        assertThatThrownBy(() -> specialityService.create(new SpecialityRequest("Existing", List.of()), Locale.ENGLISH))
+        assertThatThrownBy(() -> specialityService.create(existingNameRequest, Locale.ENGLISH))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("already exists");
 
         Speciality inactive = new Speciality("Inactive");
         inactive.deactivate();
-        when(specialityRepository.findAllById(Set.of(2L))).thenReturn(List.of(inactive));
-        assertThatThrownBy(() -> specialityService.findAllByIds(Set.of(2L)))
+        Set<Long> inactiveSpecialityIds = Set.of(2L);
+        when(specialityRepository.findAllById(inactiveSpecialityIds)).thenReturn(List.of(inactive));
+        assertThatThrownBy(() -> specialityService.findAllByIds(inactiveSpecialityIds))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("Inactive specialities");
     }
 }
