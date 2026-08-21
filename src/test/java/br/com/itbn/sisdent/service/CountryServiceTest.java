@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -99,11 +100,14 @@ class CountryServiceTest {
 
     @Test
     void rejectsUnsupportedCatalogueLocaleWithoutPassingItToTheLocalizer() {
-        assertThatThrownBy(() -> service.findPage(new br.com.itbn.sisdent.pagination.PageQuery(0, 10, "name", "asc"),
-                Locale.forLanguageTag("zh-CN")))
+        var query = new br.com.itbn.sisdent.pagination.PageQuery(0, 10, "name", "asc");
+        Locale unsupportedLocale = Locale.forLanguageTag("zh-CN");
+
+        assertThatThrownBy(() -> service.findPage(query, unsupportedLocale))
                 .isInstanceOf(ValidationException.class)
                 .extracting(exception -> ((ValidationException) exception).errorCode())
                 .isEqualTo(ErrorCode.CATALOG_UNSUPPORTED_LOCALE);
+        verifyNoInteractions(nameLocalizer);
     }
 
     private Country country() {
