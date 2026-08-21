@@ -25,8 +25,9 @@ import java.util.UUID;
 
 @Service
 public class AccountManagementService {
+    private static final String GLOBAL_ID = "globalId";
     private static final SortDefinition SORTS = new SortDefinition("person.displayName",
-            Set.of("person.displayName", "email", "globalId"));
+            Set.of("person.displayName", "email", GLOBAL_ID));
     private final AccountRepository accounts;
     private final PersonRepository persons;
     private final MembershipRepository memberships;
@@ -71,7 +72,7 @@ public class AccountManagementService {
         Account account = requireAccount(accountId);
         requireVersion(account.getVersion(), request.version());
         try { account.changeActive(request.active()); }
-        catch (IllegalStateException exception) { throw conflict("The requested account lifecycle transition is unavailable"); }
+        catch (IllegalStateException _) { throw conflict("The requested account lifecycle transition is unavailable"); }
         return response(accounts.saveAndFlush(account), null);
     }
 
@@ -85,7 +86,7 @@ public class AccountManagementService {
             throw conflict("At least one active platform administrator is required");
         }
         try { account.changePlatformAdministrator(request.platformAdministrator()); }
-        catch (IllegalStateException exception) { throw conflict("The requested platform-administrator transition is unavailable"); }
+        catch (IllegalStateException _) { throw conflict("The requested platform-administrator transition is unavailable"); }
         return response(accounts.saveAndFlush(account), null);
     }
 
@@ -128,8 +129,8 @@ public class AccountManagementService {
     }
     private Pageable deterministicPage(PageQuery query) {
         Pageable requested = pages.create(query, SORTS);
-        Sort tieBreaker = requested.getSort().getOrderFor("globalId") == null
-                ? Sort.by(Sort.Direction.ASC, "globalId") : Sort.unsorted();
+        Sort tieBreaker = requested.getSort().getOrderFor(GLOBAL_ID) == null
+                ? Sort.by(Sort.Direction.ASC, GLOBAL_ID) : Sort.unsorted();
         return PageRequest.of(requested.getPageNumber(), requested.getPageSize(), requested.getSort().and(tieBreaker));
     }
     private static void requireVersion(long current, long supplied) {

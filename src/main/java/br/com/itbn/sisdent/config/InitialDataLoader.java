@@ -318,18 +318,15 @@ public class InitialDataLoader implements ApplicationRunner {
                                 .stream()
                                 .filter(existing -> existing.getStreet().equals(address.street()))
                                 .findFirst()
-                                .orElseGet(() -> addressRepository.save(new Address(
-                                        address.street(),
-                                        address.district(),
-                                        address.city() == null ? address.district() : address.city(),
-                                        address.additionalInfo(),
-                                        address.block(),
-                                        address.postalCode(),
-                                        division,
-                                        requireReference(
-                                                countriesByCode,
-                                                countryCode,
-                                                "country code"))));
+                                .orElseGet(() -> addressRepository.save(new Address(Address.builder()
+                                        .street(address.street())
+                                        .district(address.district())
+                                        .city(address.city() == null ? address.district() : address.city())
+                                        .additionalInfo(address.additionalInfo())
+                                        .block(address.block())
+                                        .postalCode(address.postalCode())
+                                        .administrativeDivision(division)
+                                        .country(requireReference(countriesByCode, countryCode, "country code")))));
                         }));
     }
 

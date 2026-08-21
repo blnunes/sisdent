@@ -89,8 +89,8 @@ class AdministrativeDivisionServiceTest {
         when(repository.findById(1L)).thenReturn(Optional.empty());
         when(repository.existsById(2L)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.update(1L,
-                new AdministrativeDivisionRequest("Lisbon", "LX", "DISTRICT", "PT")))
+        AdministrativeDivisionRequest request = new AdministrativeDivisionRequest("Lisbon", "LX", "DISTRICT", "PT");
+        assertThatThrownBy(() -> service.update(1L, request))
                 .isInstanceOf(ResponseStatusException.class);
         assertThatThrownBy(() -> service.delete(2L)).isInstanceOf(ResponseStatusException.class);
     }

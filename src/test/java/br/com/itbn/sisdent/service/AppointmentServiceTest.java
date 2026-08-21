@@ -102,12 +102,13 @@ class AppointmentServiceTest {
     @Test
     void getsAndTransitionsAppointmentsWithinTheRequestedClinic() {
         Appointment appointment = new Appointment(new Organization("Alpha"), clinic, link, practitioner, start, end, "Europe/Lisbon");
-        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointment.getGlobalId(), organizationId)).thenReturn(Optional.of(appointment));
+        var appointmentId = appointment.getGlobalId();
+        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointmentId, organizationId)).thenReturn(Optional.of(appointment));
 
-        assertThat(service.get(organizationId, clinicId, appointment.getGlobalId()).status()).isEqualTo(AppointmentStatus.SCHEDULED);
-        assertThat(service.transition(organizationId, clinicId, appointment.getGlobalId(), AppointmentStatus.COMPLETED).status())
+        assertThat(service.get(organizationId, clinicId, appointmentId).status()).isEqualTo(AppointmentStatus.SCHEDULED);
+        assertThat(service.transition(organizationId, clinicId, appointmentId, AppointmentStatus.COMPLETED).status())
                 .isEqualTo(AppointmentStatus.COMPLETED);
-        assertThatThrownBy(() -> service.transition(organizationId, clinicId, appointment.getGlobalId(), AppointmentStatus.CANCELLED))
+        assertThatThrownBy(() -> service.transition(organizationId, clinicId, appointmentId, AppointmentStatus.CANCELLED))
                 .isInstanceOf(ResponseStatusException.class);
     }
 
@@ -147,8 +148,10 @@ class AppointmentServiceTest {
                 .hasMessageContaining("inactive");
 
         Appointment appointment = new Appointment(new Organization("Alpha"), clinic, link, practitioner, start, end, "Europe/Lisbon");
-        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointment.getGlobalId(), organizationId)).thenReturn(Optional.of(appointment));
-        assertThatThrownBy(() -> service.get(organizationId, UUID.randomUUID(), appointment.getGlobalId()))
+        var appointmentId = appointment.getGlobalId();
+        var unrelatedClinicId = UUID.randomUUID();
+        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointmentId, organizationId)).thenReturn(Optional.of(appointment));
+        assertThatThrownBy(() -> service.get(organizationId, unrelatedClinicId, appointmentId))
                 .isInstanceOf(ResponseStatusException.class);
     }
 }

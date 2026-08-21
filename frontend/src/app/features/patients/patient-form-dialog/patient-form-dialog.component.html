@@ -81,9 +81,11 @@
                 </mat-select>
               </mat-form-field>
             } @else if (field.key === 'postalCode' && isPatientForm()) {
+              <label class="visually-hidden" for="patient-postal-code">{{ field.label }}</label>
               <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
                 <mat-label>{{ field.label }}</mat-label>
                 <input
+                  id="patient-postal-code"
                   matInput
                   [formControlName]="field.key"
                   [required]="field.required ?? false"
@@ -135,7 +137,7 @@
                   </p>
                 </div>
                 @if (selectedSpecialities().length) {
-                  <div class="specialities-table" role="region" aria-label="Selected specialities">
+                  <section class="specialities-table" aria-label="Selected specialities">
                     <table>
                       <thead>
                         <tr>
@@ -171,7 +173,7 @@
                         }
                       </tbody>
                     </table>
-                  </div>
+                  </section>
                 } @else {
                   <p class="empty-specialities">No specialities selected yet.</p>
                 }
@@ -179,9 +181,11 @@
             } @else if (field.key === 'procedures') {
               <div class="procedures-editor full-width">
                 <div class="procedure-add">
+                  <label class="visually-hidden" for="patient-procedure-name">Add procedure</label>
                   <mat-form-field appearance="outline">
                     <mat-label>Add procedure</mat-label>
                     <input
+                      id="patient-procedure-name"
                       matInput
                       [value]="procedureNameToAdd()"
                       (input)="setProcedureName($any($event.target).value)"
@@ -199,7 +203,7 @@
                   <p>Add one procedure at a time. You can remove an item before saving.</p>
                 </div>
                 @if (selectedProcedures().length) {
-                  <div class="procedures-table" role="region" aria-label="Selected procedures">
+                  <section class="procedures-table" aria-label="Selected procedures">
                     <table>
                       <thead>
                         <tr>
@@ -232,7 +236,7 @@
                         }
                       </tbody>
                     </table>
-                  </div>
+                  </section>
                 } @else {
                   <p
                     class="empty-procedures"
@@ -243,9 +247,10 @@
                 }
               </div>
             } @else if (field.type === 'date') {
+              <label class="visually-hidden" [attr.for]="'patient-field-' + field.key">{{ field.label }}</label>
               <mat-form-field appearance="outline" [class.full-width]="field.fullWidth">
                 <mat-label>{{ field.label }}</mat-label>
-                <input matInput readonly [matDatepicker]="picker" [formControlName]="field.key" />
+                <input [id]="'patient-field-' + field.key" matInput readonly [matDatepicker]="picker" [formControlName]="field.key" />
                 <mat-datepicker-toggle matSuffix [for]="picker" />
                 <mat-datepicker #picker />
                 @if (form.get(field.key)?.hasError('required') && form.get(field.key)?.touched) {
@@ -266,7 +271,9 @@
                     }
                   </mat-select>
                 } @else {
+                  <label class="visually-hidden" [attr.for]="'patient-field-' + field.key">{{ field.label }}</label>
                   <input
+                    [id]="'patient-field-' + field.key"
                     matInput
                     [formControlName]="field.key"
                     [readonly]="isPatientAddressField(field) && isAddressLocked()"

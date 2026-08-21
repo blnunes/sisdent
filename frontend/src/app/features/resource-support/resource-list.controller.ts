@@ -183,12 +183,14 @@ export abstract class ResourceListController {
     else if (event.action === 'edit') this.edit(record);
     else if (event.action === 'delete') this.remove(record);
   }
-  create(): void {}
+  abstract create(): void;
   closeMenu(drawer: MatSidenav): void {
     void drawer.close();
   }
-  protected view(_record: ResourceRecord): void {}
-  protected edit(_record: ResourceRecord): void {}
+  protected view(_record: ResourceRecord): void {
+    throw new Error('View action is not supported by this resource.');
+  }
+  protected abstract edit(record: ResourceRecord): void;
   protected remove(record: ResourceRecord): void {
     if (
       !confirm(

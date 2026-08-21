@@ -45,23 +45,15 @@ public class Address extends AuditableEntity {
     protected Address() {
     }
 
-    public Address(
-            String street,
-            String district,
-            String city,
-            String additionalInfo,
-            String block,
-            String postalCode,
-            AdministrativeDivision administrativeDivision,
-            Country country) {
-        this.street = street;
-        this.district = district;
-        this.city = city;
-        this.additionalInfo = additionalInfo;
-        this.block = block;
-        this.postalCode = postalCode;
-        this.administrativeDivision = administrativeDivision;
-        this.country = country;
+    public Address(Builder builder) {
+        street = builder.street;
+        district = builder.district;
+        city = builder.city;
+        additionalInfo = builder.additionalInfo;
+        block = builder.block;
+        postalCode = builder.postalCode;
+        administrativeDivision = builder.administrativeDivision;
+        country = builder.country;
     }
 
     public Long getId() {
@@ -100,10 +92,33 @@ public class Address extends AuditableEntity {
         return country;
     }
 
-    public void update(String street, String district, String city, String additionalInfo, String block,
-            String postalCode, AdministrativeDivision administrativeDivision, Country country) {
-        this.street = street; this.district = district; this.city = city; this.additionalInfo = additionalInfo;
-        this.block = block; this.postalCode = postalCode;
-        this.administrativeDivision = administrativeDivision; this.country = country;
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public void update(Address source) {
+        street = source.street; district = source.district; city = source.city; additionalInfo = source.additionalInfo;
+        block = source.block; postalCode = source.postalCode;
+        administrativeDivision = source.administrativeDivision; country = source.country;
+    }
+
+    public static final class Builder {
+        private String street;
+        private String district;
+        private String city;
+        private String additionalInfo;
+        private String block;
+        private String postalCode;
+        private AdministrativeDivision administrativeDivision;
+        private Country country;
+
+        public Builder street(String value) { street = value; return this; }
+        public Builder district(String value) { district = value; return this; }
+        public Builder city(String value) { city = value; return this; }
+        public Builder additionalInfo(String value) { additionalInfo = value; return this; }
+        public Builder block(String value) { block = value; return this; }
+        public Builder postalCode(String value) { postalCode = value; return this; }
+        public Builder administrativeDivision(AdministrativeDivision value) { administrativeDivision = value; return this; }
+        public Builder country(Country value) { country = value; return this; }
     }
 }

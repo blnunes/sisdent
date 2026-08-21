@@ -19,7 +19,8 @@ import java.util.List;
 
 @Service
 public class AddressService {
-    private static final SortDefinition SORT_DEFINITION = new SortDefinition("street", java.util.Set.of("id", "street", "district", "postalCode"));
+    private static final String STREET = "street";
+    private static final SortDefinition SORT_DEFINITION = new SortDefinition(STREET, java.util.Set.of("id", STREET, "district", "postalCode"));
 
     private final AddressRepository addressRepository;
     private final AdministrativeDivisionService administrativeDivisionService;
@@ -39,7 +40,7 @@ public class AddressService {
 
     @Transactional(readOnly = true)
     public List<AddressResponse> findAll() {
-        return addressRepository.findAll(Sort.by("street")).stream()
+        return addressRepository.findAll(Sort.by(STREET)).stream()
                 .map(ResponseMapper::toResponse)
                 .toList();
     }
@@ -78,8 +79,7 @@ public class AddressService {
     public AddressResponse update(Long id, AddressRequest request) {
         Address address = addressRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         Address source = newAddress(request);
-        address.update(source.getStreet(), source.getDistrict(), source.getCity(), source.getAdditionalInfo(),
-                source.getBlock(), source.getPostalCode(), source.getAdministrativeDivision(), source.getCountry());
+        address.update(source);
         return ResponseMapper.toResponse(addressRepository.saveAndFlush(address));
     }
 
@@ -123,15 +123,15 @@ public class AddressService {
 
     private Address newAddress(AddressRequest request) {
         br.com.itbn.sisdent.model.Country country = countryService.requireByCode(request.countryCode());
-        return new Address(
-                request.street().trim(),
-                normalizeNullable(request.district()),
-                request.city().trim(),
-                normalizeNullable(request.additionalInfo()),
-                normalizeNullable(request.block()),
-                normalizeNullable(request.postalCode()),
-                administrativeDivisionService.findOrCreate(request.administrativeDivision(), country),
-                country);
+        return new Address(Address.builder()
+                .street(request.street().trim())
+                .district(normalizeNullable(request.district()))
+                .city(request.city().trim())
+                .additionalInfo(normalizeNullable(request.additionalInfo()))
+                .block(normalizeNullable(request.block()))
+                .postalCode(normalizeNullable(request.postalCode()))
+                .administrativeDivision(administrativeDivisionService.findOrCreate(request.administrativeDivision(), country))
+                .country(country));
     }
 
     private String normalizeNullable(String value) {

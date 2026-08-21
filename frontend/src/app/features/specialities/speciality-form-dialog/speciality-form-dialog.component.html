@@ -14,9 +14,10 @@
 </header>
 <mat-dialog-content
   ><form [formGroup]="form">
+    <label class="visually-hidden" for="speciality-name">{{ 'SPECIALITIES.FORM.NAME' | translate }}</label>
     <mat-form-field appearance="outline"
-      ><mat-label>{{ 'SPECIALITIES.FORM.NAME' | translate }}</mat-label
-      ><input matInput formControlName="name" required />
+      ><mat-label for="speciality-name">{{ 'SPECIALITIES.FORM.NAME' | translate }}</mat-label
+      ><input id="speciality-name" matInput formControlName="name" required />
       @if (form.controls.name.hasError('required') && form.controls.name.touched) {
         <mat-error>{{ 'SPECIALITIES.FORM.NAME_REQUIRED' | translate }}</mat-error>
       }
@@ -28,9 +29,11 @@
         {{ 'SPECIALITIES.FORM.PROCEDURES_DESCRIPTION' | translate }}
       </p>
       <div class="procedure-add">
+        <label class="visually-hidden" for="speciality-procedure-name">{{ 'SPECIALITIES.FORM.ADD_PROCEDURE' | translate }}</label>
         <mat-form-field appearance="outline"
-          ><mat-label>{{ 'SPECIALITIES.FORM.ADD_PROCEDURE' | translate }}</mat-label
+          ><mat-label for="speciality-procedure-name">{{ 'SPECIALITIES.FORM.ADD_PROCEDURE' | translate }}</mat-label
           ><input
+            id="speciality-procedure-name"
             matInput
             formControlName="procedureName"
             (keydown.enter)="$event.preventDefault(); addProcedure()" /></mat-form-field
@@ -44,9 +47,8 @@
         </button>
       </div>
       @if (procedures().length) {
-        <div
+        <section
           class="procedures"
-          role="region"
           [attr.aria-label]="'SPECIALITIES.FORM.SELECTED_PROCEDURES' | translate"
         >
           @for (procedure of procedures(); track procedure.id ?? procedure.name) {
@@ -65,7 +67,7 @@
               </button>
             </div>
           }
-        </div>
+        </section>
       } @else {
         <p class="empty" [class.validation-error]="proceduresTouched()">
           {{ 'SPECIALITIES.FORM.MIN_PROCEDURE' | translate }}
@@ -88,15 +90,18 @@
       <p class="section-description">{{ 'SPECIALITIES.FORM.TRANSLATIONS_HELP' | translate }}</p>
       <h4>{{ 'SPECIALITIES.FORM.SPECIALITY_NAME' | translate }}</h4>
       <div class="translation-grid">
+        <label class="visually-hidden" for="speciality-translation-en">{{ 'CATALOG_TRANSLATIONS.LOCALES.en' | translate }}</label>
         <mat-form-field appearance="outline"
-          ><mat-label>{{ 'CATALOG_TRANSLATIONS.LOCALES.en' | translate }}</mat-label
-          ><input matInput formControlName="translationEn" /></mat-form-field
+          ><mat-label for="speciality-translation-en">{{ 'CATALOG_TRANSLATIONS.LOCALES.en' | translate }}</mat-label
+          ><input id="speciality-translation-en" matInput formControlName="translationEn" /></mat-form-field
+        ><label class="visually-hidden" for="speciality-translation-pt">{{ 'CATALOG_TRANSLATIONS.LOCALES.pt-PT' | translate }}</label
         ><mat-form-field appearance="outline"
-          ><mat-label>{{ 'CATALOG_TRANSLATIONS.LOCALES.pt-PT' | translate }}</mat-label
-          ><input matInput formControlName="translationPt" /></mat-form-field
+          ><mat-label for="speciality-translation-pt">{{ 'CATALOG_TRANSLATIONS.LOCALES.pt-PT' | translate }}</mat-label
+          ><input id="speciality-translation-pt" matInput formControlName="translationPt" /></mat-form-field
+        ><label class="visually-hidden" for="speciality-translation-nl">{{ 'CATALOG_TRANSLATIONS.LOCALES.nl' | translate }}</label
         ><mat-form-field appearance="outline"
-          ><mat-label>{{ 'CATALOG_TRANSLATIONS.LOCALES.nl' | translate }}</mat-label
-          ><input matInput formControlName="translationNl"
+          ><mat-label for="speciality-translation-nl">{{ 'CATALOG_TRANSLATIONS.LOCALES.nl' | translate }}</mat-label
+          ><input id="speciality-translation-nl" matInput formControlName="translationNl"
         /></mat-form-field>
       </div>
       @if (procedures().length) {
@@ -112,10 +117,11 @@
               <div class="translation-grid">
                 @for (locale of locales; track locale) {
                   <mat-form-field appearance="outline"
-                    ><mat-label>{{
+                    ><mat-label [attr.for]="'procedure-' + procedureIndex + '-translation-' + locale">{{
                       'CATALOG_TRANSLATIONS.LOCALES.' + locale | translate
                     }}</mat-label
                     ><input
+                      [id]="'procedure-' + procedureIndex + '-translation-' + locale"
                       matInput
                       [value]="procedureTranslation(procedureIndex, locale)"
                       (input)="

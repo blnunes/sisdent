@@ -14,7 +14,15 @@ header p {
 form > mat-form-field {
   width: 100%;
 }
-section {
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+form > section {
   border-top: 1px solid var(--app-border);
   padding-top: 14px;
 }

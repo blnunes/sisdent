@@ -152,15 +152,11 @@ class PatientServiceTest {
     }
 
     private Address address(Country country) {
-        return new Address(
-                "Avenida da Liberdade 100",
-                null,
-                "Lisbon",
-                null,
-                null,
-                "1250-096",
-                null,
-                country);
+        return new Address(Address.builder()
+                .street("Avenida da Liberdade 100")
+                .city("Lisbon")
+                .postalCode("1250-096")
+                .country(country));
     }
 
     private Patient patient(Country country) {

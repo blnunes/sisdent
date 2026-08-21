@@ -118,7 +118,8 @@ class AddressServiceTest {
     void rejectsInvalidSuggestionsAndInvalidAddressSelections() {
         assertThat(addressService.suggestByPostalCode("P", "125")).isEmpty();
         assertThat(addressService.suggestByPostalCode("PT", "1")).isEmpty();
-        assertThatThrownBy(() -> addressService.resolvePatientAddress(1L, request()))
+        AddressRequest addressRequest = request();
+        assertThatThrownBy(() -> addressService.resolvePatientAddress(1L, addressRequest))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("either addressId");
         assertThatThrownBy(() -> addressService.resolvePatientAddress(null, null))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("required");
@@ -129,7 +130,8 @@ class AddressServiceTest {
         when(addressRepository.findById(1L)).thenReturn(java.util.Optional.empty());
         when(addressRepository.existsById(2L)).thenReturn(false);
 
-        assertThatThrownBy(() -> addressService.update(1L, request())).isInstanceOf(ResponseStatusException.class);
+        AddressRequest addressRequest = request();
+        assertThatThrownBy(() -> addressService.update(1L, addressRequest)).isInstanceOf(ResponseStatusException.class);
         assertThatThrownBy(() -> addressService.delete(2L)).isInstanceOf(ResponseStatusException.class);
         assertThatThrownBy(() -> addressService.resolvePatientAddress(1L, null)).isInstanceOf(ResponseStatusException.class);
     }
@@ -148,15 +150,13 @@ class AddressServiceTest {
 
     private Address address() {
         Country country = country();
-        return new Address(
-                "Avenida da Liberdade 100",
-                null,
-                "Lisbon",
-                "Floor 2",
-                null,
-                "1250-096",
-                division(country),
-                country);
+        return new Address(Address.builder()
+                .street("Avenida da Liberdade 100")
+                .city("Lisbon")
+                .additionalInfo("Floor 2")
+                .postalCode("1250-096")
+                .administrativeDivision(division(country))
+                .country(country));
     }
 
     private AdministrativeDivision division(Country country) {

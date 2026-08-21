@@ -86,7 +86,8 @@ class CatalogTranslationServiceTest {
     @Test
     void rejectsUnsupportedLocalesAndUnknownResources() {
         when(specialities.findById(99L)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> service.replace(CatalogResourceType.SPECIALITY, 99L, Map.of("en", "Name")))
+        Map<String, String> translations = Map.of("en", "Name");
+        assertThatThrownBy(() -> service.replace(CatalogResourceType.SPECIALITY, 99L, translations))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .extracting(exception -> ((ResourceNotFoundException) exception).errorCode())
                 .isEqualTo(ErrorCode.RESOURCE_NOT_FOUND);
@@ -96,7 +97,8 @@ class CatalogTranslationServiceTest {
         when(speciality.getName()).thenReturn("Name");
         when(specialities.findById(4L)).thenReturn(Optional.of(speciality));
         when(repository.findByResourceTypeAndResourceId(CatalogResourceType.SPECIALITY, 4L)).thenReturn(List.of());
-        assertThatThrownBy(() -> service.replace(CatalogResourceType.SPECIALITY, 4L, Map.of("fr", "Nom")))
+        Map<String, String> unsupportedTranslations = Map.of("fr", "Nom");
+        assertThatThrownBy(() -> service.replace(CatalogResourceType.SPECIALITY, 4L, unsupportedTranslations))
                 .isInstanceOf(ValidationException.class)
                 .extracting(exception -> ((ValidationException) exception).errorCode())
                 .isEqualTo(ErrorCode.CATALOG_UNSUPPORTED_LOCALE);

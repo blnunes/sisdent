@@ -59,7 +59,9 @@ class AccountManagementServiceTest {
         when(memberships.findAllByAccount_IdOrderByOrganization_NameAscClinicUnit_NameAsc(any())).thenReturn(List.of());
 
         assertThat(service.changeLifecycle(account.getGlobalId(), new AccountLifecycleRequest(false, 0L)).active()).isFalse();
-        assertThatThrownBy(() -> service.changeLifecycle(account.getGlobalId(), new AccountLifecycleRequest(true, 1L)))
+        var accountId = account.getGlobalId();
+        AccountLifecycleRequest staleRequest = new AccountLifecycleRequest(true, 1L);
+        assertThatThrownBy(() -> service.changeLifecycle(accountId, staleRequest))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("changed by another request");
     }
 
@@ -69,8 +71,9 @@ class AccountManagementServiceTest {
         when(accounts.findLockedByGlobalId(account.getGlobalId())).thenReturn(Optional.of(account));
         when(accounts.countByPlatformAdministratorTrueAndActiveTrue()).thenReturn(1L);
 
-        assertThatThrownBy(() -> service.changePlatformAdministrator(account.getGlobalId(),
-                new AccountPlatformAdministratorRequest(false, 0L)))
+        var accountId = account.getGlobalId();
+        AccountPlatformAdministratorRequest request = new AccountPlatformAdministratorRequest(false, 0L);
+        assertThatThrownBy(() -> service.changePlatformAdministrator(accountId, request))
                 .isInstanceOf(ResponseStatusException.class).hasMessageContaining("At least one active");
     }
 }
