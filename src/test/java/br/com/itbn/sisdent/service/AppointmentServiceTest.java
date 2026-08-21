@@ -28,6 +28,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -55,10 +56,10 @@ class AppointmentServiceTest {
     @BeforeEach
     void setUp() {
         request = new AppointmentRequest(clinicId, patientId, practitionerId, start, end, "Europe/Lisbon");
-        practitioner = org.mockito.Mockito.mock(Practitioner.class);
-        link = org.mockito.Mockito.mock(PatientOrganizationLink.class);
-        clinic = org.mockito.Mockito.mock(ClinicUnit.class);
-        Patient patient = org.mockito.Mockito.mock(Patient.class);
+        practitioner = mock(Practitioner.class);
+        link = mock(PatientOrganizationLink.class);
+        clinic = mock(ClinicUnit.class);
+        Patient patient = mock(Patient.class);
         lenient().when(practitioner.isActive()).thenReturn(true);
         lenient().when(practitioner.getId()).thenReturn(1L);
         lenient().when(practitioner.getGlobalId()).thenReturn(practitionerId);

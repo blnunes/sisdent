@@ -71,7 +71,7 @@ public class AccountManagementService {
         Account account = requireAccount(accountId);
         requireVersion(account.getVersion(), request.version());
         try { account.changeActive(request.active()); }
-        catch (IllegalStateException exception) { throw conflict("The requested account lifecycle transition is unavailable"); }
+        catch (IllegalStateException _) { throw conflict("The requested account lifecycle transition is unavailable"); }
         return response(accounts.saveAndFlush(account), null);
     }
 
@@ -85,7 +85,7 @@ public class AccountManagementService {
             throw conflict("At least one active platform administrator is required");
         }
         try { account.changePlatformAdministrator(request.platformAdministrator()); }
-        catch (IllegalStateException exception) { throw conflict("The requested platform-administrator transition is unavailable"); }
+        catch (IllegalStateException _) { throw conflict("The requested platform-administrator transition is unavailable"); }
         return response(accounts.saveAndFlush(account), null);
     }
 

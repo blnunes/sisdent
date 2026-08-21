@@ -2,7 +2,6 @@ package br.com.itbn.sisdent.filter;
 
 import br.com.itbn.sisdent.model.DocumentType;
 import br.com.itbn.sisdent.model.Gender;
-import br.com.itbn.sisdent.model.Patient;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Join;

@@ -33,6 +33,7 @@ import org.springframework.data.domain.Pageable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -57,7 +58,7 @@ class OrganizationPatientServiceTest {
 
     @BeforeEach
     void setUp() {
-        patient = org.mockito.Mockito.mock(Patient.class);
+        patient = mock(Patient.class);
         lenient().when(patient.getGlobalId()).thenReturn(patientId);
         lenient().when(patient.getBirthDate()).thenReturn(birthDate);
         lenient().when(patient.getId()).thenReturn(10L);

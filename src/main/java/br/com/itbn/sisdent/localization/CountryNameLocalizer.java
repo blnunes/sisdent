@@ -20,7 +20,7 @@ public class CountryNameLocalizer implements CatalogNameLocalizer<Country> {
             Locale countryLocale = new Locale.Builder().setRegion(country.getCode()).build();
             String localizedName = countryLocale.getDisplayCountry(SupportedCatalogLocale.from(locale));
             return localizedName.isBlank() ? country.getName() : localizedName;
-        } catch (IllformedLocaleException exception) {
+        } catch (IllformedLocaleException _) {
             return country.getName();
         }
     }

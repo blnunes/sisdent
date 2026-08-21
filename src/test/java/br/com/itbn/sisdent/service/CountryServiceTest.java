@@ -1,5 +1,6 @@
 package br.com.itbn.sisdent.service;
 
+import br.com.itbn.sisdent.dto.CountryResponse;
 import br.com.itbn.sisdent.dto.CountryRequest;
 import br.com.itbn.sisdent.error.ErrorCode;
 import br.com.itbn.sisdent.error.ResourceNotFoundException;
@@ -42,7 +43,7 @@ class CountryServiceTest {
         when(countries.findByCode("PT")).thenReturn(Optional.of(portugal));
         when(nameLocalizer.localize(portugal, Locale.ENGLISH)).thenReturn("Portugal");
 
-        assertThat(service.findAll()).singleElement().extracting(response -> response.code()).isEqualTo("PT");
+        assertThat(service.findAll()).singleElement().extracting(CountryResponse::code).isEqualTo("PT");
         assertThat(service.requireByCode("PT")).isSameAs(portugal);
         assertThatThrownBy(() -> service.requireByCode("ZZ")).isInstanceOf(UnknownCountryException.class);
     }

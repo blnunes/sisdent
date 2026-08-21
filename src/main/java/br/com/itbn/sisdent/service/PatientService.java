@@ -10,7 +10,6 @@ import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.pagination.SortDefinition;
 import br.com.itbn.sisdent.filter.PatientFilter;
 import br.com.itbn.sisdent.filter.PatientSpecifications;
-import br.com.itbn.sisdent.model.Address;
 import br.com.itbn.sisdent.model.Patient;
 import br.com.itbn.sisdent.repository.PatientRepository;
 import org.springframework.data.domain.Sort;

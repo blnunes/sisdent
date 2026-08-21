@@ -1,6 +1,7 @@
 package br.com.itbn.sisdent.graphql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import br.com.itbn.sisdent.error.ApplicationException;
@@ -110,7 +111,7 @@ class ApplicationGraphQlExceptionResolverTest {
     }
 
     private static DataFetchingEnvironment environment() {
-        DataFetchingEnvironment environment = org.mockito.Mockito.mock(DataFetchingEnvironment.class);
+        DataFetchingEnvironment environment = mock(DataFetchingEnvironment.class);
         when(environment.getLocale()).thenReturn(Locale.ENGLISH);
         return environment;
     }

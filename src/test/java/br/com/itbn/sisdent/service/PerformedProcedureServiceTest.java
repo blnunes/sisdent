@@ -22,6 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,8 +38,8 @@ class PerformedProcedureServiceTest {
     void recordsCompletedAppointmentProceduresAndRejectsInactiveCatalogEntries() {
         UUID organization = UUID.randomUUID();
         UUID appointmentId = UUID.randomUUID();
-        Appointment appointment = org.mockito.Mockito.mock(Appointment.class);
-        DentalProcedure procedure = org.mockito.Mockito.mock(DentalProcedure.class);
+        Appointment appointment = mock(Appointment.class);
+        DentalProcedure procedure = mock(DentalProcedure.class);
         when(appointment.getStatus()).thenReturn(AppointmentStatus.COMPLETED);
         when(appointments.findByGlobalIdAndOrganization_GlobalId(appointmentId, organization)).thenReturn(Optional.of(appointment));
         when(procedure.getStatus()).thenReturn(CatalogStatus.ACTIVE);

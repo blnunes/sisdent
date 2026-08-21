@@ -36,7 +36,7 @@ class AccountAvatarIntegrationTests {
     @Autowired JsonMapper jsonMapper;
 
     @DynamicPropertySource
-    static void avatarDirectory(DynamicPropertyRegistry registry) { registry.add("sisdent.avatar.storage-directory", () -> AVATARS.toString()); }
+    static void avatarDirectory(DynamicPropertyRegistry registry) { registry.add("sisdent.avatar.storage-directory", AVATARS::toString); }
 
     @Test
     void uploadsPngAndJpegThroughMultipartThenReturnsNormalizedPng() throws Exception {

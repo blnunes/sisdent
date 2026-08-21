@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -78,7 +79,7 @@ class CatalogTranslationServiceTest {
         var response = service.replace(CatalogResourceType.SPECIALITY, 4L,
                 Map.of("en", "Digital Implantology", "pt-PT", "Implantologia digital", "nl", ""));
 
-        verify(repository, org.mockito.Mockito.times(2)).save(any(CatalogTranslation.class));
+        verify(repository, times(2)).save(any(CatalogTranslation.class));
         assertThat(response.missingLocales()).containsExactly("nl");
     }
 
