@@ -36,7 +36,9 @@ class LocalProfileAvatarStorageTest {
     @Test
     void rejectsAFileWhereTheConfiguredDirectoryMustBeCreated() throws Exception {
         Path file = Files.createTempFile(directory, "avatar-root", ".tmp");
-        assertThatThrownBy(() -> new LocalProfileAvatarStorage(file.toString()))
+        String configuredPath = file.toString();
+
+        assertThatThrownBy(() -> new LocalProfileAvatarStorage(configuredPath))
                 .isInstanceOf(InfrastructureException.class);
     }
 }
