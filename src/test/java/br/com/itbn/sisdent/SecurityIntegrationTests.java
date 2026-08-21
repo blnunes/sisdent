@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -84,8 +85,6 @@ class SecurityIntegrationTests {
     void platformAdministratorCanUsePlatformCatalogues() throws Exception {
         String token = emailLogin("admin@sisdent.local", "admin");
 
-        mockMvc.perform(get("/api/specialities").header("Authorization", bearer(token)))
-                .andExpect(status().isOk());
         mockMvc.perform(get("/api/platform/catalog-translations").header("Authorization", bearer(token)))
                 .andExpect(status().isOk());
     }
@@ -144,54 +143,22 @@ class SecurityIntegrationTests {
     }
 
     @Test
-    void catalogueUsesTheRequestedPortugueseLocaleOverHttp() throws Exception {
+    void retiredSpecialityRestOperationsReturnNotFound() throws Exception {
         String token = emailLogin("admin@sisdent.local", "admin");
 
         mockMvc.perform(get("/api/specialities")
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/specialities")
                         .header("Authorization", bearer(token))
-                        .header("Accept-Language", "pt-PT"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[?(@.name == 'Pediatric Dentistry')].displayName")
-                        .value("Odontopediatria"));
-    }
-
-    @Test
-    void newlyCreatedSpecialityAndProcedureUsePersistedTranslations() throws Exception {
-        String token = emailLogin("admin@sisdent.local", "admin");
-        String response = mockMvc.perform(post("/api/specialities")
-                        .header("Authorization", bearer(token))
-                        .header("Accept-Language", "pt-PT")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "Digital Implantology",
-                                  "translations": {
-                                    "en": "Digital Implantology",
-                                    "pt-PT": "Implantologia Digital",
-                                    "nl": "Digitale implantologie"
-                                  },
-                                  "procedures": [{
-                                    "name": "Guided implant placement",
-                                    "translations": {
-                                      "en": "Guided implant placement",
-                                      "pt-PT": "Colocação guiada de implante",
-                                      "nl": "Geleide implantaatplaatsing"
-                                    }
-                                  }]
-                                }
-                                """))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.displayName").value("Implantologia Digital"))
-                .andExpect(jsonPath("$.procedures[0].displayName").value("Colocação guiada de implante"))
-                .andReturn().getResponse().getContentAsString();
-        long id = jsonMapper.readTree(response).get("id").asLong();
-
-        mockMvc.perform(get("/api/specialities")
+                .content("{}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(put("/api/specialities/{id}", 1)
                         .header("Authorization", bearer(token))
-                        .header("Accept-Language", "nl"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[?(@.id == %d)].displayName".formatted(id))
-                        .value("Digitale implantologie"));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNotFound());
     }
 
     private String emailLogin(String email, String password) throws Exception {
@@ -202,7 +169,7 @@ class SecurityIntegrationTests {
                                 """.formatted(email, password)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        return jsonMapper.readTree(response).get("accessToken").asText();
+        return jsonMapper.readTree(response).get("accessToken").asString();
     }
 
     private static String bearer(String token) {

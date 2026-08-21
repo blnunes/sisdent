@@ -1,8 +1,13 @@
 type Mutation {
     createCountry(input: CountryMutationInput!, locale: String): Country!
     updateCountry(id: ID!, input: CountryMutationInput!, locale: String): Country!
+    deleteCountry(id: ID!): Boolean!
     createSpeciality(input: SpecialityMutationInput!, locale: String): Speciality!
     updateSpeciality(id: ID!, input: SpecialityMutationInput!, locale: String): Speciality!
+    deactivateSpeciality(id: ID!): Boolean!
+    createAdministrativeDivision(input: AdministrativeDivisionMutationInput!): AdministrativeDivision!
+    updateAdministrativeDivision(id: ID!, input: AdministrativeDivisionMutationInput!): AdministrativeDivision!
+    deleteAdministrativeDivision(id: ID!): Boolean!
     createClinicUnit(organizationId: ID!, input: ClinicUnitMutationInput!): ClinicUnit!
     createPractitioner(organizationId: ID!, input: PractitionerMutationInput!): Practitioner!
     updatePractitioner(organizationId: ID!, practitionerId: ID!, input: PractitionerMutationInput!): Practitioner!
@@ -18,6 +23,8 @@ input SpecialityMutationInput {
     translations: [CatalogTranslationMutationInput!]
 }
 input ClinicUnitMutationInput { name: String! }
+input AdministrativeDivisionMutationInput { name: String!, code: String!, type: String!, countryCode: String! }
+type AdministrativeDivision { id: ID!, name: String!, code: String!, type: String!, country: Country! }
 input PractitionerMutationInput {
     displayName: String!
     registrationNumber: String
@@ -26,9 +33,9 @@ input PractitionerMutationInput {
 }
 input PatientAddressMutationInput {
     street: String!, district: String, city: String!, additionalInfo: String, block: String, postalCode: String!
-    administrativeDivision: AdministrativeDivisionMutationInput, countryCode: String!
+    administrativeDivision: PatientAdministrativeDivisionMutationInput, countryCode: String!
 }
-input AdministrativeDivisionMutationInput { name: String!, code: String!, type: String! }
+input PatientAdministrativeDivisionMutationInput { name: String!, code: String!, type: String! }
 input PatientUpdateMutationInput {
     name: String!, birthDate: String!, active: Boolean!, gender: Gender!, taxId: String,
     identificationType: DocumentType!, identificationNumber: String!, documentIssuerCountryCode: String!,

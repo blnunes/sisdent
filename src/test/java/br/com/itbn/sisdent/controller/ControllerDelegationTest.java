@@ -1,18 +1,14 @@
 package br.com.itbn.sisdent.controller;
 
 import br.com.itbn.sisdent.service.AddressService;
-import br.com.itbn.sisdent.service.AdministrativeDivisionService;
-import br.com.itbn.sisdent.service.CountryService;
 import br.com.itbn.sisdent.service.OrganizationPatientService;
 import br.com.itbn.sisdent.service.OrganizationService;
 import br.com.itbn.sisdent.service.AccountManagementService;
 import br.com.itbn.sisdent.service.PractitionerService;
 import br.com.itbn.sisdent.service.SessionService;
-import br.com.itbn.sisdent.service.SpecialityService;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
-import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,36 +18,17 @@ import static org.mockito.Mockito.verify;
 class ControllerDelegationTest {
     @Test
     void delegatesReferenceDataEndpointsToTheirServices() {
-        CountryService countries = mock(CountryService.class);
-        AdministrativeDivisionService divisions = mock(AdministrativeDivisionService.class);
         AddressService addresses = mock(AddressService.class);
-        SpecialityService specialities = mock(SpecialityService.class);
 
-        new CountryController(countries).continents();
-        new CountryController(countries).delete(1L);
-        new AdministrativeDivisionController(divisions).findAll(0, 10, "name", "asc");
-        new AdministrativeDivisionController(divisions).create(null);
-        new AdministrativeDivisionController(divisions).update(1L, null);
-        new AdministrativeDivisionController(divisions).delete(1L);
         new AddressController(addresses).findAll(0, 10, "street", "asc");
         new AddressController(addresses).findByPostalCode("1250", "PT");
         new AddressController(addresses).suggestByPostalCode("PT", "12");
         new AddressController(addresses).create(null);
         new AddressController(addresses).update(1L, null);
         new AddressController(addresses).delete(1L);
-        new SpecialityController(specialities).findAll(0, 10, "name", "asc", "endo", "root", Locale.ENGLISH);
-        new SpecialityController(specialities).findFilterOptions("name", "endo");
-        new SpecialityController(specialities).create(null, Locale.ENGLISH);
-        new SpecialityController(specialities).update(1L, null, Locale.ENGLISH);
-        new SpecialityController(specialities).delete(1L);
 
-        verify(countries).delete(1L);
-        verify(divisions).findPage(any());
-        verify(divisions).delete(1L);
         verify(addresses).findByPostalCode("PT", "1250");
         verify(addresses).suggestByPostalCode("PT", "12");
-        verify(specialities).findFilterOptions("name", "endo");
-        verify(specialities).delete(1L);
     }
 
     @Test

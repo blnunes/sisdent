@@ -2,6 +2,7 @@ package br.com.itbn.sisdent.graphql;
 
 import br.com.itbn.sisdent.dto.CountryResponse;
 import br.com.itbn.sisdent.dto.PageResponse;
+import java.util.List;
 import br.com.itbn.sisdent.service.CountryService;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
@@ -35,5 +36,10 @@ public class CountryQueryController {
     @QueryMapping
     public CountryResponse country(@Argument String code, @Argument String locale) {
         return countryService.findByCode(code, catalogueLocale.resolve(locale));
+    }
+
+    @QueryMapping
+    public List<br.com.itbn.sisdent.model.Continent> continents() {
+        return countryService.continents();
     }
 }

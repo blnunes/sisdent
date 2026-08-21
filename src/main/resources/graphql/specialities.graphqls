@@ -5,7 +5,10 @@ extend type Query {
         """BCP 47 language tag. en, pt and nl language families are supported."""
         locale: String
     ): SpecialityPage!
+    specialityFilterOptions(field: String!, query: String): [FilterOption!]!
 }
+
+type FilterOption { value: String!, label: String! }
 
 input SpecialityFilterInput {
     name: String

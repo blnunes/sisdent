@@ -1,32 +1,30 @@
 # REST retirement inventory
 
-Status date: 2026-08-18. This is the release gate for REST retirement, not a
-claim that every HTTP endpoint can be removed. The inventory was produced from
+Status date: 2026-08-21. This is the release gate for REST retirement. The inventory was produced from
 Spring MVC mappings, Angular source and E2E tests, deployment scripts, and
 repository documentation. There is no telemetry or API-consumer registry in
 this repository, so every endpoint without a proven in-repository-only consumer
 is treated as potentially externally consumed and is retained.
 
 `Deprecated` means it is still supported during the deprecation window; it does
-not mean a route was removed. No controller, DTO, service, authorization rule,
-transaction, repository, audit rule, proxy rule, or compatibility handler is
-removed in this phase.
+not mean a route was removed. A route can be removed only after its consumers
+are migrated, its GraphQL parity tests are green, and release approval is recorded.
 
 ## Decisions and deprecation window
 
-The following individual REST operations are deprecated in generated OpenAPI on
-2026-08-18 and remain available through **2027-02-18**. Removal requires a
-release approval after consumer telemetry has shown no traffic throughout the
-window and the listed GraphQL contract tests remain green.
+The speciality list and write routes were removed on 2026-08-21 after the
+Angular patient catalogue consumer moved to GraphQL and the replacement
+contracts were tested. `GET /api/specialities/filter-options` and
+`DELETE /api/specialities/{id}` remain until their GraphQL replacements exist.
 
 | REST operation | GraphQL replacement | Angular consumer | Status |
 | --- | --- | --- | --- |
 | Country list | `countries(page, locale)` | none; country list uses GraphQL | Retired; GraphQL-only |
 | Country create | `createCountry(input, locale)` | none; country write uses GraphQL | Retired; GraphQL-only |
 | Country update | `updateCountry(id, input, locale)` | none; country write uses GraphQL | Retired; GraphQL-only |
-| `GET /api/specialities` | `specialities(page, filter, locale)` | none; speciality list uses GraphQL | Deprecated |
-| `POST /api/specialities` | `createSpeciality(input, locale)` | none; speciality write uses GraphQL | Deprecated |
-| `PUT /api/specialities/{id}` | `updateSpeciality(id, input, locale)` | none; speciality write uses GraphQL | Deprecated |
+| `GET /api/specialities` | `specialities(page, filter, locale)` | speciality list and patient picker | Removed 2026-08-21 |
+| `POST /api/specialities` | `createSpeciality(input, locale)` | speciality write | Removed 2026-08-21 |
+| `PUT /api/specialities/{id}` | `updateSpeciality(id, input, locale)` | speciality write | Removed 2026-08-21 |
 | Patient update | `updatePatient(organizationId, clinicUnitId, patientId, input)` | none; patient edit uses GraphQL | Retired; GraphQL-only |
 
 The OpenAPI `deprecated: true` flags are covered by
@@ -39,8 +37,8 @@ is returned yet because these routes have not been approved for removal.
 | --- | --- | --- | --- |
 | Auth: `POST /api/auth/login` | `AuthService`, auth tests and all Playwright setup; security configuration | No replacement by design | Retained operational HTTP endpoint; it issues the JWT used by GraphQL. |
 | Session: `GET /api/session` | `AuthService`, appointment/accounts/clinical E2E setup | No replacement by design | Retained authentication bootstrap endpoint. |
-| Countries: `GET /api/countries/continents`; `DELETE /api/countries/{id}` | `CountriesComponent` still calls `continents`; catalogue tests; README | List/create/update are GraphQL-only; enum lookup and delete remain REST. | Retained. |
-| Specialities: `GET`, `POST`, `PUT /api/specialities`; `GET /api/specialities/filter-options`; `DELETE /api/specialities/{id}` | Patient lookup/autocomplete, catalogue E2E/tests, README | Query/create/update replaced; filter autocomplete and delete are not | First three operations deprecated; remaining operations retained. |
+| Countries | `countries`, `continents`, `createCountry`, `updateCountry`, `deleteCountry` | `CountriesComponent` and catalogue tests | REST removed; GraphQL-only. |
+| Specialities | `specialities`, `specialityFilterOptions`, `createSpeciality`, `updateSpeciality`, `deactivateSpeciality` | Catalogue E2E/tests | REST removed; GraphQL-only. |
 | Addresses: `GET`, `POST /api/addresses`; `GET /api/addresses/postal-code/{postalCode}`; `GET /api/addresses/postal-code-suggestions`; `PUT`, `DELETE /api/addresses/{id}` | Address screen and patient form/service; catalogue tests; README | No replacement | Retained; external status unverified. |
 | Administrative divisions: `GET`, `POST /api/administrative-divisions` and legacy alias `/api/states`; `PUT`, `DELETE /api/administrative-divisions/{id}` and `/api/states/{id}` | Division screen/tests; README | No replacement | Retained. `/api/states` is a compatibility alias with unknown consumers. |
 | Catalogue translations: `GET /api/platform/catalog-translations`; `PUT /api/platform/catalog-translations/{type}/{id}` | `CatalogTranslationApiService` and its tests | No replacement | Retained. |

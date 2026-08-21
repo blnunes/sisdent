@@ -101,8 +101,21 @@ export class CountriesComponent extends CatalogueListController {
   protected override edit(record: ResourceRecord): void {
     this.openWithContinents(record);
   }
+  protected override remove(record: ResourceRecord): void {
+    const name = String(record['displayName'] ?? record['name'] ?? '—');
+    if (!confirm(`Delete ${name}?`)) {
+      return;
+    }
+    this.mutations.deleteCountry(String(record['id'])).subscribe({
+      next: () => this.load(),
+      error: (error: unknown) => {
+        this.error.set(true);
+        this.errorMessage.set(error instanceof GraphQlUserError ? error.message : 'The country could not be deleted.');
+      },
+    });
+  }
   private openWithContinents(record?: ResourceRecord): void {
-    this.http.get<string[]>('/api/countries/continents').subscribe({
+    this.countriesGraphql.continents().subscribe({
       next: (continents) =>
         this.openEditor(record, [
           ...BASE_FIELDS,

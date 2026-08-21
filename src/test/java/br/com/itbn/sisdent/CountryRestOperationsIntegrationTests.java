@@ -1,6 +1,5 @@
 package br.com.itbn.sisdent;
 
-import br.com.itbn.sisdent.repository.CountryRepository;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,11 +11,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -31,9 +28,6 @@ class CountryRestOperationsIntegrationTests {
 
     @Autowired
     private JsonMapper jsonMapper;
-
-    @Autowired
-    private CountryRepository countries;
 
     @Test
     void retiredCountryListCreateAndUpdateRoutesHaveNoMapping() throws Exception {
@@ -54,15 +48,14 @@ class CountryRestOperationsIntegrationTests {
     }
 
     @Test
-    void retainedContinentsAndDeleteRoutesRemainAvailable() throws Exception {
+    void countryRestRoutesHaveNoMapping() throws Exception {
         String authorization = bearer(adminToken());
-        Long countryId = countries.findAll().getFirst().getId();
 
         mockMvc.perform(get("/api/countries/continents").header("Authorization", authorization))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0]").isNotEmpty());
-        mockMvc.perform(delete("/api/countries/{id}", countryId).header("Authorization", authorization))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isNotFound());
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/countries/{id}", 1L)
+                        .header("Authorization", authorization))
+                .andExpect(status().isNotFound());
     }
 
     private String adminToken() throws Exception {

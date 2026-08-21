@@ -2,19 +2,35 @@
 
 ## Phase 10
 
-GraphQL at `POST /graphql` is now the primary frontend API. REST is retained
-only for explicitly tracked operational, integration, and not-yet-migrated
-workflows; it is not eligible for a global mechanical removal. The authoritative
-route-by-route decision, consumers, GraphQL replacements, deprecation window,
-and removal gate are in [REST retirement inventory](REST_RETIREMENT_INVENTORY.md).
+GraphQL at `POST /graphql` is the sole target API for application business
+workflows. REST is temporary only while a route has no approved GraphQL
+replacement, and must be retired route by route after its Angular and external
+consumers have migrated. Authentication, session bootstrap, health checks,
+OpenAPI during the migration, and development-only H2 support deliberately
+remain HTTP endpoints. The authoritative route-by-route decision, consumers,
+GraphQL replacements, and removal gate are in [REST retirement inventory](REST_RETIREMENT_INVENTORY.md),
+with execution sequencing in the [GraphQL REST retirement plan](GRAPHQL_REST_RETIREMENT_PLAN.md).
 `POST /api/auth/login`, `GET /api/session`, `GET /actuator/health`, REST OpenAPI
 documentation, and development-only H2 support deliberately remain HTTP
 endpoints. JWT issuance and GraphQL authentication continue to use the existing
 Bearer-token security path.
 
+### Total migration decision
+
+Phase 8's incremental coexistence is superseded. Every business operation now
+needs a GraphQL query or mutation and no Angular production code may call its
+`/api/**` route once that replacement is released. The only permitted permanent
+HTTP surface is authentication/bootstrap (`/api/auth/login`, `/api/session`,
+`/api/csrf`) and operational infrastructure (`/actuator/health`, development
+H2). OpenAPI is temporary migration documentation and is removed once the final
+business REST route is retired. The retirement plan is the implementation
+backlog and its per-wave exit criteria are release gates.
+
 ## Phase 8
 
-Phase 8 objective: incrementally migrate approved Angular read flows to a frontend-oriented GraphQL BFF while REST remains active and fully compatible during the transition.
+Phase 8 is historical context. Its incremental BFF rollout is superseded by the
+Phase 10 total-migration decision above; do not use this section to retain or
+add business REST APIs.
 
 Sisdent is a Spring Boot REST API with an Angular single-page application.
 Authentication uses email/password and stateless JWT Bearer tokens. `Account`
@@ -108,7 +124,7 @@ deferred: an OpenTelemetry exporter may later bridge this correlation ID/MDC int
 `CountryService` and `CatalogTranslationService` are migrated to
 `ApplicationException`; their catalogue-locale and not-found paths now use the
 shared stable-code contract. The remaining direct `ResponseStatusException`
-uses are deferred legacy REST-only paths: `AccountManagementService`,
+uses are deferred legacy HTTP-transport paths scheduled for GraphQL migration: `AccountManagementService`,
 `AddressService`, `AdministrativeDivisionService`, `AppointmentService`,
 `ClinicalRecordService`, `CurrentAccountService`, `OdontogramService`,
 `OrganizationPatientService`, `OrganizationService`, `PatientService`,
@@ -123,8 +139,7 @@ signalling and is caught/mapped by their services; configuration-time validation
 
 ## GraphQL BFF foundation
 
-REST remains active alongside GraphQL at `POST /graphql`; GraphQL has not replaced REST globally.
-It is a read-only frontend BFF boundary. The endpoint requires an authenticated JWT and each
+GraphQL at `POST /graphql` is the frontend business API. The endpoint requires an authenticated JWT and each
 resolver delegates exclusively to its established service, where platform, organization, clinic,
 active-link, and role authorization remains authoritative. The standard Angular authentication
 interceptor sends its Bearer token to `/graphql` as it does for REST. Missing or malformed
@@ -133,7 +148,7 @@ error envelope.
 
 Schemas are organized by domain under `src/main/resources/graphql` (`countries.graphqls`,
 `specialities.graphqls`, `organization-reads.graphqls`). Queries use plural collection names and singular item lookups;
-mutations are intentionally absent in Phase 8. Collection queries take the reusable
+mutations follow the same service-delegation rules as queries. Collection queries take the reusable
 `CataloguePageInput` (page, size, sort, `SortDirection`) and domain-specific typed filters,
 not REST query-string conventions. All catalogue queries accept an optional `locale` BCP 47
 argument. `en`, `pt`, and `nl`, including valid regional variants, are supported; omitted locale
@@ -170,11 +185,11 @@ query Countries($page: CataloguePageInput!, $locale: String) {
 Variables: `{"page":{"page":0,"size":10,"sort":"name","direction":"ASC"},"locale":"pt-PT"}`.
 The equivalent speciality read supports `filter: { name, procedure }`.
 
-New GraphQL services should begin as a query and follow the same sequence: define a
-small schema type, add a resolver that delegates to an existing service, protect the
-endpoint in `SecurityConfiguration`, and add unit plus authenticated integration tests.
-Mutations should only be introduced after their REST/service validations and transactional
-behaviour are already understood.
+New GraphQL services follow the same sequence: define a small schema type, add a
+resolver that delegates to an existing service, protect the endpoint in
+`SecurityConfiguration`, migrate the typed Angular service, and add unit plus
+authenticated integration tests. Mutations are introduced only after their
+REST/service validations and transactional behaviour are understood.
 
 Angular components never make GraphQL requests directly. `GraphQlClientService` owns transport
 and safe error mapping; typed domain services own exact operations and variables.
@@ -184,7 +199,7 @@ and safe error mapping; typed domain services own exact operations and variables
 | Frontend read flow | GraphQL boundary | REST status |
 | --- | --- | --- |
 | Country catalogue list/create/update | `countries(page, locale)`, `createCountry(input, locale)`, `updateCountry(id, input, locale)` | GraphQL-only. Delete and continent lookup remain REST. |
-| Speciality catalogue list | `specialities(page, filter, locale)` | Create, update, deactivate, and filter autocomplete remain REST. |
+| Speciality catalogue list/create/update | `specialities(page, filter, locale)`, `createSpeciality`, `updateSpeciality` | GraphQL-only. Deactivate and filter autocomplete await migration. |
 | Clinic-unit workspace list | `clinicUnits(organizationId, clinicUnitId)` | Create and account-management dialog lookup remain REST. |
 | Practitioner workspace list | `practitioners(organizationId)` | Create, update, and deactivate remain REST. |
 | Organizations, patients, appointments, and clinical models | Not yet migrated | Their REST reads remain intentional until scope, pagination, batching, and field contracts are approved. |
@@ -196,6 +211,6 @@ the collection query, avoiding a per-practitioner load. These operational collec
 paginate in REST, so no artificial page contract was added; pagination is deferred until the
 corresponding REST/service contract changes.
 
-No GraphQL mutations are introduced in Phase 8. The generic client maps
+The generic client maps
 `errors[].extensions.code`, friendly messages, and optional correlation IDs into the safe
 user-error model. REST continues to serve every non-migrated flow and every write.

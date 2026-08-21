@@ -2,6 +2,7 @@ import { HttpParams, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Membership } from '../../core/models';
+import { LanguageService } from '../../core/language.service';
 import { PatientApiService } from './patient-api.service';
 
 describe('PatientApiService', () => {
@@ -9,7 +10,7 @@ describe('PatientApiService', () => {
   let http: HttpTestingController;
   const membership: Membership = { id: 'member-1', organizationId: 'org / one', organizationName: 'Clinic', clinicUnitId: 'unit / a', role: 'MANAGER', version: 1 };
 
-  beforeEach(() => { TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] }); api = TestBed.inject(PatientApiService); http = TestBed.inject(HttpTestingController); });
+  beforeEach(() => { TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: LanguageService, useValue: { current: () => 'en' } }] }); api = TestBed.inject(PatientApiService); http = TestBed.inject(HttpTestingController); });
   afterEach(() => http.verify());
 
   it('builds tenant endpoints with an optional encoded clinic unit', () => {
@@ -38,7 +39,13 @@ describe('PatientApiService', () => {
 
   it('maps speciality, address, and tax-id autocomplete sources to patient filter options', () => {
     api.filterOptions(membership, 'specialityId', 'pediatric').subscribe((options) => expect(options).toEqual([{ value: '2', label: 'Pediatric Dentistry' }]));
-    http.expectOne((request) => request.url === '/api/specialities').flush({ content: [{ id: 1, name: 'Surgery' }, { id: 2, name: 'Pediatric Dentistry' }], page: 0, size: 100, totalElements: 2, totalPages: 1 });
+    const specialitiesRequest = http.expectOne('/graphql');
+    expect(specialitiesRequest.request.body.variables).toEqual({
+      page: { page: 0, size: 100, sort: 'name', direction: 'ASC' },
+      filter: {},
+      locale: 'en',
+    });
+    specialitiesRequest.flush({ data: { specialities: { content: [{ id: '1', name: 'Surgery', displayName: 'Surgery' }, { id: '2', name: 'Pediatric Dentistry', displayName: 'Pediatric Dentistry' }], page: 0, size: 100, totalElements: 2, totalPages: 1 } } });
 
     api.filterOptions(membership, 'addressId', 'maple').subscribe((options) => expect(options).toEqual([{ value: '7', label: 'Maple Grove · 1000 · Lisbon' }]));
     http.expectOne((request) => request.url === '/api/addresses').flush({ content: [{ id: 7, street: 'Maple Grove', postalCode: '1000', city: 'Lisbon', country: { code: 'PT' } }, { id: 8, street: 'Oak Road', city: 'Porto', country: { code: 'PT' } }], page: 0, size: 100, totalElements: 2, totalPages: 1 });

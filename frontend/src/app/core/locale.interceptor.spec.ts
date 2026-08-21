@@ -25,9 +25,9 @@ describe('localeInterceptor', () => {
   it('sends the selected supported language to API endpoints', () => {
     localStorage.setItem('sisdent.language', 'nl');
 
-    http.get('/api/specialities').subscribe();
+    http.get('/api/countries/continents').subscribe();
 
-    const request = controller.expectOne('/api/specialities');
+    const request = controller.expectOne('/api/countries/continents');
     expect(request.request.headers.get('Accept-Language')).toBe('nl');
     request.flush({});
   });

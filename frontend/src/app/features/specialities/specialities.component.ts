@@ -42,7 +42,7 @@ export class SpecialitiesComponent extends ResourceListController {
   readonly columns = COLUMNS;
   constructor() {
     super({
-      endpoint: () => '/api/specialities',
+      endpoint: () => '',
       maintainPermission: 'MAINTAIN_SPECIALITIES',
       columns: COLUMNS,
       filters: FILTERS,
@@ -88,6 +88,19 @@ export class SpecialitiesComponent extends ResourceListController {
       error: (error: unknown) => {
         this.error.set(true);
         this.errorMessage.set(error instanceof GraphQlUserError ? error.message : 'The speciality could not be saved.');
+      },
+    });
+  }
+  protected override remove(record: ResourceRecord): void {
+    const name = String(record['displayName'] ?? record['name'] ?? '—');
+    if (!confirm(this.translate.instant('RESOURCE.DELETE_CONFIRM', { name }))) {
+      return;
+    }
+    this.mutations.deactivateSpeciality(String(record['id'])).subscribe({
+      next: () => this.load(),
+      error: (error: unknown) => {
+        this.error.set(true);
+        this.errorMessage.set(error instanceof GraphQlUserError ? error.message : 'The speciality could not be deactivated.');
       },
     });
   }

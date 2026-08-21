@@ -7,7 +7,12 @@ type Query {
     ): CountryPage!
     """Looks up an existing country catalogue entry by its ISO code."""
     country(code: String!, locale: String): Country!
+    """The authoritative continent values for country maintenance."""
+    continents: [Continent!]!
+    administrativeDivisions(page: CataloguePageInput): AdministrativeDivisionPage!
 }
+
+type AdministrativeDivisionPage { content: [AdministrativeDivision!]!, page: Int!, size: Int!, totalElements: Int!, totalPages: Int! }
 
 """The transport-neutral pagination and ordering contract for catalogue queries."""
 input CataloguePageInput {

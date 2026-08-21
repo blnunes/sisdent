@@ -51,6 +51,27 @@ class GraphQlIntegrationTests {
     }
 
     @Test
+    void countryAuxiliaryOperationsUseGraphQlInsteadOfRest() throws Exception {
+        String authorization = bearer(emailLogin("admin@sisdent.local", "admin"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ continents }\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.continents[0]").isNotEmpty());
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"mutation { deleteCountry(id: \\\"1\\\") }\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.deleteCountry").value(true));
+    }
+
+    @Test
     void graphqlRequiresPlatformAdministratorAuthority() throws Exception {
         mockMvc.perform(post("/graphql")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -110,6 +131,40 @@ class GraphQlIntegrationTests {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.updateCountry").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
+    }
+
+    @Test
+    void specialityMutationsReplaceTheRetiredRestOperations() throws Exception {
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { createSpeciality(input: { name: \\"GraphQL Implantology\\", procedures: [{ name: \\"Guided implant placement\\" }] }, locale: \\"pt-PT\\") { id name displayName procedures { name } } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.createSpeciality.name").value("GraphQL Implantology"))
+                .andExpect(jsonPath("$.data.createSpeciality.procedures[0].name").value("Guided implant placement"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { createSpeciality(input: { name: \\"\\", procedures: [] }) { id } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.createSpeciality").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("group.admin@sisdent.demo", "odonto2026@O")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { updateSpeciality(id: \\"1\\", input: { name: \\"Forbidden speciality\\", procedures: [{ name: \\"Forbidden procedure\\" }] }) { id } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.updateSpeciality").doesNotExist())
                 .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
     }
 

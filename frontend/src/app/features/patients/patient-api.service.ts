@@ -2,12 +2,16 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { Membership, PageResponse } from '../../core/models';
+import { SpecialityCatalogGraphqlService } from '../../core/speciality-catalog-graphql.service';
+import { AdministrativeDivisionGraphqlService } from '../../core/administrative-division-graphql.service';
 import { AddressOption, AdministrativeDivisionOption, PatientRecord, SpecialityOption } from './patient.models';
 import { FilterOption } from '../../shared/filters/filter.models';
 
 @Injectable({ providedIn: 'root' })
 export class PatientApiService {
   private readonly http = inject(HttpClient);
+  private readonly specialitiesGraphql = inject(SpecialityCatalogGraphqlService);
+  private readonly divisionsGraphql = inject(AdministrativeDivisionGraphqlService);
   endpoint(membership: Membership | null): string {
     if (!membership) return '';
     const base = `/api/organizations/${encodeURIComponent(membership.organizationId)}/patients`;
@@ -30,7 +34,26 @@ export class PatientApiService {
   }
   create(membership: Membership, body: unknown): Observable<unknown> { return this.http.post(this.endpoint(membership).split('?')[0], body); }
   deactivate(membership: Membership, globalId: string): Observable<unknown> { return this.http.delete(`${this.endpoint(membership).split('?')[0]}/${globalId}`); }
-  specialities(): Observable<PageResponse<SpecialityOption>> { return this.http.get<PageResponse<SpecialityOption>>('/api/specialities', { params: { page: '0', size: '100', sort: 'name', direction: 'asc' } }); }
-  administrativeDivisions(): Observable<PageResponse<AdministrativeDivisionOption>> { return this.http.get<PageResponse<AdministrativeDivisionOption>>('/api/administrative-divisions', { params: { page: '0', size: '100', sort: 'name', direction: 'asc' } }); }
+  specialities(): Observable<PageResponse<SpecialityOption>> {
+    return this.specialitiesGraphql.list({ page: 0, size: 100, sort: 'name', direction: 'asc' }).pipe(
+      map((response) => ({
+        ...response,
+        content: response.content.map(({ id, name, displayName }) => ({
+          id: Number(id),
+          name,
+          displayName,
+        })),
+      })),
+    );
+  }
+  administrativeDivisions(): Observable<PageResponse<AdministrativeDivisionOption>> {
+    return this.divisionsGraphql.list(0, 100, 'name', 'asc').pipe(map((response) => ({
+      ...response,
+      content: response.content.map((division) => ({
+        ...division,
+        id: Number(division.id),
+      })),
+    })));
+  }
   postalCodeSuggestions(countryCode: string, query: string): Observable<AddressOption[]> { return this.http.get<AddressOption[]>('/api/addresses/postal-code-suggestions', { params: { countryCode, query } }); }
 }

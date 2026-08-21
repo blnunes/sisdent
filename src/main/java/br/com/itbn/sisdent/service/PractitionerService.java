@@ -61,8 +61,7 @@ public class PractitionerService {
 
     private Account account(UUID id) {
         if (id == null) return null;
-        Account account = accounts.findByGlobalId(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return account;
+        return accounts.findByGlobalId(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     private Account account(UUID id, UUID organizationId) {

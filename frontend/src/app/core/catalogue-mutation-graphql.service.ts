@@ -34,6 +34,20 @@ export class CatalogueMutationGraphqlService {
     }).pipe(map((response) => response[operation]));
   }
 
+  deleteCountry(id: string): Observable<boolean> {
+    return this.graphql.query<{ deleteCountry: boolean }>(
+      'mutation DeleteCountry($id: ID!) { deleteCountry(id: $id) }',
+      { id },
+    ).pipe(map(({ deleteCountry }) => deleteCountry));
+  }
+
+  deactivateSpeciality(id: string): Observable<boolean> {
+    return this.graphql.query<{ deactivateSpeciality: boolean }>(
+      'mutation DeactivateSpeciality($id: ID!) { deactivateSpeciality(id: $id) }',
+      { id },
+    ).pipe(map(({ deactivateSpeciality }) => deactivateSpeciality));
+  }
+
   saveSpeciality(record: SpecialityCatalogueItem | undefined, input: SpecialityWrite): Observable<SpecialityCatalogueItem> {
     const operation = record ? 'updateSpeciality' : 'createSpeciality';
     const query = `mutation SaveSpeciality($id: ID, $input: SpecialityMutationInput!, $locale: String) {

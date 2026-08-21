@@ -13,6 +13,7 @@ import br.com.itbn.sisdent.pagination.PageQuery;
 import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.pagination.SortDefinition;
 import br.com.itbn.sisdent.model.Country;
+import br.com.itbn.sisdent.model.Continent;
 import br.com.itbn.sisdent.repository.CountryRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,12 @@ public class CountryService {
         return countryRepository.findAll(Sort.by("name")).stream()
                 .map(country -> toResponse(country, Locale.ENGLISH))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Continent> continents() {
+        authorization.requirePlatformAdministrator();
+        return List.of(Continent.values());
     }
 
     @Transactional(readOnly = true)

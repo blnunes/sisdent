@@ -15,8 +15,16 @@ import { provideTranslateService } from '@ngx-translate/core';
 describe('catalogue feature endpoints', () => {
   const cases: [Type<unknown>, string][] = [
     [AddressesComponent, '/api/addresses'],
-    [AdministrativeDivisionsComponent, '/api/administrative-divisions'],
   ];
+
+  it('loads administrative divisions through GraphQL', () => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideTranslateService(), { provide: MatDialog, useValue: { open: vi.fn() } }, { provide: AuthService, useValue: { activeMembership: signal(null), hasPermission: () => true } }] });
+    TestBed.runInInjectionContext(() => new AdministrativeDivisionsComponent());
+    const request = TestBed.inject(HttpTestingController).expectOne('/graphql');
+    expect(request.request.body.query).toContain('query AdministrativeDivisions');
+    request.flush({ data: { administrativeDivisions: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } } });
+    TestBed.inject(HttpTestingController).verify();
+  });
 
   it.each(cases)('%s loads only its own endpoint', (componentType, endpoint) => {
     TestBed.configureTestingModule({
@@ -119,7 +127,7 @@ describe('catalogue feature endpoints', () => {
     });
     component.create();
     http
-      .expectOne('/api/countries/continents')
+      .expectOne((request) => request.url === '/graphql' && request.body.query.includes('query Continents'))
       .flush('failure', { status: 500, statusText: 'Server error' });
     expect(component.error()).toBe(true);
     expect(dialog.open).not.toHaveBeenCalled();

@@ -71,13 +71,25 @@ describe('PatientsComponent country data', () => {
     component.create();
 
     const http = TestBed.inject(HttpTestingController);
-    http.expectOne((request) => request.url === '/api/specialities').flush({
-      content: [], page: 0, size: 100, totalElements: 0, totalPages: 0,
+    const specialitiesRequest = http.expectOne((request) =>
+      request.url === '/graphql' && request.body.query.includes('query Specialities'),
+    );
+    expect(specialitiesRequest.request.body.variables).toEqual({
+      page: { page: 0, size: 100, sort: 'name', direction: 'ASC' },
+      filter: {},
+      locale: 'en',
     });
-    http.expectOne((request) => request.url === '/api/administrative-divisions').flush({
+    specialitiesRequest.flush({ data: { specialities: {
       content: [], page: 0, size: 100, totalElements: 0, totalPages: 0,
-    });
-    http.expectOne('/graphql').flush({
+    } } });
+    http.expectOne((request) =>
+      request.url === '/graphql' && request.body.query.includes('query AdministrativeDivisions'),
+    ).flush({ data: { administrativeDivisions: {
+      content: [], page: 0, size: 100, totalElements: 0, totalPages: 0,
+    } } });
+    http.expectOne((request) =>
+      request.url === '/graphql' && request.body.query.includes('query Countries'),
+    ).flush({
       data: {
         countries: {
           content: [{ id: '1', code: 'PT', name: 'Portugal', displayName: 'Portugal', continent: 'EUROPE' }],

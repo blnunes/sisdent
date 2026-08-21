@@ -40,9 +40,6 @@ in [`docs/REST_RETIREMENT_INVENTORY.md`](docs/REST_RETIREMENT_INVENTORY.md).
 The following are examples of retained REST paths, not a complete REST API list:
 
 ```text
-GET /api/administrative-divisions
-GET /api/countries/continents
-DELETE /api/countries/{id}
 GET /api/addresses
 GET /api/addresses/postal-code/{postalCode}?countryCode=PT
 GET /api/organizations/{organizationId}/patients
@@ -50,9 +47,6 @@ POST /api/organizations/{organizationId}/patients
 DELETE /api/organizations/{organizationId}/patients/{patientId}
 GET /api/organizations/{organizationId}/appointments
 GET /api/organizations/{organizationId}/clinical/encounters
-GET /api/specialities
-POST /api/specialities
-PUT /api/specialities/{id}
 ```
 
 Country list, create, and update are GraphQL-only through `countries(page, locale)`,

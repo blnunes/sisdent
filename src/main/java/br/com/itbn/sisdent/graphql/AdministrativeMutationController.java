@@ -5,6 +5,7 @@ import br.com.itbn.sisdent.dto.CountryResponse;
 import br.com.itbn.sisdent.dto.PractitionerResponse;
 import br.com.itbn.sisdent.dto.SpecialityResponse;
 import br.com.itbn.sisdent.service.CountryService;
+import br.com.itbn.sisdent.service.AdministrativeDivisionService;
 import br.com.itbn.sisdent.service.OrganizationService;
 import br.com.itbn.sisdent.service.PractitionerService;
 import br.com.itbn.sisdent.service.SpecialityService;
@@ -24,16 +25,18 @@ public class AdministrativeMutationController {
     private final PractitionerService practitioners;
     private final OrganizationPatientService patients;
     private final CatalogueLocaleArgument catalogueLocale;
+    private final AdministrativeDivisionService divisions;
 
     public AdministrativeMutationController(CountryService countries, SpecialityService specialities,
             OrganizationService organizations, PractitionerService practitioners, OrganizationPatientService patients,
-            CatalogueLocaleArgument catalogueLocale) {
+            CatalogueLocaleArgument catalogueLocale, AdministrativeDivisionService divisions) {
         this.countries = countries;
         this.specialities = specialities;
         this.organizations = organizations;
         this.practitioners = practitioners;
         this.patients = patients;
         this.catalogueLocale = catalogueLocale;
+        this.divisions = divisions;
     }
 
     @MutationMapping
@@ -48,6 +51,12 @@ public class AdministrativeMutationController {
     }
 
     @MutationMapping
+    public boolean deleteCountry(@Argument Long id) {
+        countries.delete(id);
+        return true;
+    }
+
+    @MutationMapping
     public SpecialityResponse createSpeciality(@Argument @Valid SpecialityMutationInput input,
             @Argument String locale) {
         return specialities.create(input.toRequest(), catalogueLocale.resolve(locale));
@@ -57,6 +66,30 @@ public class AdministrativeMutationController {
     public SpecialityResponse updateSpeciality(@Argument Long id, @Argument @Valid SpecialityMutationInput input,
             @Argument String locale) {
         return specialities.update(id, input.toRequest(), catalogueLocale.resolve(locale));
+    }
+
+    @MutationMapping
+    public boolean deactivateSpeciality(@Argument Long id) {
+        specialities.delete(id);
+        return true;
+    }
+
+    @MutationMapping
+    public br.com.itbn.sisdent.dto.AdministrativeDivisionResponse createAdministrativeDivision(
+            @Argument @Valid AdministrativeDivisionMutationInput input) {
+        return divisions.create(input.toRequest());
+    }
+
+    @MutationMapping
+    public br.com.itbn.sisdent.dto.AdministrativeDivisionResponse updateAdministrativeDivision(
+            @Argument Long id, @Argument @Valid AdministrativeDivisionMutationInput input) {
+        return divisions.update(id, input.toRequest());
+    }
+
+    @MutationMapping
+    public boolean deleteAdministrativeDivision(@Argument Long id) {
+        divisions.delete(id);
+        return true;
     }
 
     @MutationMapping
