@@ -1,13 +1,216 @@
 package br.com.itbn.sisdent.model;
-import jakarta.persistence.*; import java.time.*; import java.util.*;
-@Entity @Table(name="clinical_encounters") public class ClinicalEncounter extends AuditableEntity {
- @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id; @Column(name="global_id",nullable=false,unique=true,updatable=false) private UUID globalId=UUID.randomUUID();
- @ManyToOne(fetch=FetchType.LAZY,optional=false) private Organization organization; @ManyToOne(fetch=FetchType.LAZY,optional=false) private ClinicUnit clinicUnit; @ManyToOne(fetch=FetchType.LAZY,optional=false) private PatientOrganizationLink patientLink; @ManyToOne(fetch=FetchType.LAZY) private Appointment appointment; @ManyToOne(fetch=FetchType.LAZY) private Practitioner practitioner; @ManyToOne(fetch=FetchType.LAZY) @JoinColumn(name="original_encounter_id") private ClinicalEncounter originalEncounter;
- private Instant careAt; private String careTimezone; @Column(length=4000) private String narrative; @Column(length=500) private String administrativeNote; @Enumerated(EnumType.STRING) private EncounterStatus status=EncounterStatus.DRAFT; private Instant finalizedAt; private String finalizedBy; @Column(length=500) private String amendmentReason;
- protected ClinicalEncounter(){}
- public ClinicalEncounter(Builder builder){organization=builder.organization;clinicUnit=builder.clinicUnit;patientLink=builder.patientLink;appointment=builder.appointment;practitioner=builder.practitioner;careAt=builder.careAt;careTimezone=builder.careTimezone;narrative=builder.narrative;administrativeNote=builder.administrativeNote;originalEncounter=builder.originalEncounter;amendmentReason=builder.amendmentReason;}
- public static Builder builder(){return new Builder();}
- public Long getId(){return id;} public UUID getGlobalId(){return globalId;} public Organization getOrganization(){return organization;} public ClinicUnit getClinicUnit(){return clinicUnit;} public PatientOrganizationLink getPatientLink(){return patientLink;} public Appointment getAppointment(){return appointment;} public Practitioner getPractitioner(){return practitioner;} public ClinicalEncounter getOriginalEncounter(){return originalEncounter;} public Instant getCareAt(){return careAt;} public String getCareTimezone(){return careTimezone;} public String getNarrative(){return narrative;} public String getAdministrativeNote(){return administrativeNote;} public EncounterStatus getStatus(){return status;} public Instant getFinalizedAt(){return finalizedAt;} public String getFinalizedBy(){return finalizedBy;} public String getAmendmentReason(){return amendmentReason;}
- public void update(Instant at,String zone,String n,String note,Practitioner p,Appointment a){if(status!=EncounterStatus.DRAFT){throw new IllegalStateException();}careAt=at;careTimezone=zone;narrative=n;administrativeNote=note;practitioner=p;appointment=a;} public void finalizeRecord(String actor){if(status!=EncounterStatus.DRAFT){throw new IllegalStateException();}status=EncounterStatus.FINAL;finalizedAt=Instant.now();finalizedBy=actor;}
- public static final class Builder{private Organization organization;private ClinicUnit clinicUnit;private PatientOrganizationLink patientLink;private Appointment appointment;private Practitioner practitioner;private Instant careAt;private String careTimezone;private String narrative;private String administrativeNote;private ClinicalEncounter originalEncounter;private String amendmentReason;public Builder organization(Organization value){organization=value;return this;}public Builder clinicUnit(ClinicUnit value){clinicUnit=value;return this;}public Builder patientLink(PatientOrganizationLink value){patientLink=value;return this;}public Builder appointment(Appointment value){appointment=value;return this;}public Builder practitioner(Practitioner value){practitioner=value;return this;}public Builder careAt(Instant value){careAt=value;return this;}public Builder careTimezone(String value){careTimezone=value;return this;}public Builder narrative(String value){narrative=value;return this;}public Builder administrativeNote(String value){administrativeNote=value;return this;}public Builder originalEncounter(ClinicalEncounter value){originalEncounter=value;return this;}public Builder amendmentReason(String value){amendmentReason=value;return this;}}
+
+import jakarta.persistence.*;
+
+import java.time.*;
+import java.util.*;
+
+@Entity
+@Table(name = "clinical_encounters")
+public class ClinicalEncounter extends AuditableEntity {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(name = "global_id", nullable = false, unique = true, updatable = false)
+    private UUID globalId = UUID.randomUUID();
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private Organization organization;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private ClinicUnit clinicUnit;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private PatientOrganizationLink patientLink;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Appointment appointment;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Practitioner practitioner;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "original_encounter_id")
+    private ClinicalEncounter originalEncounter;
+    private Instant careAt;
+    private String careTimezone;
+    @Column(length = 4000)
+    private String narrative;
+    @Column(length = 500)
+    private String administrativeNote;
+    @Enumerated(EnumType.STRING)
+    private EncounterStatus status = EncounterStatus.DRAFT;
+    private Instant finalizedAt;
+    private String finalizedBy;
+    @Column(length = 500)
+    private String amendmentReason;
+
+    protected ClinicalEncounter() {
+    }
+
+    public ClinicalEncounter(Builder builder) {
+        organization = builder.organization;
+        clinicUnit = builder.clinicUnit;
+        patientLink = builder.patientLink;
+        appointment = builder.appointment;
+        practitioner = builder.practitioner;
+        careAt = builder.careAt;
+        careTimezone = builder.careTimezone;
+        narrative = builder.narrative;
+        administrativeNote = builder.administrativeNote;
+        originalEncounter = builder.originalEncounter;
+        amendmentReason = builder.amendmentReason;
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public UUID getGlobalId() {
+        return globalId;
+    }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public ClinicUnit getClinicUnit() {
+        return clinicUnit;
+    }
+
+    public PatientOrganizationLink getPatientLink() {
+        return patientLink;
+    }
+
+    public Appointment getAppointment() {
+        return appointment;
+    }
+
+    public Practitioner getPractitioner() {
+        return practitioner;
+    }
+
+    public ClinicalEncounter getOriginalEncounter() {
+        return originalEncounter;
+    }
+
+    public Instant getCareAt() {
+        return careAt;
+    }
+
+    public String getCareTimezone() {
+        return careTimezone;
+    }
+
+    public String getNarrative() {
+        return narrative;
+    }
+
+    public String getAdministrativeNote() {
+        return administrativeNote;
+    }
+
+    public EncounterStatus getStatus() {
+        return status;
+    }
+
+    public Instant getFinalizedAt() {
+        return finalizedAt;
+    }
+
+    public String getFinalizedBy() {
+        return finalizedBy;
+    }
+
+    public String getAmendmentReason() {
+        return amendmentReason;
+    }
+
+    public void update(Instant at, String zone, String n, String note, Practitioner p, Appointment a) {
+        if (status != EncounterStatus.DRAFT) {
+            throw new IllegalStateException();
+        }
+        careAt = at;
+        careTimezone = zone;
+        narrative = n;
+        administrativeNote = note;
+        practitioner = p;
+        appointment = a;
+    }
+
+    public void finalizeRecord(String actor) {
+        if (status != EncounterStatus.DRAFT) {
+            throw new IllegalStateException();
+        }
+        status = EncounterStatus.FINAL;
+        finalizedAt = Instant.now();
+        finalizedBy = actor;
+    }
+
+    public static final class Builder {
+        private Organization organization;
+        private ClinicUnit clinicUnit;
+        private PatientOrganizationLink patientLink;
+        private Appointment appointment;
+        private Practitioner practitioner;
+        private Instant careAt;
+        private String careTimezone;
+        private String narrative;
+        private String administrativeNote;
+        private ClinicalEncounter originalEncounter;
+        private String amendmentReason;
+
+        public Builder organization(Organization value) {
+            organization = value;
+            return this;
+        }
+
+        public Builder clinicUnit(ClinicUnit value) {
+            clinicUnit = value;
+            return this;
+        }
+
+        public Builder patientLink(PatientOrganizationLink value) {
+            patientLink = value;
+            return this;
+        }
+
+        public Builder appointment(Appointment value) {
+            appointment = value;
+            return this;
+        }
+
+        public Builder practitioner(Practitioner value) {
+            practitioner = value;
+            return this;
+        }
+
+        public Builder careAt(Instant value) {
+            careAt = value;
+            return this;
+        }
+
+        public Builder careTimezone(String value) {
+            careTimezone = value;
+            return this;
+        }
+
+        public Builder narrative(String value) {
+            narrative = value;
+            return this;
+        }
+
+        public Builder administrativeNote(String value) {
+            administrativeNote = value;
+            return this;
+        }
+
+        public Builder originalEncounter(ClinicalEncounter value) {
+            originalEncounter = value;
+            return this;
+        }
+
+        public Builder amendmentReason(String value) {
+            amendmentReason = value;
+            return this;
+        }
+    }
 }
