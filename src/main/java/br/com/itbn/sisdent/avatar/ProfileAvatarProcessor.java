@@ -41,7 +41,7 @@ public final class ProfileAvatarProcessor {
             return new ProcessedAvatar(toPng(square(source)), PNG);
         } catch (ValidationException exception) {
             throw exception;
-        } catch (IOException | RuntimeException _) {
+        } catch (IOException | RuntimeException exception) {
             throw new ValidationException(ErrorCode.ACCOUNT_AVATAR_INVALID_IMAGE);
         }
     }
