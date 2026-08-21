@@ -36,7 +36,7 @@ export class CountriesComponent extends CatalogueListController {
   constructor() {
     super(
       {
-        endpoint: () => '/api/countries',
+        endpoint: () => '',
         maintainPermission: 'MAINTAIN_COUNTRIES',
         columns: COLUMNS,
         identifier: (record) => Number(record['id']),

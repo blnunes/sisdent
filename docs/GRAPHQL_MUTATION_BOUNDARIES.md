@@ -4,7 +4,7 @@ REST remains active. GraphQL does not replace REST globally in Phase 9; each mut
 
 | Frontend workflow | GraphQL mutation | Service boundary | REST status |
 | --- | --- | --- | --- |
-| Create/update country catalogue | `createCountry`, `updateCountry` | `CountryService` | Retained for compatibility; delete stays REST-only |
+| Create/update country catalogue | `createCountry`, `updateCountry` | `CountryService` | GraphQL-only; delete stays REST-only |
 | Create/update speciality catalogue | `createSpeciality`, `updateSpeciality` | `SpecialityService` | Retained for compatibility; deactivate stays REST-only |
 | Create clinic unit | `createClinicUnit` | `OrganizationService` | Retained for compatibility |
 | Create/update practitioner | `createPractitioner`, `updatePractitioner` | `PractitionerService` | Retained for compatibility; deactivate stays REST-only |

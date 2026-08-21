@@ -34,10 +34,10 @@ describe('localeInterceptor', () => {
 
   it('uses English for invalid saved values and does not alter translation asset calls', () => {
     localStorage.setItem('sisdent.language', 'unsupported');
-    http.get('/api/countries').subscribe();
+    http.get('/api/countries/continents').subscribe();
     http.get('/i18n/en.json').subscribe();
 
-    const apiRequest = controller.expectOne('/api/countries');
+    const apiRequest = controller.expectOne('/api/countries/continents');
     expect(apiRequest.request.headers.get('Accept-Language')).toBe('en');
     apiRequest.flush({});
     const assetRequest = controller.expectOne('/i18n/en.json');

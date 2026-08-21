@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -137,6 +138,11 @@ public class RestExceptionTranslator {
 
     @ExceptionHandler(NoResourceFoundException.class)
     ProblemDetail missingResource(Locale locale) {
+        return problem(HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND, locale, Map.of(), List.of());
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    ProblemDetail unmappedMethod(Locale locale) {
         return problem(HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND, locale, Map.of(), List.of());
     }
 

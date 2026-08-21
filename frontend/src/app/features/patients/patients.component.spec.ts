@@ -1,0 +1,97 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { provideTranslateService } from '@ngx-translate/core';
+import { of } from 'rxjs';
+import { AuthService } from '../../core/auth.service';
+import { LanguageService } from '../../core/language.service';
+import { PatientsComponent } from './patients.component';
+
+describe('PatientsComponent country data', () => {
+  const dialog = { open: vi.fn(() => ({ afterClosed: () => of(undefined) })) };
+
+  beforeEach(() => {
+    dialog.open.mockClear();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTranslateService(),
+        { provide: MatDialog, useValue: dialog },
+        { provide: LanguageService, useValue: { current: signal('en') } },
+        {
+          provide: AuthService,
+          useValue: {
+            activeMembership: signal({
+              id: 'membership-1',
+              organizationId: 'organization-1',
+              organizationName: 'Clinic',
+              role: 'MANAGER',
+              version: 1,
+            }),
+            hasPermission: () => true,
+          },
+        },
+      ],
+    });
+  });
+
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  it('loads nationality options through the country GraphQL query', () => {
+    const component = TestBed.runInInjectionContext(() => new PatientsComponent());
+    (component as unknown as { loadNationalityOptions(): void }).loadNationalityOptions();
+
+    const request = TestBed.inject(HttpTestingController).expectOne('/graphql');
+    expect(request.request.body.variables).toEqual({
+      page: { page: 0, size: 100, sort: 'name', direction: 'ASC' },
+      locale: 'en',
+    });
+    request.flush({
+      data: {
+        countries: {
+          content: [{ id: '1', code: 'PT', name: 'Portugal', displayName: 'Portugal', continent: 'EUROPE' }],
+          page: 0,
+          size: 100,
+          totalElements: 1,
+          totalPages: 1,
+        },
+      },
+    });
+    expect(component.filters().find((filter) => filter.key === 'nationalityCode')?.options).toEqual([
+      { value: 'PT', label: 'Portugal (PT)' },
+    ]);
+  });
+
+  it('loads patient editor country data through the country GraphQL query', () => {
+    const component = TestBed.runInInjectionContext(() => new PatientsComponent());
+
+    component.create();
+
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne((request) => request.url === '/api/specialities').flush({
+      content: [], page: 0, size: 100, totalElements: 0, totalPages: 0,
+    });
+    http.expectOne((request) => request.url === '/api/administrative-divisions').flush({
+      content: [], page: 0, size: 100, totalElements: 0, totalPages: 0,
+    });
+    http.expectOne('/graphql').flush({
+      data: {
+        countries: {
+          content: [{ id: '1', code: 'PT', name: 'Portugal', displayName: 'Portugal', continent: 'EUROPE' }],
+          page: 0,
+          size: 100,
+          totalElements: 1,
+          totalPages: 1,
+        },
+      },
+    });
+
+    expect(dialog.open).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ data: expect.objectContaining({ countries: [expect.objectContaining({ code: 'PT' })] }) }),
+    );
+  });
+});

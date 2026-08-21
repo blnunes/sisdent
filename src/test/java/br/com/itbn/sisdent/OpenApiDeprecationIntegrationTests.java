@@ -18,17 +18,18 @@ class OpenApiDeprecationIntegrationTests {
     private MockMvc mockMvc;
 
     @Test
-    void publishesOnlyGraphqlReplacedRestOperationsAsDeprecated() throws Exception {
+    void publishesOnlyRemainingDeprecatedRestOperations() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.paths['/api/countries'].get.deprecated").value(true))
-                .andExpect(jsonPath("$.paths['/api/countries'].post.deprecated").value(true))
-                .andExpect(jsonPath("$.paths['/api/countries/{id}'].put.deprecated").value(true))
                 .andExpect(jsonPath("$.paths['/api/specialities'].get.deprecated").value(true))
                 .andExpect(jsonPath("$.paths['/api/specialities'].post.deprecated").value(true))
                 .andExpect(jsonPath("$.paths['/api/specialities/{id}'].put.deprecated").value(true))
                 .andExpect(jsonPath("$.paths['/api/organizations/{organizationId}/patients/{patientId}'].put.deprecated")
                         .value(true))
+                .andExpect(jsonPath("$.paths['/api/countries'].get").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/countries'].post").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/countries/{id}'].put").doesNotExist())
+                .andExpect(jsonPath("$.paths['/api/countries/continents'].get.deprecated").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/countries/{id}'].delete.deprecated").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/specialities/{id}'].delete.deprecated").doesNotExist());
     }

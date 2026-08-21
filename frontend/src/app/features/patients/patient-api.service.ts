@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { Membership, PageResponse } from '../../core/models';
-import { AddressOption, AdministrativeDivisionOption, CountryOption, PatientRecord, SpecialityOption } from './patient.models';
+import { AddressOption, AdministrativeDivisionOption, PatientRecord, SpecialityOption } from './patient.models';
 import { FilterOption } from '../../shared/filters/filter.models';
 
 @Injectable({ providedIn: 'root' })
@@ -32,7 +32,6 @@ export class PatientApiService {
   update(membership: Membership, globalId: string, body: unknown): Observable<unknown> { return this.http.put(`${this.endpoint(membership).split('?')[0]}/${globalId}`, body); }
   deactivate(membership: Membership, globalId: string): Observable<unknown> { return this.http.delete(`${this.endpoint(membership).split('?')[0]}/${globalId}`); }
   specialities(): Observable<PageResponse<SpecialityOption>> { return this.http.get<PageResponse<SpecialityOption>>('/api/specialities', { params: { page: '0', size: '100', sort: 'name', direction: 'asc' } }); }
-  countries(): Observable<PageResponse<CountryOption>> { return this.http.get<PageResponse<CountryOption>>('/api/countries', { params: { page: '0', size: '100', sort: 'name', direction: 'asc' } }); }
   administrativeDivisions(): Observable<PageResponse<AdministrativeDivisionOption>> { return this.http.get<PageResponse<AdministrativeDivisionOption>>('/api/administrative-divisions', { params: { page: '0', size: '100', sort: 'name', direction: 'asc' } }); }
   postalCodeSuggestions(countryCode: string, query: string): Observable<AddressOption[]> { return this.http.get<AddressOption[]>('/api/addresses/postal-code-suggestions', { params: { countryCode, query } }); }
 }

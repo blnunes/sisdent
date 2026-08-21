@@ -85,11 +85,32 @@ class GraphQlIntegrationTests {
                         .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
+                                { "query": "mutation { updateCountry(id: \\"1\\", input: { name: \\"Updated GraphQL Country\\", code: \\"UG\\", continent: EUROPE }) { id name code continent } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.updateCountry.name").value("Updated GraphQL Country"))
+                .andExpect(jsonPath("$.data.updateCountry.code").value("UG"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
                                 { "query": "mutation { createCountry(input: { name: \\"Invalid\\", code: \\"invalid\\", continent: EUROPE }) { id } }" }
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.createCountry").doesNotExist())
                 .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("group.admin@sisdent.demo", "odonto2026@O")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { updateCountry(id: \\"1\\", input: { name: \\"Forbidden\\", code: \\"FB\\", continent: EUROPE }) { id } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.updateCountry").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
     }
 
     @Test

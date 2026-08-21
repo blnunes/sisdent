@@ -14,7 +14,6 @@ import { TranslatePipe } from '@ngx-translate/core';
 import {
   AddressOption,
   AdministrativeDivisionOption,
-  CountryOption,
   PatientField as Field,
   PatientFormValues as FormValues,
   ProcedureOption,
@@ -22,12 +21,13 @@ import {
 } from '../patient.models';
 import { PatientApiService } from '../patient-api.service';
 import { CatalogDisplayNameService } from '../../../core/catalog-display-name.service';
+import { CountryCatalogueItem } from '../../../core/country-catalog-graphql.service';
 
 export type PatientFormDialogData = {
   fields: Field[];
   values?: FormValues;
   specialities?: SpecialityOption[];
-  countries?: CountryOption[];
+  countries?: CountryCatalogueItem[];
   administrativeDivisions?: AdministrativeDivisionOption[];
   recordType: string;
   translationKey: string;

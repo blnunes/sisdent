@@ -41,7 +41,8 @@ The following are examples of retained REST paths, not a complete REST API list:
 
 ```text
 GET /api/administrative-divisions
-GET /api/countries
+GET /api/countries/continents
+DELETE /api/countries/{id}
 GET /api/addresses
 GET /api/addresses/postal-code/{postalCode}?countryCode=PT
 GET /api/organizations/{organizationId}/patients
@@ -55,7 +56,9 @@ POST /api/specialities
 PUT /api/specialities/{id}
 ```
 
-Country and speciality responses keep `name` as the canonical persisted value and
+Country list, create, and update are GraphQL-only through `countries(page, locale)`,
+`createCountry(input, locale)`, and `updateCountry(id, input, locale)`. The retained
+country REST endpoints are continent lookup and delete. Country and speciality responses keep `name` as the canonical persisted value and
 also expose a localized `displayName`. Send `Accept-Language: en`, `nl`, or
 `pt-PT`; unsupported languages fall back to English and custom speciality names
 fall back to their canonical value.

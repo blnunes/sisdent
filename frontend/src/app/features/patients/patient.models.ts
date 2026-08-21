@@ -10,7 +10,6 @@ export type PatientField = {
   fullWidth?: boolean;
 };
 export type SpecialityOption = { id: number; name: string; displayName?: string };
-export type CountryOption = { code: string; name: string; displayName?: string };
 export type AdministrativeDivisionOption = {
   id: number;
   name: string;

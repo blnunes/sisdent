@@ -14,6 +14,7 @@ import {
   ResourceRecord,
 } from '../resource-support/resource-list.controller';
 import { PatientApiService } from './patient-api.service';
+import { CountryCatalogGraphqlService } from '../../core/country-catalog-graphql.service';
 import { PatientMutationGraphqlService } from './patient-mutation-graphql.service';
 import {
   PATIENT_FIELDS,
@@ -102,6 +103,7 @@ export const PATIENT_FILTERS: readonly FilterDefinition[] = [
 })
 export class PatientsComponent extends ResourceListController {
   private readonly api = inject(PatientApiService);
+  private readonly countriesGraphql = inject(CountryCatalogGraphqlService);
   private readonly mutations = inject(PatientMutationGraphqlService);
   readonly activeKey = 'patients';
   readonly title = 'MODULES.PATIENTS';
@@ -213,7 +215,7 @@ export class PatientsComponent extends ResourceListController {
   private loadNationalityOptions(): void {
     const membership = this.auth.activeMembership();
     if (!membership) return;
-    this.api.countries().subscribe({
+    this.countriesGraphql.list(this.countryPage()).subscribe({
       next: (response) => {
         const options = response.content.map((country) => ({
           value: country.code,
@@ -238,7 +240,7 @@ export class PatientsComponent extends ResourceListController {
   private openEditor(record?: ResourceRecord): void {
     forkJoin({
       specialities: this.api.specialities(),
-      countries: this.api.countries(),
+      countries: this.countriesGraphql.list(this.countryPage()),
       administrativeDivisions: this.api.administrativeDivisions(),
     }).subscribe({
       next: (response) =>
@@ -269,6 +271,9 @@ export class PatientsComponent extends ResourceListController {
           }),
       error: () => this.error.set(true),
     });
+  }
+  private countryPage() {
+    return { page: 0, size: 100, sort: 'name', direction: 'asc' as const };
   }
   private openDetails(record: ResourceRecord): void {
     this.dialog.open(PatientDetailsDialog, {

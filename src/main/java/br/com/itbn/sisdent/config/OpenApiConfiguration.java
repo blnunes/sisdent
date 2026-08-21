@@ -42,8 +42,7 @@ public class OpenApiConfiguration {
                         .description(
                                 "GraphQL is the primary frontend API. Retained HTTP endpoints support explicitly "
                                         + "documented operational, authentication, integration, and not-yet-migrated workflows. "
-                                        + "Deprecated REST operations remain available through at least 2027-02-18; see "
-                                        + "docs/REST_RETIREMENT_INVENTORY.md before relying on or removing them. "
+                                        + "See docs/REST_RETIREMENT_INVENTORY.md for the current transport inventory. "
                                         + "Patient, practitioner, appointment, clinical, clinic-unit, and membership "
                                         + "operations are authorized by active organization or clinic-unit memberships; "
                                         + "platform administration does not itself grant operational access."));

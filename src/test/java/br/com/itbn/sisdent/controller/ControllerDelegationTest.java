@@ -27,10 +27,7 @@ class ControllerDelegationTest {
         AddressService addresses = mock(AddressService.class);
         SpecialityService specialities = mock(SpecialityService.class);
 
-        new CountryController(countries).findAll(0, 10, "name", "asc", Locale.ENGLISH);
         new CountryController(countries).continents();
-        new CountryController(countries).create(null, Locale.ENGLISH);
-        new CountryController(countries).update(1L, null, Locale.ENGLISH);
         new CountryController(countries).delete(1L);
         new AdministrativeDivisionController(divisions).findAll(0, 10, "name", "asc");
         new AdministrativeDivisionController(divisions).create(null);
@@ -48,9 +45,6 @@ class ControllerDelegationTest {
         new SpecialityController(specialities).update(1L, null, Locale.ENGLISH);
         new SpecialityController(specialities).delete(1L);
 
-        verify(countries).findPage(any(), any());
-        verify(countries).create(null, Locale.ENGLISH);
-        verify(countries).update(1L, null, Locale.ENGLISH);
         verify(countries).delete(1L);
         verify(divisions).findPage(any());
         verify(divisions).delete(1L);

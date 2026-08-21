@@ -183,7 +183,7 @@ and safe error mapping; typed domain services own exact operations and variables
 
 | Frontend read flow | GraphQL boundary | REST status |
 | --- | --- | --- |
-| Country catalogue list | `countries(page, locale)` | Create, edit, delete, item lookup, and continent lookup remain REST. |
+| Country catalogue list/create/update | `countries(page, locale)`, `createCountry(input, locale)`, `updateCountry(id, input, locale)` | GraphQL-only. Delete and continent lookup remain REST. |
 | Speciality catalogue list | `specialities(page, filter, locale)` | Create, update, deactivate, and filter autocomplete remain REST. |
 | Clinic-unit workspace list | `clinicUnits(organizationId, clinicUnitId)` | Create and account-management dialog lookup remain REST. |
 | Practitioner workspace list | `practitioners(organizationId)` | Create, update, and deactivate remain REST. |
