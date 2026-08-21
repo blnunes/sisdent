@@ -55,15 +55,14 @@ public class CountryService {
 
     @Transactional(readOnly = true)
     public Country requireByCode(String code) {
-        return countryRepository.findByCode(code)
-                .orElseThrow(() -> new UnknownCountryException(code));
+        return loadByCode(code);
     }
 
     @Transactional(readOnly = true)
     public CountryResponse findByCode(String code, Locale locale) {
         authorization.requirePlatformAdministrator();
         validateCatalogLocale(locale);
-        return toResponse(requireByCode(code), locale);
+        return toResponse(loadByCode(code), locale);
     }
 
     @Transactional
@@ -93,6 +92,11 @@ public class CountryService {
 
     private CountryResponse toResponse(Country country, Locale locale) {
         return ResponseMapper.toResponse(country, nameLocalizer.localize(country, locale));
+    }
+
+    private Country loadByCode(String code) {
+        return countryRepository.findByCode(code)
+                .orElseThrow(() -> new UnknownCountryException(code));
     }
 
     private void validateCatalogLocale(Locale locale) {

@@ -46,7 +46,9 @@ class CountryServiceTest {
 
         assertThat(service.findAll()).singleElement().extracting(CountryResponse::code).isEqualTo("PT");
         assertThat(service.requireByCode("PT")).isSameAs(portugal);
+        assertThat(service.findByCode("PT", Locale.ENGLISH).displayName()).isEqualTo("Portugal");
         assertThatThrownBy(() -> service.requireByCode("ZZ")).isInstanceOf(UnknownCountryException.class);
+        verify(authorization).requirePlatformAdministrator();
     }
 
     @Test
