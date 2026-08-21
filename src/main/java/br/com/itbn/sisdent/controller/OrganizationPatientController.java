@@ -12,7 +12,6 @@ import br.com.itbn.sisdent.pagination.PageQuery;
 import br.com.itbn.sisdent.filter.PatientFilter;
 import br.com.itbn.sisdent.model.DocumentType;
 import br.com.itbn.sisdent.model.Gender;
-import io.swagger.v3.oas.annotations.Operation;
 import br.com.itbn.sisdent.service.OrganizationPatientService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -67,15 +65,6 @@ public class OrganizationPatientController {
             @Valid @RequestBody PatientRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(patientService.create(organizationId, clinicUnitId, request));
-    }
-
-    @Deprecated(since = "2026-08-18", forRemoval = false)
-    @Operation(deprecated = true, description = "Use the GraphQL updatePatient mutation. Scheduled for review after 2027-02-18.")
-    @PutMapping("/api/organizations/{organizationId}/patients/{patientId}")
-    public PatientResponse update(@PathVariable UUID organizationId, @PathVariable UUID patientId,
-            @RequestParam(required = false) UUID clinicUnitId,
-            @Valid @RequestBody PatientRequest request) {
-        return patientService.update(organizationId, clinicUnitId, patientId, request);
     }
 
     @DeleteMapping("/api/organizations/{organizationId}/patients/{patientId}")

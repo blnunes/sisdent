@@ -8,7 +8,7 @@ REST remains active. GraphQL does not replace REST globally in Phase 9; each mut
 | Create/update speciality catalogue | `createSpeciality`, `updateSpeciality` | `SpecialityService` | Retained for compatibility; deactivate stays REST-only |
 | Create clinic unit | `createClinicUnit` | `OrganizationService` | Retained for compatibility |
 | Create/update practitioner | `createPractitioner`, `updatePractitioner` | `PractitionerService` | Retained for compatibility; deactivate stays REST-only |
-| Update an organization-scoped patient | `updatePatient` | `OrganizationPatientService` | Retained for compatibility; create/deactivate stay REST-only |
+| Update an organization-scoped patient | `updatePatient` | `OrganizationPatientService` | GraphQL-only; create/deactivate stay REST-only |
 
 The Angular write services issue typed GraphQL inputs and refresh the existing GraphQL read state after success. The shared JWT interceptor still adds the Bearer token; the GraphQL endpoint requires authentication and services enforce platform, organization, clinic-unit and membership scope. Error messages and stable `extensions.code` values are surfaced through the safe GraphQL client error model, with the correlation ID available for support.
 

@@ -141,6 +141,38 @@ class GraphQlIntegrationTests {
                 .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
     }
 
+    @Test
+    void patientUpdateMutationUsesTheScopedServiceWorkflowAndSafeErrors() throws Exception {
+        String organizationId = organizationId("Northstar Dental Group");
+        String authorization = bearer(emailLogin("group.admin@sisdent.demo", "odonto2026@O"));
+        String patientId = createPatientForGraphQlUpdate(organizationId, authorization);
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(patientUpdateMutation(organizationId, patientId, "GraphQL Updated Patient")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.updatePatient.globalId").value(patientId))
+                .andExpect(jsonPath("$.data.updatePatient.name").value("GraphQL Updated Patient"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(patientUpdateMutation(organizationId, patientId, "")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.updatePatient").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("northstar.readonly@sisdent.demo", "odonto2026@O")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(patientUpdateMutation(organizationId, patientId, "Forbidden Update")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.updatePatient").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
+    }
+
     @ParameterizedTest
     @MethodSource("invalidPaginationQueries")
     void invalidPaginationIsReportedAsAGraphQlError(
@@ -284,6 +316,38 @@ class GraphQlIntegrationTests {
 
     private String organizationId(String name) {
         return organizationRepository.findByName(name).orElseThrow().getGlobalId().toString();
+    }
+
+    private String createPatientForGraphQlUpdate(String organizationId, String authorization) throws Exception {
+        String response = mockMvc.perform(post("/api/organizations/{organizationId}/patients", organizationId)
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "GraphQL Update Candidate",
+                                  "birthDate": "1990-01-02",
+                                  "active": true,
+                                  "gender": "FEMALE",
+                                  "taxId": null,
+                                  "identificationType": "PASSPORT",
+                                  "identificationNumber": "GQL-UPDATE-42",
+                                  "documentIssuerCountryCode": "PT",
+                                  "nationalityCode": "PT",
+                                  "addressId": 1,
+                                  "specialityIds": []
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return jsonMapper.readTree(response).get("globalId").asString();
+    }
+
+    private static String patientUpdateMutation(String organizationId, String patientId, String name) {
+        return """
+                { "query": "mutation { updatePatient(organizationId: \\"%s\\", patientId: \\"%s\\", input: { name: \\"%s\\", birthDate: \\"1990-01-02\\", active: true, gender: FEMALE, taxId: null, identificationType: PASSPORT, identificationNumber: \\"GQL-UPDATE-42\\", documentIssuerCountryCode: \\"PT\\", nationalityCode: \\"PT\\", addressId: \\"1\\", specialityIds: [] }) { globalId name active } }" }
+                """.formatted(organizationId, patientId, name);
     }
 
     private String emailLogin(String email, String password) throws Exception {

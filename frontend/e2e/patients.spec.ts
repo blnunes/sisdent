@@ -62,8 +62,9 @@ test.describe('Patient management', () => {
 
     const updateResponse = page.waitForResponse(
       (response) =>
-        response.url().match(/\/patients\/[0-9a-f-]+(?:\?.*)?$/) !== null &&
-        response.request().method() === 'PUT' &&
+        new URL(response.url()).pathname === '/graphql' &&
+        response.request().method() === 'POST' &&
+        String(response.request().postData()).includes('mutation UpdatePatient') &&
         response.ok(),
     );
     await page.getByRole('button', { name: 'Save changes' }).click();

@@ -47,7 +47,6 @@ GET /api/addresses
 GET /api/addresses/postal-code/{postalCode}?countryCode=PT
 GET /api/organizations/{organizationId}/patients
 POST /api/organizations/{organizationId}/patients
-PUT /api/organizations/{organizationId}/patients/{patientId}
 DELETE /api/organizations/{organizationId}/patients/{patientId}
 GET /api/organizations/{organizationId}/appointments
 GET /api/organizations/{organizationId}/clinical/encounters
@@ -94,8 +93,8 @@ The workspace loads clinic units and patients only through the scoped
 organization endpoints and surfaces forbidden scope, stale-version, finalized
 record, and unavailable-patient errors to the user.
 
-To replace a patient's speciality assignments, send their IDs in
-`specialityIds` to `PUT /api/organizations/{organizationId}/patients/{patientId}`. Send an empty array
+To replace a patient's speciality assignments, send their IDs in the GraphQL
+`updatePatient` mutation input. Send an empty array
 (`"specialityIds": []`) to remove every assignment from that patient; this
 does not delete the speciality records. Catalog removal is logical so existing
 history remains valid.

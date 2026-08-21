@@ -66,7 +66,6 @@ class ControllerDelegationTest {
                 null, null, null, null, null, null, null);
         controller.filterOptions(organization, clinic, "name", "Ana");
         assertThat(controller.create(organization, clinic, null).getStatusCode().value()).isEqualTo(201);
-        controller.update(organization, patient, clinic, null);
         assertThat(controller.delete(organization, patient, clinic).getStatusCode().value()).isEqualTo(204);
         controller.exactMatch(organization, clinic, null);
         assertThat(controller.link(organization, null).getStatusCode().value()).isEqualTo(201);

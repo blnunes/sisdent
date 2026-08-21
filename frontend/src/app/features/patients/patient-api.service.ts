@@ -29,7 +29,6 @@ export class PatientApiService {
     return this.http.get<FilterOption[]>(`${this.endpoint(membership).split('?')[0]}/filter-options`, { params: { field, query } });
   }
   create(membership: Membership, body: unknown): Observable<unknown> { return this.http.post(this.endpoint(membership).split('?')[0], body); }
-  update(membership: Membership, globalId: string, body: unknown): Observable<unknown> { return this.http.put(`${this.endpoint(membership).split('?')[0]}/${globalId}`, body); }
   deactivate(membership: Membership, globalId: string): Observable<unknown> { return this.http.delete(`${this.endpoint(membership).split('?')[0]}/${globalId}`); }
   specialities(): Observable<PageResponse<SpecialityOption>> { return this.http.get<PageResponse<SpecialityOption>>('/api/specialities', { params: { page: '0', size: '100', sort: 'name', direction: 'asc' } }); }
   administrativeDivisions(): Observable<PageResponse<AdministrativeDivisionOption>> { return this.http.get<PageResponse<AdministrativeDivisionOption>>('/api/administrative-divisions', { params: { page: '0', size: '100', sort: 'name', direction: 'asc' } }); }

@@ -27,7 +27,7 @@ window and the listed GraphQL contract tests remain green.
 | `GET /api/specialities` | `specialities(page, filter, locale)` | none; speciality list uses GraphQL | Deprecated |
 | `POST /api/specialities` | `createSpeciality(input, locale)` | none; speciality write uses GraphQL | Deprecated |
 | `PUT /api/specialities/{id}` | `updateSpeciality(id, input, locale)` | none; speciality write uses GraphQL | Deprecated |
-| `PUT /api/organizations/{organizationId}/patients/{patientId}` | `updatePatient(organizationId, clinicUnitId, patientId, input)` | none; patient edit uses GraphQL | Deprecated |
+| Patient update | `updatePatient(organizationId, clinicUnitId, patientId, input)` | none; patient edit uses GraphQL | Retired; GraphQL-only |
 
 The OpenAPI `deprecated: true` flags are covered by
 `OpenApiDeprecationIntegrationTests`. No deprecation response (for example 410)

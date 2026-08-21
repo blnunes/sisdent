@@ -29,11 +29,9 @@ describe('PatientApiService', () => {
     request.flush({ content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 });
   });
 
-  it('uses globalId for update and deactivate while create targets the collection', () => {
+  it('creates on the collection and deactivates by globalId', () => {
     api.create(membership, { name: 'Ana' }).subscribe();
     expect(http.expectOne((request) => request.url.endsWith('/patients') && request.method === 'POST').request.body).toEqual({ name: 'Ana' });
-    api.update(membership, 'patient-global-id', { name: 'Ana Maria' }).subscribe();
-    expect(http.expectOne((request) => request.url.endsWith('/patients/patient-global-id') && request.method === 'PUT').request.body).toEqual({ name: 'Ana Maria' });
     api.deactivate(membership, 'patient-global-id').subscribe();
     expect(http.expectOne((request) => request.url.endsWith('/patients/patient-global-id') && request.method === 'DELETE')).toBeTruthy();
   });
