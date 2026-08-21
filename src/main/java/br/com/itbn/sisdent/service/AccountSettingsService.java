@@ -79,7 +79,7 @@ public class AccountSettingsService {
         Account account = currentAccountService.require();
         try {
             account.changePreferredLanguage(request == null ? null : request.preferredLanguage());
-        } catch (IllegalArgumentException _) {
+        } catch (IllegalArgumentException exception) {
             throw new ValidationException(ErrorCode.ACCOUNT_PREFERRED_LANGUAGE_INVALID);
         }
         accounts.saveAndFlush(account);
@@ -141,7 +141,7 @@ public class AccountSettingsService {
     }
 
     private void safeDelete(String key) {
-        try { avatarStorage.delete(key); } catch (RuntimeException _) { /* retained for a later cleanup attempt */ }
+        try { avatarStorage.delete(key); } catch (RuntimeException ignored) { /* retained for a later cleanup attempt */ }
     }
 
     private static void validatePasswordRequest(ChangeOwnPasswordRequest request) {

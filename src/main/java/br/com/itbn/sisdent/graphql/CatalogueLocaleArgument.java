@@ -17,7 +17,7 @@ public class CatalogueLocaleArgument {
             Locale locale = new Locale.Builder().setLanguageTag(value).build();
             if (value.isBlank() || !SupportedCatalogLocale.supports(locale)) throw unsupported();
             return locale;
-        } catch (IllformedLocaleException _) {
+        } catch (IllformedLocaleException exception) {
             throw unsupported();
         }
     }
