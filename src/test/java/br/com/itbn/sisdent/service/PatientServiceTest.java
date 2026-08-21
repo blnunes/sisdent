@@ -161,8 +161,20 @@ class PatientServiceTest {
     }
 
     private Patient patient(Country country) {
-        return new Patient("Original", LocalDate.of(1990, 1, 1), true, Gender.FEMALE, "111 222",
-                DocumentType.NATIONAL_ID_CARD, "AB 123", country, country, address(country), List.of());
+        return new Patient(new Patient.PatientDetails(
+                new Patient.PatientIdentity(
+                        "Original",
+                        LocalDate.of(1990, 1, 1),
+                        true,
+                        Gender.FEMALE,
+                        "111 222"),
+                new Patient.PatientDocument(
+                        DocumentType.NATIONAL_ID_CARD,
+                        "AB 123",
+                        country,
+                        country),
+                address(country),
+                List.of()));
     }
 
     private Country country() {

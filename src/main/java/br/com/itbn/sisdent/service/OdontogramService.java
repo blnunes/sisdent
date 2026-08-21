@@ -62,7 +62,20 @@ public class OdontogramService {
         }
         String zone = zone(r.observationTimezone());
         Organization organization = organizations.findByGlobalId(org).orElseThrow(this::notFound);
-        return response(findings.save(new OdontogramFinding(organization, clinic, link, practitioner, replacement, r.toothCode(), r.surface(), r.condition(), r.observedAt(), zone, blank(r.clinicalNote()))));
+        OdontogramFinding.FindingContext context = new OdontogramFinding.FindingContext(
+                organization,
+                clinic,
+                link,
+                practitioner,
+                replacement);
+        OdontogramFinding.Observation observation = new OdontogramFinding.Observation(
+                r.toothCode(),
+                r.surface(),
+                r.condition(),
+                r.observedAt(),
+                zone,
+                blank(r.clinicalNote()));
+        return response(findings.save(new OdontogramFinding(context, observation)));
     }
 
     @Transactional

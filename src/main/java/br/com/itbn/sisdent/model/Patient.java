@@ -82,29 +82,8 @@ public class Patient extends AuditableEntity {
     protected Patient() {
     }
 
-    public Patient(
-            String name,
-            LocalDate birthDate,
-            boolean active,
-            Gender gender,
-            String taxId,
-            DocumentType identificationType,
-            String identificationNumber,
-            Country documentIssuerCountry,
-            Country nationality,
-            Address address,
-            Collection<Speciality> specialities) {
-        this.name = name;
-        this.birthDate = birthDate;
-        this.active = active;
-        this.gender = gender;
-        this.taxId = taxId;
-        this.identificationType = identificationType;
-        this.identificationNumber = identificationNumber;
-        this.documentIssuerCountry = documentIssuerCountry;
-        this.nationality = nationality;
-        this.address = address;
-        this.specialities.addAll(specialities);
+    public Patient(PatientDetails details) {
+        apply(details);
     }
 
     public Long getId() {
@@ -163,15 +142,50 @@ public class Patient extends AuditableEntity {
         return Set.copyOf(specialities);
     }
 
-    public void update(String name, LocalDate birthDate, boolean active, Gender gender, String taxId,
-            DocumentType identificationType, String identificationNumber, Country documentIssuerCountry,
-            Country nationality, Address address, Collection<Speciality> specialities) {
-        this.name = name; this.birthDate = birthDate; this.active = active; this.gender = gender;
-        this.taxId = taxId; this.identificationType = identificationType;
-        this.identificationNumber = identificationNumber; this.documentIssuerCountry = documentIssuerCountry;
-        this.nationality = nationality; this.address = address;
-        this.specialities.clear(); this.specialities.addAll(specialities);
+    public void update(PatientDetails details) {
+        apply(details);
     }
 
-    public void deactivate() { this.active = false; }
+    public void deactivate() {
+        active = false;
+    }
+
+    private void apply(PatientDetails details) {
+        PatientIdentity identity = details.identity();
+        PatientDocument document = details.document();
+        name = identity.name();
+        birthDate = identity.birthDate();
+        active = identity.active();
+        gender = identity.gender();
+        taxId = identity.taxId();
+        identificationType = document.identificationType();
+        identificationNumber = document.identificationNumber();
+        documentIssuerCountry = document.issuerCountry();
+        nationality = document.nationality();
+        address = details.address();
+        specialities.clear();
+        specialities.addAll(details.specialities());
+    }
+
+    public record PatientDetails(
+            PatientIdentity identity,
+            PatientDocument document,
+            Address address,
+            Collection<Speciality> specialities) {
+    }
+
+    public record PatientIdentity(
+            String name,
+            LocalDate birthDate,
+            boolean active,
+            Gender gender,
+            String taxId) {
+    }
+
+    public record PatientDocument(
+            DocumentType identificationType,
+            String identificationNumber,
+            Country issuerCountry,
+            Country nationality) {
+    }
 }

@@ -56,18 +56,20 @@ class ResponseMapperTest {
         Country country = country();
         Address address = new Address(Address.builder()
                 .street("Rua Augusta 1").city("Lisbon").postalCode("1100-053").country(country));
-        Patient patient = new Patient(
-                "Ana Silva",
-                LocalDate.of(1992, 4, 18),
-                true,
-                Gender.FEMALE,
-                null,
-                DocumentType.NATIONAL_ID_CARD,
-                "12345ABC",
-                country,
-                country,
+        Patient patient = new Patient(new Patient.PatientDetails(
+                new Patient.PatientIdentity(
+                        "Ana Silva",
+                        LocalDate.of(1992, 4, 18),
+                        true,
+                        Gender.FEMALE,
+                        null),
+                new Patient.PatientDocument(
+                        DocumentType.NATIONAL_ID_CARD,
+                        "12345ABC",
+                        country,
+                        country),
                 address,
-                List.of(new Speciality("Orthodontics")));
+                List.of(new Speciality("Orthodontics"))));
 
         PatientResponse response = ResponseMapper.toResponse(patient);
 

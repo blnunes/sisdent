@@ -92,10 +92,7 @@ public class PatientService {
     @Transactional
     public PatientResponse update(Long id, PatientRequest request) {
         Patient patient = patientRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        Patient source = newPatient(request);
-        patient.update(source.getName(), source.getBirthDate(), source.isActive(), source.getGender(), source.getTaxId(),
-                source.getIdentificationType(), source.getIdentificationNumber(), source.getDocumentIssuerCountry(),
-                source.getNationality(), source.getAddress(), source.getSpecialities());
+        patient.update(patientDetails(request));
         return ResponseMapper.toResponse(patientRepository.saveAndFlush(patient));
     }
 
@@ -110,11 +107,22 @@ public class PatientService {
     }
 
     private Patient newPatient(PatientRequest request) {
-        return new Patient(request.name(), request.birthDate(), request.active(), request.gender(),
-                normalizeNullable(request.taxId()),
-                request.identificationType(), IdentificationNumbers.normalize(request.identificationNumber()),
-                countryService.requireByCode(request.documentIssuerCountryCode()),
-                countryService.requireByCode(request.nationalityCode()),
+        return new Patient(patientDetails(request));
+    }
+
+    private Patient.PatientDetails patientDetails(PatientRequest request) {
+        return new Patient.PatientDetails(
+                new Patient.PatientIdentity(
+                        request.name(),
+                        request.birthDate(),
+                        request.active(),
+                        request.gender(),
+                        normalizeNullable(request.taxId())),
+                new Patient.PatientDocument(
+                        request.identificationType(),
+                        IdentificationNumbers.normalize(request.identificationNumber()),
+                        countryService.requireByCode(request.documentIssuerCountryCode()),
+                        countryService.requireByCode(request.nationalityCode())),
                 addressService.resolvePatientAddress(request.addressId(), request.address()),
                 specialityService.findAllByIds(request.specialityIds()));
     }
