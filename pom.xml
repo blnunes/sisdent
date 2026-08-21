@@ -19,7 +19,8 @@
 
     <properties>
         <java.version>25</java.version>
-        <sonar.exclusions>.github/workflows/**</sonar.exclusions>
+        <!-- Build outputs and dependency caches are generated/external code, not project sources. -->
+        <sonar.exclusions>.github/workflows/**,**/.angular/**,**/node_modules/**,**/dist/**,**/coverage/**</sonar.exclusions>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
