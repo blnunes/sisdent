@@ -19,7 +19,6 @@ import tools.jackson.databind.json.JsonMapper;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -108,43 +107,47 @@ class SecurityIntegrationTests {
         String oldPassword = "odonto2026@O";
         String newPassword = "changed-password-2026";
         String token = emailLogin("northstar.readonly@sisdent.demo", oldPassword);
-        String settings = mockMvc.perform(get("/api/account/settings").header("Authorization", bearer(token)))
+        String settings = mockMvc.perform(post("/graphql").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"query\":\"{ currentAccountSettings { email version } }\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("northstar.readonly@sisdent.demo"))
+                .andExpect(jsonPath("$.data.currentAccountSettings.email").value("northstar.readonly@sisdent.demo"))
                 .andReturn().getResponse().getContentAsString();
-        long version = jsonMapper.readTree(settings).get("version").asLong();
+        long version = jsonMapper.readTree(settings).get("data").get("currentAccountSettings").get("version").asLong();
 
-        mockMvc.perform(patch("/api/account/settings/profile").header("Authorization", bearer(token))
+        mockMvc.perform(post("/graphql").header("Authorization", bearer(token))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"displayName\":\"Own settings user\",\"version\":%d}".formatted(version)))
+                        .content("{\"query\":\"mutation { updateOwnProfile(input: { displayName: \\\"Own settings user\\\", version: %d }) { displayName } }\"}".formatted(version)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.displayName").value("Own settings user"));
-        mockMvc.perform(patch("/api/account/settings/password").header("Authorization", bearer(token))
+                .andExpect(jsonPath("$.data.updateOwnProfile.displayName").value("Own settings user"));
+        mockMvc.perform(post("/graphql").header("Authorization", bearer(token))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"currentPassword\":\"%s\",\"newPassword\":\"%s\"}".formatted(oldPassword, newPassword)))
-                .andExpect(status().isNoContent());
+                        .content("{\"query\":\"mutation { changeOwnPassword(input: { currentPassword: \\\"%s\\\", newPassword: \\\"%s\\\" }) }\"}".formatted(oldPassword, newPassword)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.changeOwnPassword").value(true));
 
         emailLogin("northstar.readonly@sisdent.demo", newPassword);
         mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"northstar.readonly@sisdent.demo\",\"password\":\"%s\"}".formatted(oldPassword)))
                 .andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/api/account/settings")).andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/graphql").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"query\":\"{ currentAccountSettings { email } }\"}"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void authenticatedUserPersistsOwnPreferredLanguageAcrossSessions() throws Exception {
         String token = emailLogin("northstar.readonly@sisdent.demo", "odonto2026@O");
 
-        mockMvc.perform(patch("/api/account/settings/preferred-language").header("Authorization", bearer(token))
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"preferredLanguage\":\"nl\"}"))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.preferredLanguage").value("nl"));
+        mockMvc.perform(post("/graphql").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"query\":\"mutation { updateOwnPreferredLanguage(input: { preferredLanguage: \\\"nl\\\" }) { preferredLanguage } }\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.updateOwnPreferredLanguage.preferredLanguage").value("nl"));
         mockMvc.perform(get("/api/session").header("Authorization", bearer(token)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.preferredLanguage").value("nl"));
         String renewedToken = emailLogin("northstar.readonly@sisdent.demo", "odonto2026@O");
         mockMvc.perform(get("/api/session").header("Authorization", bearer(renewedToken)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.preferredLanguage").value("nl"));
-        mockMvc.perform(patch("/api/account/settings/preferred-language")
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"preferredLanguage\":\"pt-BR\"}"))
+        mockMvc.perform(post("/graphql").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"query\":\"mutation { updateOwnPreferredLanguage(input: { preferredLanguage: \\\"pt-BR\\\" }) { preferredLanguage } }\"}"))
                 .andExpect(status().isUnauthorized());
     }
 

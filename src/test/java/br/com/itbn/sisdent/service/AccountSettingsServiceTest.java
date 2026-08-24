@@ -133,7 +133,7 @@ class AccountSettingsServiceTest {
 
         var response = service.uploadAvatar(image("image/png", "photo.png"));
 
-        assertThat(response.avatarUrl()).contains("/api/account/settings/avatar?v=");
+        assertThat(response.avatarUrl()).contains("graphql-avatar?v=");
         assertThat(account.getAvatarKey()).matches("account_[a-f0-9]{32}_[a-f0-9]{32}\\.png");
         verify(avatarStorage).save(matches("account_[a-f0-9]{32}_[a-f0-9]{32}\\.png"), argThat(bytes -> bytes.length > 0));
         verify(accounts).saveAndFlush(account);

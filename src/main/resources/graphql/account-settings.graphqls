@@ -1,0 +1,19 @@
+extend type Query {
+    currentAccountSettings: CurrentAccountSettings!
+    ownAvatar: AvatarDownload!
+}
+
+extend type Mutation {
+    updateOwnProfile(input: UpdateOwnProfileInput!): CurrentAccountSettings!
+    updateOwnPreferredLanguage(input: UpdateOwnPreferredLanguageInput!): CurrentAccountSettings!
+    changeOwnPassword(input: ChangeOwnPasswordInput!): Boolean!
+    uploadOwnAvatar(input: AvatarUploadInput!): CurrentAccountSettings!
+    removeOwnAvatar: Boolean!
+}
+
+type CurrentAccountSettings { id: ID!, displayName: String!, email: String!, preferredLanguage: String!, avatarUrl: String, version: Int! }
+type AvatarDownload { contentType: String!, contentBase64: String! }
+input UpdateOwnProfileInput { displayName: String!, version: Int! }
+input UpdateOwnPreferredLanguageInput { preferredLanguage: String }
+input ChangeOwnPasswordInput { currentPassword: String!, newPassword: String! }
+input AvatarUploadInput { fileName: String!, contentType: String!, contentBase64: String! }

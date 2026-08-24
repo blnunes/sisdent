@@ -94,12 +94,12 @@ the rejected catalogue locale never selects the error language.
 
 ## Account avatar
 
-Account avatars remain an authenticated REST operational endpoint:
-`PUT /api/account/settings/avatar` with a `multipart/form-data` part named `file`.
-The accepted input and processing/security guarantees are documented in
-[Avatar upload and storage decision](AVATAR_STORAGE_DECISION.md). In particular,
-phone-camera JPEG EXIF orientation is applied before the 256×256 centre crop, and
-clients must use RFC 9457 `code` values rather than matching localized error text.
+Account avatars use authenticated GraphQL. `uploadOwnAvatar` implements the GraphQL
+multipart-request specification and `ownAvatar` returns a normalized image payload for
+the typed Angular service to create a Blob. The accepted input and processing/security
+guarantees are documented in [Avatar upload and storage decision](AVATAR_STORAGE_DECISION.md).
+Phone-camera JPEG EXIF orientation is applied before the 256×256 centre crop; file bytes
+and GraphQL variables are never logged.
 
 ## Operational observability
 

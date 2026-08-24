@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AccountSettingsApiService } from '../../core/account-settings-api.service';
+import { GraphQlUserError } from '../../core/graphql-client.service';
 import { AuthService } from '../../core/auth.service';
 import { CurrentAccountSettings } from '../../core/models';
 import { Language, LanguageService, LANGUAGE_OPTIONS } from '../../core/language.service';
@@ -145,8 +146,9 @@ export class AccountSettingsComponent implements OnInit, OnDestroy {
   closeMenu(drawer: MatSidenav): void { void drawer.close(); }
   private revokePreview(): void { const preview = this.avatarPreview(); if (preview) URL.revokeObjectURL(preview); this.avatarPreview.set(null); }
   private avatarUploadError(error: unknown): string {
-    const code = error instanceof HttpErrorResponse && typeof error.error === 'object' && error.error !== null
-      ? (error.error as { code?: unknown }).code : undefined;
+    const code = error instanceof GraphQlUserError ? error.code
+      : error instanceof HttpErrorResponse && typeof error.error === 'object' && error.error !== null
+        ? (error.error as { code?: unknown }).code : undefined;
     const key = typeof code === 'string' ? ({
       'ACCOUNT.AVATAR_EMPTY': 'AVATAR_EMPTY', 'ACCOUNT.AVATAR_TOO_LARGE': 'AVATAR_TOO_LARGE',
       'ACCOUNT.AVATAR_INVALID_TYPE': 'AVATAR_UNSUPPORTED_TYPE', 'ACCOUNT.AVATAR_INVALID_IMAGE': 'AVATAR_INVALID_IMAGE',

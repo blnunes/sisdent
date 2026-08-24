@@ -55,15 +55,15 @@ Exit: no business catalogue route remains under `/api/**`.
 
 ## Phase 2 — account settings
 
-Status: **Planned**
+Status: **Complete**
 
-- [ ] Add typed GraphQL query/mutations for current settings, profile, preferred
+- [x] Add typed GraphQL query/mutations for current settings, profile, preferred
   language and password changes.
-- [ ] Migrate `core/account-settings-api.service.ts` and its tests; the
+- [x] Migrate `core/account-settings-api.service.ts` and its tests; the
   `account-settings.component.html` remains a presentational consumer.
-- [ ] Define and approve a GraphQL multipart upload/download contract for avatar
+- [x] Define and approve a GraphQL multipart upload/download contract for avatar
   operations, then migrate avatar calls without exposing file bytes in logs.
-- [ ] Remove `AccountSettingsController` REST business mappings and tests.
+- [x] Remove `AccountSettingsController` REST business mappings and tests.
 
 Exit: account settings screen has no `/api/account/settings/**` business call.
 

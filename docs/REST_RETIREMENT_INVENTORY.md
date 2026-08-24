@@ -42,6 +42,7 @@ is returned yet because these routes have not been approved for removal.
 | Addresses | `addresses`, `addressesByPostalCode`, `addressPostalCodeSuggestions`, `createAddress`, `updateAddress`, `deleteAddress` | Address screen and patient form/service; catalogue tests; README | Retired; GraphQL-only |
 | Administrative divisions | `administrativeDivisions`, `createAdministrativeDivision`, `updateAdministrativeDivision`, `deleteAdministrativeDivision` | Division screen/tests | Retired; GraphQL-only |
 | Catalogue translations | `catalogTranslations`, `replaceCatalogTranslations` | `CatalogTranslationApiService` and `CatalogTranslationsComponent` | Retired; GraphQL-only |
+| Account settings: current/profile/preferred-language/password/avatar | `currentAccountSettings`, `updateOwnProfile`, `updateOwnPreferredLanguage`, `changeOwnPassword`, `uploadOwnAvatar`, `removeOwnAvatar`, `ownAvatar` | Account settings screen and language selector | Retired; GraphQL-only |
 | Platform accounts: `GET`, `POST /api/platform/accounts`; `GET /api/platform/accounts/{accountId}`; `PATCH .../lifecycle`; `PATCH .../platform-administrator` | Account screen/service, authorization E2E, identity tests | No replacement | Retained. |
 | Current account and organization accounts: `GET /api/account`; `GET /api/organizations/{organizationId}/accounts`; `GET .../accounts/{accountId}` | Account screen/service and integration tests | No replacement | Retained. |
 | Platform organizations: `POST`, `GET /api/platform/organizations` | Account screen plus E2E setup/authorization tests | No replacement | Retained. |
@@ -70,7 +71,7 @@ contracts. The repository documentation references are `README.md`,
 | `/h2-console/**` | Local-development support only; it is controlled by the existing application/security configuration. |
 | Static SPA and `/i18n/**` | Browser application delivery, not data APIs. |
 
-There are no controller mappings for file upload/download, refresh-token,
+There are no REST controller mappings for file upload/download, refresh-token,
 webhook, or third-party callback routes. Adding one requires an explicit entry
 in this inventory before it can be considered for GraphQL migration.
 

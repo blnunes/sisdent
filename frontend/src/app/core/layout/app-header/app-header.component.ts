@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, OnDestroy, Output, ViewChild, effect, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { AccountSettingsApiService } from '../../account-settings-api.service';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,7 +19,7 @@ import { ThemeToggleComponent } from '../../../shared/preferences/theme-toggle/t
 })
 export class AppHeaderComponent implements OnDestroy {
   readonly auth = inject(AuthService);
-  private readonly http = inject(HttpClient);
+  private readonly accountSettings = inject(AccountSettingsApiService);
   readonly avatarSource = signal<string | null>(null);
   @Output() readonly menuClick = new EventEmitter<void>();
   @ViewChild('menuButton') private menuButton?: ElementRef<HTMLButtonElement>;
@@ -27,7 +27,7 @@ export class AppHeaderComponent implements OnDestroy {
   private readonly avatarLoader = effect(() => {
     const avatarUrl = this.auth.session()?.avatarUrl;
     this.clearAvatar();
-    if (avatarUrl) this.http.get(avatarUrl, { responseType: 'blob' }).subscribe({
+    if (avatarUrl) this.accountSettings.avatar().subscribe({
       next: (blob) => { this.avatarObjectUrl = URL.createObjectURL(blob); this.avatarSource.set(this.avatarObjectUrl); },
     });
   });
