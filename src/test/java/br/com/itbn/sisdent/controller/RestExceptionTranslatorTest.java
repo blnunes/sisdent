@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class RestExceptionTranslatorTest {
     private final ObjectMapper objectMapper = mock(ObjectMapper.class);
@@ -42,18 +43,18 @@ class RestExceptionTranslatorTest {
         assertThat(translator.authenticationFailure(Locale.US).getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         assertThat(translator.authorization(Locale.US).getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
         assertThat(translator.databaseConflict(Locale.US).getStatus()).isEqualTo(HttpStatus.CONFLICT.value());
-        assertThat(translator.optimisticLock(Locale.US).getProperties().get("code"))
-                .isEqualTo(ErrorCode.CONFLICT.value());
+        assertThat(translator.optimisticLock(Locale.US).getProperties())
+                .containsEntry("code", ErrorCode.CONFLICT.value());
     }
 
     @Test
     void mapsLegacyResponseStatusesWithoutExposingTheirReasons() {
         assertThat(translator.responseStatus(new ResponseStatusException(HttpStatus.BAD_REQUEST, "private"), Locale.US)
-                .getProperties().get("code")).isEqualTo(ErrorCode.REQUEST_PARAMETER_INVALID.value());
+                .getProperties()).containsEntry("code", ErrorCode.REQUEST_PARAMETER_INVALID.value());
         assertThat(translator.responseStatus(new ResponseStatusException(HttpStatus.NOT_FOUND, "private"), Locale.US)
-                .getProperties().get("code")).isEqualTo(ErrorCode.RESOURCE_NOT_FOUND.value());
+                .getProperties()).containsEntry("code", ErrorCode.RESOURCE_NOT_FOUND.value());
         assertThat(translator.responseStatus(new ResponseStatusException(HttpStatus.I_AM_A_TEAPOT, "private"), Locale.US)
-                .getProperties().get("code")).isEqualTo(ErrorCode.INTERNAL_ERROR.value());
+                .getProperties()).containsEntry("code", ErrorCode.INTERNAL_ERROR.value());
     }
 
     @Test
@@ -61,20 +62,20 @@ class RestExceptionTranslatorTest {
         MDC.put("transport", "graphql");
 
         assertThat(translator.authorization(Locale.US).getStatus()).isEqualTo(HttpStatus.FORBIDDEN.value());
-        assertThat(translator.unexpected(new RuntimeException("private"), Locale.US).getProperties().get("code"))
-                .isEqualTo(ErrorCode.INTERNAL_ERROR.value());
+        assertThat(translator.unexpected(new RuntimeException("private"), Locale.US).getProperties())
+                .containsEntry("code", ErrorCode.INTERNAL_ERROR.value());
     }
 
     @Test
     void mapsMalformedAndUnmappedRequestsToTheirStableCodes() {
-        assertThat(translator.malformedRequest(new RuntimeException(), Locale.US).getProperties().get("code"))
-                .isEqualTo(ErrorCode.REQUEST_MALFORMED.value());
-        assertThat(translator.invalidParameter(new RuntimeException(), Locale.US).getProperties().get("code"))
-                .isEqualTo(ErrorCode.REQUEST_PARAMETER_INVALID.value());
-        assertThat(translator.uploadTooLarge(new MaxUploadSizeExceededException(1024), Locale.US).getProperties().get("code"))
-                .isEqualTo(ErrorCode.ACCOUNT_AVATAR_TOO_LARGE.value());
-        assertThat(translator.malformedMultipart(new MultipartException("bad"), Locale.US).getProperties().get("code"))
-                .isEqualTo(ErrorCode.REQUEST_MALFORMED.value());
+        assertThat(translator.malformedRequest(new RuntimeException(), Locale.US).getProperties())
+                .containsEntry("code", ErrorCode.REQUEST_MALFORMED.value());
+        assertThat(translator.invalidParameter(new RuntimeException(), Locale.US).getProperties())
+                .containsEntry("code", ErrorCode.REQUEST_PARAMETER_INVALID.value());
+        assertThat(translator.uploadTooLarge(new MaxUploadSizeExceededException(1024), Locale.US).getProperties())
+                .containsEntry("code", ErrorCode.ACCOUNT_AVATAR_TOO_LARGE.value());
+        assertThat(translator.malformedMultipart(new MultipartException("bad"), Locale.US).getProperties())
+                .containsEntry("code", ErrorCode.REQUEST_MALFORMED.value());
         assertThat(translator.missingResource(Locale.US).getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
         assertThat(translator.unmappedMethod(Locale.US).getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
     }
@@ -97,16 +98,17 @@ class RestExceptionTranslatorTest {
         BeanPropertyBindingResult result = new BeanPropertyBindingResult(new Object(), "input");
         result.addError(new FieldError("input", "name", "required"));
         MethodArgumentNotValidException beanFailure = mock(MethodArgumentNotValidException.class);
-        org.mockito.Mockito.when(beanFailure.getBindingResult()).thenReturn(result);
+        when(beanFailure.getBindingResult()).thenReturn(result);
 
         ConstraintViolation<?> violation = mock(ConstraintViolation.class);
         Path path = mock(Path.class);
-        org.mockito.Mockito.when(path.toString()).thenReturn("input.birthDate");
-        org.mockito.Mockito.when(violation.getPropertyPath()).thenReturn(path);
-        org.mockito.Mockito.when(violation.getMessage()).thenReturn("invalid date");
+        when(path.toString()).thenReturn("input.birthDate");
+        when(violation.getPropertyPath()).thenReturn(path);
+        when(violation.getMessage()).thenReturn("invalid date");
 
-        assertThat(translator.beanValidation(beanFailure, Locale.US).getProperties().get("violations")).isNotNull();
+        assertThat(translator.beanValidation(beanFailure, Locale.US).getProperties())
+                .containsKey("violations");
         assertThat(translator.constraintValidation(new ConstraintViolationException(java.util.Set.of(violation)), Locale.US)
-                .getProperties().get("violations")).isNotNull();
+                .getProperties()).containsKey("violations");
     }
 }

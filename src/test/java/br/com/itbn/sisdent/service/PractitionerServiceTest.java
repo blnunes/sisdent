@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -71,7 +72,7 @@ class PractitionerServiceTest {
         assertThatThrownBy(() -> service.create(organizationId, request)).isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Unknown speciality");
 
-        Speciality speciality = org.mockito.Mockito.mock(Speciality.class);
+        Speciality speciality = mock(Speciality.class);
         when(speciality.getStatus()).thenReturn(CatalogStatus.ACTIVE);
         when(specialities.findById(1L)).thenReturn(Optional.of(speciality));
         when(practitioners.save(any(Practitioner.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -82,7 +83,7 @@ class PractitionerServiceTest {
     @Test
     void updatesAndDeactivatesOnlyPractitionersInTheOrganization() {
         UUID practitionerId = UUID.randomUUID();
-        Practitioner practitioner = org.mockito.Mockito.mock(Practitioner.class);
+        Practitioner practitioner = mock(Practitioner.class);
         when(practitioners.findByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId))
                 .thenReturn(Optional.of(practitioner));
         when(practitioner.getSpecialities()).thenReturn(Set.of());

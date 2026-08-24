@@ -12,10 +12,8 @@ import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.pagination.SortDefinition;
 import br.com.itbn.sisdent.repository.AdministrativeDivisionRepository;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import br.com.itbn.sisdent.error.ErrorCode;
 import br.com.itbn.sisdent.error.ResourceNotFoundException;
 

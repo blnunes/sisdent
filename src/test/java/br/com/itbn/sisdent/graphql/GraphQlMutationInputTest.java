@@ -34,10 +34,13 @@ class GraphQlMutationInputTest {
         assertThat(link.toRequest().clinicUnitId()).isEqualTo(CLINIC_ID);
         assertThat(new PatientFilterInput(null, null, null, null, null, null, null, null, null, null, null)
                 .toFilter().birthDate()).isNull();
-        assertThatThrownBy(() -> new ExactPatientMatchInput(DocumentType.PASSPORT, "PT", "AB123", "bad").toRequest())
+        ExactPatientMatchInput invalidMatch = new ExactPatientMatchInput(DocumentType.PASSPORT, "PT", "AB123", "bad");
+        PatientLinkMutationInput invalidLink = new PatientLinkMutationInput(DocumentType.PASSPORT, "PT", "AB123", "bad",
+                CLINIC_ID, PatientLinkBasis.INTAKE);
+
+        assertThatThrownBy(invalidMatch::toRequest)
                 .isInstanceOf(ValidationException.class);
-        assertThatThrownBy(() -> new PatientLinkMutationInput(DocumentType.PASSPORT, "PT", "AB123", "bad",
-                CLINIC_ID, PatientLinkBasis.INTAKE).toRequest()).isInstanceOf(ValidationException.class);
+        assertThatThrownBy(invalidLink::toRequest).isInstanceOf(ValidationException.class);
     }
 
     @Test
@@ -53,12 +56,16 @@ class GraphQlMutationInputTest {
         assertThat(clinical.toUpdateRequest().version()).isEqualTo(3L);
         assertThat(appointment.toRequest().startAt()).isEqualTo(Instant.parse(INSTANT));
         assertThat(amendment.toRequest().careAt()).isEqualTo(Instant.parse(INSTANT));
-        assertThatThrownBy(() -> new ClinicalEncounterMutationInput(CLINIC_ID, PATIENT_ID, null, null, INSTANT,
-                "Europe/Lisbon", "note", null, null).toUpdateRequest()).isInstanceOf(ValidationException.class);
-        assertThatThrownBy(() -> new AppointmentMutationInput(CLINIC_ID, PATIENT_ID, PRACTITIONER_ID, "bad", INSTANT,
-                "Europe/Lisbon").toRequest()).isInstanceOf(ValidationException.class);
-        assertThatThrownBy(() -> new AmendEncounterMutationInput(CLINIC_ID, null, null, "bad", "Europe/Lisbon",
-                "note", null, "correction").toRequest()).isInstanceOf(ValidationException.class);
+        ClinicalEncounterMutationInput invalidClinical = new ClinicalEncounterMutationInput(CLINIC_ID, PATIENT_ID, null,
+                null, INSTANT, "Europe/Lisbon", "note", null, null);
+        AppointmentMutationInput invalidAppointment = new AppointmentMutationInput(CLINIC_ID, PATIENT_ID,
+                PRACTITIONER_ID, "bad", INSTANT, "Europe/Lisbon");
+        AmendEncounterMutationInput invalidAmendment = new AmendEncounterMutationInput(CLINIC_ID, null, null, "bad",
+                "Europe/Lisbon", "note", null, "correction");
+
+        assertThatThrownBy(invalidClinical::toUpdateRequest).isInstanceOf(ValidationException.class);
+        assertThatThrownBy(invalidAppointment::toRequest).isInstanceOf(ValidationException.class);
+        assertThatThrownBy(invalidAmendment::toRequest).isInstanceOf(ValidationException.class);
     }
 
     @Test
@@ -73,13 +80,15 @@ class GraphQlMutationInputTest {
         assertThat(patient.toRequest().birthDate()).isEqualTo(LocalDate.of(1990, 1, 2));
         assertThat(finding.toRequest().observedAt()).isEqualTo(Instant.parse(INSTANT));
         assertThat(procedure.toRequest().performedAt()).isEqualTo(Instant.parse(INSTANT));
-        assertThatThrownBy(() -> new PatientMutationInput("Ana", "bad", true, Gender.FEMALE, null,
-                DocumentType.PASSPORT, "AB123", "PT", "PT", null, null, Set.of()).toRequest())
+        PatientMutationInput invalidPatient = new PatientMutationInput("Ana", "bad", true, Gender.FEMALE, null,
+                DocumentType.PASSPORT, "AB123", "PT", "PT", null, null, Set.of());
+        OdontogramFindingMutationInput invalidFinding = new OdontogramFindingMutationInput(CLINIC_ID, PATIENT_ID, null,
+                null, "11", OdontogramSurface.WHOLE_TOOTH, OdontogramCondition.SOUND, "bad", "Europe/Lisbon", null);
+        PerformedProcedureMutationInput invalidProcedure = new PerformedProcedureMutationInput(1L, "bad", null);
+
+        assertThatThrownBy(invalidPatient::toRequest)
                 .isInstanceOf(ValidationException.class);
-        assertThatThrownBy(() -> new OdontogramFindingMutationInput(CLINIC_ID, PATIENT_ID, null, null, "11",
-                OdontogramSurface.WHOLE_TOOTH, OdontogramCondition.SOUND, "bad", "Europe/Lisbon", null).toRequest())
-                .isInstanceOf(ValidationException.class);
-        assertThatThrownBy(() -> new PerformedProcedureMutationInput(1L, "bad", null).toRequest())
-                .isInstanceOf(ValidationException.class);
+        assertThatThrownBy(invalidFinding::toRequest).isInstanceOf(ValidationException.class);
+        assertThatThrownBy(invalidProcedure::toRequest).isInstanceOf(ValidationException.class);
     }
 }

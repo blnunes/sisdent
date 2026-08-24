@@ -12,8 +12,6 @@ import br.com.itbn.sisdent.repository.AddressRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 import br.com.itbn.sisdent.error.ErrorCode;
 import br.com.itbn.sisdent.error.ResourceNotFoundException;
 import br.com.itbn.sisdent.error.ValidationException;
