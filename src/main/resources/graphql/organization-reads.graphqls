@@ -1,4 +1,6 @@
 extend type Query {
+    patients(organizationId: ID!, clinicUnitId: ID, page: CataloguePageInput, filter: PatientFilterInput): PatientPage!
+    patientFilterOptions(organizationId: ID!, clinicUnitId: ID, field: String!, query: String): [FilterOption!]!
     currentAccount: Account!
     platformAccounts(page: AccountPageInput, filter: String): AccountPage!
     platformAccount(accountId: ID!): Account!

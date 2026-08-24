@@ -446,29 +446,21 @@ class GraphQlIntegrationTests {
     }
 
     private String createPatientForGraphQlUpdate(String organizationId, String authorization) throws Exception {
-        String response = mockMvc.perform(post("/api/organizations/{organizationId}/patients", organizationId)
+        String response = mockMvc.perform(post("/graphql")
                         .header("Authorization", authorization)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "GraphQL Update Candidate",
-                                  "birthDate": "1990-01-02",
-                                  "active": true,
-                                  "gender": "FEMALE",
-                                  "taxId": null,
-                                  "identificationType": "PASSPORT",
-                                  "identificationNumber": "GQL-UPDATE-42",
-                                  "documentIssuerCountryCode": "PT",
-                                  "nationalityCode": "PT",
-                                  "addressId": 1,
-                                  "specialityIds": []
-                                }
-                                """))
-                .andExpect(status().isCreated())
+                        .content(patientCreateMutation(organizationId)))
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        return jsonMapper.readTree(response).get("globalId").asString();
+        return jsonMapper.readTree(response).at("/data/createPatient/globalId").asString();
+    }
+
+    private static String patientCreateMutation(String organizationId) {
+        return """
+                { "query": "mutation { createPatient(organizationId: \\"%s\\", input: { name: \\"GraphQL Update Candidate\\", birthDate: \\"1990-01-02\\", active: true, gender: FEMALE, taxId: null, identificationType: PASSPORT, identificationNumber: \\"GQL-UPDATE-42\\", documentIssuerCountryCode: \\"PT\\", nationalityCode: \\"PT\\", addressId: \\"1\\", specialityIds: [] }) { globalId } }" }
+                """.formatted(organizationId);
     }
 
     private static String patientUpdateMutation(String organizationId, String patientId, String name) {

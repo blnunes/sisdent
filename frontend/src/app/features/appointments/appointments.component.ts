@@ -19,6 +19,7 @@ import { distinctUntilChanged } from 'rxjs';
 import { Appointment, PageResponse, Practitioner } from '../../core/models';
 import { AuthService } from '../../core/auth.service';
 import { OrganizationReadGraphqlService } from '../../core/organization-read-graphql.service';
+import { PatientApiService } from '../patients/patient-api.service';
 import { AppHeaderComponent } from '../../core/layout/app-header/app-header.component';
 import { ModuleNavigationComponent } from '../../core/layout/module-navigation/module-navigation.component';
 
@@ -52,6 +53,7 @@ export class AppointmentsComponent {
   readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
   private readonly organizationReads = inject(OrganizationReadGraphqlService);
+  private readonly patientApi = inject(PatientApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translate = inject(TranslateService);
 
@@ -288,15 +290,16 @@ export class AppointmentsComponent {
       this.patients.set([]);
       return;
     }
-    this.http
-      .get<PageResponse<{ globalId: string; name: string }>>(
-        `/api/organizations/${membership.organizationId}/patients`,
-        {
-          params: { clinicUnitId },
-        },
-      )
+    this.patientApi
+      .list({ ...membership, clinicUnitId }, {
+        page: { page: 0, size: 20, sort: 'name', direction: 'ASC' },
+        filter: {},
+      })
       .subscribe({
-        next: (page) => this.patients.set(page.content),
+        next: (page) => this.patients.set(page.content.map((patient) => ({
+          globalId: String(patient['globalId']),
+          name: String(patient['name']),
+        }))),
         error: () => this.error.set(this.translate.instant('APPOINTMENTS.ERROR.LOAD_OPTIONS')),
       });
   }

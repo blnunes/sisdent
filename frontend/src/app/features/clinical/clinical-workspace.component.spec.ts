@@ -26,8 +26,8 @@ describe('ClinicalWorkspaceComponent', () => {
     component = fixture.componentInstance;
     http = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
-    const patients = http.expectOne(request => request.url === '/api/organizations/organization-1/patients');
-    patients.flush({ content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 });
+    const patients = http.expectOne('/graphql');
+    patients.flush({ data: { patients: { content: [], page: 0, size: 20, totalElements: 0, totalPages: 0 } } });
   });
 
   afterEach(() => http.verify());
@@ -47,14 +47,12 @@ describe('ClinicalWorkspaceComponent', () => {
 
   it('searches patients by name only after two characters', () => {
     component.onPatientInput('a');
-    http.expectNone('/api/organizations/organization-1/patients');
+    http.expectNone('/graphql');
 
     component.onPatientInput('Ana');
-    const request = http.expectOne(request => request.url === '/api/organizations/organization-1/patients');
-    expect(request.request.params.get('clinicUnitId')).toBe('clinic-1');
-    expect(request.request.params.get('name')).toBe('Ana');
-    expect(request.request.params.get('size')).toBe('20');
-    request.flush({ content: [{ globalId: 'patient-1', name: 'Ana Silva' }], page: 0, size: 20, totalElements: 1, totalPages: 1 });
+    const request = http.expectOne('/graphql');
+    expect(request.request.body.variables).toMatchObject({ clinicUnitId: 'clinic-1', filter: { name: 'Ana' } });
+    request.flush({ data: { patients: { content: [{ globalId: 'patient-1', name: 'Ana Silva' }], page: 0, size: 20, totalElements: 1, totalPages: 1 } } });
     expect(component.patients()).toEqual([{ globalId: 'patient-1', name: 'Ana Silva' }]);
   });
 

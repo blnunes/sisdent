@@ -139,7 +139,7 @@ export function patientToForm(record: PatientRecord): PatientFormValues {
   };
 }
 
-export function patientRequest(value: PatientFormValues): unknown {
+export function patientRequest(value: PatientFormValues): Record<string, unknown> {
   const address = {
     street: value['street'],
     district: value['district'],

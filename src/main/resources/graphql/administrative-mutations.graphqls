@@ -24,7 +24,11 @@ type Mutation {
     grantMembership(organizationId: ID!, input: AccountMembershipInput!): Membership!
     changeMembershipRole(organizationId: ID!, membershipId: ID!, input: MembershipRoleUpdateInput!): Membership!
     revokeMembership(organizationId: ID!, membershipId: ID!, input: MembershipRevokeInput!): Boolean!
-    updatePatient(organizationId: ID!, clinicUnitId: ID, patientId: ID!, input: PatientUpdateMutationInput!): PatientMutationResult!
+    createPatient(organizationId: ID!, clinicUnitId: ID, input: PatientMutationInput!): Patient!
+    updatePatient(organizationId: ID!, clinicUnitId: ID, patientId: ID!, input: PatientMutationInput!): PatientMutationResult!
+    deactivatePatient(organizationId: ID!, clinicUnitId: ID, patientId: ID!): Boolean!
+    exactPatientMatch(organizationId: ID!, clinicUnitId: ID, input: ExactPatientMatchInput!): ExactPatientMatch!
+    linkPatient(organizationId: ID!, input: PatientLinkMutationInput!): PatientLink!
 }
 
 input CountryMutationInput { name: String!, code: String!, continent: Continent! }
@@ -59,11 +63,19 @@ input PatientAddressMutationInput {
     administrativeDivision: PatientAdministrativeDivisionMutationInput, countryCode: String!
 }
 input PatientAdministrativeDivisionMutationInput { name: String!, code: String!, type: String! }
-input PatientUpdateMutationInput {
+input PatientMutationInput {
     name: String!, birthDate: String!, active: Boolean!, gender: Gender!, taxId: String,
     identificationType: DocumentType!, identificationNumber: String!, documentIssuerCountryCode: String!,
     nationalityCode: String!, addressId: ID, address: PatientAddressMutationInput, specialityIds: [ID!]!
 }
 type PatientMutationResult { globalId: ID!, name: String!, active: Boolean! }
+input ExactPatientMatchInput { documentType: DocumentType!, issuerCountryCode: String!, documentNumber: String!, birthDate: String! }
+input PatientLinkMutationInput { documentType: DocumentType!, issuerCountryCode: String!, documentNumber: String!, birthDate: String!, clinicUnitId: ID, operationalBasis: PatientLinkBasis! }
+type ExactPatientMatch { possibleMatchExists: Boolean! }
+type PatientLink { id: ID!, patientId: ID!, organizationId: ID!, clinicUnitId: ID, operationalBasis: PatientLinkBasis!, createdBy: String!, createdAt: String! }
+enum PatientLinkBasis { INTAKE ATTENDANCE }
+type PatientPage { content: [Patient!]!, page: Int!, size: Int!, totalElements: Int!, totalPages: Int! }
+type Patient { id: ID!, globalId: ID!, name: String!, birthDate: String!, active: Boolean!, gender: Gender!, taxId: String, identificationType: DocumentType!, identificationNumber: String!, documentIssuerCountry: Country!, nationality: Country!, address: Address, specialities: [Speciality!]! }
+input PatientFilterInput { id: ID, name: String, birthDate: String, active: Boolean, gender: Gender, taxId: String, identificationType: DocumentType, identificationNumber: String, nationalityCode: String, addressId: ID, specialityId: ID }
 enum Gender { FEMALE MALE OTHER }
 enum DocumentType { NATIONAL_ID_CARD PASSPORT }

@@ -17,6 +17,7 @@ import { ClinicalEncounter, ClinicUnit, OdontogramFinding, PageResponse } from '
 import { AppHeaderComponent } from '../../core/layout/app-header/app-header.component';
 import { ModuleNavigationComponent } from '../../core/layout/module-navigation/module-navigation.component';
 import { OrganizationReadGraphqlService } from '../../core/organization-read-graphql.service';
+import { PatientApiService } from '../patients/patient-api.service';
 
 type PatientOption = { globalId: string; name: string };
 type Choice = { value: string; labelKey: string };
@@ -45,6 +46,7 @@ export class ClinicalWorkspaceComponent {
   readonly auth = inject(AuthService);
   private readonly http = inject(HttpClient);
   private readonly organizationReads = inject(OrganizationReadGraphqlService);
+  private readonly patientApi = inject(PatientApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translate = inject(TranslateService);
   readonly membership = this.auth.activeMembership;
@@ -141,16 +143,17 @@ export class ClinicalWorkspaceComponent {
       this.error.set(this.t('NO_CLINIC'));
       return;
     }
-    const params: Record<string, string> = { clinicUnitId: this.clinicUnitId, size: '20' };
-    if (name) params['name'] = name;
-    this.http
-      .get<PageResponse<PatientOption>>(
-        `/api/organizations/${membership.organizationId}/patients`,
-        { params },
-      )
+    this.patientApi
+      .list({ ...membership, clinicUnitId: this.clinicUnitId }, {
+        page: { page: 0, size: 20, sort: 'name', direction: 'ASC' },
+        filter: name ? { name } : {},
+      })
       .subscribe({
         next: (response) => {
-          this.patients.set(response.content);
+          this.patients.set(response.content.map((patient) => ({
+            globalId: String(patient['globalId']),
+            name: String(patient['name']),
+          })));
           if (!response.content.length && !name) this.error.set(this.t('NO_PATIENT'));
         },
         error: (error) => this.fail(error, 'LOAD'),

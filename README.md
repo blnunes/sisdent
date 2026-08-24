@@ -40,9 +40,6 @@ in [`docs/REST_RETIREMENT_INVENTORY.md`](docs/REST_RETIREMENT_INVENTORY.md).
 The following are examples of retained REST paths, not a complete REST API list:
 
 ```text
-GET /api/organizations/{organizationId}/patients
-POST /api/organizations/{organizationId}/patients
-DELETE /api/organizations/{organizationId}/patients/{patientId}
 GET /api/organizations/{organizationId}/appointments
 GET /api/organizations/{organizationId}/clinical/encounters
 ```
@@ -67,8 +64,9 @@ administrative division.
 Example:
 
 ```bash
-curl -H 'Authorization: Bearer <token>' \
-  'http://localhost:8080/api/organizations/{organizationId}/patients'
+curl -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' \
+  -d '{"query":"{ patients(organizationId: \\"{organizationId}\\") { content { globalId name } } }"}' \
+  'http://localhost:8080/graphql'
 ```
 
 Dental procedures are nested resources owned by a speciality. They are

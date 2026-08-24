@@ -8,7 +8,7 @@ Use the application with an email/password account. The local bootstrap account
 is `admin@sisdent.local` / `admin`; production must supply
 `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD`.
 
-Patient operations use `/api/organizations/{organizationId}/patients`.
+Patient operations use scoped GraphQL `patients` queries and patient mutations.
 Appointments use `/api/organizations/{organizationId}/appointments` and
 clinical operations use `/api/organizations/{organizationId}/clinical`.
 Organization scope always comes from an active membership.

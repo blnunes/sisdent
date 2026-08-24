@@ -1,7 +1,7 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { Membership, PageResponse } from '../../core/models';
+import { GraphQlClientService } from '../../core/graphql-client.service';
 import { SpecialityCatalogGraphqlService } from '../../core/speciality-catalog-graphql.service';
 import { AdministrativeDivisionGraphqlService } from '../../core/administrative-division-graphql.service';
 import { AddressGraphqlService } from '../../core/address-graphql.service';
@@ -10,16 +10,21 @@ import { FilterOption } from '../../shared/filters/filter.models';
 
 @Injectable({ providedIn: 'root' })
 export class PatientApiService {
-  private readonly http = inject(HttpClient);
+  private readonly graphql = inject(GraphQlClientService);
   private readonly specialitiesGraphql = inject(SpecialityCatalogGraphqlService);
   private readonly divisionsGraphql = inject(AdministrativeDivisionGraphqlService);
   private readonly addressesGraphql = inject(AddressGraphqlService);
-  endpoint(membership: Membership | null): string {
-    if (!membership) return '';
-    const base = `/api/organizations/${encodeURIComponent(membership.organizationId)}/patients`;
-    return membership.clinicUnitId ? `${base}?clinicUnitId=${encodeURIComponent(membership.clinicUnitId)}` : base;
+  list(membership: Membership, query: PatientListQuery): Observable<PageResponse<PatientRecord>> {
+    return this.graphql.query<{ patients: PageResponse<PatientRecord> }>(
+      `query Patients($organizationId: ID!, $clinicUnitId: ID, $page: CataloguePageInput, $filter: PatientFilterInput) {
+        patients(organizationId: $organizationId, clinicUnitId: $clinicUnitId, page: $page, filter: $filter) {
+          content { id globalId name birthDate active gender taxId identificationType identificationNumber documentIssuerCountry { code } nationality { code } address { id street district city additionalInfo block postalCode administrativeDivision { name code type } country { code } } specialities { id name displayName } }
+          page size totalElements totalPages
+        }
+      }`,
+      { organizationId: membership.organizationId, clinicUnitId: membership.clinicUnitId, page: query.page, filter: query.filter },
+    ).pipe(map(({ patients }) => patients));
   }
-  list(membership: Membership, params: HttpParams): Observable<PageResponse<PatientRecord>> { return this.http.get<PageResponse<PatientRecord>>(this.endpoint(membership), { params }); }
   filterOptions(membership: Membership, field: string, query = ''): Observable<FilterOption[]> {
     const normalizedQuery = query.trim().toLowerCase();
     if (field === 'specialityId') {
@@ -29,13 +34,33 @@ export class PatientApiService {
       return this.addressesGraphql.list(0, 100, 'street', 'asc').pipe(map((response) => response.content.filter((address) => [address.street, address.city, address.postalCode].some((value) => value?.toLowerCase().includes(normalizedQuery))).slice(0, 10).map((address) => ({ value: String(address.id), label: `${address.street} · ${address.postalCode ?? ''} · ${address.city}` }))));
     }
     if (field === 'taxId') {
-      const params = new HttpParams().set('page', 0).set('size', 10).set('sort', 'name').set('direction', 'asc').set('taxId', query);
-      return this.list(membership, params).pipe(map((response) => response.content.flatMap((patient) => patient['taxId'] ? [{ value: String(patient['taxId']), label: String(patient['taxId']) }] : [])));
+      return this.list(membership, { page: patientNamePage(), filter: { taxId: query } }).pipe(
+        map((response) => response.content.flatMap((patient) => patient['taxId'] ? [{ value: String(patient['taxId']), label: String(patient['taxId']) }] : [])),
+      );
     }
-    return this.http.get<FilterOption[]>(`${this.endpoint(membership).split('?')[0]}/filter-options`, { params: { field, query } });
+    return this.graphql.query<{ patientFilterOptions: FilterOption[] }>(
+      `query PatientFilterOptions($organizationId: ID!, $clinicUnitId: ID, $field: String!, $query: String) {
+        patientFilterOptions(organizationId: $organizationId, clinicUnitId: $clinicUnitId, field: $field, query: $query) { value label }
+      }`,
+      { organizationId: membership.organizationId, clinicUnitId: membership.clinicUnitId, field, query },
+    ).pipe(map(({ patientFilterOptions }) => patientFilterOptions));
   }
-  create(membership: Membership, body: unknown): Observable<unknown> { return this.http.post(this.endpoint(membership).split('?')[0], body); }
-  deactivate(membership: Membership, globalId: string): Observable<unknown> { return this.http.delete(`${this.endpoint(membership).split('?')[0]}/${globalId}`); }
+  create(membership: Membership, input: Record<string, unknown>): Observable<PatientRecord> {
+    return this.graphql.query<{ createPatient: PatientRecord }>(
+      `mutation CreatePatient($organizationId: ID!, $clinicUnitId: ID, $input: PatientMutationInput!) {
+        createPatient(organizationId: $organizationId, clinicUnitId: $clinicUnitId, input: $input) { globalId name active }
+      }`,
+      { organizationId: membership.organizationId, clinicUnitId: membership.clinicUnitId, input },
+    ).pipe(map(({ createPatient }) => createPatient));
+  }
+  deactivate(membership: Membership, patientId: string): Observable<boolean> {
+    return this.graphql.query<{ deactivatePatient: boolean }>(
+      `mutation DeactivatePatient($organizationId: ID!, $clinicUnitId: ID, $patientId: ID!) {
+        deactivatePatient(organizationId: $organizationId, clinicUnitId: $clinicUnitId, patientId: $patientId)
+      }`,
+      { organizationId: membership.organizationId, clinicUnitId: membership.clinicUnitId, patientId },
+    ).pipe(map(({ deactivatePatient }) => deactivatePatient));
+  }
   specialities(): Observable<PageResponse<SpecialityOption>> {
     return this.specialitiesGraphql.list({ page: 0, size: 100, sort: 'name', direction: 'asc' }).pipe(
       map((response) => ({
@@ -58,4 +83,13 @@ export class PatientApiService {
     })));
   }
   postalCodeSuggestions(countryCode: string, query: string): Observable<AddressOption[]> { return this.addressesGraphql.postalCodeSuggestions(countryCode, query).pipe(map((addresses) => addresses.map((address) => ({ ...address, id: Number(address.id) })))); }
+}
+
+export type PatientListQuery = {
+  page: { page: number; size: number; sort: string; direction: 'ASC' | 'DESC' };
+  filter: Record<string, unknown>;
+};
+
+function patientNamePage(): PatientListQuery['page'] {
+  return { page: 0, size: 10, sort: 'name', direction: 'ASC' };
 }

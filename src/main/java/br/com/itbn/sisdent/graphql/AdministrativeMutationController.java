@@ -9,7 +9,6 @@ import br.com.itbn.sisdent.service.AdministrativeDivisionService;
 import br.com.itbn.sisdent.service.OrganizationService;
 import br.com.itbn.sisdent.service.PractitionerService;
 import br.com.itbn.sisdent.service.SpecialityService;
-import br.com.itbn.sisdent.service.OrganizationPatientService;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -23,18 +22,16 @@ public class AdministrativeMutationController {
     private final SpecialityService specialities;
     private final OrganizationService organizations;
     private final PractitionerService practitioners;
-    private final OrganizationPatientService patients;
     private final CatalogueLocaleArgument catalogueLocale;
     private final AdministrativeDivisionService divisions;
 
     public AdministrativeMutationController(CountryService countries, SpecialityService specialities,
-            OrganizationService organizations, PractitionerService practitioners, OrganizationPatientService patients,
+            OrganizationService organizations, PractitionerService practitioners,
             CatalogueLocaleArgument catalogueLocale, AdministrativeDivisionService divisions) {
         this.countries = countries;
         this.specialities = specialities;
         this.organizations = organizations;
         this.practitioners = practitioners;
-        this.patients = patients;
         this.catalogueLocale = catalogueLocale;
         this.divisions = divisions;
     }
@@ -110,9 +107,4 @@ public class AdministrativeMutationController {
         return practitioners.update(organizationId, practitionerId, input.toRequest());
     }
 
-    @MutationMapping
-    public PatientMutationResult updatePatient(@Argument UUID organizationId, @Argument UUID clinicUnitId,
-            @Argument UUID patientId, @Argument @Valid PatientUpdateMutationInput input) {
-        return PatientMutationResult.from(patients.update(organizationId, clinicUnitId, patientId, input.toRequest()));
-    }
 }

@@ -79,12 +79,12 @@ Status: **Planned**
 
 ## Phase 4 — patient workflow
 
-Status: **Planned**
+Status: **Complete**
 
-- [ ] Add scoped patient query, create/deactivate/intake/link/filter GraphQL
+- [x] Add scoped patient query, create/deactivate/intake/link/filter GraphQL
   operations and migrate `PatientApiService`/patient components.
-- [ ] Cover tenant isolation, clinic scope, duplicate identity and rollback.
-- [ ] Remove `OrganizationPatientController`.
+- [x] Cover tenant isolation, clinic scope, duplicate identity and rollback.
+- [x] Remove `OrganizationPatientController`.
 
 ## Phase 5 — scheduling
 

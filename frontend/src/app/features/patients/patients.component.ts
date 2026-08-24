@@ -1,7 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, forkJoin } from 'rxjs';
-import { PageResponse } from '../../core/models';
 import { DataTableColumn } from '../../shared/data-table/data-table.models';
 import {
   FilterAutocompleteEvent,
@@ -145,15 +144,23 @@ export class PatientsComponent extends ResourceListController {
     }
     this.loading.set(true);
     this.error.set(false);
-    const params = this.tableQuery.toHttpParams({
+    const tableQuery = this.tableQuery.toHttpParams({
       page: this.page(),
       size: this.pageSize(),
       sort: this.sort(),
       direction: this.sortDirection(),
       filters: this.filterValues(),
     });
-    this.api.list(membership, params).subscribe({
-      next: (response: PageResponse<PatientRecord>) => {
+    this.api.list(membership, {
+      page: {
+        page: this.page(),
+        size: this.pageSize(),
+        sort: this.sort(),
+        direction: this.sortDirection() === 'desc' ? 'DESC' : 'ASC',
+      },
+      filter: Object.fromEntries(tableQuery.keys().filter((key) => !['page', 'size', 'sort', 'direction'].includes(key)).map((key) => [key, tableQuery.get(key)])),
+    }).subscribe({
+      next: (response) => {
         this.records.set(response.content);
         this.totalElements.set(response.totalElements);
         this.loading.set(false);

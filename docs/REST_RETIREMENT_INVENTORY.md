@@ -25,7 +25,7 @@ contracts were tested. `GET /api/specialities/filter-options` and
 | `GET /api/specialities` | `specialities(page, filter, locale)` | speciality list and patient picker | Removed 2026-08-21 |
 | `POST /api/specialities` | `createSpeciality(input, locale)` | speciality write | Removed 2026-08-21 |
 | `PUT /api/specialities/{id}` | `updateSpeciality(id, input, locale)` | speciality write | Removed 2026-08-21 |
-| Patient update | `updatePatient(organizationId, clinicUnitId, patientId, input)` | none; patient edit uses GraphQL | Retired; GraphQL-only |
+| Patient workflow | `patients`, `patientFilterOptions`, `createPatient`, `updatePatient`, `deactivatePatient`, `exactPatientMatch`, `linkPatient` | Patient, appointment and clinical screens | Retired; GraphQL-only |
 
 The OpenAPI `deprecated: true` flags are covered by
 `OpenApiDeprecationIntegrationTests`. No deprecation response (for example 410)
@@ -48,7 +48,7 @@ is returned yet because these routes have not been approved for removal.
 | Platform organizations: `POST`, `GET /api/platform/organizations` | Account screen plus E2E setup/authorization tests | No replacement | Retained. |
 | Clinic units: `POST`, `GET /api/organizations/{organizationId}/clinic-units` | Clinical and appointment screens, account dialog, E2E setup; organization workspace uses GraphQL | `clinicUnits` and `createClinicUnit` exist, but REST has active consumers | Retained until every caller is migrated and external use is known. |
 | Memberships: `POST /api/organizations/{organizationId}/memberships`; `POST .../account-memberships`; `DELETE .../memberships/{membershipId}`; `POST .../memberships/{membershipId}/revoke`; `PATCH .../memberships/{membershipId}` | Account service/screen, authorization E2E, identity tests | No replacement | Retained. |
-| Patients: `GET`, `POST /api/organizations/{organizationId}/patients`; `GET .../filter-options`; `PUT`, `DELETE .../{patientId}`; `POST .../patient-intake/exact-match`; `POST .../patient-links` | Patient, appointment, clinical screens and tenant-isolation E2E; README | Only update is replaced | `PUT` deprecated; every other operation retained. |
+| Patients | Patient, appointment, clinical screens and tenant-isolation tests | `patients`, `patientFilterOptions`, `createPatient`, `updatePatient`, `deactivatePatient`, `exactPatientMatch`, `linkPatient` | Retired; GraphQL-only. |
 | Practitioners: `GET`, `POST /api/organizations/{organizationId}/practitioners`; `PUT`, `DELETE .../{id}` | Appointment screen, account service/tests, scheduling E2E; workspace uses GraphQL for list/create/update | Query/create/update exist, but REST has active consumers; delete is not replaced | Retained. |
 | Appointments: `GET`, `POST /api/organizations/{organizationId}/appointments`; `GET .../{id}`; `PUT .../{id}/reschedule`; `POST .../{id}/cancel`, `/complete`, `/no-show`; `GET`, `POST .../{id}/performed-procedures`; `POST .../performed-procedures/{procedureId}/void` | Home and appointment screens, scheduling/role E2E, integration tests, PROJECT_GUIDE | No replacement | Retained. |
 | Clinical: `GET`, `POST /api/organizations/{organizationId}/clinical/encounters`; `GET`, `PUT .../encounters/{id}`; `POST .../finalize`; `GET`, `POST .../amendments`; `GET .../odontogram/current`, `/history`; `POST .../odontogram/findings`; `POST .../odontogram/findings/{id}/void` | Clinical workspace, clinical E2E/integration tests, README/PROJECT_GUIDE | No replacement | Retained. Clinical data must not be mechanically migrated or removed. |
