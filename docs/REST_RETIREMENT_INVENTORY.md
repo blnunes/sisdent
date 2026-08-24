@@ -1,21 +1,32 @@
 # REST retirement inventory
 
-Status date: 2026-08-21. This is the release gate for REST retirement. The inventory was produced from
+Status date: 2026-08-24. Final retirement verification completed from
 Spring MVC mappings, Angular source and E2E tests, deployment scripts, and
-repository documentation. There is no telemetry or API-consumer registry in
-this repository, so every endpoint without a proven in-repository-only consumer
-is treated as potentially externally consumed and is retained.
+repository documentation. No business MVC mapping or production Angular
+`/api/**` call remains.
 
-`Deprecated` means it is still supported during the deprecation window; it does
-not mean a route was removed. A route can be removed only after its consumers
-are migrated, its GraphQL parity tests are green, and release approval is recorded.
+All former business routes are retired. GraphQL parity coverage remains as the
+replacement contract; route-absence tests preserve the retirement boundary.
 
-## Decisions and deprecation window
+## Final cleanup and verification
 
-The speciality list and write routes were removed on 2026-08-21 after the
-Angular patient catalogue consumer moved to GraphQL and the replacement
-contracts were tested. `GET /api/specialities/filter-options` and
-`DELETE /api/specialities/{id}` remain until their GraphQL replacements exist.
+The final obsolete-consumer cleanup removed the unused Angular REST list
+orchestration and empty endpoint placeholder shims. The remaining list
+components use typed GraphQL services, and
+`catalogue-endpoints.spec.ts` prevents feature production code from importing
+`HttpClient` or referencing `/api/**`.
+
+The final verification on 2026-08-24 passed the Maven quality gate with 87.30%
+instruction coverage and 66.73% branch coverage, the Angular suite (106 tests),
+and the Playwright suite (13 tests). SonarCloud Quality Gate passed with 80.30%
+new-code coverage; reliability, security, maintainability, duplication, and
+security-hotspot conditions also passed.
+
+## Retirement decisions
+
+The final route inventory verifies that all speciality, country, patient,
+administrative, account, organization, scheduling, and clinical routes are
+retired. Their GraphQL replacements are listed below.
 
 | REST operation | GraphQL replacement | Angular consumer | Status |
 | --- | --- | --- | --- |
@@ -27,9 +38,9 @@ contracts were tested. `GET /api/specialities/filter-options` and
 | `PUT /api/specialities/{id}` | `updateSpeciality(id, input, locale)` | speciality write | Removed 2026-08-21 |
 | Patient workflow | `patients`, `patientFilterOptions`, `createPatient`, `updatePatient`, `deactivatePatient`, `exactPatientMatch`, `linkPatient` | Patient, appointment and clinical screens | Retired; GraphQL-only |
 
-The OpenAPI `deprecated: true` flags are covered by
-`OpenApiDeprecationIntegrationTests`. No deprecation response (for example 410)
-is returned yet because these routes have not been approved for removal.
+`RestRetirementIntegrationTests` verifies that temporary OpenAPI and Swagger
+endpoints are absent. Focused REST-removal tests preserve 404 coverage where a
+retired route is intentionally exercised.
 
 ## Application REST mapping inventory
 
@@ -67,7 +78,6 @@ contracts. The repository documentation references are `README.md`,
 | `POST /graphql` | Primary authenticated frontend BFF. It continues to use the JWT issued by REST login and service-layer authorization. |
 | `POST /api/auth/login`, `GET /api/session` | Authentication/bootstrap protocol; no GraphQL login mutation is approved. |
 | `GET /actuator/health` | Deployment and container health check (`render.yaml`, `run-dev.sh`, `compose.preprod.yml`, pre-production scripts). |
-| `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html` | Supported REST contract discovery during the retirement window. |
 | `/h2-console/**` | Local-development support only; it is controlled by the existing application/security configuration. |
 | Static SPA and `/i18n/**` | Browser application delivery, not data APIs. |
 
@@ -77,7 +87,7 @@ in this inventory before it can be considered for GraphQL migration.
 
 ## GraphQL parity evidence
 
-GraphQL is an adapter over existing services. The deprecated operations call the
+GraphQL is an adapter over existing services. The retired operations call the
 same `CountryService`, `SpecialityService`, and `OrganizationPatientService` as
 REST. Consequently authorization, tenant isolation, validation, transactions,
 conflict rules, audit behaviour, pagination/filtering, and localization remain
@@ -91,7 +101,7 @@ not expose request data, credentials, tokens, stack traces, or causes.
 | Patient update mutation | `GraphQlIntegrationTests`, patient mutation GraphQL service test, tenant-isolation integration/E2E coverage of the underlying service contract |
 | Error, locale, pagination and safe correlation handling | `GraphQlIntegrationTests`, `ApplicationGraphQlExceptionResolverTest`, catalogue GraphQL tests |
 
-Before removing a deprecated route, add a removal test that asserts the route's
+Before removing a business route, add a removal test that asserts the route's
 documented 404/410 outcome and an equivalent GraphQL success, validation,
 authorization, isolation, conflict, pagination/filter, and boundary test. Also
 remove its Angular service/test references, gateway/proxy rule if any, and this
@@ -101,8 +111,7 @@ inventory entry only after production consumer telemetry and release approval.
 
 `RequestCorrelationFilter` normalizes all `/api/**` metrics/logs as REST and
 `/graphql` as GraphQL; no business identifiers, documents, tokens, credentials,
-or bodies are labels. Existing CORS/proxy configuration continues to proxy both
-`/api` and `/graphql`; do not remove the `/api` proxy while any retained route
-exists. Health monitoring remains on `/actuator/health`. No dashboard, alert,
+or bodies are labels. Development proxies expose `/graphql` and only the three
+retained `/api` routes. Health monitoring remains on `/actuator/health`. No dashboard, alert,
 gateway, or third-party integration configuration is stored in this repository,
 so its owners must confirm those consumers before any future removal approval.

@@ -3,17 +3,15 @@
 ## Phase 10
 
 GraphQL at `POST /graphql` is the sole target API for application business
-workflows. REST is temporary only while a route has no approved GraphQL
-replacement, and must be retired route by route after its Angular and external
-consumers have migrated. Authentication, session bootstrap, health checks,
-OpenAPI during the migration, and development-only H2 support deliberately
-remain HTTP endpoints. The authoritative route-by-route decision, consumers,
-GraphQL replacements, and removal gate are in [REST retirement inventory](REST_RETIREMENT_INVENTORY.md),
-with execution sequencing in the [GraphQL REST retirement plan](GRAPHQL_REST_RETIREMENT_PLAN.md).
-`POST /api/auth/login`, `GET /api/session`, `GET /actuator/health`, REST OpenAPI
-documentation, and development-only H2 support deliberately remain HTTP
-endpoints. JWT issuance and GraphQL authentication continue to use the existing
-Bearer-token security path.
+workflows. All business routes have been retired. Authentication, session
+bootstrap, CSRF, health checks, and development-only H2 support deliberately
+remain HTTP endpoints. The authoritative route decision, consumers,
+GraphQL replacements, and retirement evidence are in the
+[REST retirement inventory](REST_RETIREMENT_INVENTORY.md).
+`POST /api/auth/login`, `GET /api/session`, `GET /api/csrf`,
+`GET /actuator/health`, and development-only H2 support deliberately remain
+HTTP endpoints. JWT issuance and GraphQL authentication continue to use the
+existing Bearer-token security path.
 
 ### Total migration decision
 
@@ -22,17 +20,12 @@ needs a GraphQL query or mutation and no Angular production code may call its
 `/api/**` route once that replacement is released. The only permitted permanent
 HTTP surface is authentication/bootstrap (`/api/auth/login`, `/api/session`,
 `/api/csrf`) and operational infrastructure (`/actuator/health`, development
-H2). OpenAPI is temporary migration documentation and is removed once the final
-business REST route is retired. The retirement plan is the implementation
-backlog and its per-wave exit criteria are release gates.
+H2). Temporary OpenAPI and Swagger material was removed with the final business
+REST route. The final cleanup also removed the obsolete Angular REST list helper
+and endpoint placeholder shims; the retirement inventory records its GraphQL
+replacement and verification evidence.
 
-## Phase 8
-
-Phase 8 is historical context. Its incremental BFF rollout is superseded by the
-Phase 10 total-migration decision above; do not use this section to retain or
-add business REST APIs.
-
-Sisdent is a Spring Boot REST API with an Angular single-page application.
+Sisdent is a Spring Boot GraphQL API with an Angular single-page application.
 Authentication uses email/password and stateless JWT Bearer tokens. `Account`
 is the global identity, `Person` provides its display name, and active
 `Membership` records are the sole authority for organization and clinic work.
@@ -193,24 +186,3 @@ REST/service validations and transactional behaviour are understood.
 
 Angular components never make GraphQL requests directly. `GraphQlClientService` owns transport
 and safe error mapping; typed domain services own exact operations and variables.
-
-### Phase 8 migration inventory
-
-| Frontend read flow | GraphQL boundary | REST status |
-| --- | --- | --- |
-| Country catalogue list/create/update | `countries(page, locale)`, `createCountry(input, locale)`, `updateCountry(id, input, locale)` | GraphQL-only. Delete and continent lookup remain REST. |
-| Speciality catalogue list/create/update | `specialities(page, filter, locale)`, `createSpeciality`, `updateSpeciality` | GraphQL-only. Deactivate and filter autocomplete await migration. |
-| Clinic-unit workspace list | `clinicUnits(organizationId, clinicUnitId)` | Create and account-management dialog lookup remain REST. |
-| Practitioner workspace list | `practitioners(organizationId)` | Create, update, and deactivate remain REST. |
-| Organizations, patients, appointments, and clinical models | Not yet migrated | Their REST reads remain intentional until scope, pagination, batching, and field contracts are approved. |
-
-`clinicUnits` returns active units only and accepts an optional clinic-unit scope. `practitioners`
-returns only list-screen fields; account emails, memberships, and internal persistence state are
-not in the schema. The existing practitioner repository entity graph provides speciality data in
-the collection query, avoiding a per-practitioner load. These operational collections do not yet
-paginate in REST, so no artificial page contract was added; pagination is deferred until the
-corresponding REST/service contract changes.
-
-The generic client maps
-`errors[].extensions.code`, friendly messages, and optional correlation IDs into the safe
-user-error model. REST continues to serve every non-migrated flow and every write.

@@ -8,11 +8,11 @@ import { clearSystemUnavailable, markSystemUnavailable } from './system-availabi
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   // Translation/assets are loaded while LanguageService can still be constructing.
   // Avoid resolving AuthService for non-API requests, which would create a DI cycle.
-  if (!request.url.startsWith('/api/') && request.url !== '/graphql') return next(request);
+  if (!isApplicationRequest(request.url)) return next(request);
   const auth = inject(AuthService);
   const router = inject(Router);
   const token = auth.token();
-  const isAuthenticationRequest = request.url.endsWith('/api/auth/login') || request.url.endsWith('/api/auth/email-verification');
+  const isAuthenticationRequest = request.url === '/api/auth/login';
   const outgoing = token && !isAuthenticationRequest
     ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : request;
@@ -30,6 +30,15 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     }),
   );
 };
+
+function isApplicationRequest(url: string): boolean {
+  return (
+    url === '/graphql'
+    || url === '/api/auth/login'
+    || url === '/api/session'
+    || url === '/api/csrf'
+  );
+}
 
 function isUnauthorized(error: unknown): error is { status: number } {
   return typeof error === 'object' && error !== null && 'status' in error && error.status === 401;

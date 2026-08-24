@@ -36,7 +36,6 @@ export class CountriesComponent extends CatalogueListController {
   constructor() {
     super(
       {
-        endpoint: () => '',
         maintainPermission: 'MAINTAIN_COUNTRIES',
         columns: COLUMNS,
         identifier: (record) => Number(record['id']),
@@ -92,11 +91,17 @@ export class CountriesComponent extends CatalogueListController {
     this.openWithContinents();
   }
   protected override save(record: ResourceRecord | undefined, body: unknown): void {
-    this.mutations.saveCountry(record as never, body as { name: string; code: string; continent: string })
-      .subscribe({ next: () => this.load(), error: (error: unknown) => {
-        this.error.set(true);
-        this.errorMessage.set(error instanceof GraphQlUserError ? error.message : 'The country could not be saved.');
-      } });
+    this.mutations
+      .saveCountry(record as never, body as { name: string; code: string; continent: string })
+      .subscribe({
+        next: () => this.load(),
+        error: (error: unknown) => {
+          this.error.set(true);
+          this.errorMessage.set(
+            error instanceof GraphQlUserError ? error.message : 'The country could not be saved.',
+          );
+        },
+      });
   }
   protected override edit(record: ResourceRecord): void {
     this.openWithContinents(record);
@@ -110,7 +115,9 @@ export class CountriesComponent extends CatalogueListController {
       next: () => this.load(),
       error: (error: unknown) => {
         this.error.set(true);
-        this.errorMessage.set(error instanceof GraphQlUserError ? error.message : 'The country could not be deleted.');
+        this.errorMessage.set(
+          error instanceof GraphQlUserError ? error.message : 'The country could not be deleted.',
+        );
       },
     });
   }

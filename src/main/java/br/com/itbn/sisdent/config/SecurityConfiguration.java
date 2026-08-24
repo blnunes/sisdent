@@ -50,26 +50,16 @@ public class SecurityConfiguration {
                                 "/api/auth/login",
                                 "/api/csrf",
                                 "/actuator/health",
-                                "/v3/api-docs/**",
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/swagger-resources/**",
-                                "/webjars/**",
-                                "/configuration/**",
                                 "/h2-console/**",
                                 "/i18n/**").permitAll()
-                        // Foundational catalogues are platform-wide, not organization-scoped.
-                        // They require platform-administrator authority.
-                        .requestMatchers("/api/specialities/**", "/api/countries/**")
-                        .hasAuthority("ROLE_PLATFORM_ADMIN")
                         // GraphQL contains both platform and organization-scoped reads. Individual
                         // resolvers delegate to services, which remain the authorization authority.
                         .requestMatchers("/graphql")
                         .authenticated()
                         // Single-page application shell, static assets, and client-side routes.
                         // The SPA bundle contains no secrets; data authorization is enforced on
-                        // the /api/** matchers above. Client-side route protection is handled by
-                        // the Angular authGuard/adminGuard.
+                        // the retained API matchers above. Client-side route protection is handled
+                        // by the Angular authGuard/adminGuard.
                         .requestMatchers(HttpMethod.GET,
                                 "/",
                                 "/index.html",

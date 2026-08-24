@@ -24,7 +24,8 @@ npm ci
 npm start
 ```
 
-Open `http://localhost:4200`. The development server proxies `/api` to port 8080. The local training credentials are:
+Open `http://localhost:4200`. The development server proxies GraphQL and the
+three retained authentication/bootstrap routes to port 8080. The local training credentials are:
 
 ```text
 Identification type: NATIONAL_ID
@@ -48,16 +49,14 @@ Password: admin
 
 ## GraphQL BFF boundary (Phase 10)
 
-GraphQL is the primary frontend API for migrated flows. Components call typed
+GraphQL is the frontend business API. Components call typed
 domain services, never the GraphQL client directly. `GraphQlClientService` owns
 the common request/error envelope and maps `errors[].extensions.code` and
 `correlationId` into the safe frontend error model; the regular authentication
 interceptor attaches the JWT Bearer token.
 
-Country and speciality reads/writes, clinic-unit reads/creation, practitioner
-workspace reads/writes, and patient edits have GraphQL adapters. Authentication,
-session bootstrap, health checks, and every workflow without a verified GraphQL
-replacement remain HTTP. The full route decision and deprecation window are in
+All business workflows use GraphQL. Authentication, session bootstrap, CSRF,
+health checks, and development-only H2 support remain HTTP. The final route inventory is in
 [`docs/REST_RETIREMENT_INVENTORY.md`](../docs/REST_RETIREMENT_INVENTORY.md).
 
 ## Validation

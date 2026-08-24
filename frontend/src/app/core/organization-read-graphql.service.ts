@@ -15,7 +15,7 @@ const PRACTITIONERS_QUERY = `query Practitioners($organizationId: ID!, $clinicUn
   }
 }`;
 
-/** Typed operations for the Phase 8 operational read boundary. Writes remain REST-only. */
+/** Typed read operations for organization-scoped GraphQL workflows. */
 @Injectable({ providedIn: 'root' })
 export class OrganizationReadGraphqlService {
   private readonly graphql = inject(GraphQlClientService);
@@ -31,7 +31,10 @@ export class OrganizationReadGraphqlService {
 
   listPractitioners(organizationId: string, clinicUnitId?: string): Observable<Practitioner[]> {
     return this.graphql
-      .query<{ practitioners: Practitioner[] }>(PRACTITIONERS_QUERY, { organizationId, clinicUnitId: clinicUnitId ?? null })
+      .query<{ practitioners: Practitioner[] }>(PRACTITIONERS_QUERY, {
+        organizationId,
+        clinicUnitId: clinicUnitId ?? null,
+      })
       .pipe(map(({ practitioners }) => practitioners));
   }
 }

@@ -1,6 +1,6 @@
 # Sisdent
 
-REST API built with Java 25, Spring Boot 4 and an in-memory H2 database.
+GraphQL API built with Java 25, Spring Boot 4 and an in-memory H2 database.
 
 The `frontend` directory contains an Angular 22 and Angular Material 22
 interface for authentication and administrative user management.
@@ -32,10 +32,10 @@ Open `http://localhost:4200` and use `NATIONAL_ID / ADMIN / admin`. See
 
 ## API surface
 
-GraphQL (`POST /graphql`) is the primary frontend API. Retained REST endpoints
-serve explicitly documented operational and not-yet-migrated workflows. The
-complete endpoint inventory, GraphQL replacements, and deprecation window are
-in [`docs/REST_RETIREMENT_INVENTORY.md`](docs/REST_RETIREMENT_INVENTORY.md).
+GraphQL (`POST /graphql`) is the sole business API. HTTP is limited to
+`POST /api/auth/login`, `GET /api/session`, `GET /api/csrf`, health checks, and
+development-only H2 support. The final inventory is in
+[`docs/REST_RETIREMENT_INVENTORY.md`](docs/REST_RETIREMENT_INVENTORY.md).
 
 Scheduling and clinical workflows are GraphQL-only.
 
@@ -44,9 +44,9 @@ Addresses are GraphQL-only through `addresses`, `addressesByPostalCode`,
 Catalogue translations are GraphQL-only through `catalogTranslations` and
 `replaceCatalogTranslations`.
 
-Country list, create, and update are GraphQL-only through `countries(page, locale)`,
-`createCountry(input, locale)`, and `updateCountry(id, input, locale)`. The retained
-country REST endpoints are continent lookup and delete. Country and speciality responses keep `name` as the canonical persisted value and
+Country operations are GraphQL-only through `countries(page, locale)`,
+`continents`, `createCountry(input, locale)`, `updateCountry(id, input, locale)`,
+and `deleteCountry`. Country and speciality responses keep `name` as the canonical persisted value and
 also expose a localized `displayName`. Send `Accept-Language: en`, `nl`, or
 `pt-PT`; unsupported languages fall back to English and custom speciality names
 fall back to their canonical value.
@@ -64,9 +64,8 @@ curl -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' \
   'http://localhost:8080/graphql'
 ```
 
-Dental procedures are nested resources owned by a speciality. They are
-returned, created, updated, and deactivated through the speciality endpoints;
-there is no standalone `/api/procedures` endpoint.
+Dental procedures are nested resources owned by a speciality and are managed
+through GraphQL; there is no standalone procedure endpoint.
 
 ## Clinical workspace
 
@@ -79,8 +78,8 @@ are never edited in place. Odontogram findings are likewise preserved: a
 correction first voids the finding with a reason and version, then creates a
 replacement that references the voided finding.
 
-The workspace loads clinic units and patients only through the scoped
-organization endpoints and surfaces forbidden scope, stale-version, finalized
+The workspace loads clinic units and patients only through scoped GraphQL
+operations and surfaces forbidden scope, stale-version, finalized
 record, and unavailable-patient errors to the user.
 
 To replace a patient's speciality assignments, send their IDs in the GraphQL

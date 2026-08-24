@@ -14,7 +14,10 @@ import {
 import { CatalogDisplayNameService } from '../../core/catalog-display-name.service';
 import { SpecialityCatalogGraphqlService } from '../../core/speciality-catalog-graphql.service';
 import { GraphQlUserError } from '../../core/graphql-client.service';
-import { CatalogueMutationGraphqlService, SpecialityWrite } from '../../core/catalogue-mutation-graphql.service';
+import {
+  CatalogueMutationGraphqlService,
+  SpecialityWrite,
+} from '../../core/catalogue-mutation-graphql.service';
 import { inject } from '@angular/core';
 
 const COLUMNS: readonly DataTableColumn[] = [
@@ -42,7 +45,6 @@ export class SpecialitiesComponent extends ResourceListController {
   readonly columns = COLUMNS;
   constructor() {
     super({
-      endpoint: () => '',
       maintainPermission: 'MAINTAIN_SPECIALITIES',
       columns: COLUMNS,
       filters: FILTERS,
@@ -59,35 +61,42 @@ export class SpecialitiesComponent extends ResourceListController {
     this.loading.set(true);
     this.error.set(false);
     this.errorMessage.set('');
-    this.specialitiesGraphql.list({
-      page: this.page(),
-      size: this.pageSize(),
-      sort: this.sort(),
-      direction: this.sortDirection(),
-      filter: this.filterValues(),
-    }).subscribe({
-      next: (response) => {
-        this.records.set(response.content);
-        this.totalElements.set(response.totalElements);
-        this.loading.set(false);
-      },
-      error: (error: unknown) => {
-        this.error.set(true);
-        this.errorMessage.set(error instanceof GraphQlUserError
-          ? error.message : 'The speciality catalogue could not be loaded.');
-        this.loading.set(false);
-      },
-    });
+    this.specialitiesGraphql
+      .list({
+        page: this.page(),
+        size: this.pageSize(),
+        sort: this.sort(),
+        direction: this.sortDirection(),
+        filter: this.filterValues(),
+      })
+      .subscribe({
+        next: (response) => {
+          this.records.set(response.content);
+          this.totalElements.set(response.totalElements);
+          this.loading.set(false);
+        },
+        error: (error: unknown) => {
+          this.error.set(true);
+          this.errorMessage.set(
+            error instanceof GraphQlUserError
+              ? error.message
+              : 'The speciality catalogue could not be loaded.',
+          );
+          this.loading.set(false);
+        },
+      });
   }
   protected override edit(record: ResourceRecord): void {
     this.openSpecialityEditor(record);
   }
-  protected override save(record: ResourceRecord | undefined, body: unknown): void {
+  protected save(record: ResourceRecord | undefined, body: unknown): void {
     this.mutations.saveSpeciality(record as never, body as SpecialityWrite).subscribe({
       next: () => this.load(),
       error: (error: unknown) => {
         this.error.set(true);
-        this.errorMessage.set(error instanceof GraphQlUserError ? error.message : 'The speciality could not be saved.');
+        this.errorMessage.set(
+          error instanceof GraphQlUserError ? error.message : 'The speciality could not be saved.',
+        );
       },
     });
   }
@@ -100,7 +109,11 @@ export class SpecialitiesComponent extends ResourceListController {
       next: () => this.load(),
       error: (error: unknown) => {
         this.error.set(true);
-        this.errorMessage.set(error instanceof GraphQlUserError ? error.message : 'The speciality could not be deactivated.');
+        this.errorMessage.set(
+          error instanceof GraphQlUserError
+            ? error.message
+            : 'The speciality could not be deactivated.',
+        );
       },
     });
   }

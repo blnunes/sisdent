@@ -113,7 +113,6 @@ export class PatientsComponent extends ResourceListController {
 
   constructor() {
     super({
-      endpoint: () => '',
       maintainPermission: 'MAINTAIN_PATIENTS',
       columns: COLUMNS,
       filters: PATIENT_FILTERS,
@@ -151,32 +150,35 @@ export class PatientsComponent extends ResourceListController {
       direction: this.sortDirection(),
       filters: this.filterValues(),
     });
-    this.api.list(membership, {
-      page: {
-        page: this.page(),
-        size: this.pageSize(),
-        sort: this.sort(),
-        direction: this.sortDirection() === 'desc' ? 'DESC' : 'ASC',
-      },
-      filter: Object.fromEntries(
-        tableQuery.keys()
-          .filter((key) => !['page', 'size', 'sort', 'direction'].includes(key))
-          .map((key) => {
-            const value = tableQuery.get(key);
-            return [key, key === 'active' ? value === 'true' : value];
-          }),
-      ),
-    }).subscribe({
-      next: (response) => {
-        this.records.set(response.content);
-        this.totalElements.set(response.totalElements);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set(true);
-        this.loading.set(false);
-      },
-    });
+    this.api
+      .list(membership, {
+        page: {
+          page: this.page(),
+          size: this.pageSize(),
+          sort: this.sort(),
+          direction: this.sortDirection() === 'desc' ? 'DESC' : 'ASC',
+        },
+        filter: Object.fromEntries(
+          tableQuery
+            .keys()
+            .filter((key) => !['page', 'size', 'sort', 'direction'].includes(key))
+            .map((key) => {
+              const value = tableQuery.get(key);
+              return [key, key === 'active' ? value === 'true' : value];
+            }),
+        ),
+      })
+      .subscribe({
+        next: (response) => {
+          this.records.set(response.content);
+          this.totalElements.set(response.totalElements);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.error.set(true);
+          this.loading.set(false);
+        },
+      });
   }
   override updateAutocomplete(event: FilterAutocompleteEvent): void {
     const membership = this.auth.activeMembership();
@@ -184,13 +186,11 @@ export class PatientsComponent extends ResourceListController {
     const { filter, query } = event;
     this.filterDisplayValues.update((values) => ({ ...values, [filter.key]: query }));
     this.updateFilter({ key: filter.key, value: filter.selectionRequired ? '' : query });
-    this.api
-      .filterOptions(membership, filter.key, query)
-      .subscribe({
-        next: (options) =>
-          this.filterOptions.update((values) => ({ ...values, [filter.key]: options })),
-        error: () => this.filterOptions.update((values) => ({ ...values, [filter.key]: [] })),
-      });
+    this.api.filterOptions(membership, filter.key, query).subscribe({
+      next: (options) =>
+        this.filterOptions.update((values) => ({ ...values, [filter.key]: options })),
+      error: () => this.filterOptions.update((values) => ({ ...values, [filter.key]: [] })),
+    });
   }
   override create(): void {
     this.openEditor();
@@ -279,7 +279,11 @@ export class PatientsComponent extends ResourceListController {
             const membership = this.auth.activeMembership();
             if (!membership) return;
             const request = record
-              ? this.mutations.update(membership, String(record['globalId']), patientRequest(values) as Record<string, unknown>)
+              ? this.mutations.update(
+                  membership,
+                  String(record['globalId']),
+                  patientRequest(values) as Record<string, unknown>,
+                )
               : this.api.create(membership, patientRequest(values));
             request.subscribe({ next: () => this.load(), error: () => this.error.set(true) });
           }),
