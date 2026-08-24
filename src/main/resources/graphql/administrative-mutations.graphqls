@@ -15,6 +15,15 @@ type Mutation {
     createClinicUnit(organizationId: ID!, input: ClinicUnitMutationInput!): ClinicUnit!
     createPractitioner(organizationId: ID!, input: PractitionerMutationInput!): Practitioner!
     updatePractitioner(organizationId: ID!, practitionerId: ID!, input: PractitionerMutationInput!): Practitioner!
+    deactivatePractitioner(organizationId: ID!, practitionerId: ID!): Boolean!
+    createPlatformAccount(input: AccountCreateInput!): Account!
+    changeAccountLifecycle(accountId: ID!, input: AccountLifecycleInput!): Account!
+    changeAccountPlatformAdministrator(accountId: ID!, input: AccountPlatformAdministratorInput!): Account!
+    createOrganization(input: OrganizationInput!): Organization!
+    createMembership(organizationId: ID!, input: MembershipInput!): Membership!
+    grantMembership(organizationId: ID!, input: AccountMembershipInput!): Membership!
+    changeMembershipRole(organizationId: ID!, membershipId: ID!, input: MembershipRoleUpdateInput!): Membership!
+    revokeMembership(organizationId: ID!, membershipId: ID!, input: MembershipRevokeInput!): Boolean!
     updatePatient(organizationId: ID!, clinicUnitId: ID, patientId: ID!, input: PatientUpdateMutationInput!): PatientMutationResult!
 }
 
@@ -37,6 +46,14 @@ input PractitionerMutationInput {
     accountId: ID
     specialityIds: [ID!]!
 }
+input AccountCreateInput { displayName: String!, email: String!, password: String! }
+input AccountLifecycleInput { active: Boolean!, version: Int! }
+input AccountPlatformAdministratorInput { platformAdministrator: Boolean!, version: Int! }
+input OrganizationInput { name: String! }
+input MembershipInput { email: String!, displayName: String!, password: String!, clinicUnitId: ID, role: MembershipRole! }
+input AccountMembershipInput { email: String!, clinicUnitId: ID, role: MembershipRole! }
+input MembershipRoleUpdateInput { role: MembershipRole!, version: Int! }
+input MembershipRevokeInput { version: Int! }
 input PatientAddressMutationInput {
     street: String!, district: String, city: String!, additionalInfo: String, block: String, postalCode: String!
     administrativeDivision: PatientAdministrativeDivisionMutationInput, countryCode: String!

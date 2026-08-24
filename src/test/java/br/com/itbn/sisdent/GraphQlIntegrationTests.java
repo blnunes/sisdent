@@ -395,6 +395,52 @@ class GraphQlIntegrationTests {
                 .andExpect(jsonPath("$.data.clinicUnits[0].id").value(clinicUnitId));
     }
 
+    @Test
+    void accountManagementGraphQlMutationsValidateAndEnforceOptimisticLocking() throws Exception {
+        String authorization = bearer(emailLogin("admin@sisdent.local", "admin"));
+        String response = mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { createPlatformAccount(input: { displayName: \\"Phase Three\\", email: \\"phase-three@sisdent.test\\", password: \\"safe-password\\" }) { id active version } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.createPlatformAccount.active").value(true))
+                .andReturn().getResponse().getContentAsString();
+        String accountId = jsonMapper.readTree(response).at("/data/createPlatformAccount/id").asText();
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { changeAccountLifecycle(accountId: \\"%s\\", input: { active: false, version: 0 }) { active } }" }
+                                """.formatted(accountId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.changeAccountLifecycle.active").value(false));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { changeAccountLifecycle(accountId: \\"%s\\", input: { active: true, version: 0 }) { id } }" }
+                                """.formatted(accountId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.changeAccountLifecycle").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("CONFLICT"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { createPlatformAccount(input: { displayName: \\"\\", email: \\"invalid\\", password: \\"short\\" }) { id } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.createPlatformAccount").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
+    }
+
     private String organizationId(String name) {
         return organizationRepository.findByName(name).orElseThrow().getGlobalId().toString();
     }

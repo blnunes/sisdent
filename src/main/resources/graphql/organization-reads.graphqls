@@ -1,4 +1,10 @@
 extend type Query {
+    currentAccount: Account!
+    platformAccounts(page: AccountPageInput, filter: String): AccountPage!
+    platformAccount(accountId: ID!): Account!
+    organizationAccounts(organizationId: ID!, page: AccountPageInput, filter: String): AccountPage!
+    organizationAccount(organizationId: ID!, accountId: ID!): Account!
+    platformOrganizations: [Organization!]!
     """Active clinic units visible in an authorized organization scope."""
     clinicUnits(organizationId: ID!, clinicUnitId: ID): [ClinicUnit!]!
     """Active and inactive practitioners visible to authorized practitioner managers."""
@@ -20,3 +26,10 @@ type Practitioner {
     active: Boolean!
     specialityIds: [ID!]!
 }
+
+type AccountPage { content: [Account!]!, page: Int!, size: Int!, totalElements: Int!, totalPages: Int! }
+type Account { id: ID!, displayName: String!, email: String!, active: Boolean!, platformAdministrator: Boolean!, version: Int!, memberships: [Membership!]! }
+type Membership { id: ID!, organizationId: ID!, organizationName: String!, clinicUnitId: ID, clinicUnitName: String, role: MembershipRole!, version: Int! }
+type Organization { id: ID!, name: String!, active: Boolean! }
+input AccountPageInput { page: Int, size: Int, sort: String, direction: SortDirection }
+enum MembershipRole { ORGANIZATION_ADMIN MANAGER READ_ONLY PRACTITIONER_MANAGER APPOINTMENT_MANAGER APPOINTMENT_READER CLINICAL_READER CLINICAL_AUTHOR CLINICAL_MANAGER }
