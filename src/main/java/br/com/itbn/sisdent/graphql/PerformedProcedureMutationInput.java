@@ -18,7 +18,7 @@ public record PerformedProcedureMutationInput(
     PerformedProcedureRequest toRequest() {
         try {
             return new PerformedProcedureRequest(dentalProcedureId, Instant.parse(performedAt), administrativeNote);
-        } catch (DateTimeParseException exception) {
+        } catch (DateTimeParseException _) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
         }
     }

@@ -8,22 +8,16 @@ test.describe('Clinical workspace', () => {
     const adminToken = await loginApi(request, 'admin@sisdent.local', 'admin');
     const session = await apiJson(request, '/api/session', adminToken);
     const organizationId = session.memberships[0].organizationId;
-    const clinics = await apiJson(request, `/api/organizations/${organizationId}/clinic-units`, adminToken);
-    const clinicUnitId = await clinicWithPatients(request, organizationId, clinics, adminToken);
+    const clinics = await graphQl(request, adminToken, `query { clinicUnits(organizationId: "${organizationId}") { id } }`);
+    const clinicUnitId = await clinicWithPatients(request, organizationId, clinics.clinicUnits, adminToken);
     const email = `e2e-clinical-manager-${Date.now()}@example.test`;
-    const created = await request.post(`${backendUrl}/api/platform/accounts`, {
-      headers: bearer(adminToken), data: { displayName: 'E2E Clinical Manager', email, password },
-    });
-    expect(created.status()).toBe(201);
-    const membership = await request.post(`${backendUrl}/api/organizations/${organizationId}/account-memberships`, {
-      headers: bearer(adminToken), data: { email, clinicUnitId, role: 'CLINICAL_MANAGER' },
-    });
-    expect(membership.status()).toBe(201);
+    await graphQl(request, adminToken, `mutation { createPlatformAccount(input: { displayName: "E2E Clinical Manager", email: "${email}", password: "${password}" }) { id } }`);
+    await graphQl(request, adminToken, `mutation { grantMembership(organizationId: "${organizationId}", input: { email: "${email}", clinicUnitId: "${clinicUnitId}", role: CLINICAL_MANAGER }) { id } }`);
 
     const managerToken = await loginApi(request, email, password);
-    const patients = await apiJson(request, `/api/organizations/${organizationId}/patients?clinicUnitId=${clinicUnitId}&size=1`, managerToken);
-    expect(patients.content.length).toBeGreaterThan(0);
-    const patient = patients.content[0];
+    const patients = await graphQl(request, managerToken, `query { patients(organizationId: "${organizationId}", clinicUnitId: "${clinicUnitId}", page: { page: 0, size: 1 }) { content { globalId name } } }`);
+    expect(patients.patients.content.length).toBeGreaterThan(0);
+    const patient = patients.patients.content[0];
 
     await loginThroughUi(page, email, password);
     await page.goto('/clinical');
@@ -33,6 +27,9 @@ test.describe('Clinical workspace', () => {
 
     await page.getByRole('textbox', { name: 'Clinical narrative', exact: true }).fill('Initial E2E clinical note');
     await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+    // The component reloads its clinical state after each mutation. The focused
+    // backend integration test verifies the mutation payload contract; this E2E
+    // test verifies the resulting workflow state instead of a discarded response body.
     await expect(page.getByText('Initial E2E clinical note', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Edit draft', exact: true }).click();
     await page.getByRole('textbox', { name: 'Clinical narrative', exact: true }).fill('Updated E2E clinical note');
@@ -46,15 +43,17 @@ test.describe('Clinical workspace', () => {
     await page.getByRole('button', { name: 'Create final amendment', exact: true }).click();
     await expect(page.getByText('E2E traceable amendment', { exact: true })).toBeVisible();
 
-    await page.getByRole('textbox', { name: 'FDI tooth', exact: true }).fill('11');
+    await page.getByRole('combobox', { name: 'FDI tooth', exact: true }).click();
+    await page.getByRole('option', { name: '11', exact: true }).click();
     await page.getByRole('combobox', { name: 'Condition', exact: true }).click();
-    await page.getByRole('option', { name: 'CARIES', exact: true }).click();
+    await page.getByRole('option', { name: 'Caries', exact: true }).click();
     await page.getByRole('button', { name: 'Record finding', exact: true }).click();
     await expect(page.getByText('CARIES', { exact: true })).toBeVisible();
     await page.getByRole('textbox', { name: 'Reason for voiding', exact: true }).fill('E2E correction');
     await page.getByRole('button', { name: 'Void 11', exact: true }).click();
+    await expect(page.getByText('11 · CARIES — Voided: E2E correction', { exact: true })).toBeVisible();
     await page.getByRole('combobox', { name: 'Condition', exact: true }).click();
-    await page.getByRole('option', { name: 'RESTORATION', exact: true }).click();
+    await page.getByRole('option', { name: 'Restoration', exact: true }).click();
     await page.getByRole('button', { name: 'Record finding', exact: true }).click();
     await expect(page.getByText('RESTORATION', { exact: true })).toBeVisible();
 
@@ -64,7 +63,13 @@ test.describe('Clinical workspace', () => {
 });
 
 async function loginApi(request: APIRequestContext, email: string, userPassword: string): Promise<string> {
-  const response = await request.post(`${backendUrl}/api/auth/login`, { data: { email, password: userPassword } });
+  const csrf = await request.get(`${backendUrl}/api/csrf`);
+  expect(csrf.ok()).toBeTruthy();
+  const { headerName, token } = await csrf.json();
+  const response = await request.post(`${backendUrl}/api/auth/login`, {
+    headers: { [headerName]: token },
+    data: { email, password: userPassword },
+  });
   expect(response.status(), `login for ${email}`).toBe(200);
   return (await response.json()).accessToken as string;
 }
@@ -85,9 +90,8 @@ async function graphQl(request: APIRequestContext, token: string, query: string)
 
 async function clinicWithPatients(request: APIRequestContext, organizationId: string, clinics: any[], token: string): Promise<string> {
   for (const clinic of clinics) {
-    const patients = await apiJson(request,
-      `/api/organizations/${organizationId}/patients?clinicUnitId=${clinic.id}&size=1`, token);
-    if (patients.content.length > 0) return clinic.id;
+    const patients = await graphQl(request, token, `query { patients(organizationId: "${organizationId}", clinicUnitId: "${clinic.id}", page: { page: 0, size: 1 }) { content { globalId } } }`);
+    if (patients.patients.content.length > 0) return clinic.id;
   }
   throw new Error(`No seeded patient is available in organization ${organizationId}`);
 }

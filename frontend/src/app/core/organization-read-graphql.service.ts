@@ -9,8 +9,8 @@ const CLINIC_UNITS_QUERY = `query ClinicUnits($organizationId: ID!, $clinicUnitI
   }
 }`;
 
-const PRACTITIONERS_QUERY = `query Practitioners($organizationId: ID!) {
-  practitioners(organizationId: $organizationId) {
+const PRACTITIONERS_QUERY = `query Practitioners($organizationId: ID!, $clinicUnitId: ID) {
+  practitioners(organizationId: $organizationId, clinicUnitId: $clinicUnitId) {
     globalId displayName registrationNumber accountId active specialityIds
   }
 }`;
@@ -29,9 +29,9 @@ export class OrganizationReadGraphqlService {
       .pipe(map(({ clinicUnits }) => clinicUnits));
   }
 
-  listPractitioners(organizationId: string): Observable<Practitioner[]> {
+  listPractitioners(organizationId: string, clinicUnitId?: string): Observable<Practitioner[]> {
     return this.graphql
-      .query<{ practitioners: Practitioner[] }>(PRACTITIONERS_QUERY, { organizationId })
+      .query<{ practitioners: Practitioner[] }>(PRACTITIONERS_QUERY, { organizationId, clinicUnitId: clinicUnitId ?? null })
       .pipe(map(({ practitioners }) => practitioners));
   }
 }

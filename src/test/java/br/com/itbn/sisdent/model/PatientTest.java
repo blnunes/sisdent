@@ -2,6 +2,7 @@ package br.com.itbn.sisdent.model;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -80,7 +81,9 @@ class PatientTest {
                 mock(Address.class),
                 List.of(speciality)));
 
-        assertThatThrownBy(() -> patient.getSpecialities().add(mock(Speciality.class)))
+        Set<Speciality> specialities = patient.getSpecialities();
+        Speciality anotherSpeciality = mock(Speciality.class);
+        assertThatThrownBy(() -> specialities.add(anotherSpeciality))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 

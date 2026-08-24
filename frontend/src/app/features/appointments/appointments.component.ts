@@ -162,7 +162,7 @@ export class AppointmentsComponent {
           this.loading.set(false);
         },
       });
-    this.organizationReads.listPractitioners(membership.organizationId).subscribe({
+    this.organizationReads.listPractitioners(membership.organizationId, membership.clinicUnitId).subscribe({
       next: (records) =>
         this.practitioners.set(records.filter((practitioner) => practitioner.active)),
       error: () => this.error.set(this.translate.instant('APPOINTMENTS.ERROR.LOAD_OPTIONS')),
@@ -214,7 +214,7 @@ export class AppointmentsComponent {
       },
       error: (response) =>
         this.error.set(
-          response.status === 409
+          isSchedulingConflict(response)
             ? this.translate.instant('APPOINTMENTS.ERROR.CONFLICT')
             : this.translate.instant(
                 this.editingAppointment
@@ -254,7 +254,7 @@ export class AppointmentsComponent {
         next: () => this.load(),
         error: (response) =>
           this.error.set(
-            response.status === 409
+            isSchedulingConflict(response)
               ? this.translate.instant('APPOINTMENTS.ERROR.CONFLICT')
               : this.translate.instant('APPOINTMENTS.ERROR.TRANSITION'),
           ),
@@ -304,4 +304,10 @@ export class AppointmentsComponent {
     date.setHours(hours, minutes, 0, 0);
     return date;
   }
+}
+
+function isSchedulingConflict(response: { code?: string; status?: number }): boolean {
+  return response.code === 'SCHEDULING.PRACTITIONER_UNAVAILABLE'
+    || response.code === 'CONFLICT'
+    || response.status === 409;
 }

@@ -158,7 +158,14 @@ export class PatientsComponent extends ResourceListController {
         sort: this.sort(),
         direction: this.sortDirection() === 'desc' ? 'DESC' : 'ASC',
       },
-      filter: Object.fromEntries(tableQuery.keys().filter((key) => !['page', 'size', 'sort', 'direction'].includes(key)).map((key) => [key, tableQuery.get(key)])),
+      filter: Object.fromEntries(
+        tableQuery.keys()
+          .filter((key) => !['page', 'size', 'sort', 'direction'].includes(key))
+          .map((key) => {
+            const value = tableQuery.get(key);
+            return [key, key === 'active' ? value === 'true' : value];
+          }),
+      ),
     }).subscribe({
       next: (response) => {
         this.records.set(response.content);

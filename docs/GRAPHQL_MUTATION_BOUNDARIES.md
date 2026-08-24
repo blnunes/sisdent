@@ -6,9 +6,12 @@ GraphQL replaces REST for all business workflows under the Phase 10 total-migrat
 | --- | --- | --- | --- |
 | Create/update country catalogue | `createCountry`, `updateCountry` | `CountryService` | REST removed; delete awaits mutation |
 | Create/update speciality catalogue | `createSpeciality`, `updateSpeciality` | `SpecialityService` | REST removed; deactivate awaits mutation |
-| Create clinic unit | `createClinicUnit` | `OrganizationService` | Migrate all frontend consumers, then remove REST |
-| Create/update practitioner | `createPractitioner`, `updatePractitioner` | `PractitionerService` | Migrate all frontend consumers; deactivate awaits mutation |
+| Manage platform accounts and lifecycle | `createPlatformAccount`, `changeAccountLifecycle`, `changeAccountPlatformAdministrator` | `AccountManagementService` | REST removed; GraphQL-only |
+| Create organization and clinic unit | `createOrganization`, `createClinicUnit` | `OrganizationService` | REST removed; GraphQL-only |
+| Manage memberships | `createMembership`, `grantMembership`, `changeMembershipRole`, `revokeMembership` | `OrganizationService` | REST removed; GraphQL-only |
+| Create/update/deactivate practitioner | `createPractitioner`, `updatePractitioner`, `deactivatePractitioner` | `PractitionerService` | REST removed; GraphQL-only |
 | Update an organization-scoped patient | `updatePatient` | `OrganizationPatientService` | REST removed; create/deactivate await mutations |
+| Schedule, reschedule, transition, procedure and availability workflows | `createAppointment`, `rescheduleAppointment`, `transitionAppointment`, `createPerformedProcedure`, `voidPerformedProcedure`, `appointmentAvailability` | `AppointmentService`, `PerformedProcedureService` | REST removed; GraphQL-only |
 
 The Angular write services issue typed GraphQL inputs and refresh the existing GraphQL read state after success. The shared JWT interceptor still adds the Bearer token; the GraphQL endpoint requires authentication and services enforce platform, organization, clinic-unit and membership scope. Error messages and stable `extensions.code` values are surfaced through the safe GraphQL client error model, with the correlation ID available for support.
 
@@ -16,9 +19,9 @@ Resolvers do not access repositories, open transactions, or reimplement validati
 
 ## Migration backlog
 
-Catalogue/practitioner deletion or deactivation, catalogue-translation replacement,
-patient intake/deactivation, membership and account lifecycle, scheduling,
-clinical records, performed procedures and odontogram updates are pending GraphQL
-work. They are not permanent REST exceptions.
+Catalogue deletion or deactivation and any future workflow are not permanent
+REST exceptions. New business operations require a typed GraphQL contract and
+the same service-layer validation, authorization and conflict guarantees.
 
-High-risk workflows are deliberately deferred: clinical finalization and amendments, odontogram replacement, account lifecycle, all destructive operations, and patient intake/deactivation. A later phase must first approve their version/conflict contracts, tenant-isolation tests, rollback coverage and UX recovery behavior before exposing mutations.
+High-risk mutations use explicit inputs and preserve service-layer version,
+tenant-isolation, rollback and UX-recovery guarantees.

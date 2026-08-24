@@ -58,7 +58,8 @@ public class ClinicalRecordService {
         authorization.requireClinicalAuthor(org, r.clinicUnitId());
         ClinicalEncounter e = require(org, id);
         scope(e, r.clinicUnitId());
-        if (e.getStatus() != EncounterStatus.DRAFT || !e.getCreatedBy().equals(current.require().getGlobalId().toString()))
+        if (e.getStatus() != EncounterStatus.DRAFT
+                || !java.util.Objects.equals(e.getCreatedBy(), current.require().getGlobalId().toString()))
             throw state();
         version(e.getVersion(), r.version());
         Parts p = parts(org, r.clinicUnitId(), r.patientId(), r.appointmentId(), r.practitionerId(), r.careAt(), r.careTimezone());

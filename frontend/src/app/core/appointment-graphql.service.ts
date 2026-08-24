@@ -12,6 +12,8 @@ export type AppointmentInput = {
   schedulingTimezone: string;
 };
 
+export type AppointmentAvailability = { available: boolean };
+
 type AppointmentStatus = Appointment['status'];
 
 /** Typed scheduling transport. Authorization and scheduling validation remain server-owned. */
@@ -62,5 +64,14 @@ export class AppointmentGraphqlService {
       }`,
       { organizationId, clinicUnitId, appointmentId, status },
     ).pipe(map(({ transitionAppointment }) => transitionAppointment));
+  }
+
+  availability(organizationId: string, clinicUnitId: string, practitionerId: string, startAt: string, endAt: string): Observable<AppointmentAvailability> {
+    return this.graphql.query<{ appointmentAvailability: AppointmentAvailability }>(
+      `query AppointmentAvailability($organizationId: ID!, $clinicUnitId: ID!, $practitionerId: ID!, $startAt: String!, $endAt: String!) {
+        appointmentAvailability(organizationId: $organizationId, clinicUnitId: $clinicUnitId, practitionerId: $practitionerId, startAt: $startAt, endAt: $endAt) { available }
+      }`,
+      { organizationId, clinicUnitId, practitionerId, startAt, endAt },
+    ).pipe(map(({ appointmentAvailability }) => appointmentAvailability));
   }
 }

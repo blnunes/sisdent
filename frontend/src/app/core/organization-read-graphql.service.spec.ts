@@ -25,9 +25,9 @@ describe('OrganizationReadGraphqlService', () => {
     const failure = vi.fn();
     TestBed.inject(OrganizationReadGraphqlService).listPractitioners('organization-1').subscribe({ error: failure });
     const request = http.expectOne('/graphql');
-    expect(request.request.body.query).toContain('query Practitioners($organizationId: ID!)');
+    expect(request.request.body.query).toContain('query Practitioners($organizationId: ID!, $clinicUnitId: ID)');
     expect(request.request.body.query).not.toContain('password');
-    expect(request.request.body.variables).toEqual({ organizationId: 'organization-1' });
+    expect(request.request.body.variables).toEqual({ organizationId: 'organization-1', clinicUnitId: null });
     request.flush({ errors: [{ message: 'You are not allowed to access this resource.', extensions: { code: 'AUTHORIZATION.DENIED', correlationId: 'correlation-42' } }] });
     expect(failure).toHaveBeenCalledWith(expect.objectContaining({ code: 'AUTHORIZATION.DENIED', correlationId: 'correlation-42' }));
   });

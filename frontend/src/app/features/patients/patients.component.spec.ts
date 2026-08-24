@@ -65,6 +65,18 @@ describe('PatientsComponent country data', () => {
     ]);
   });
 
+  it('sends the active patient filter as a GraphQL Boolean', () => {
+    const component = TestBed.runInInjectionContext(() => new PatientsComponent());
+    component.updateFilter({ key: 'active', value: 'false' });
+    component.load();
+
+    const request = TestBed.inject(HttpTestingController).expectOne((candidate) =>
+      candidate.url === '/graphql' && candidate.body.query.includes('query Patients'),
+    );
+    expect(request.request.body.variables.filter).toEqual({ active: false });
+    request.flush({ data: { patients: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } } });
+  });
+
   it('loads patient editor country data through the country GraphQL query', () => {
     const component = TestBed.runInInjectionContext(() => new PatientsComponent());
 

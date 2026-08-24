@@ -23,7 +23,7 @@ public record PatientFilterInput(Long id, String name, String birthDate, Boolean
         }
         try {
             return LocalDate.parse(birthDate);
-        } catch (DateTimeParseException exception) {
+        } catch (DateTimeParseException _) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
         }
     }

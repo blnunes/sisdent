@@ -34,7 +34,7 @@ Permanent HTTP exceptions are only `POST /api/auth/login`, `GET /api/session`,
 
 ## Phase 1 — catalogue completion
 
-Status: **Complete**
+Status: **In progress**
 
 - [x] Remove country REST routes; provide `countries`, `continents`,
   `createCountry`, `updateCountry`, and `deleteCountry` through GraphQL.
@@ -69,13 +69,15 @@ Exit: account settings screen has no `/api/account/settings/**` business call.
 
 ## Phase 3 — accounts and organization administration
 
-Status: **Planned**
+Status: **Complete**
 
-- [ ] Migrate account management, platform organizations, clinic units,
+- [x] Migrate account management, platform organizations, clinic units,
   memberships and practitioners to typed GraphQL services.
-- [ ] Cover platform/organization scope, lifecycle and optimistic-lock failures.
-- [ ] Remove `AccountManagementController`, `OrganizationController` and
+- [x] Cover platform/organization scope, lifecycle and optimistic-lock failures.
+- [x] Remove `AccountManagementController`, `OrganizationController` and
   `PractitionerController` mappings after consumers migrate.
+
+Verified: SonarCloud Quality Gate passed with new-code coverage at or above 80%.
 
 ## Phase 4 — patient workflow
 
@@ -88,16 +90,16 @@ Status: **Complete**
 
 ## Phase 5 — scheduling
 
-Status: **In progress**
+Status: **Complete**
 
-- [ ] Add appointment queries, availability, lifecycle and performed-procedure
+- [x] Add appointment queries, availability, lifecycle and performed-procedure
   GraphQL operations; migrate home and appointments components.
-- [ ] Cover role matrix, timing conflicts, idempotency and rollback.
-- [ ] Remove `AppointmentController`.
+- [x] Cover role matrix, timing conflicts, idempotency and rollback.
+- [x] Remove `AppointmentController`.
 
 ## Phase 6 — clinical workflow
 
-Status: **In progress**
+Status: **Complete**
 
 - [x] Add encounter, amendment, finalization and odontogram GraphQL contracts;
   migrate `clinical-workspace.component.ts` away from direct `HttpClient` calls.
@@ -107,6 +109,9 @@ Status: **In progress**
 ## Phase 7 — final REST retirement
 
 Status: **Planned**
+
+Phase 7 requires a new repository-wide REST retirement inventory before any
+compatibility material or remaining mappings are removed.
 
 - [ ] Verify no business `/api/**` calls or controller mappings remain.
 - [ ] Remove temporary OpenAPI/proxy compatibility material and update all

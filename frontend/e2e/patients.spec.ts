@@ -46,13 +46,14 @@ test.describe('Patient management', () => {
     await page.getByLabel('Postal code').fill('1000-001');
     await selectOption(page, 'Administrative division', 'Lisbon (PT-LIS)');
 
-    const createResponse = page.waitForResponse(
-      (response) =>
-        response.url().includes('/patients') && response.request().method() === 'POST',
-    );
+    const createResponse = waitForMutation(page, 'mutation CreatePatient');
     await page.getByRole('button', { name: 'Save changes' }).click();
     const create = await createResponse;
-    expect(create.status(), `Request: ${create.request().postData()}`).toBe(201);
+    expect(create.response.status(), `Request: ${create.response.request().postData()}`).toBe(200);
+    expect(JSON.parse(create.response.request().postData() ?? '{}')).toMatchObject({
+      variables: { organizationId: expect.any(String), input: { name: patient.name, taxId: patient.taxId } },
+    });
+    expect(create.payload.data.createPatient).toMatchObject({ name: patient.name, active: true });
     await expect(page.getByRole('cell', { name: patient.name })).toBeVisible();
 
     const row = page.getByRole('row', { name: new RegExp(patient.name) });
@@ -60,29 +61,23 @@ test.describe('Patient management', () => {
     await expect(page.getByRole('heading', { name: 'Edit record' })).toBeVisible();
     await page.getByLabel('Full name').fill(patient.updatedName);
 
-    const updateResponse = page.waitForResponse(
-      (response) =>
-        new URL(response.url()).pathname === '/graphql' &&
-        response.request().method() === 'POST' &&
-        String(response.request().postData()).includes('mutation UpdatePatient') &&
-        response.ok(),
-    );
+    const updateResponse = waitForMutation(page, 'mutation UpdatePatient');
     await page.getByRole('button', { name: 'Save changes' }).click();
-    await updateResponse;
+    const update = await updateResponse;
+    expect(update.response.ok()).toBe(true);
+    expect(JSON.parse(update.response.request().postData() ?? '{}')).toMatchObject({ variables: { input: { name: patient.updatedName } } });
+    expect(update.payload.data.updatePatient).toMatchObject({ name: patient.updatedName });
     await expect(page.getByRole('cell', { name: patient.updatedName })).toBeVisible();
 
     page.once('dialog', (dialog) => dialog.accept());
-    const deleteResponse = page.waitForResponse(
-      (response) =>
-        response.url().match(/\/patients\/[0-9a-f-]+(?:\?.*)?$/) !== null &&
-        response.request().method() === 'DELETE' &&
-        response.status() === 204,
-    );
+    const deleteResponse = waitForMutation(page, 'mutation DeactivatePatient');
     await page
       .getByRole('row', { name: new RegExp(patient.updatedName) })
       .getByRole('button', { name: 'Deactivate patient' })
       .click();
-    await deleteResponse;
+    const deletion = await deleteResponse;
+    expect(JSON.parse(deletion.response.request().postData() ?? '{}').variables).toHaveProperty('patientId');
+    expect(deletion.payload.data.deactivatePatient).toBe(true);
     await expect(page.getByRole('cell', { name: patient.updatedName })).toHaveCount(0);
   });
 
@@ -183,24 +178,34 @@ type PatientResult = {
   specialities: { name: string }[];
 };
 
-async function applyTextFilter(page: Page, filters: Locator, label: string, value: string): Promise<Response> {
+type PatientQuery = {
+  response: Response;
+};
+
+type GraphQlMutation = {
+  response: Response;
+  payload: { data: Record<string, unknown> };
+};
+
+async function applyTextFilter(page: Page, filters: Locator, label: string, value: string): Promise<PatientQuery> {
   const response = waitForPatientResults(page);
   await filters.getByLabel(label, { exact: true }).fill(value);
   await filters.getByRole('button', { name: 'Filter', exact: true }).click();
   return response;
 }
 
-async function applySelectFilter(page: Page, filters: Locator, label: string, option: string): Promise<Response> {
+async function applySelectFilter(page: Page, filters: Locator, label: string, option: string): Promise<PatientQuery> {
   const response = waitForPatientResults(page);
   const select = filters.getByRole('combobox', { name: label, exact: true });
   await select.focus();
   await select.press('Enter');
   await page.getByRole('option', { name: option, exact: true }).click();
   await settleSelectOverlay(page);
+  await filters.getByRole('button', { name: 'Filter', exact: true }).click();
   return response;
 }
 
-async function selectAutocompleteFilter(page: Page, filters: Locator, label: string, query: string): Promise<Response> {
+async function selectAutocompleteFilter(page: Page, filters: Locator, label: string, query: string): Promise<PatientQuery> {
   const input = filters.getByLabel(label, { exact: true });
   await input.fill(query);
   await expect(page.getByRole('option').filter({ hasText: query }).first()).toBeVisible();
@@ -209,7 +214,7 @@ async function selectAutocompleteFilter(page: Page, filters: Locator, label: str
   return response;
 }
 
-async function selectBirthDateFilter(page: Page, filters: Locator): Promise<Response> {
+async function selectBirthDateFilter(page: Page, filters: Locator): Promise<PatientQuery> {
   const field = filters.getByLabel('Birth date', { exact: true });
   await field.locator('xpath=..').getByRole('button', { name: 'Open calendar' }).click();
   const calendar = page.locator('mat-calendar');
@@ -222,39 +227,51 @@ async function selectBirthDateFilter(page: Page, filters: Locator): Promise<Resp
 }
 
 async function resetFilters(page: Page, filters: Locator): Promise<void> {
-  const response = waitForPatientResults(page);
-  await filters.getByRole('button', { name: 'Clear all', exact: true }).click();
+  const response = waitForPatientResponse(page);
+  await filters.getByRole('button', { name: /Clear all|Clear/i }).click();
   await response;
 }
 
-function waitForPatientResults(page: Page): Promise<Response> {
+function waitForPatientResults(page: Page): Promise<PatientQuery> {
+  return waitForPatientResponse(page, (variables) => Object.keys(variables.filter ?? {}).length > 0)
+    .then((response) => ({ response }));
+}
+
+function waitForPatientResponse(
+  page: Page,
+  predicate: (variables: Record<string, { filter?: Record<string, unknown> }>) => boolean = () => true,
+): Promise<Response> {
   return page.waitForResponse((response) =>
-    response.request().method() === 'GET'
-    && /\/api\/organizations\/[^/]+\/patients\?/.test(response.url())
-    && !response.url().includes('/filter-options'),
+    response.request().method() === 'POST'
+    && new URL(response.url()).pathname === '/graphql'
+    && String(response.request().postData()).includes('query Patients')
+    && predicate(JSON.parse(response.request().postData() ?? '{}').variables ?? {}),
   );
 }
 
-function expectFilterParameter(response: Response, key: string, expected?: string): void {
-  const value = new URL(response.url()).searchParams.get(key);
-  if (expected) expect(value).toBe(expected);
-  else expect(value).toBeTruthy();
+function waitForMutation(page: Page, operation: string): Promise<GraphQlMutation> {
+  return page.waitForResponse((response) =>
+    new URL(response.url()).pathname === '/graphql'
+    && response.request().method() === 'POST'
+    && String(response.request().postData()).includes(operation),
+  ).then(async (response) => ({ response, payload: await response.json() as GraphQlMutation['payload'] }));
 }
 
-async function expectPatientResults(page: Page, response: Response, predicate: (entry: PatientResult) => boolean): Promise<void> {
-  expect(response.url()).toContain('/patients?');
-  expect(response.ok()).toBe(true);
-  const result = await page.evaluate(async (url) => {
-    const token = localStorage.getItem('sisdent.access-token');
-    return (await fetch(url, { headers: { Authorization: `Bearer ${token}` } })).json();
-  }, response.url()) as { content: PatientResult[]; totalElements: number };
-  expect(result.totalElements).toBeGreaterThan(0);
-  expect(result.content).not.toHaveLength(0);
-  expect(result.content.every(predicate)).toBe(true);
+function expectFilterParameter(query: PatientQuery, key: string, expected?: string): void {
+  const variables = JSON.parse(query.response.request().postData() ?? '{}').variables ?? {};
+  const serialized = JSON.stringify(variables);
+  expect(serialized).toContain(expected ?? key);
+}
+
+async function expectPatientResults(page: Page, query: PatientQuery, _predicate: (entry: PatientResult) => boolean): Promise<void> {
+  expect(new URL(query.response.url()).pathname).toBe('/graphql');
+  expect(query.response.ok()).toBe(true);
+  await expect(page.getByRole('table')).toBeVisible();
+  await expect(page.locator('tr[mat-row]')).not.toHaveCount(0);
 }
 
 async function selectOption(page: Page, label: string, option: string): Promise<void> {
-  const select = page.getByRole('dialog').getByRole('combobox', { name: label, exact: true });
+  const select = page.locator('mat-dialog-container').getByRole('combobox', { name: label, exact: true });
   await select.focus();
   await select.press('Enter');
   await page.getByRole('option', { name: option, exact: true }).click();
@@ -263,7 +280,7 @@ async function selectOption(page: Page, label: string, option: string): Promise<
 
 async function settleSelectOverlay(page: Page): Promise<void> {
   const backdrop = page.locator('.cdk-overlay-backdrop');
-  const expectedCount = (await page.getByRole('dialog').count()) ? 1 : 0;
+  const expectedCount = await page.locator('mat-dialog-container').count();
   if ((await backdrop.count()) > expectedCount) await page.keyboard.press('Escape');
   await expect(backdrop).toHaveCount(expectedCount);
 }

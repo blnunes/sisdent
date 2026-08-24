@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: false,
+  fullyParallel: true,
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 2 : 0,
   reporter: process.env['CI'] ? 'github' : 'list',
@@ -10,6 +10,7 @@ export default defineConfig({
     baseURL: 'http://localhost:4201',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    timezoneId: 'Europe/Lisbon',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {

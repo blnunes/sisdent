@@ -25,7 +25,7 @@ public record AmendEncounterMutationInput(
         try {
             return new AmendEncounterRequest(clinicUnitId, appointmentId, practitionerId, Instant.parse(careAt),
                     careTimezone, narrative, administrativeNote, reason);
-        } catch (DateTimeParseException exception) {
+        } catch (DateTimeParseException _) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
         }
     }

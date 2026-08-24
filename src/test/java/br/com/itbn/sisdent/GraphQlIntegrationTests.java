@@ -393,6 +393,14 @@ class GraphQlIntegrationTests {
                 .andExpect(jsonPath("$.errors").doesNotExist())
                 .andExpect(jsonPath("$.data.clinicUnits[0].organizationId").value(northstarId))
                 .andExpect(jsonPath("$.data.clinicUnits[0].id").value(clinicUnitId));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("northstar.scheduler@sisdent.demo", "odonto2026@O")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ practitioners(organizationId: \\\"%s\\\", clinicUnitId: \\\"%s\\\") { globalId displayName } }\" }".formatted(northstarId, clinicUnitId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.practitioners[0].displayName").isNotEmpty());
     }
 
     @Test

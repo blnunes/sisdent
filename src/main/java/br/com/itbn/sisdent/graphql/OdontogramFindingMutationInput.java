@@ -29,7 +29,7 @@ public record OdontogramFindingMutationInput(
         try {
             return new OdontogramFindingCreateRequest(clinicUnitId, patientId, practitionerId, replacementForId,
                     toothCode, surface, condition, Instant.parse(observedAt), observationTimezone, clinicalNote);
-        } catch (DateTimeParseException exception) {
+        } catch (DateTimeParseException _) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
         }
     }

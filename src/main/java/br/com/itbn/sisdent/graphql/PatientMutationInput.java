@@ -26,7 +26,7 @@ public record PatientMutationInput(@NotBlank String name, @NotBlank String birth
             return new PatientRequest(name, LocalDate.parse(birthDate), active, gender, taxId, identificationType,
                     identificationNumber, documentIssuerCountryCode, nationalityCode, addressId,
                     address == null ? null : address.toRequest(), specialityIds);
-        } catch (DateTimeParseException exception) {
+        } catch (DateTimeParseException _) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
         }
     }

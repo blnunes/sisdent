@@ -44,8 +44,11 @@ export class ClinicalGraphqlService {
   voidFinding(organizationId: string, clinicUnitId: string, findingId: string, reason: string, version: number): Observable<OdontogramFinding> { return this.graphql.query<{ voidOdontogramFinding: OdontogramFinding }>(`mutation VoidOdontogramFinding($organizationId: ID!, $clinicUnitId: ID!, $findingId: ID!, $input: VoidOdontogramFindingMutationInput!) { voidOdontogramFinding(organizationId: $organizationId, clinicUnitId: $clinicUnitId, findingId: $findingId, input: $input) { globalId voidReason version } }`, { organizationId, clinicUnitId, findingId, input: { reason, version } }).pipe(map(({ voidOdontogramFinding }) => voidOdontogramFinding)); }
 
   private encounter(operation: 'createClinicalEncounter' | 'updateClinicalEncounter', organizationId: string, encounterId: string | undefined, input: ClinicalEncounterInput): Observable<ClinicalEncounter> {
-    const variables = { organizationId, encounterId: encounterId ?? null, input };
-    return this.graphql.query<Record<typeof operation, ClinicalEncounter>>(`mutation ClinicalEncounter($organizationId: ID!, $encounterId: ID, $input: ClinicalEncounterMutationInput!) { ${operation}(organizationId: $organizationId${encounterId ? ', encounterId: $encounterId' : ''}, input: $input) { globalId clinicUnitId patientId careAt careTimezone narrative administrativeNote status version } }`, variables).pipe(map((response) => response[operation]));
+    const declaration = encounterId
+      ? '$organizationId: ID!, $encounterId: ID!, $input: ClinicalEncounterMutationInput!'
+      : '$organizationId: ID!, $input: ClinicalEncounterMutationInput!';
+    const variables = encounterId ? { organizationId, encounterId, input } : { organizationId, input };
+    return this.graphql.query<Record<typeof operation, ClinicalEncounter>>(`mutation ClinicalEncounter(${declaration}) { ${operation}(organizationId: $organizationId${encounterId ? ', encounterId: $encounterId' : ''}, input: $input) { globalId clinicUnitId patientId careAt careTimezone narrative administrativeNote status version } }`, variables).pipe(map((response) => response[operation]));
   }
 }
 

@@ -29,8 +29,12 @@ public class PractitionerService {
     }
 
     @Transactional(readOnly = true)
-    public List<PractitionerResponse> list(UUID org) {
-        authorization.requirePractitionerManagement(org, null);
+    public List<PractitionerResponse> list(UUID org, UUID clinicUnitId) {
+        try {
+            authorization.requireAppointmentRead(org, clinicUnitId);
+        } catch (org.springframework.security.access.AccessDeniedException _) {
+            authorization.requirePractitionerManagement(org, clinicUnitId);
+        }
         return practitioners.findAllByOrganization_GlobalIdOrderByDisplayName(org).stream().map(this::response).toList();
     }
 

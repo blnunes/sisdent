@@ -43,4 +43,20 @@ describe('AppointmentGraphqlService', () => {
     request.flush({ errors: [{ message: 'Denied', extensions: { code: 'AUTHORIZATION.DENIED', correlationId: 'correlation-1' } }] });
     expect(failure).toHaveBeenCalledWith(expect.objectContaining({ code: 'AUTHORIZATION.DENIED', correlationId: 'correlation-1' }));
   });
+
+  it('queries practitioner availability with scoped interval variables', () => {
+    const result = vi.fn();
+    TestBed.inject(AppointmentGraphqlService)
+      .availability('organization-1', 'clinic-1', 'practitioner-1', '2030-01-01T09:00:00Z', '2030-01-01T10:00:00Z')
+      .subscribe(result);
+
+    const request = http.expectOne('/graphql');
+    expect(request.request.body.query).toContain('appointmentAvailability');
+    expect(request.request.body.variables).toEqual({
+      organizationId: 'organization-1', clinicUnitId: 'clinic-1', practitionerId: 'practitioner-1',
+      startAt: '2030-01-01T09:00:00Z', endAt: '2030-01-01T10:00:00Z',
+    });
+    request.flush({ data: { appointmentAvailability: { available: true } } });
+    expect(result).toHaveBeenCalledWith({ available: true });
+  });
 });

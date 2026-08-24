@@ -70,6 +70,12 @@ class ClinicalRecordsGraphQlIntegrationTests {
         String token = login();
         String encounterId = createEncounter(token, organization, clinic, patient);
 
+        graphQl(token, "mutation { updateClinicalEncounter(organizationId: \"%s\", encounterId: \"%s\", input: { clinicUnitId: \"%s\", patientId: \"%s\", careAt: \"2030-01-01T09:30:00Z\", careTimezone: \"Europe/Lisbon\", narrative: \"Updated clinical note\", version: 0 }) { narrative status version } }"
+                .formatted(organization.getGlobalId(), encounterId, clinic.getGlobalId(), patient.getGlobalId()))
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.updateClinicalEncounter.narrative").value("Updated clinical note"))
+                .andExpect(jsonPath("$.data.updateClinicalEncounter.status").value("DRAFT"));
+
         graphQl(token, "mutation { finalizeClinicalEncounter(organizationId: \"%s\", clinicUnitId: \"%s\", encounterId: \"%s\") { status } }"
                 .formatted(organization.getGlobalId(), clinic.getGlobalId(), encounterId))
                 .andExpect(jsonPath("$.data.finalizeClinicalEncounter.status").value("FINAL"));

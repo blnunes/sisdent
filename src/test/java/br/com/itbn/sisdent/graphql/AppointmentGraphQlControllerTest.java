@@ -1,12 +1,15 @@
 package br.com.itbn.sisdent.graphql;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import br.com.itbn.sisdent.dto.AppointmentResponse;
+import br.com.itbn.sisdent.dto.AppointmentAvailabilityResponse;
 import br.com.itbn.sisdent.dto.PageResponse;
+import br.com.itbn.sisdent.model.AppointmentStatus;
 import br.com.itbn.sisdent.error.ValidationException;
 import br.com.itbn.sisdent.service.AppointmentService;
 import br.com.itbn.sisdent.service.PerformedProcedureService;
@@ -36,7 +39,8 @@ class AppointmentGraphQlControllerTest {
 
     @Test
     void rejectsMalformedRangeBeforeCallingTheService() {
-        assertThatThrownBy(() -> controller.appointments(UUID.randomUUID(), null, "not-an-instant", null, null, null))
+        UUID organizationId = UUID.randomUUID();
+        assertThatThrownBy(() -> controller.appointments(organizationId, null, "not-an-instant", null, null, null))
                 .isInstanceOf(ValidationException.class);
     }
 
@@ -52,5 +56,58 @@ class AppointmentGraphQlControllerTest {
         controller.createAppointment(organizationId, input);
 
         verify(appointments).create(organizationId, input.toRequest());
+    }
+
+    @Test
+    void delegatesScopedAvailabilityQuery() {
+        UUID organizationId = UUID.randomUUID();
+        UUID clinicUnitId = UUID.randomUUID();
+        UUID practitionerId = UUID.randomUUID();
+        Instant startAt = Instant.parse("2030-01-01T09:00:00Z");
+        Instant endAt = Instant.parse("2030-01-01T10:00:00Z");
+        when(appointments.availability(organizationId, clinicUnitId, practitionerId, startAt, endAt))
+                .thenReturn(new AppointmentAvailabilityResponse(true));
+
+        assertThat(controller.appointmentAvailability(organizationId, clinicUnitId, practitionerId,
+                startAt.toString(), endAt.toString()).available()).isTrue();
+
+        verify(appointments).availability(organizationId, clinicUnitId, practitionerId, startAt, endAt);
+    }
+
+    @Test
+    void delegatesAppointmentProcedureAndLifecycleOperations() {
+        UUID organizationId = UUID.randomUUID();
+        UUID clinicUnitId = UUID.randomUUID();
+        UUID appointmentId = UUID.randomUUID();
+        UUID performedProcedureId = UUID.randomUUID();
+        AppointmentMutationInput appointmentInput = new AppointmentMutationInput(clinicUnitId, UUID.randomUUID(),
+                UUID.randomUUID(), "2030-01-01T09:00:00Z", "2030-01-01T10:00:00Z", "Europe/Lisbon");
+        PerformedProcedureMutationInput procedureInput = new PerformedProcedureMutationInput(1L,
+                "2030-01-01T10:00:00Z", null);
+        VoidPerformedProcedureMutationInput voidInput = new VoidPerformedProcedureMutationInput("duplicate entry");
+
+        controller.appointment(organizationId, clinicUnitId, appointmentId);
+        controller.performedProcedures(organizationId, clinicUnitId, appointmentId);
+        controller.rescheduleAppointment(organizationId, appointmentId, appointmentInput);
+        controller.transitionAppointment(organizationId, clinicUnitId, appointmentId, AppointmentStatus.COMPLETED);
+        controller.createPerformedProcedure(organizationId, clinicUnitId, appointmentId, procedureInput);
+        controller.voidPerformedProcedure(organizationId, clinicUnitId, performedProcedureId, voidInput);
+
+        verify(appointments).get(organizationId, clinicUnitId, appointmentId);
+        verify(procedures).list(organizationId, clinicUnitId, appointmentId);
+        verify(appointments).reschedule(organizationId, appointmentId, appointmentInput.toRequest());
+        verify(appointments).transition(organizationId, clinicUnitId, appointmentId, AppointmentStatus.COMPLETED);
+        verify(procedures).create(organizationId, clinicUnitId, appointmentId, procedureInput.toRequest());
+        verify(procedures).voidRecord(organizationId, clinicUnitId, performedProcedureId, voidInput.toRequest());
+    }
+
+    @Test
+    void defaultsMissingPageAndEndRangeValues() {
+        UUID organizationId = UUID.randomUUID();
+        Instant from = Instant.parse("2030-01-01T00:00:00Z");
+
+        controller.appointments(organizationId, null, from.toString(), null, null, null);
+
+        verify(appointments).list(organizationId, null, from, null, 0, 25);
     }
 }

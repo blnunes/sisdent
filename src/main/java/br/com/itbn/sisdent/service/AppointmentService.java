@@ -1,6 +1,7 @@
 package br.com.itbn.sisdent.service;
 
 import br.com.itbn.sisdent.dto.AppointmentRequest;
+import br.com.itbn.sisdent.dto.AppointmentAvailabilityResponse;
 import br.com.itbn.sisdent.dto.AppointmentResponse;
 import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.model.Appointment;
@@ -76,6 +77,16 @@ public class AppointmentService {
         Appointment appointment = require(organizationId, appointmentId);
         checkClinic(appointment, clinicUnitId);
         return response(appointment);
+    }
+
+    @Transactional(readOnly = true)
+    public AppointmentAvailabilityResponse availability(UUID organizationId, UUID clinicUnitId, UUID practitionerId,
+            Instant startAt, Instant endAt) {
+        authorization.requireAppointmentRead(organizationId, clinicUnitId);
+        authorization.requireClinicInOrganization(organizationId, clinicUnitId);
+        validRange(startAt, endAt);
+        Practitioner practitioner = lockActive(organizationId, practitionerId);
+        return new AppointmentAvailabilityResponse(!appointments.hasOverlap(practitioner.getId(), startAt, endAt, null));
     }
 
     @Transactional

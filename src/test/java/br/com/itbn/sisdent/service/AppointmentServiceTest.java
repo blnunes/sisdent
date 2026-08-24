@@ -138,6 +138,17 @@ class AppointmentServiceTest {
     }
 
     @Test
+    void reportsAvailabilityOnlyForAnAuthorizedClinicAndActivePractitioner() {
+        when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
+        when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId))
+                .thenReturn(Optional.of(practitioner));
+        when(appointments.hasOverlap(1L, start, end, null)).thenReturn(false);
+
+        assertThat(service.availability(organizationId, clinicId, practitionerId, start, end).available()).isTrue();
+        verify(authorization).requireAppointmentRead(organizationId, clinicId);
+    }
+
+    @Test
     void rejectsInactivePractitionersAndAppointmentsOutsideTheClinicScope() {
         when(practitioner.isActive()).thenReturn(false);
         when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));

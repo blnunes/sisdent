@@ -22,7 +22,7 @@ public record PatientLinkMutationInput(@NotNull DocumentType documentType, @NotB
     private LocalDate parseBirthDate() {
         try {
             return LocalDate.parse(birthDate);
-        } catch (DateTimeParseException exception) {
+        } catch (DateTimeParseException _) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
         }
     }

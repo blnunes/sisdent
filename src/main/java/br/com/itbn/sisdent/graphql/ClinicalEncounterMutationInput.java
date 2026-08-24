@@ -39,7 +39,7 @@ public record ClinicalEncounterMutationInput(
     private Instant instant() {
         try {
             return Instant.parse(careAt);
-        } catch (DateTimeParseException exception) {
+        } catch (DateTimeParseException _) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
         }
     }

@@ -1,6 +1,7 @@
 package br.com.itbn.sisdent.graphql;
 
 import br.com.itbn.sisdent.dto.AppointmentResponse;
+import br.com.itbn.sisdent.dto.AppointmentAvailabilityResponse;
 import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.dto.PerformedProcedureResponse;
 import br.com.itbn.sisdent.model.AppointmentStatus;
@@ -40,6 +41,12 @@ public class AppointmentGraphQlController {
     public AppointmentResponse appointment(@Argument UUID organizationId, @Argument UUID clinicUnitId,
             @Argument UUID appointmentId) {
         return appointments.get(organizationId, clinicUnitId, appointmentId);
+    }
+
+    @QueryMapping
+    public AppointmentAvailabilityResponse appointmentAvailability(@Argument UUID organizationId,
+            @Argument UUID clinicUnitId, @Argument UUID practitionerId, @Argument String startAt, @Argument String endAt) {
+        return appointments.availability(organizationId, clinicUnitId, practitionerId, instant(startAt), instant(endAt));
     }
 
     @QueryMapping
@@ -92,7 +99,7 @@ public class AppointmentGraphQlController {
     private static Instant parse(String value) {
         try {
             return Instant.parse(value);
-        } catch (DateTimeParseException exception) {
+        } catch (DateTimeParseException _) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
         }
     }

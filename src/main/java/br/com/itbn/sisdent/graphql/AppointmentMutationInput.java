@@ -27,7 +27,7 @@ public record AppointmentMutationInput(
                     Instant.parse(startAt),
                     Instant.parse(endAt),
                     schedulingTimezone);
-        } catch (DateTimeParseException exception) {
+        } catch (DateTimeParseException _) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
         }
     }

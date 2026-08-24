@@ -13,10 +13,10 @@ consumers are removed; **In progress** means implementation has started;
 | Wave | Status | Delivered / next release gate |
 | --- | --- | --- |
 | 1 — catalogue | **In progress** | Countries are **Done**. Specialities, addresses, administrative divisions and catalogue translations are pending. |
-| 2 — identity and organization | **Planned** | Account settings, account management, organizations, memberships, clinic units and practitioners. |
+| 2 — identity and organization | **Done** | Account settings, account management, organizations, memberships, clinic units and practitioners are GraphQL-only. |
 | 3 — patients | **Planned** | Patient reads, creation, deactivation, intake, linking and autocomplete. |
-| 4 — scheduling | **Planned** | Appointment reads, availability, transitions and performed procedures. |
-| 5 — clinical | **In progress** | GraphQL-only implementation is complete; the release gate remains blocked by unrelated full-suite failures. |
+| 4 — scheduling | **Done** | Appointment reads, availability, transitions and performed procedures are GraphQL-only. |
+| 5 — clinical | **Done** | Encounters, amendments, finalization and odontogram are GraphQL-only. |
 
 Update this table in the same change that moves an operation to GraphQL or
 removes a REST mapping; it is the single progress view for this programme.
@@ -38,15 +38,16 @@ repositories: GraphQL adapters delegate to those boundaries.
 | Speciality list/create/update | `specialities`, `createSpeciality`, `updateSpeciality` | Removed 2026-08-21 |
 | Patient update | `updatePatient` | Removed |
 | Clinical workflow | clinical encounter and odontogram queries/mutations | `ClinicalRecordController` removed |
+| Account and organization administration | typed account/organization reads plus lifecycle, membership and practitioner mutations | `AccountManagementController`, `OrganizationController` and `PractitionerController` removed |
 
 ## Execution waves
 
 | Wave | Controllers and workflows | Required GraphQL work | Exit condition |
 | --- | --- | --- | --- |
 | 1 — catalogue completion | Administrative divisions, addresses and catalogue translations | Catalogue queries, autocomplete queries and destructive mutations with explicit conflict contract | No Angular calls to these REST routes; platform-admin authorization and validation coverage |
-| 2 — identity and organization | `AccountSettingsController`, `AccountManagementController`, `OrganizationController`, `PractitionerController` | Current-account/settings, account lifecycle, organizations, clinic units, memberships and practitioners | Membership/platform scope, self-service restriction, lifecycle and optimistic-lock coverage |
+| 2 — identity and organization | `AccountSettingsController`, `AccountManagementController`, `OrganizationController`, `PractitionerController` | Current-account/settings, account lifecycle, organizations, clinic units, memberships and practitioners | Complete: controllers removed with membership/platform scope, lifecycle and optimistic-lock coverage |
 | 3 — patient workflow | `OrganizationPatientController` remaining list/create/deactivate/intake/link/filter operations | Scoped patient query and create/deactivate/intake/link mutations | Tenant isolation, duplicate identity, clinic scope and rollback coverage |
-| 4 — scheduling | `AppointmentController` including performed procedures | Paginated appointment queries and state-transition mutations | Role matrix, time/conflict boundaries, idempotency and transaction rollback coverage |
+| 4 — scheduling | `AppointmentController` including performed procedures | Paginated appointment queries, availability and state-transition mutations | Complete: controller removed with role, conflict, idempotency and rollback coverage |
 | 5 — clinical | `ClinicalRecordController` including encounters, finalization, amendments and odontogram | Clinical queries and explicit versioned mutations | Complete: controller removed with GraphQL lifecycle, conflict and scope tests |
 
 ## Frontend migration worklist
@@ -57,9 +58,9 @@ repositories: GraphQL adapters delegate to those boundaries.
 | **Done** | `features/specialities/specialities.component.ts` | `specialityFilterOptions` query and `deactivateSpeciality` mutation; no REST fallback | `SpecialityController` removed |
 | **Complete** | `features/addresses/addresses.component.ts`, `features/administrative-divisions/administrative-divisions.component.ts`, `features/patients/patient-api.service.ts` | Typed catalogue GraphQL services for address, division and autocomplete data | REST surface retired |
 | **Complete** | `core/catalog-translation-api.service.ts`, `features/catalog-translations/catalog-translations.component.ts` | Typed GraphQL translation read/replace service | REST surface retired |
-| **Planned** | `core/account-api.service.ts`, `core/account-settings-api.service.ts` | Replace account, settings, organization and membership HTTP methods with typed GraphQL services | Account and organization controllers |
+| **Done** | `core/account-api.service.ts`, `core/account-settings-api.service.ts`, `core/organization-mutation-graphql.service.ts`, `core/organization-read-graphql.service.ts` | Typed account, organization, clinic-unit, membership and practitioner GraphQL services | Account and organization controllers removed |
 | 3 | `features/patients/patient-api.service.ts`, `features/patients/patients.component.ts` | Complete scoped patient queries and create/deactivate/intake/link mutations | `OrganizationPatientController` |
-| 4 | `features/home/home.component.ts`, `features/appointments/appointments.component.ts` | Add appointment query, availability and transition mutations; consume only typed GraphQL service | `AppointmentController` |
+| **Done** | `features/home/home.component.ts`, `features/appointments/appointments.component.ts` | Typed appointment GraphQL queries, availability and mutations | `AppointmentController` removed |
 | **Done** | `features/clinical/clinical-workspace.component.ts` | Typed clinical GraphQL query/mutation service | `ClinicalRecordController` removed |
 
 ### Wave 2: account settings checkpoint

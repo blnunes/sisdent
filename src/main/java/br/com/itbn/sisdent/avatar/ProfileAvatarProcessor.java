@@ -153,18 +153,28 @@ public final class ProfileAvatarProcessor {
     private static int tiffOrientation(byte[] bytes, int tiff, int end) {
         if (tiff + 8 > end) return 1;
         boolean littleEndian = bytes[tiff] == 'I' && bytes[tiff + 1] == 'I';
-        if (!littleEndian && !(bytes[tiff] == 'M' && bytes[tiff + 1] == 'M') || unsignedShort(bytes, tiff + 2, littleEndian) != 42) return 1;
+        if (!hasTiffHeader(bytes, tiff, littleEndian)) return 1;
         int ifd = tiff + unsignedInt(bytes, tiff + 4, littleEndian);
         if (ifd < tiff || ifd + 2 > end) return 1;
         int entries = unsignedShort(bytes, ifd, littleEndian);
         for (int entry = ifd + 2; entry + 12 <= end && entry < ifd + 2 + entries * 12; entry += 12) {
-            if (unsignedShort(bytes, entry, littleEndian) == 0x0112 && unsignedShort(bytes, entry + 2, littleEndian) == 3
-                    && unsignedInt(bytes, entry + 4, littleEndian) == 1) {
-                int orientation = unsignedShort(bytes, entry + 8, littleEndian);
-                return orientation >= 1 && orientation <= 8 ? orientation : 1;
-            }
+            int orientation = orientationFromEntry(bytes, entry, littleEndian);
+            if (orientation != 0) return orientation;
         }
         return 1;
+    }
+
+    private static boolean hasTiffHeader(byte[] bytes, int tiff, boolean littleEndian) {
+        boolean bigEndian = bytes[tiff] == 'M' && bytes[tiff + 1] == 'M';
+        return (littleEndian || bigEndian) && unsignedShort(bytes, tiff + 2, littleEndian) == 42;
+    }
+
+    private static int orientationFromEntry(byte[] bytes, int entry, boolean littleEndian) {
+        if (unsignedShort(bytes, entry, littleEndian) != 0x0112
+                || unsignedShort(bytes, entry + 2, littleEndian) != 3
+                || unsignedInt(bytes, entry + 4, littleEndian) != 1) return 0;
+        int orientation = unsignedShort(bytes, entry + 8, littleEndian);
+        return orientation >= 1 && orientation <= 8 ? orientation : 1;
     }
 
     private static int unsignedShort(byte[] bytes, int offset, boolean littleEndian) {
@@ -186,9 +196,9 @@ public final class ProfileAvatarProcessor {
     public record ProcessedAvatar(byte[] content, String contentType) {
         @Override
         public boolean equals(Object other) {
-            return other instanceof ProcessedAvatar avatar
-                    && Arrays.equals(content, avatar.content)
-                    && contentType.equals(avatar.contentType);
+            return other instanceof ProcessedAvatar(byte[] otherContent, String otherContentType)
+                    && Arrays.equals(content, otherContent)
+                    && contentType.equals(otherContentType);
         }
 
         @Override
