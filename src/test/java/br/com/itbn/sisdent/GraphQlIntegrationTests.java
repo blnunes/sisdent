@@ -51,6 +51,27 @@ class GraphQlIntegrationTests {
     }
 
     @Test
+    void countryAuxiliaryOperationsUseGraphQlInsteadOfRest() throws Exception {
+        String authorization = bearer(emailLogin("admin@sisdent.local", "admin"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ continents }\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.continents[0]").isNotEmpty());
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"mutation { deleteCountry(id: \\\"1\\\") }\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.deleteCountry").value(true));
+    }
+
+    @Test
     void graphqlRequiresPlatformAdministratorAuthority() throws Exception {
         mockMvc.perform(post("/graphql")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -85,11 +106,92 @@ class GraphQlIntegrationTests {
                         .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
+                                { "query": "mutation { updateCountry(id: \\"1\\", input: { name: \\"Updated GraphQL Country\\", code: \\"UG\\", continent: EUROPE }) { id name code continent } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.updateCountry.name").value("Updated GraphQL Country"))
+                .andExpect(jsonPath("$.data.updateCountry.code").value("UG"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
                                 { "query": "mutation { createCountry(input: { name: \\"Invalid\\", code: \\"invalid\\", continent: EUROPE }) { id } }" }
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.createCountry").doesNotExist())
                 .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("group.admin@sisdent.demo", "odonto2026@O")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { updateCountry(id: \\"1\\", input: { name: \\"Forbidden\\", code: \\"FB\\", continent: EUROPE }) { id } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.updateCountry").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
+    }
+
+    @Test
+    void specialityMutationsReplaceTheRetiredRestOperations() throws Exception {
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { createSpeciality(input: { name: \\"GraphQL Implantology\\", procedures: [{ name: \\"Guided implant placement\\" }] }, locale: \\"pt-PT\\") { id name displayName procedures { name } } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.createSpeciality.name").value("GraphQL Implantology"))
+                .andExpect(jsonPath("$.data.createSpeciality.procedures[0].name").value("Guided implant placement"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("admin@sisdent.local", "admin")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { createSpeciality(input: { name: \\"\\", procedures: [] }) { id } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.createSpeciality").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("group.admin@sisdent.demo", "odonto2026@O")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { updateSpeciality(id: \\"1\\", input: { name: \\"Forbidden speciality\\", procedures: [{ name: \\"Forbidden procedure\\" }] }) { id } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.updateSpeciality").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
+    }
+
+    @Test
+    void addressAndAdministrativeDivisionOperationsUseGraphQlWithValidationAndAuthorization() throws Exception {
+        String admin = bearer(emailLogin("admin@sisdent.local", "admin"));
+        String divisionMutation = "mutation { createAdministrativeDivision(input: { name: \\\"GraphQL Division\\\", code: \\\"GQL\\\", type: \\\"DISTRICT\\\", countryCode: \\\"PT\\\" }) { id name country { code } } }";
+        mockMvc.perform(post("/graphql").header("Authorization", admin).contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"%s\" }".formatted(divisionMutation)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.createAdministrativeDivision.country.code").value("PT"));
+
+        String addressMutation = "mutation { createAddress(input: { street: \\\"GraphQL Street\\\", city: \\\"Lisbon\\\", postalCode: \\\"1000-001\\\", countryCode: \\\"PT\\\" }) { id street postalCode } }";
+        mockMvc.perform(post("/graphql").header("Authorization", admin).contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"%s\" }".formatted(addressMutation)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.createAddress.street").value("GraphQL Street"));
+
+        mockMvc.perform(post("/graphql").header("Authorization", admin).contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"mutation { createAddress(input: { street: \\\"\\\", city: \\\"Lisbon\\\", postalCode: \\\"1000\\\", countryCode: \\\"PT\\\" }) { id } }\" }"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.createAddress").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
+
+        mockMvc.perform(post("/graphql").header("Authorization", bearer(emailLogin("group.admin@sisdent.demo", "odonto2026@O"))).contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ addresses { page } }\" }"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.addresses").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
     }
 
     @Test
@@ -117,6 +219,38 @@ class GraphQlIntegrationTests {
                                 """.formatted(outsideScopeId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.createClinicUnit").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
+    }
+
+    @Test
+    void patientUpdateMutationUsesTheScopedServiceWorkflowAndSafeErrors() throws Exception {
+        String organizationId = organizationId("Northstar Dental Group");
+        String authorization = bearer(emailLogin("group.admin@sisdent.demo", "odonto2026@O"));
+        String patientId = createPatientForGraphQlUpdate(organizationId, authorization);
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(patientUpdateMutation(organizationId, patientId, "GraphQL Updated Patient")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.updatePatient.globalId").value(patientId))
+                .andExpect(jsonPath("$.data.updatePatient.name").value("GraphQL Updated Patient"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(patientUpdateMutation(organizationId, patientId, "")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.updatePatient").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("northstar.readonly@sisdent.demo", "odonto2026@O")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(patientUpdateMutation(organizationId, patientId, "Forbidden Update")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.updatePatient").doesNotExist())
                 .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
     }
 
@@ -259,10 +393,88 @@ class GraphQlIntegrationTests {
                 .andExpect(jsonPath("$.errors").doesNotExist())
                 .andExpect(jsonPath("$.data.clinicUnits[0].organizationId").value(northstarId))
                 .andExpect(jsonPath("$.data.clinicUnits[0].id").value(clinicUnitId));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("northstar.scheduler@sisdent.demo", "odonto2026@O")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ practitioners(organizationId: \\\"%s\\\", clinicUnitId: \\\"%s\\\") { globalId displayName } }\" }".formatted(northstarId, clinicUnitId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.practitioners[0].displayName").isNotEmpty());
+    }
+
+    @Test
+    void accountManagementGraphQlMutationsValidateAndEnforceOptimisticLocking() throws Exception {
+        String authorization = bearer(emailLogin("admin@sisdent.local", "admin"));
+        String response = mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { createPlatformAccount(input: { displayName: \\"Phase Three\\", email: \\"phase-three@sisdent.test\\", password: \\"safe-password\\" }) { id active version } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.createPlatformAccount.active").value(true))
+                .andReturn().getResponse().getContentAsString();
+        String accountId = jsonMapper.readTree(response).at("/data/createPlatformAccount/id").asText();
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { changeAccountLifecycle(accountId: \\"%s\\", input: { active: false, version: 0 }) { active } }" }
+                                """.formatted(accountId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.changeAccountLifecycle.active").value(false));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { changeAccountLifecycle(accountId: \\"%s\\", input: { active: true, version: 0 }) { id } }" }
+                                """.formatted(accountId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.changeAccountLifecycle").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("CONFLICT"));
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "query": "mutation { createPlatformAccount(input: { displayName: \\"\\", email: \\"invalid\\", password: \\"short\\" }) { id } }" }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.createPlatformAccount").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
     }
 
     private String organizationId(String name) {
         return organizationRepository.findByName(name).orElseThrow().getGlobalId().toString();
+    }
+
+    private String createPatientForGraphQlUpdate(String organizationId, String authorization) throws Exception {
+        String response = mockMvc.perform(post("/graphql")
+                        .header("Authorization", authorization)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(patientCreateMutation(organizationId)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        return jsonMapper.readTree(response).at("/data/createPatient/globalId").asString();
+    }
+
+    private static String patientCreateMutation(String organizationId) {
+        return """
+                { "query": "mutation { createPatient(organizationId: \\"%s\\", input: { name: \\"GraphQL Update Candidate\\", birthDate: \\"1990-01-02\\", active: true, gender: FEMALE, taxId: null, identificationType: PASSPORT, identificationNumber: \\"GQL-UPDATE-42\\", documentIssuerCountryCode: \\"PT\\", nationalityCode: \\"PT\\", addressId: \\"1\\", specialityIds: [] }) { globalId } }" }
+                """.formatted(organizationId);
+    }
+
+    private static String patientUpdateMutation(String organizationId, String patientId, String name) {
+        return """
+                { "query": "mutation { updatePatient(organizationId: \\"%s\\", patientId: \\"%s\\", input: { name: \\"%s\\", birthDate: \\"1990-01-02\\", active: true, gender: FEMALE, taxId: null, identificationType: PASSPORT, identificationNumber: \\"GQL-UPDATE-42\\", documentIssuerCountryCode: \\"PT\\", nationalityCode: \\"PT\\", addressId: \\"1\\", specialityIds: [] }) { globalId name active } }" }
+                """.formatted(organizationId, patientId, name);
     }
 
     private String emailLogin(String email, String password) throws Exception {

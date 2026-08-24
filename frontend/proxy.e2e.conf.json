@@ -1,5 +1,15 @@
 {
-  "/api": {
+  "/api/auth/login": {
+    "target": "http://localhost:8081",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/api/session": {
+    "target": "http://localhost:8081",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/api/csrf": {
     "target": "http://localhost:8081",
     "secure": false,
     "changeOrigin": true

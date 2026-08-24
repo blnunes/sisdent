@@ -1,6 +1,6 @@
 [mcp_servers.quality-gate]
-command = "sh"
-args = ["-c", "node \"$(git rev-parse --show-toplevel)/.codex/mcp/quality-gate.mjs\""]
+command = "zsh"
+args = ["-c", "source \"$HOME/.zshrc\" >/dev/null 2>&1; exec node \"$(git rev-parse --show-toplevel)/.codex/mcp/quality-gate.mjs\""]
 required = true
 tool_timeout_sec = 300
 default_tools_approval_mode = "approve"

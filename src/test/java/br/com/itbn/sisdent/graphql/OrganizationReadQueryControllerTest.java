@@ -34,9 +34,10 @@ class OrganizationReadQueryControllerTest {
     void delegatesPractitionerReadToExistingScopedService() {
         UUID organizationId = UUID.randomUUID();
         List<PractitionerResponse> expected = List.of();
-        when(practitioners.list(organizationId)).thenReturn(expected);
+        UUID clinicUnitId = UUID.randomUUID();
+        when(practitioners.list(organizationId, clinicUnitId)).thenReturn(expected);
 
-        assertThat(controller.practitioners(organizationId)).isSameAs(expected);
-        verify(practitioners).list(organizationId);
+        assertThat(controller.practitioners(organizationId, clinicUnitId)).isSameAs(expected);
+        verify(practitioners).list(organizationId, clinicUnitId);
     }
 }

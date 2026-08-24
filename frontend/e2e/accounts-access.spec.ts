@@ -17,8 +17,9 @@ test.describe('Accounts and Access', () => {
     expect(session.memberships).toEqual([]);
 
     const accountsResponse = page.waitForResponse((response) =>
-      response.request().method() === 'GET'
-      && new URL(response.url()).pathname === '/api/platform/accounts',
+      response.request().method() === 'POST'
+      && new URL(response.url()).pathname === '/graphql'
+      && String(response.request().postData()).includes('platformAccounts'),
     );
     await page.goto('/accounts');
     await expect((await accountsResponse).ok()).toBeTruthy();

@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -64,7 +65,10 @@ class ScopeAuthorizationServiceTest {
 
         grant(MembershipRole.READ_ONLY, clinic);
         service.requireRead(organization.getGlobalId(), clinic.getGlobalId());
-        assertThatThrownBy(() -> service.requireRead(organization.getGlobalId(), UUID.randomUUID()))
+        UUID organizationId = organization.getGlobalId();
+        UUID unrelatedClinicId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> service.requireRead(organizationId, unrelatedClinicId))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -76,11 +80,13 @@ class ScopeAuthorizationServiceTest {
         service.requireAppointmentManagement(organization.getGlobalId(), null);
 
         grant(MembershipRole.READ_ONLY, null);
-        assertThatThrownBy(() -> service.requireWrite(organization.getGlobalId(), null))
+        UUID organizationId = organization.getGlobalId();
+
+        assertThatThrownBy(() -> service.requireWrite(organizationId, null))
                 .isInstanceOf(AccessDeniedException.class);
-        assertThatThrownBy(() -> service.requirePractitionerManagement(organization.getGlobalId(), null))
+        assertThatThrownBy(() -> service.requirePractitionerManagement(organizationId, null))
                 .isInstanceOf(AccessDeniedException.class);
-        assertThatThrownBy(() -> service.requireAppointmentManagement(organization.getGlobalId(), null))
+        assertThatThrownBy(() -> service.requireAppointmentManagement(organizationId, null))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -92,7 +98,9 @@ class ScopeAuthorizationServiceTest {
             service.requireAppointmentRead(organization.getGlobalId(), null);
         }
         grant(MembershipRole.CLINICAL_READER, null);
-        assertThatThrownBy(() -> service.requireAppointmentRead(organization.getGlobalId(), null))
+        UUID organizationId = organization.getGlobalId();
+
+        assertThatThrownBy(() -> service.requireAppointmentRead(organizationId, null))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -109,7 +117,9 @@ class ScopeAuthorizationServiceTest {
         service.requireClinicalManagement(organization.getGlobalId(), null);
 
         grant(MembershipRole.CLINICAL_AUTHOR, null);
-        assertThatThrownBy(() -> service.requireClinicalManagement(organization.getGlobalId(), null))
+        UUID organizationId = organization.getGlobalId();
+
+        assertThatThrownBy(() -> service.requireClinicalManagement(organizationId, null))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -121,7 +131,9 @@ class ScopeAuthorizationServiceTest {
         account.assignAccountManagementOrganizationIfAbsent(organization);
         service.requireAccountAdministration(organization.getGlobalId());
 
-        assertThatThrownBy(() -> service.requireAccountAdministration(UUID.randomUUID()))
+        UUID otherOrganizationId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> service.requireAccountAdministration(otherOrganizationId))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -130,18 +142,25 @@ class ScopeAuthorizationServiceTest {
         Account platformAdministrator = new Account(new Person("Admin"), "admin@example.com", "encoded", true);
         when(currentAccountService.require()).thenReturn(platformAdministrator);
 
-        service.requireOrganizationAdministration(organization.getGlobalId());
-        service.requireAccountAdministration(organization.getGlobalId());
+        assertThatCode(() -> {
+            service.requireOrganizationAdministration(organization.getGlobalId());
+            service.requireAccountAdministration(organization.getGlobalId());
+        }).doesNotThrowAnyException();
     }
 
     @Test
     void resolvesOnlyClinicUnitsFromTheRequestedOrganization() {
-        when(clinics.findByGlobalId(clinic.getGlobalId())).thenReturn(Optional.of(clinic));
-        assertThat(service.requireClinicInOrganization(organization.getGlobalId(), clinic.getGlobalId())).isSameAs(clinic);
+        UUID organizationId = organization.getGlobalId();
+        UUID clinicId = clinic.getGlobalId();
+        when(clinics.findByGlobalId(clinicId)).thenReturn(Optional.of(clinic));
+        assertThat(service.requireClinicInOrganization(organizationId, clinicId)).isSameAs(clinic);
 
-        assertThatThrownBy(() -> service.requireClinicInOrganization(UUID.randomUUID(), clinic.getGlobalId()))
+        UUID otherOrganizationId = UUID.randomUUID();
+        UUID missingClinicId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> service.requireClinicInOrganization(otherOrganizationId, clinicId))
                 .isInstanceOf(AccessDeniedException.class);
-        assertThatThrownBy(() -> service.requireClinicInOrganization(organization.getGlobalId(), UUID.randomUUID()))
+        assertThatThrownBy(() -> service.requireClinicInOrganization(organizationId, missingClinicId))
                 .isInstanceOf(ResponseStatusException.class);
     }
 

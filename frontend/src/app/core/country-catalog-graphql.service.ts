@@ -28,6 +28,7 @@ const COUNTRIES_QUERY = `query Countries($page: CataloguePageInput, $locale: Str
     totalPages
   }
 }`;
+const CONTINENTS_QUERY = 'query Continents { continents }';
 
 export function supportsCatalogueLocale(locale: string): boolean {
   try {
@@ -66,5 +67,10 @@ export class CountryCatalogGraphqlService {
         locale,
       })
       .pipe(map(({ countries }) => countries));
+  }
+
+  continents(): Observable<readonly string[]> {
+    return this.graphql.query<{ continents: readonly string[] }>(CONTINENTS_QUERY, {})
+      .pipe(map(({ continents }) => continents));
   }
 }

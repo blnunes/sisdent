@@ -93,8 +93,9 @@ class PatientServiceTest {
 
     @Test
     void rejectsMissingAndInactivePatientsDuringMutations() {
+        PatientRequest request = patientRequest();
         when(patientRepository.findById(1L)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> patientService.update(1L, patientRequest()))
+        assertThatThrownBy(() -> patientService.update(1L, request))
                 .isInstanceOf(ResponseStatusException.class);
 
         Country portugal = country();
@@ -152,20 +153,28 @@ class PatientServiceTest {
     }
 
     private Address address(Country country) {
-        return new Address(
-                "Avenida da Liberdade 100",
-                null,
-                "Lisbon",
-                null,
-                null,
-                "1250-096",
-                null,
-                country);
+        return new Address(Address.builder()
+                .street("Avenida da Liberdade 100")
+                .city("Lisbon")
+                .postalCode("1250-096")
+                .country(country));
     }
 
     private Patient patient(Country country) {
-        return new Patient("Original", LocalDate.of(1990, 1, 1), true, Gender.FEMALE, "111 222",
-                DocumentType.NATIONAL_ID_CARD, "AB 123", country, country, address(country), List.of());
+        return new Patient(new Patient.PatientDetails(
+                new Patient.PatientIdentity(
+                        "Original",
+                        LocalDate.of(1990, 1, 1),
+                        true,
+                        Gender.FEMALE,
+                        "111 222"),
+                new Patient.PatientDocument(
+                        DocumentType.NATIONAL_ID_CARD,
+                        "AB 123",
+                        country,
+                        country),
+                address(country),
+                List.of()));
     }
 
     private Country country() {

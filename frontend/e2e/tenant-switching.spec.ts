@@ -14,13 +14,14 @@ test.describe('Tenant switching', () => {
     await expect(page.getByRole('cell', { name: 'Scarlett Adams' })).toHaveCount(0);
 
     const patientRequest = page.waitForResponse((response) =>
-      response.request().method() === 'GET' &&
-      response.url().includes('/patients') &&
-      response.url().includes('page=0'),
+      response.request().method() === 'POST' &&
+      new URL(response.url()).pathname === '/graphql' &&
+      String(response.request().postData()).includes('query Patients'),
     );
-    await page.getByRole('combobox', { name: 'Active organization and clinic' }).click();
+    await page.locator('.membership-select').click();
     await page.getByRole('option', { name: 'Southstart Dental Group', exact: true }).click();
-    await patientRequest;
+    const request = await patientRequest;
+    expect(JSON.parse(request.request().postData() ?? '{}').variables.organizationId).toBeTruthy();
 
     await expect(page.getByRole('cell', { name: 'Scarlett Adams' })).toBeVisible();
     await expect(page.getByRole('cell', { name: 'Olivia Bennett' })).toHaveCount(0);

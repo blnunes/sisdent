@@ -19,7 +19,8 @@ import tools.jackson.databind.json.JsonMapper;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -40,9 +41,18 @@ class SecurityIntegrationTests {
     }
 
     @Test
+    void providesAnAntiCsrfTokenForTheSinglePageApplication() throws Exception {
+        mockMvc.perform(get("/api/csrf"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.headerName").isNotEmpty());
+    }
+
+    @Test
     void rejectsUnsafeRequestsThatCarryASessionCookieWithoutACsrfToken() throws Exception {
         mockMvc.perform(post("/api/auth/login")
                         .cookie(new Cookie("JSESSIONID", "browser-session"))
+                        .with(csrf().useInvalidToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"admin@sisdent.local\",\"password\":\"admin\"}"))
                 .andExpect(status().isForbidden());
@@ -71,21 +81,25 @@ class SecurityIntegrationTests {
     }
 
     @Test
-    void platformAdministratorCanUsePlatformCatalogues() throws Exception {
+    void platformAdministratorCanUsePlatformTranslationCatalogueThroughGraphQl() throws Exception {
         String token = emailLogin("admin@sisdent.local", "admin");
 
-        mockMvc.perform(get("/api/specialities").header("Authorization", bearer(token)))
-                .andExpect(status().isOk());
-        mockMvc.perform(get("/api/platform/catalog-translations").header("Authorization", bearer(token)))
-                .andExpect(status().isOk());
+        mockMvc.perform(post("/graphql").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ catalogTranslations { canonicalName } }\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist());
     }
 
     @Test
-    void organizationAdministratorCannotManagePlatformTranslations() throws Exception {
+    void organizationAdministratorCannotManagePlatformTranslationsThroughGraphQl() throws Exception {
         String token = emailLogin("group.admin@sisdent.demo", "odonto2026@O");
 
-        mockMvc.perform(get("/api/platform/catalog-translations").header("Authorization", bearer(token)))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/graphql").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ catalogTranslations { canonicalName } }\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
     }
 
     @Test
@@ -93,95 +107,67 @@ class SecurityIntegrationTests {
         String oldPassword = "odonto2026@O";
         String newPassword = "changed-password-2026";
         String token = emailLogin("northstar.readonly@sisdent.demo", oldPassword);
-        String settings = mockMvc.perform(get("/api/account/settings").header("Authorization", bearer(token)))
+        String settings = mockMvc.perform(post("/graphql").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"query\":\"{ currentAccountSettings { email version } }\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("northstar.readonly@sisdent.demo"))
+                .andExpect(jsonPath("$.data.currentAccountSettings.email").value("northstar.readonly@sisdent.demo"))
                 .andReturn().getResponse().getContentAsString();
-        long version = jsonMapper.readTree(settings).get("version").asLong();
+        long version = jsonMapper.readTree(settings).get("data").get("currentAccountSettings").get("version").asLong();
 
-        mockMvc.perform(patch("/api/account/settings/profile").header("Authorization", bearer(token))
+        mockMvc.perform(post("/graphql").header("Authorization", bearer(token))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"displayName\":\"Own settings user\",\"version\":%d}".formatted(version)))
+                        .content("{\"query\":\"mutation { updateOwnProfile(input: { displayName: \\\"Own settings user\\\", version: %d }) { displayName } }\"}".formatted(version)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.displayName").value("Own settings user"));
-        mockMvc.perform(patch("/api/account/settings/password").header("Authorization", bearer(token))
+                .andExpect(jsonPath("$.data.updateOwnProfile.displayName").value("Own settings user"));
+        mockMvc.perform(post("/graphql").header("Authorization", bearer(token))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"currentPassword\":\"%s\",\"newPassword\":\"%s\"}".formatted(oldPassword, newPassword)))
-                .andExpect(status().isNoContent());
+                        .content("{\"query\":\"mutation { changeOwnPassword(input: { currentPassword: \\\"%s\\\", newPassword: \\\"%s\\\" }) }\"}".formatted(oldPassword, newPassword)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.changeOwnPassword").value(true));
 
         emailLogin("northstar.readonly@sisdent.demo", newPassword);
         mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"northstar.readonly@sisdent.demo\",\"password\":\"%s\"}".formatted(oldPassword)))
                 .andExpect(status().isUnauthorized());
-        mockMvc.perform(get("/api/account/settings")).andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/graphql").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"query\":\"{ currentAccountSettings { email } }\"}"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void authenticatedUserPersistsOwnPreferredLanguageAcrossSessions() throws Exception {
         String token = emailLogin("northstar.readonly@sisdent.demo", "odonto2026@O");
 
-        mockMvc.perform(patch("/api/account/settings/preferred-language").header("Authorization", bearer(token))
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"preferredLanguage\":\"nl\"}"))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.preferredLanguage").value("nl"));
+        mockMvc.perform(post("/graphql").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"query\":\"mutation { updateOwnPreferredLanguage(input: { preferredLanguage: \\\"nl\\\" }) { preferredLanguage } }\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.updateOwnPreferredLanguage.preferredLanguage").value("nl"));
         mockMvc.perform(get("/api/session").header("Authorization", bearer(token)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.preferredLanguage").value("nl"));
         String renewedToken = emailLogin("northstar.readonly@sisdent.demo", "odonto2026@O");
         mockMvc.perform(get("/api/session").header("Authorization", bearer(renewedToken)))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.preferredLanguage").value("nl"));
-        mockMvc.perform(patch("/api/account/settings/preferred-language")
-                        .contentType(MediaType.APPLICATION_JSON).content("{\"preferredLanguage\":\"pt-BR\"}"))
+        mockMvc.perform(post("/graphql").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"query\":\"mutation { updateOwnPreferredLanguage(input: { preferredLanguage: \\\"pt-BR\\\" }) { preferredLanguage } }\"}"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void catalogueUsesTheRequestedPortugueseLocaleOverHttp() throws Exception {
+    void retiredSpecialityRestOperationsReturnNotFound() throws Exception {
         String token = emailLogin("admin@sisdent.local", "admin");
 
         mockMvc.perform(get("/api/specialities")
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(post("/api/specialities")
                         .header("Authorization", bearer(token))
-                        .header("Accept-Language", "pt-PT"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[?(@.name == 'Pediatric Dentistry')].displayName")
-                        .value("Odontopediatria"));
-    }
-
-    @Test
-    void newlyCreatedSpecialityAndProcedureUsePersistedTranslations() throws Exception {
-        String token = emailLogin("admin@sisdent.local", "admin");
-        String response = mockMvc.perform(post("/api/specialities")
-                        .header("Authorization", bearer(token))
-                        .header("Accept-Language", "pt-PT")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "Digital Implantology",
-                                  "translations": {
-                                    "en": "Digital Implantology",
-                                    "pt-PT": "Implantologia Digital",
-                                    "nl": "Digitale implantologie"
-                                  },
-                                  "procedures": [{
-                                    "name": "Guided implant placement",
-                                    "translations": {
-                                      "en": "Guided implant placement",
-                                      "pt-PT": "Colocação guiada de implante",
-                                      "nl": "Geleide implantaatplaatsing"
-                                    }
-                                  }]
-                                }
-                                """))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.displayName").value("Implantologia Digital"))
-                .andExpect(jsonPath("$.procedures[0].displayName").value("Colocação guiada de implante"))
-                .andReturn().getResponse().getContentAsString();
-        long id = jsonMapper.readTree(response).get("id").asLong();
-
-        mockMvc.perform(get("/api/specialities")
+                .content("{}"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(put("/api/specialities/{id}", 1)
                         .header("Authorization", bearer(token))
-                        .header("Accept-Language", "nl"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[?(@.id == %d)].displayName".formatted(id))
-                        .value("Digitale implantologie"));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isNotFound());
     }
 
     private String emailLogin(String email, String password) throws Exception {
@@ -192,7 +178,7 @@ class SecurityIntegrationTests {
                                 """.formatted(email, password)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        return jsonMapper.readTree(response).get("accessToken").asText();
+        return jsonMapper.readTree(response).get("accessToken").asString();
     }
 
     private static String bearer(String token) {

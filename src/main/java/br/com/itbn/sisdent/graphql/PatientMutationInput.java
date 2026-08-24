@@ -13,22 +13,20 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Set;
 
-/** Selected patient update only; versioned/destructive patient workflows remain REST-only. */
-public record PatientUpdateMutationInput(
-        @NotBlank String name, @NotBlank String birthDate, @NotNull Boolean active, @NotNull Gender gender,
-        @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9 -]{2,31}") String taxId,
+/** Shared create/update input; validation remains identical across both patient writes. */
+public record PatientMutationInput(@NotBlank String name, @NotBlank String birthDate, @NotNull Boolean active,
+        @NotNull Gender gender, @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9 -]{2,31}") String taxId,
         @NotNull DocumentType identificationType,
         @NotBlank @Pattern(regexp = "[A-Za-z0-9][A-Za-z0-9 -]{2,63}") String identificationNumber,
         @NotBlank @Pattern(regexp = "[A-Z]{2}") String documentIssuerCountryCode,
-        @NotBlank @Pattern(regexp = "[A-Z]{2}") String nationalityCode,
-        Long addressId, @Valid PatientAddressMutationInput address,
-        @NotNull Set<@NotNull Long> specialityIds) {
+        @NotBlank @Pattern(regexp = "[A-Z]{2}") String nationalityCode, Long addressId,
+        @Valid PatientAddressMutationInput address, @NotNull Set<@NotNull Long> specialityIds) {
     PatientRequest toRequest() {
         try {
             return new PatientRequest(name, LocalDate.parse(birthDate), active, gender, taxId, identificationType,
                     identificationNumber, documentIssuerCountryCode, nationalityCode, addressId,
                     address == null ? null : address.toRequest(), specialityIds);
-        } catch (DateTimeParseException exception) {
+        } catch (DateTimeParseException _) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
         }
     }

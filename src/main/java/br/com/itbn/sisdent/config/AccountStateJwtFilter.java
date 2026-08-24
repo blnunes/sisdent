@@ -47,7 +47,7 @@ public class AccountStateJwtFilter extends OncePerRequestFilter {
         try {
             return accountRepository.findByGlobalId(UUID.fromString(subject))
                     .map(account -> new AccountState(account.isActive()));
-        } catch (IllegalArgumentException exception) {
+        } catch (IllegalArgumentException _) {
             return java.util.Optional.empty();
         }
     }

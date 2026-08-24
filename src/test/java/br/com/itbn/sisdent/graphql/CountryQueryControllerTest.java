@@ -47,8 +47,9 @@ class CountryQueryControllerTest {
     void rejectsAnUnsupportedLocaleWithItsStableErrorCode() {
         CountryService service = mock(CountryService.class);
         CountryQueryController controller = new CountryQueryController(service, new CatalogueLocaleArgument());
+        CataloguePageInput pageInput = new CataloguePageInput(0, 10, "name", SortDirection.ASC);
 
-        assertThatThrownBy(() -> controller.countries(new CataloguePageInput(0, 10, "name", SortDirection.ASC), "zh-CN"))
+        assertThatThrownBy(() -> controller.countries(pageInput, "zh-CN"))
                 .isInstanceOf(ValidationException.class)
                 .satisfies(throwable -> {
                     ValidationException exception = (ValidationException) throwable;

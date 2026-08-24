@@ -7,13 +7,14 @@ import br.com.itbn.sisdent.model.AdministrativeDivision;
 import br.com.itbn.sisdent.model.Continent;
 import br.com.itbn.sisdent.model.Country;
 import br.com.itbn.sisdent.repository.AddressRepository;
+import br.com.itbn.sisdent.error.ResourceNotFoundException;
+import br.com.itbn.sisdent.error.ValidationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -35,6 +36,9 @@ class AddressServiceTest {
 
     @Mock
     private CountryService countryService;
+
+    @Mock
+    private ScopeAuthorizationService authorization;
 
     @InjectMocks
     private AddressService addressService;
@@ -118,10 +122,11 @@ class AddressServiceTest {
     void rejectsInvalidSuggestionsAndInvalidAddressSelections() {
         assertThat(addressService.suggestByPostalCode("P", "125")).isEmpty();
         assertThat(addressService.suggestByPostalCode("PT", "1")).isEmpty();
-        assertThatThrownBy(() -> addressService.resolvePatientAddress(1L, request()))
-                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("either addressId");
+        AddressRequest addressRequest = request();
+        assertThatThrownBy(() -> addressService.resolvePatientAddress(1L, addressRequest))
+                .isInstanceOf(ValidationException.class);
         assertThatThrownBy(() -> addressService.resolvePatientAddress(null, null))
-                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("required");
+                .isInstanceOf(ValidationException.class);
     }
 
     @Test
@@ -129,9 +134,10 @@ class AddressServiceTest {
         when(addressRepository.findById(1L)).thenReturn(java.util.Optional.empty());
         when(addressRepository.existsById(2L)).thenReturn(false);
 
-        assertThatThrownBy(() -> addressService.update(1L, request())).isInstanceOf(ResponseStatusException.class);
-        assertThatThrownBy(() -> addressService.delete(2L)).isInstanceOf(ResponseStatusException.class);
-        assertThatThrownBy(() -> addressService.resolvePatientAddress(1L, null)).isInstanceOf(ResponseStatusException.class);
+        AddressRequest addressRequest = request();
+        assertThatThrownBy(() -> addressService.update(1L, addressRequest)).isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> addressService.delete(2L)).isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> addressService.resolvePatientAddress(1L, null)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     private AddressRequest request() {
@@ -148,15 +154,13 @@ class AddressServiceTest {
 
     private Address address() {
         Country country = country();
-        return new Address(
-                "Avenida da Liberdade 100",
-                null,
-                "Lisbon",
-                "Floor 2",
-                null,
-                "1250-096",
-                division(country),
-                country);
+        return new Address(Address.builder()
+                .street("Avenida da Liberdade 100")
+                .city("Lisbon")
+                .additionalInfo("Floor 2")
+                .postalCode("1250-096")
+                .administrativeDivision(division(country))
+                .country(country));
     }
 
     private AdministrativeDivision division(Country country) {

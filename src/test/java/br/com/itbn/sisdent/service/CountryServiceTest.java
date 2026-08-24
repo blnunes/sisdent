@@ -1,5 +1,6 @@
 package br.com.itbn.sisdent.service;
 
+import br.com.itbn.sisdent.dto.CountryResponse;
 import br.com.itbn.sisdent.dto.CountryRequest;
 import br.com.itbn.sisdent.error.ErrorCode;
 import br.com.itbn.sisdent.error.ResourceNotFoundException;
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,9 +44,11 @@ class CountryServiceTest {
         when(countries.findByCode("PT")).thenReturn(Optional.of(portugal));
         when(nameLocalizer.localize(portugal, Locale.ENGLISH)).thenReturn("Portugal");
 
-        assertThat(service.findAll()).singleElement().extracting(response -> response.code()).isEqualTo("PT");
+        assertThat(service.findAll()).singleElement().extracting(CountryResponse::code).isEqualTo("PT");
         assertThat(service.requireByCode("PT")).isSameAs(portugal);
+        assertThat(service.findByCode("PT", Locale.ENGLISH).displayName()).isEqualTo("Portugal");
         assertThatThrownBy(() -> service.requireByCode("ZZ")).isInstanceOf(UnknownCountryException.class);
+        verify(authorization).requirePlatformAdministrator();
     }
 
     @Test
@@ -98,11 +102,14 @@ class CountryServiceTest {
 
     @Test
     void rejectsUnsupportedCatalogueLocaleWithoutPassingItToTheLocalizer() {
-        assertThatThrownBy(() -> service.findPage(new br.com.itbn.sisdent.pagination.PageQuery(0, 10, "name", "asc"),
-                Locale.forLanguageTag("zh-CN")))
+        var query = new br.com.itbn.sisdent.pagination.PageQuery(0, 10, "name", "asc");
+        Locale unsupportedLocale = Locale.forLanguageTag("zh-CN");
+
+        assertThatThrownBy(() -> service.findPage(query, unsupportedLocale))
                 .isInstanceOf(ValidationException.class)
                 .extracting(exception -> ((ValidationException) exception).errorCode())
                 .isEqualTo(ErrorCode.CATALOG_UNSUPPORTED_LOCALE);
+        verifyNoInteractions(nameLocalizer);
     }
 
     private Country country() {

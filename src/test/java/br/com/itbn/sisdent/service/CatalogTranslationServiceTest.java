@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -31,10 +32,11 @@ class CatalogTranslationServiceTest {
     private final SpecialityRepository specialities = mock(SpecialityRepository.class);
     private final DentalProcedureRepository procedures = mock(DentalProcedureRepository.class);
     private final MessageSource messages = mock(MessageSource.class);
+    private final ScopeAuthorizationService authorization = mock(ScopeAuthorizationService.class);
     private CatalogTranslationService service;
 
     @BeforeEach
-    void setUp() { service = new CatalogTranslationService(repository, specialities, procedures, messages); }
+    void setUp() { service = new CatalogTranslationService(repository, specialities, procedures, messages, authorization); }
 
     @Test
     void customTranslationTakesPrecedenceOverBuiltInAndCanonicalFallbacks() {
@@ -78,14 +80,15 @@ class CatalogTranslationServiceTest {
         var response = service.replace(CatalogResourceType.SPECIALITY, 4L,
                 Map.of("en", "Digital Implantology", "pt-PT", "Implantologia digital", "nl", ""));
 
-        verify(repository, org.mockito.Mockito.times(2)).save(any(CatalogTranslation.class));
+        verify(repository, times(2)).save(any(CatalogTranslation.class));
         assertThat(response.missingLocales()).containsExactly("nl");
     }
 
     @Test
     void rejectsUnsupportedLocalesAndUnknownResources() {
         when(specialities.findById(99L)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> service.replace(CatalogResourceType.SPECIALITY, 99L, Map.of("en", "Name")))
+        Map<String, String> translations = Map.of("en", "Name");
+        assertThatThrownBy(() -> service.replace(CatalogResourceType.SPECIALITY, 99L, translations))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .extracting(exception -> ((ResourceNotFoundException) exception).errorCode())
                 .isEqualTo(ErrorCode.RESOURCE_NOT_FOUND);
@@ -95,7 +98,8 @@ class CatalogTranslationServiceTest {
         when(speciality.getName()).thenReturn("Name");
         when(specialities.findById(4L)).thenReturn(Optional.of(speciality));
         when(repository.findByResourceTypeAndResourceId(CatalogResourceType.SPECIALITY, 4L)).thenReturn(List.of());
-        assertThatThrownBy(() -> service.replace(CatalogResourceType.SPECIALITY, 4L, Map.of("fr", "Nom")))
+        Map<String, String> unsupportedTranslations = Map.of("fr", "Nom");
+        assertThatThrownBy(() -> service.replace(CatalogResourceType.SPECIALITY, 4L, unsupportedTranslations))
                 .isInstanceOf(ValidationException.class)
                 .extracting(exception -> ((ValidationException) exception).errorCode())
                 .isEqualTo(ErrorCode.CATALOG_UNSUPPORTED_LOCALE);

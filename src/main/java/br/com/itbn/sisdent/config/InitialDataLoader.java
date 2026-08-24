@@ -318,18 +318,15 @@ public class InitialDataLoader implements ApplicationRunner {
                                 .stream()
                                 .filter(existing -> existing.getStreet().equals(address.street()))
                                 .findFirst()
-                                .orElseGet(() -> addressRepository.save(new Address(
-                                        address.street(),
-                                        address.district(),
-                                        address.city() == null ? address.district() : address.city(),
-                                        address.additionalInfo(),
-                                        address.block(),
-                                        address.postalCode(),
-                                        division,
-                                        requireReference(
-                                                countriesByCode,
-                                                countryCode,
-                                                "country code"))));
+                                .orElseGet(() -> addressRepository.save(new Address(Address.builder()
+                                        .street(address.street())
+                                        .district(address.district())
+                                        .city(address.city() == null ? address.district() : address.city())
+                                        .additionalInfo(address.additionalInfo())
+                                        .block(address.block())
+                                        .postalCode(address.postalCode())
+                                        .administrativeDivision(division)
+                                        .country(requireReference(countriesByCode, countryCode, "country code")))));
                         }));
     }
 
@@ -341,24 +338,26 @@ public class InitialDataLoader implements ApplicationRunner {
             SeedDefaults seedDefaults) {
         patients.stream()
                 .filter(patient -> patientRepository.findByTaxId(patient.taxId()).isEmpty())
-                .map(patient -> new Patient(
-                        patient.name(),
-                        patient.birthDate(),
-                        patient.active(),
-                        patient.gender(),
-                        patient.taxId(),
-                        seedDefaults.identificationType(),
-                        seedDefaults.identificationPrefix() + patient.taxId(),
-                        requireReference(
-                                countriesByCode,
-                                seedDefaults.patientNationalityCode(),
-                                "document issuer country code"),
-                        requireReference(
-                                countriesByCode,
-                                patient.nationalityCode() == null || patient.nationalityCode().isBlank()
-                                        ? seedDefaults.patientNationalityCode()
-                                        : patient.nationalityCode(),
-                                "nationality country code"),
+                .map(patient -> new Patient(new Patient.PatientDetails(
+                        new Patient.PatientIdentity(
+                                patient.name(),
+                                patient.birthDate(),
+                                patient.active(),
+                                patient.gender(),
+                                patient.taxId()),
+                        new Patient.PatientDocument(
+                                seedDefaults.identificationType(),
+                                seedDefaults.identificationPrefix() + patient.taxId(),
+                                requireReference(
+                                        countriesByCode,
+                                        seedDefaults.patientNationalityCode(),
+                                        "document issuer country code"),
+                                requireReference(
+                                        countriesByCode,
+                                        patient.nationalityCode() == null || patient.nationalityCode().isBlank()
+                                                ? seedDefaults.patientNationalityCode()
+                                                : patient.nationalityCode(),
+                                        "nationality country code")),
                         requireReference(
                                 addressesByReference,
                                 patient.addressReference(),
@@ -368,7 +367,7 @@ public class InitialDataLoader implements ApplicationRunner {
                                         specialitiesByName,
                                         name,
                                         "speciality name"))
-                                .toList()))
+                                .toList())))
                 .forEach(patientRepository::save);
     }
 

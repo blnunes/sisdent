@@ -23,7 +23,6 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -43,40 +42,24 @@ public class SecurityConfiguration {
             RequestCorrelationFilter requestCorrelationFilter,
             RestExceptionTranslator exceptionTranslator) {
         http
-                // JWTs are sent in Authorization headers. CSRF is nevertheless enabled for any
-                // unsafe request that carries a session cookie, so a future cookie-based endpoint
-                // cannot silently inherit the API's bearer-token threat model.
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .requireCsrfProtectionMatcher(SecurityConfiguration::requiresCsrfProtection))
+                .csrf(org.springframework.security.config.Customizer.withDefaults())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/api/auth/login",
+                                "/api/csrf",
                                 "/actuator/health",
-                                "/v3/api-docs/**",
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/swagger-resources/**",
-                                "/webjars/**",
-                                "/configuration/**",
                                 "/h2-console/**",
                                 "/i18n/**").permitAll()
-                        // Foundational catalogues are platform-wide, not organization-scoped.
-                        // They require platform-administrator authority.
-                        .requestMatchers("/api/specialities/**", "/api/addresses/**", "/api/countries/**",
-                                "/api/administrative-divisions/**", "/api/states/**",
-                                "/api/platform/catalog-translations/**")
-                        .hasAuthority("ROLE_PLATFORM_ADMIN")
                         // GraphQL contains both platform and organization-scoped reads. Individual
                         // resolvers delegate to services, which remain the authorization authority.
                         .requestMatchers("/graphql")
                         .authenticated()
                         // Single-page application shell, static assets, and client-side routes.
                         // The SPA bundle contains no secrets; data authorization is enforced on
-                        // the /api/** matchers above. Client-side route protection is handled by
-                        // the Angular authGuard/adminGuard.
+                        // the retained API matchers above. Client-side route protection is handled
+                        // by the Angular authGuard/adminGuard.
                         .requestMatchers(HttpMethod.GET,
                                 "/",
                                 "/index.html",
@@ -156,12 +139,4 @@ public class SecurityConfiguration {
         return authenticationConverter;
     }
 
-    static boolean requiresCsrfProtection(jakarta.servlet.http.HttpServletRequest request) {
-        if (HttpMethod.GET.matches(request.getMethod()) || HttpMethod.HEAD.matches(request.getMethod())
-                || HttpMethod.OPTIONS.matches(request.getMethod()) || request.getCookies() == null) {
-            return false;
-        }
-        return java.util.Arrays.stream(request.getCookies())
-                .anyMatch(cookie -> "JSESSIONID".equals(cookie.getName()));
-    }
 }

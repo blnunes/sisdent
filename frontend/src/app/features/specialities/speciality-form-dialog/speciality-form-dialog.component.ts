@@ -146,7 +146,13 @@ export class SpecialityFormDialogComponent {
   }
   private currentLocale(): (typeof LOCALES)[number] {
     const language = this.translate.getCurrentLang();
-    return language?.startsWith('pt') ? 'pt-PT' : language === 'nl' ? 'nl' : 'en';
+    if (language?.startsWith('pt')) {
+      return 'pt-PT';
+    }
+    if (language === 'nl') {
+      return 'nl';
+    }
+    return 'en';
   }
 }
 

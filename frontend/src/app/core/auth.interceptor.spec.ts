@@ -33,9 +33,9 @@ describe('authInterceptor', () => {
 
   afterEach(() => controller.verify());
 
-  it('clears the local session and redirects to login when an authenticated API request returns 401', () => {
-    http.get('/api/patients').subscribe({ error: () => undefined });
-    const request = controller.expectOne('/api/patients');
+  it('clears the local session and redirects to login when an authenticated GraphQL request returns 401', () => {
+    http.post('/graphql', { query: '{ currentAccount { id } }' }).subscribe({ error: () => undefined });
+    const request = controller.expectOne('/graphql');
     expect(request.request.headers.get('Authorization')).toBe('Bearer valid-token');
     request.flush('expired', { status: 401, statusText: 'Unauthorized' });
 
@@ -44,9 +44,9 @@ describe('authInterceptor', () => {
   });
 
   it('keeps an authenticated session for authorization errors', () => {
-    http.get('/api/patients').subscribe({ error: () => undefined });
+    http.post('/graphql', { query: '{ currentAccount { id } }' }).subscribe({ error: () => undefined });
     controller
-      .expectOne('/api/patients')
+      .expectOne('/graphql')
       .flush('forbidden', { status: 403, statusText: 'Forbidden' });
 
     expect(clearSession).not.toHaveBeenCalled();
@@ -60,10 +60,10 @@ describe('authInterceptor', () => {
     request.flush({ data: { countries: { page: 0 } } });
   });
 
-  it('moves to the unavailable screen when an authenticated API request cannot reach the server', () => {
-    http.get('/api/patients').subscribe({ error: () => undefined });
+  it('moves to the unavailable screen when an authenticated GraphQL request cannot reach the server', () => {
+    http.post('/graphql', { query: '{ currentAccount { id } }' }).subscribe({ error: () => undefined });
     controller
-      .expectOne('/api/patients')
+      .expectOne('/graphql')
       .flush('down', { status: 503, statusText: 'Service Unavailable' });
 
     expect(clearSession).toHaveBeenCalledOnce();

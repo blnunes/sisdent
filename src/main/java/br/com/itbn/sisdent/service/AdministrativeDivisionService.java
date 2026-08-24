@@ -12,10 +12,10 @@ import br.com.itbn.sisdent.pagination.PageableFactory;
 import br.com.itbn.sisdent.pagination.SortDefinition;
 import br.com.itbn.sisdent.repository.AdministrativeDivisionRepository;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import br.com.itbn.sisdent.error.ErrorCode;
+import br.com.itbn.sisdent.error.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -27,14 +27,16 @@ public class AdministrativeDivisionService {
     private final AdministrativeDivisionRepository repository;
     private final CountryService countryService;
     private final PageableFactory pageableFactory;
+    private final ScopeAuthorizationService authorization;
 
     public AdministrativeDivisionService(
             AdministrativeDivisionRepository repository,
             CountryService countryService,
-            PageableFactory pageableFactory) {
+            PageableFactory pageableFactory, ScopeAuthorizationService authorization) {
         this.repository = repository;
         this.countryService = countryService;
         this.pageableFactory = pageableFactory;
+        this.authorization = authorization;
     }
 
     @Transactional(readOnly = true)
@@ -46,6 +48,7 @@ public class AdministrativeDivisionService {
 
     @Transactional(readOnly = true)
     public PageResponse<AdministrativeDivisionResponse> findPage(PageQuery query) {
+        authorization.requirePlatformAdministrator();
         return PageResponse.from(
                 repository.findAll(pageableFactory.create(query, SORT_DEFINITION)),
                 ResponseMapper::toResponse);
@@ -68,6 +71,7 @@ public class AdministrativeDivisionService {
 
     @Transactional
     public AdministrativeDivisionResponse create(AdministrativeDivisionRequest request) {
+        authorization.requirePlatformAdministrator();
         Country country = countryService.requireByCode(request.countryCode());
         AdministrativeDivision division = new AdministrativeDivision(
                 request.name().trim(),
@@ -80,7 +84,7 @@ public class AdministrativeDivisionService {
     @Transactional
     public AdministrativeDivisionResponse update(Long id, AdministrativeDivisionRequest request) {
         AdministrativeDivision division = repository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND));
         division.update(
                 request.name().trim(),
                 request.code().trim().toUpperCase(java.util.Locale.ROOT),
@@ -91,8 +95,9 @@ public class AdministrativeDivisionService {
 
     @Transactional
     public void delete(Long id) {
+        authorization.requirePlatformAdministrator();
         if (!repository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+            throw new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND);
         }
         repository.deleteById(id);
     }

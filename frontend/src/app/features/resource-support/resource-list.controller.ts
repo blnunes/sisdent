@@ -1,11 +1,10 @@
-import { HttpClient } from '@angular/common/http';
 import { computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatDialog } from '@angular/material/dialog';
 import { Sort } from '@angular/material/sort';
 import { MatSidenav } from '@angular/material/sidenav';
 import { AuthService } from '../../core/auth.service';
-import { PageResponse, Permission } from '../../core/models';
+import { Permission } from '../../core/models';
 import { TableQueryService } from '../../core/table-query.service';
 import {
   DataTableActionEvent,
@@ -28,7 +27,6 @@ import { TranslateService } from '@ngx-translate/core';
 
 export type ResourceRecord = Record<string, unknown>;
 export type ResourceListDefinition = {
-  endpoint: () => string;
   maintainPermission: Permission;
   columns: readonly DataTableColumn[];
   filters?: readonly FilterDefinition[];
@@ -42,12 +40,10 @@ export type ResourceListDefinition = {
   canView?: () => boolean;
   canDelete?: (record: ResourceRecord) => boolean;
   actionLabels?: { view?: string; edit?: string; delete?: string };
-  filterOptionsEndpoint?: () => string;
 };
 
 export abstract class ResourceListController {
   readonly filterAriaLabel: string = 'RESOURCE.FILTER.ARIA';
-  protected readonly http = inject(HttpClient);
   protected readonly dialog = inject(MatDialog);
   protected readonly tableQuery = inject(TableQueryService);
   protected readonly destroyRef = inject(DestroyRef);
@@ -85,37 +81,7 @@ export abstract class ResourceListController {
       .subscribe(() => this.load());
   }
 
-  load(): void {
-    const endpoint = this.definition.endpoint();
-    if (!endpoint) {
-      this.loading.set(false);
-      return;
-    }
-    this.loading.set(true);
-    this.error.set(false);
-    this.errorMessage.set('');
-    this.http
-      .get<PageResponse<ResourceRecord>>(endpoint, {
-        params: this.tableQuery.toHttpParams({
-          page: this.page(),
-          size: this.pageSize(),
-          sort: this.sort(),
-          direction: this.sortDirection(),
-          filters: this.filterValues(),
-        }),
-      })
-      .subscribe({
-        next: (response) => {
-          this.records.set(response.content);
-          this.totalElements.set(response.totalElements);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.error.set(true);
-          this.loading.set(false);
-        },
-      });
-  }
+  abstract load(): void;
 
   changePage(event: DataTablePageEvent): void {
     this.page.set(event.pageIndex);
@@ -156,18 +122,8 @@ export abstract class ResourceListController {
     this.filterOptions.set({});
     this.applyFilters();
   }
-  updateAutocomplete(event: FilterAutocompleteEvent): void {
-    const { filter, query } = event;
-    this.filterDisplayValues.update((values) => ({ ...values, [filter.key]: query }));
-    this.updateFilter({ key: filter.key, value: filter.selectionRequired ? '' : query });
-    const endpoint =
-      this.definition.filterOptionsEndpoint?.() ??
-      `${this.definition.endpoint().split('?')[0]}/filter-options`;
-    this.http.get<FilterOption[]>(endpoint, { params: { field: filter.key, query } }).subscribe({
-      next: (options) =>
-        this.filterOptions.update((values) => ({ ...values, [filter.key]: options })),
-      error: () => this.filterOptions.update((values) => ({ ...values, [filter.key]: [] })),
-    });
+  updateAutocomplete(_event: FilterAutocompleteEvent): void {
+    throw new Error('Autocomplete is not supported by this resource.');
   }
   selectFilterOption(event: FilterValueEvent & { label: string }): void {
     this.filterDisplayValues.update((values) => ({ ...values, [event.key]: event.label }));
@@ -183,32 +139,15 @@ export abstract class ResourceListController {
     else if (event.action === 'edit') this.edit(record);
     else if (event.action === 'delete') this.remove(record);
   }
-  create(): void {}
+  abstract create(): void;
   closeMenu(drawer: MatSidenav): void {
     void drawer.close();
   }
-  protected view(_record: ResourceRecord): void {}
-  protected edit(_record: ResourceRecord): void {}
-  protected remove(record: ResourceRecord): void {
-    if (
-      !confirm(
-        this.translate.instant('RESOURCE.DELETE_CONFIRM', {
-          name: this.definition.primary(record),
-        }),
-      )
-    )
-      return;
-    this.http
-      .delete(`${this.definition.endpoint().split('?')[0]}/${this.definition.identifier(record)}`)
-      .subscribe({ next: () => this.load(), error: () => this.error.set(true) });
+  protected view(_record: ResourceRecord): void {
+    throw new Error('View action is not supported by this resource.');
   }
-  protected save(record: ResourceRecord | undefined, body: unknown): void {
-    const endpoint = this.definition.endpoint().split('?')[0];
-    const request = record
-      ? this.http.put(`${endpoint}/${this.definition.identifier(record)}`, body)
-      : this.http.post(endpoint, body);
-    request.subscribe({ next: () => this.load(), error: () => this.error.set(true) });
-  }
+  protected abstract edit(record: ResourceRecord): void;
+  protected abstract remove(record: ResourceRecord): void;
   private actions(record: ResourceRecord): DataTableRowAction[] {
     const actions: DataTableRowAction[] = [];
     if (this.definition.canView?.())

@@ -15,11 +15,12 @@
     <artifactId>sisdent</artifactId>
     <version>0.0.15-SNAPSHOT</version>
     <name>sisdent</name>
-    <description>Sisdent REST API</description>
+    <description>Sisdent GraphQL API</description>
 
     <properties>
         <java.version>25</java.version>
-        <sonar.exclusions>.github/workflows/**</sonar.exclusions>
+        <!-- Build outputs and dependency caches are generated/external code, not project sources. -->
+        <sonar.exclusions>.github/workflows/**,**/.angular/**,**/node_modules/**,**/dist/**,**/coverage/**</sonar.exclusions>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
@@ -53,11 +54,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>3.0.3</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>

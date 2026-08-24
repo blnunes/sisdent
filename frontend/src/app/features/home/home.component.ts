@@ -1,5 +1,4 @@
 import { DatePipe } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { Component, DestroyRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,7 +9,8 @@ import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { distinctUntilChanged } from 'rxjs';
-import { Appointment, PageResponse } from '../../core/models';
+import { Appointment } from '../../core/models';
+import { AppointmentGraphqlService } from '../../core/appointment-graphql.service';
 import { AuthService } from '../../core/auth.service';
 import { AppHeaderComponent } from '../../core/layout/app-header/app-header.component';
 import { ModuleNavigationComponent } from '../../core/layout/module-navigation/module-navigation.component';
@@ -23,7 +23,7 @@ import { ModuleNavigationComponent } from '../../core/layout/module-navigation/m
 })
 export class HomeComponent {
   readonly auth = inject(AuthService);
-  private readonly http = inject(HttpClient);
+  private readonly appointmentApi = inject(AppointmentGraphqlService);
   private readonly destroyRef = inject(DestroyRef);
   readonly membership = this.auth.activeMembership;
   readonly appointments = signal<Appointment[]>([]);
@@ -58,14 +58,12 @@ export class HomeComponent {
     this.loading.set(true);
     const from = this.startOfToday();
     const to = new Date(from.getTime() + (7 * 86_400_000));
-    const params: Record<string, string> = { from: from.toISOString(), to: to.toISOString(), size: '12' };
-    if (membership.clinicUnitId) params['clinicUnitId'] = membership.clinicUnitId;
-    this.http.get<PageResponse<Appointment>>(`/api/organizations/${membership.organizationId}/appointments`, { params }).subscribe({
+    this.appointmentApi.list(membership.organizationId, membership.clinicUnitId, from.toISOString(), to.toISOString(), 0, 12).subscribe({
       next: (page) => { this.appointments.set(page.content); this.loading.set(false); },
       error: () => { this.loadError.set(true); this.loading.set(false); },
     });
     const recentFrom = new Date(from.getTime() - (7 * 86_400_000));
-    this.http.get<PageResponse<Appointment>>(`/api/organizations/${membership.organizationId}/appointments`, { params: { ...params, from: recentFrom.toISOString(), to: new Date().toISOString(), size: '4' } }).subscribe({
+    this.appointmentApi.list(membership.organizationId, membership.clinicUnitId, recentFrom.toISOString(), new Date().toISOString(), 0, 4).subscribe({
       next: (page) => this.recentAppointments.set(page.content.slice().reverse()),
     });
   }

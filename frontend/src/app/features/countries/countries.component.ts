@@ -36,7 +36,6 @@ export class CountriesComponent extends CatalogueListController {
   constructor() {
     super(
       {
-        endpoint: () => '/api/countries',
         maintainPermission: 'MAINTAIN_COUNTRIES',
         columns: COLUMNS,
         identifier: (record) => Number(record['id']),
@@ -92,17 +91,38 @@ export class CountriesComponent extends CatalogueListController {
     this.openWithContinents();
   }
   protected override save(record: ResourceRecord | undefined, body: unknown): void {
-    this.mutations.saveCountry(record as never, body as { name: string; code: string; continent: string })
-      .subscribe({ next: () => this.load(), error: (error: unknown) => {
-        this.error.set(true);
-        this.errorMessage.set(error instanceof GraphQlUserError ? error.message : 'The country could not be saved.');
-      } });
+    this.mutations
+      .saveCountry(record as never, body as { name: string; code: string; continent: string })
+      .subscribe({
+        next: () => this.load(),
+        error: (error: unknown) => {
+          this.error.set(true);
+          this.errorMessage.set(
+            error instanceof GraphQlUserError ? error.message : 'The country could not be saved.',
+          );
+        },
+      });
   }
   protected override edit(record: ResourceRecord): void {
     this.openWithContinents(record);
   }
+  protected override remove(record: ResourceRecord): void {
+    const name = String(record['displayName'] ?? record['name'] ?? '—');
+    if (!confirm(`Delete ${name}?`)) {
+      return;
+    }
+    this.mutations.deleteCountry(String(record['id'])).subscribe({
+      next: () => this.load(),
+      error: (error: unknown) => {
+        this.error.set(true);
+        this.errorMessage.set(
+          error instanceof GraphQlUserError ? error.message : 'The country could not be deleted.',
+        );
+      },
+    });
+  }
   private openWithContinents(record?: ResourceRecord): void {
-    this.http.get<string[]>('/api/countries/continents').subscribe({
+    this.countriesGraphql.continents().subscribe({
       next: (continents) =>
         this.openEditor(record, [
           ...BASE_FIELDS,

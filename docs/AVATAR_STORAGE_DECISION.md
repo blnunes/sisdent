@@ -2,10 +2,13 @@
 
 ## Upload contract and processing
 
-The authenticated account endpoint is `PUT /api/account/settings/avatar`. It consumes
-`multipart/form-data` and the uploaded part is named `file`. Clients must submit a
-`FormData` body and must not set the multipart `Content-Type` header themselves; the
-browser supplies the boundary.
+Avatar operations use authenticated GraphQL at `POST /graphql`. `uploadOwnAvatar` accepts
+a typed `{ fileName, contentType, contentBase64 }` input, and `ownAvatar` returns the
+normalized image as `{ contentType, contentBase64 }`; the Angular service immediately
+converts both directions at the transport boundary. Spring GraphQL 2.0's HTTP handler
+does not support the GraphQL multipart-request specification, so this explicit bounded
+contract is approved until native multipart support is introduced. Request variables,
+base64 content, and binary responses are never logged.
 
 The service accepts JPEG (`image/jpeg`, `.jpg`, or `.jpeg`) and PNG (`image/png`,
 `.png`) files up to 5 MiB. WebP is deliberately not advertised or accepted because

@@ -22,22 +22,22 @@ describe('localeInterceptor', () => {
 
   afterEach(() => controller.verify());
 
-  it('sends the selected supported language to API endpoints', () => {
+  it('sends the selected supported language to GraphQL requests', () => {
     localStorage.setItem('sisdent.language', 'nl');
 
-    http.get('/api/specialities').subscribe();
+    http.post('/graphql', { query: '{ countries { page } }' }).subscribe();
 
-    const request = controller.expectOne('/api/specialities');
+    const request = controller.expectOne('/graphql');
     expect(request.request.headers.get('Accept-Language')).toBe('nl');
     request.flush({});
   });
 
   it('uses English for invalid saved values and does not alter translation asset calls', () => {
     localStorage.setItem('sisdent.language', 'unsupported');
-    http.get('/api/countries').subscribe();
+    http.post('/graphql', { query: '{ countries { page } }' }).subscribe();
     http.get('/i18n/en.json').subscribe();
 
-    const apiRequest = controller.expectOne('/api/countries');
+    const apiRequest = controller.expectOne('/graphql');
     expect(apiRequest.request.headers.get('Accept-Language')).toBe('en');
     apiRequest.flush({});
     const assetRequest = controller.expectOne('/i18n/en.json');

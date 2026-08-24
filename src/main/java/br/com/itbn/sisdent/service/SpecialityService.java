@@ -83,6 +83,7 @@ public class SpecialityService {
 
     @Transactional(readOnly = true)
     public List<FilterOptionResponse> findFilterOptions(String field, String query) {
+        authorization.requirePlatformAdministrator();
         Pageable limit = PageRequest.of(0, 10);
         String term = query == null ? "" : query.trim();
         return switch (field) {
@@ -199,7 +200,7 @@ public class SpecialityService {
         specialityRepository.findByName(name.trim())
                 .filter(speciality -> currentSpecialityId == null
                         || !Objects.equals(speciality.getId(), currentSpecialityId))
-                .ifPresent(speciality -> {
+                .ifPresent(_ -> {
                     throw new ResponseStatusException(
                             HttpStatus.CONFLICT,
                             "Speciality name already exists");

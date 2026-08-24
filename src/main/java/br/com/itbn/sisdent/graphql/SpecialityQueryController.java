@@ -2,6 +2,8 @@ package br.com.itbn.sisdent.graphql;
 
 import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.dto.SpecialityResponse;
+import br.com.itbn.sisdent.dto.FilterOptionResponse;
+import java.util.List;
 import br.com.itbn.sisdent.filter.SpecialityFilter;
 import br.com.itbn.sisdent.service.SpecialityService;
 import org.springframework.graphql.data.method.annotation.Argument;
@@ -28,5 +30,10 @@ public class SpecialityQueryController {
                 page == null ? new CataloguePageInput(null, null, null, null).toPageQuery() : page.toPageQuery(),
                 filter == null ? new SpecialityFilter(null, null) : filter.toFilter(),
                 catalogueLocale.resolve(locale));
+    }
+
+    @QueryMapping
+    public List<FilterOptionResponse> specialityFilterOptions(@Argument String field, @Argument String query) {
+        return specialityService.findFilterOptions(field, query);
     }
 }

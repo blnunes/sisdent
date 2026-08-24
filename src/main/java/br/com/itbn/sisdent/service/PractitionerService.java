@@ -1,9 +1,93 @@
 package br.com.itbn.sisdent.service;
-import br.com.itbn.sisdent.dto.*; import br.com.itbn.sisdent.model.*; import br.com.itbn.sisdent.repository.*; import org.springframework.http.*; import org.springframework.stereotype.*; import org.springframework.transaction.annotation.*; import org.springframework.web.server.*; import java.util.*;
-@Service public class PractitionerService { private final PractitionerRepository practitioners; private final OrganizationRepository organizations; private final AccountRepository accounts; private final SpecialityRepository specialities; private final MembershipRepository memberships; private final ScopeAuthorizationService authorization;
- public PractitionerService(PractitionerRepository p,OrganizationRepository o,AccountRepository a,SpecialityRepository s,MembershipRepository m,ScopeAuthorizationService z){practitioners=p;organizations=o;accounts=a;specialities=s;memberships=m;authorization=z;}
- @Transactional(readOnly=true) public List<PractitionerResponse> list(UUID org){authorization.requirePractitionerManagement(org,null);return practitioners.findAllByOrganization_GlobalIdOrderByDisplayName(org).stream().map(this::response).toList();}
- @Transactional public PractitionerResponse create(UUID org,PractitionerRequest r){authorization.requirePractitionerManagement(org,null); Organization o=organizations.findByGlobalId(org).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));return response(practitioners.save(new Practitioner(o,account(r.accountId(),org),r.displayName(),r.registrationNumber(),specialities(r.specialityIds()))));}
- @Transactional public PractitionerResponse update(UUID org,UUID id,PractitionerRequest r){authorization.requirePractitionerManagement(org,null); Practitioner p=require(org,id);p.update(account(r.accountId(),org),r.displayName(),r.registrationNumber(),specialities(r.specialityIds()));return response(p);}
- @Transactional public void deactivate(UUID org,UUID id){authorization.requirePractitionerManagement(org,null);require(org,id).deactivate();}
- private Practitioner require(UUID org,UUID id){return practitioners.findByGlobalIdAndOrganization_GlobalId(id,org).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));} private Account account(UUID id){if(id==null)return null;Account account=accounts.findByGlobalId(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));return account;} private Account account(UUID id,UUID organizationId){Account account=account(id);if(account!=null&&!memberships.findAllByAccount_IdAndOrganization_GlobalIdAndActiveTrue(account.getId(),organizationId).isEmpty())return account;if(account==null)return null;throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Practitioner account requires an active organization membership");} private Set<Speciality> specialities(Set<Long> ids){Set<Speciality> result=new LinkedHashSet<>();for(Long id:ids){Speciality s=specialities.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.BAD_REQUEST,"Unknown speciality"));if(s.getStatus()!=CatalogStatus.ACTIVE)throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Speciality must be active");result.add(s);}return result;} private PractitionerResponse response(Practitioner p){return new PractitionerResponse(p.getGlobalId(),p.getDisplayName(),p.getRegistrationNumber(),p.getAccount()==null?null:p.getAccount().getGlobalId(),p.isActive(),p.getSpecialities().stream().map(Speciality::getId).collect(java.util.stream.Collectors.toSet()));}}
+
+import br.com.itbn.sisdent.dto.*;
+import br.com.itbn.sisdent.model.*;
+import br.com.itbn.sisdent.repository.*;
+import org.springframework.http.*;
+import org.springframework.stereotype.*;
+import org.springframework.transaction.annotation.*;
+import org.springframework.web.server.*;
+
+import java.util.*;
+
+@Service
+public class PractitionerService {
+    private final PractitionerRepository practitioners;
+    private final OrganizationRepository organizations;
+    private final AccountRepository accounts;
+    private final SpecialityRepository specialities;
+    private final MembershipRepository memberships;
+    private final ScopeAuthorizationService authorization;
+
+    public PractitionerService(PractitionerRepository p, OrganizationRepository o, AccountRepository a, SpecialityRepository s, MembershipRepository m, ScopeAuthorizationService z) {
+        practitioners = p;
+        organizations = o;
+        accounts = a;
+        specialities = s;
+        memberships = m;
+        authorization = z;
+    }
+
+    @Transactional(readOnly = true)
+    public List<PractitionerResponse> list(UUID org, UUID clinicUnitId) {
+        try {
+            authorization.requireAppointmentRead(org, clinicUnitId);
+        } catch (org.springframework.security.access.AccessDeniedException _) {
+            authorization.requirePractitionerManagement(org, clinicUnitId);
+        }
+        return practitioners.findAllByOrganization_GlobalIdOrderByDisplayName(org).stream().map(this::response).toList();
+    }
+
+    @Transactional
+    public PractitionerResponse create(UUID org, PractitionerRequest r) {
+        authorization.requirePractitionerManagement(org, null);
+        Organization o = organizations.findByGlobalId(org).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return response(practitioners.save(new Practitioner(o, account(r.accountId(), org), r.displayName(), r.registrationNumber(), specialities(r.specialityIds()))));
+    }
+
+    @Transactional
+    public PractitionerResponse update(UUID org, UUID id, PractitionerRequest r) {
+        authorization.requirePractitionerManagement(org, null);
+        Practitioner p = require(org, id);
+        p.update(account(r.accountId(), org), r.displayName(), r.registrationNumber(), specialities(r.specialityIds()));
+        return response(p);
+    }
+
+    @Transactional
+    public void deactivate(UUID org, UUID id) {
+        authorization.requirePractitionerManagement(org, null);
+        require(org, id).deactivate();
+    }
+
+    private Practitioner require(UUID org, UUID id) {
+        return practitioners.findByGlobalIdAndOrganization_GlobalId(id, org).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    private Account account(UUID id) {
+        if (id == null) return null;
+        return accounts.findByGlobalId(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
+
+    private Account account(UUID id, UUID organizationId) {
+        Account account = account(id);
+        if (account != null && !memberships.findAllByAccount_IdAndOrganization_GlobalIdAndActiveTrue(account.getId(), organizationId).isEmpty())
+            return account;
+        if (account == null) return null;
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Practitioner account requires an active organization membership");
+    }
+
+    private Set<Speciality> specialities(Set<Long> ids) {
+        Set<Speciality> result = new LinkedHashSet<>();
+        for (Long id : ids) {
+            Speciality s = specialities.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown speciality"));
+            if (s.getStatus() != CatalogStatus.ACTIVE)
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Speciality must be active");
+            result.add(s);
+        }
+        return result;
+    }
+
+    private PractitionerResponse response(Practitioner p) {
+        return new PractitionerResponse(p.getGlobalId(), p.getDisplayName(), p.getRegistrationNumber(), p.getAccount() == null ? null : p.getAccount().getGlobalId(), p.isActive(), p.getSpecialities().stream().map(Speciality::getId).collect(java.util.stream.Collectors.toSet()));
+    }
+}

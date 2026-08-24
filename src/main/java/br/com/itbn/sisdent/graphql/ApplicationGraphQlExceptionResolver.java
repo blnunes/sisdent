@@ -56,10 +56,14 @@ public class ApplicationGraphQlExceptionResolver extends DataFetcherExceptionRes
         if (exception instanceof ConstraintViolationException || exception instanceof BindException) {
             return error(ErrorCode.VALIDATION_FAILED, Map.of(), environment.getLocale());
         }
-        String field = Optional.ofNullable(environment.getField()).map(graphql.language.Field::getName).orElse("unknown");
-        // Do not log exception messages or stack traces: resolver failures can originate in clinical services.
-        LOG.error("unexpected_error transport=graphql status=200 correlationId={} field={}",
-                CorrelationIds.current(), field);
+        if (LOG.isErrorEnabled()) {
+            String field = Optional.ofNullable(environment.getField())
+                    .map(graphql.language.Field::getName)
+                    .orElse("unknown");
+            // Do not log exception messages or stack traces: resolver failures can originate in clinical services.
+            LOG.error("unexpected_error transport=graphql status=200 correlationId={} field={}",
+                    CorrelationIds.current(), field);
+        }
         return error(ErrorCode.INTERNAL_ERROR, Map.of(), environment.getLocale());
     }
 
@@ -72,10 +76,7 @@ public class ApplicationGraphQlExceptionResolver extends DataFetcherExceptionRes
     public Mono<WebGraphQlResponse> intercept(WebGraphQlRequest request, Chain chain) {
         return chain.next(request).map(response -> {
             var errors = response.getExecutionResult().getErrors().stream()
-                    .map(error -> hasPublicCode(error) ? withCorrelationId(error)
-                            : error(error instanceof ValidationError
-                                    ? ErrorCode.VALIDATION_FAILED
-                                    : ErrorCode.REQUEST_MALFORMED, Map.of(), request.getLocale()))
+                    .map(error -> sanitize(error, request.getLocale()))
                     .toList();
             var executionResult = ExecutionResultImpl.newExecutionResult().from(response.getExecutionResult())
                     .errors(errors).build();
@@ -124,7 +125,18 @@ public class ApplicationGraphQlExceptionResolver extends DataFetcherExceptionRes
     }
 
     private boolean hasPublicCode(GraphQLError error) {
-        return error.getExtensions() != null && error.getExtensions().containsKey("code");
+        Map<String, Object> extensions = error.getExtensions();
+        return extensions != null && extensions.containsKey("code");
+    }
+
+    private GraphQLError sanitize(GraphQLError error, java.util.Locale locale) {
+        if (hasPublicCode(error)) {
+            return withCorrelationId(error);
+        }
+        if (error instanceof ValidationError) {
+            return error(ErrorCode.VALIDATION_FAILED, Map.of(), locale);
+        }
+        return error(ErrorCode.REQUEST_MALFORMED, Map.of(), locale);
     }
 
     private GraphQLError withCorrelationId(GraphQLError error) {
@@ -136,20 +148,43 @@ public class ApplicationGraphQlExceptionResolver extends DataFetcherExceptionRes
 
     private void recordKnownError(ErrorCode code, String category) {
         meterRegistry.counter("sisdent.error.count", "code", code.value(), "transport", "graphql").increment();
-        LOG.warn("known_error code={} category={} transport=graphql status=200 correlationId={}",
-                code.value(), category, CorrelationIds.current());
+        if (LOG.isWarnEnabled()) {
+            LOG.warn("known_error code={} category={} transport=graphql status=200 correlationId={}",
+                    code.value(), category, CorrelationIds.current());
+        }
     }
 
     private void recordExecution(WebGraphQlRequest request, WebGraphQlResponse response) {
         String document = request.getDocument();
-        String operation = document.contains("countries") ? "countries"
-                : document.contains("country") ? "country" : "unknown";
-        String operationType = document.stripLeading().startsWith("mutation") ? "mutation"
-                : document.stripLeading().startsWith("subscription") ? "subscription" : "query";
+        String operation = operation(document);
+        String operationType = operationType(document);
         String outcome = response.getExecutionResult().getErrors().isEmpty() ? "success" : "error";
         meterRegistry.counter("sisdent.graphql.execution.count", "operation", operation,
                 "operationType", operationType, "outcome", outcome).increment();
-        LOG.info("graphql_completed operation={} operationType={} outcome={} correlationId={}",
-                operation, operationType, outcome, CorrelationIds.current());
+        if (LOG.isInfoEnabled()) {
+            LOG.info("graphql_completed operation={} operationType={} outcome={} correlationId={}",
+                    operation, operationType, outcome, CorrelationIds.current());
+        }
+    }
+
+    private static String operation(String document) {
+        if (document.contains("countries")) {
+            return "countries";
+        }
+        if (document.contains("country")) {
+            return "country";
+        }
+        return "unknown";
+    }
+
+    private static String operationType(String document) {
+        String normalizedDocument = document.stripLeading();
+        if (normalizedDocument.startsWith("mutation")) {
+            return "mutation";
+        }
+        if (normalizedDocument.startsWith("subscription")) {
+            return "subscription";
+        }
+        return "query";
     }
 }

@@ -75,4 +75,24 @@ describe('SpecialityFormDialogComponent', () => {
     expect(warningDialog.open).not.toHaveBeenCalled();
     expect(close).toHaveBeenCalled();
   });
+
+  it('associates every speciality form field with an accessible label', () => {
+    const fixture = TestBed.createComponent(SpecialityFormDialogComponent);
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    for (const id of [
+      'speciality-name',
+      'speciality-procedure-name',
+      'speciality-translation-en',
+      'speciality-translation-pt',
+      'speciality-translation-nl',
+    ]) {
+      expect(element.querySelector(`input#${id}`)).not.toBeNull();
+      expect(element.querySelector(`label[for="${id}"]`)).not.toBeNull();
+    }
+
+    expect(element.querySelector('section.procedures[role="region"]')).toBeNull();
+    expect(element.querySelector('section.procedures')).not.toBeNull();
+  });
 });

@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -140,11 +141,18 @@ public class RestExceptionTranslator {
         return problem(HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND, locale, Map.of(), List.of());
     }
 
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    ProblemDetail unmappedMethod(Locale locale) {
+        return problem(HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND, locale, Map.of(), List.of());
+    }
+
     @ExceptionHandler(Exception.class)
     ProblemDetail unexpected(Exception exception, Locale locale) {
         // Do not log exception messages or stack traces here: they can contain request data or PII.
-        LOGGER.error("unexpected_error transport={} status={} correlationId={}", transport(), 500,
-                CorrelationIds.current());
+        if (LOGGER.isErrorEnabled()) {
+            LOGGER.error("unexpected_error transport={} status={} correlationId={}", transport(), 500,
+                    CorrelationIds.current());
+        }
         return problem(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR, locale, Map.of(), List.of());
     }
 
@@ -197,8 +205,10 @@ public class RestExceptionTranslator {
         String category = categoryFor(code);
         String transport = transport();
         meterRegistry.counter("sisdent.error.count", "code", code.value(), "transport", transport).increment();
-        LOGGER.warn("known_error code={} category={} transport={} status={} correlationId={}",
-                code.value(), category, transport, status.value(), CorrelationIds.current());
+        if (LOGGER.isWarnEnabled()) {
+            LOGGER.warn("known_error code={} category={} transport={} status={} correlationId={}",
+                    code.value(), category, transport, status.value(), CorrelationIds.current());
+        }
     }
 
     private String transport() { return "graphql".equals(MDC.get("transport")) ? "graphql" : "rest"; }

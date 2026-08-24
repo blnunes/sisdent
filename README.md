@@ -1,6 +1,6 @@
 # Sisdent
 
-REST API built with Java 25, Spring Boot 4 and an in-memory H2 database.
+GraphQL API built with Java 25, Spring Boot 4 and an in-memory H2 database.
 
 The `frontend` directory contains an Angular 22 and Angular Material 22
 interface for authentication and administrative user management.
@@ -32,30 +32,21 @@ Open `http://localhost:4200` and use `NATIONAL_ID / ADMIN / admin`. See
 
 ## API surface
 
-GraphQL (`POST /graphql`) is the primary frontend API. Retained REST endpoints
-serve explicitly documented operational and not-yet-migrated workflows. The
-complete endpoint inventory, GraphQL replacements, and deprecation window are
-in [`docs/REST_RETIREMENT_INVENTORY.md`](docs/REST_RETIREMENT_INVENTORY.md).
+GraphQL (`POST /graphql`) is the sole business API. HTTP is limited to
+`POST /api/auth/login`, `GET /api/session`, `GET /api/csrf`, health checks, and
+development-only H2 support. The final inventory is in
+[`docs/REST_RETIREMENT_INVENTORY.md`](docs/REST_RETIREMENT_INVENTORY.md).
 
-The following are examples of retained REST paths, not a complete REST API list:
+Scheduling and clinical workflows are GraphQL-only.
 
-```text
-GET /api/administrative-divisions
-GET /api/countries
-GET /api/addresses
-GET /api/addresses/postal-code/{postalCode}?countryCode=PT
-GET /api/organizations/{organizationId}/patients
-POST /api/organizations/{organizationId}/patients
-PUT /api/organizations/{organizationId}/patients/{patientId}
-DELETE /api/organizations/{organizationId}/patients/{patientId}
-GET /api/organizations/{organizationId}/appointments
-GET /api/organizations/{organizationId}/clinical/encounters
-GET /api/specialities
-POST /api/specialities
-PUT /api/specialities/{id}
-```
+Addresses are GraphQL-only through `addresses`, `addressesByPostalCode`,
+`addressPostalCodeSuggestions`, `createAddress`, `updateAddress`, and `deleteAddress`.
+Catalogue translations are GraphQL-only through `catalogTranslations` and
+`replaceCatalogTranslations`.
 
-Country and speciality responses keep `name` as the canonical persisted value and
+Country operations are GraphQL-only through `countries(page, locale)`,
+`continents`, `createCountry(input, locale)`, `updateCountry(id, input, locale)`,
+and `deleteCountry`. Country and speciality responses keep `name` as the canonical persisted value and
 also expose a localized `displayName`. Send `Accept-Language: en`, `nl`, or
 `pt-PT`; unsupported languages fall back to English and custom speciality names
 fall back to their canonical value.
@@ -68,18 +59,18 @@ administrative division.
 Example:
 
 ```bash
-curl -H 'Authorization: Bearer <token>' \
-  'http://localhost:8080/api/organizations/{organizationId}/patients'
+curl -H 'Authorization: Bearer <token>' -H 'Content-Type: application/json' \
+  -d '{"query":"{ patients(organizationId: \\"{organizationId}\\") { content { globalId name } } }"}' \
+  'http://localhost:8080/graphql'
 ```
 
-Dental procedures are nested resources owned by a speciality. They are
-returned, created, updated, and deactivated through the speciality endpoints;
-there is no standalone `/api/procedures` endpoint.
+Dental procedures are nested resources owned by a speciality and are managed
+through GraphQL; there is no standalone procedure endpoint.
 
 ## Clinical workspace
 
-Clinical records are always addressed below the active organization and clinic
-scope: `/api/organizations/{organizationId}/clinical`. A clinical reader can
+Clinical records use the active organization and clinic scope supplied to the
+typed GraphQL operations. A clinical reader can
 read encounters and odontogram history; a clinical author can create and edit
 only their draft encounters; a clinical manager (and an organization
 administrator) can finalize encounters and create amendments. Final encounters
@@ -87,12 +78,12 @@ are never edited in place. Odontogram findings are likewise preserved: a
 correction first voids the finding with a reason and version, then creates a
 replacement that references the voided finding.
 
-The workspace loads clinic units and patients only through the scoped
-organization endpoints and surfaces forbidden scope, stale-version, finalized
+The workspace loads clinic units and patients only through scoped GraphQL
+operations and surfaces forbidden scope, stale-version, finalized
 record, and unavailable-patient errors to the user.
 
-To replace a patient's speciality assignments, send their IDs in
-`specialityIds` to `PUT /api/organizations/{organizationId}/patients/{patientId}`. Send an empty array
+To replace a patient's speciality assignments, send their IDs in the GraphQL
+`updatePatient` mutation input. Send an empty array
 (`"specialityIds": []`) to remove every assignment from that patient; this
 does not delete the speciality records. Catalog removal is logical so existing
 history remains valid.

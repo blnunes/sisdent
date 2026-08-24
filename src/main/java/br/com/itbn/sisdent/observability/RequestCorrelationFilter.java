@@ -19,6 +19,7 @@ import org.springframework.web.servlet.HandlerMapping;
 @Component
 public class RequestCorrelationFilter extends OncePerRequestFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestCorrelationFilter.class);
+    public static final String TRANSPORT = "transport";
     private final MeterRegistry meterRegistry;
 
     public RequestCorrelationFilter(MeterRegistry meterRegistry) { this.meterRegistry = meterRegistry; }
@@ -30,7 +31,7 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         long startedAt = System.nanoTime();
         MDC.put(CorrelationIds.MDC_KEY, correlationId);
         // Keep only a bounded, normalized value in MDC. Request URIs can contain identifiers.
-        MDC.put("transport", transport(request));
+        MDC.put(TRANSPORT, transport(request));
         response.setHeader(CorrelationIds.HEADER, correlationId);
         try {
             chain.doFilter(request, response);
@@ -40,15 +41,15 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
             String transport = transport(request);
             String status = Integer.toString(response.getStatus());
             Timer.builder("sisdent.http.request.duration").description("HTTP request duration")
-                    .tags("transport", transport, "route", route, "status", status).register(meterRegistry)
+                    .tags(TRANSPORT, transport, "route", route, "status", status).register(meterRegistry)
                     .record(duration, TimeUnit.NANOSECONDS);
-            meterRegistry.counter("sisdent.http.request.count", "transport", transport, "route", route, "status", status)
+            meterRegistry.counter("sisdent.http.request.count", TRANSPORT, transport, "route", route, "status", status)
                     .increment();
             LOGGER.info("request_completed method={} route={} status={} durationMs={} correlationId={}",
                     request.getMethod(), route, status, TimeUnit.NANOSECONDS.toMillis(duration), correlationId);
             response.setHeader(CorrelationIds.HEADER, correlationId);
             MDC.remove(CorrelationIds.MDC_KEY);
-            MDC.remove("transport");
+            MDC.remove(TRANSPORT);
         }
     }
 

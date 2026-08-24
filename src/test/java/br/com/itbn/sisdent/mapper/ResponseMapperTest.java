@@ -36,15 +36,13 @@ class ResponseMapperTest {
     @Test
     void mapsInternationalAddress() {
         Country country = country();
-        Address address = new Address(
-                "Avenida da Liberdade 100",
-                null,
-                "Lisbon",
-                "Floor 2",
-                null,
-                "1250-096",
-                new AdministrativeDivision("Lisbon", "11", "DISTRICT", country),
-                country);
+        Address address = new Address(Address.builder()
+                .street("Avenida da Liberdade 100")
+                .city("Lisbon")
+                .additionalInfo("Floor 2")
+                .postalCode("1250-096")
+                .administrativeDivision(new AdministrativeDivision("Lisbon", "11", "DISTRICT", country))
+                .country(country));
 
         AddressResponse response = ResponseMapper.toResponse(address);
 
@@ -56,20 +54,22 @@ class ResponseMapperTest {
     @Test
     void mapsPatientGlobalIdentityAndIssuedDocument() {
         Country country = country();
-        Address address = new Address(
-                "Rua Augusta 1", null, "Lisbon", null, null, "1100-053", null, country);
-        Patient patient = new Patient(
-                "Ana Silva",
-                LocalDate.of(1992, 4, 18),
-                true,
-                Gender.FEMALE,
-                null,
-                DocumentType.NATIONAL_ID_CARD,
-                "12345ABC",
-                country,
-                country,
+        Address address = new Address(Address.builder()
+                .street("Rua Augusta 1").city("Lisbon").postalCode("1100-053").country(country));
+        Patient patient = new Patient(new Patient.PatientDetails(
+                new Patient.PatientIdentity(
+                        "Ana Silva",
+                        LocalDate.of(1992, 4, 18),
+                        true,
+                        Gender.FEMALE,
+                        null),
+                new Patient.PatientDocument(
+                        DocumentType.NATIONAL_ID_CARD,
+                        "12345ABC",
+                        country,
+                        country),
                 address,
-                List.of(new Speciality("Orthodontics")));
+                List.of(new Speciality("Orthodontics"))));
 
         PatientResponse response = ResponseMapper.toResponse(patient);
 

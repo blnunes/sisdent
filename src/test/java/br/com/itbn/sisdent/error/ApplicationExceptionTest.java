@@ -69,7 +69,8 @@ class ApplicationExceptionTest {
 
         assertThat(exception.safeMetadata()).containsExactly(Map.entry("field", "size"));
         assertThat(exception.getCause()).isSameAs(cause);
-        assertThatThrownBy(() -> exception.safeMetadata().put("another", "value"))
+        Map<String, String> safeMetadata = exception.safeMetadata();
+        assertThatThrownBy(() -> safeMetadata.put("another", "value"))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
 

@@ -53,7 +53,8 @@ class AccountSettingsServiceTest {
     @Test
     void rejectsBlankDisplayNames() {
         when(currentAccountService.require()).thenReturn(new Account(new Person("Ana"), "ana@example.com", "stored", false));
-        assertThatThrownBy(() -> service.updateProfile(new UpdateOwnProfileRequest("  ", 0L)))
+        UpdateOwnProfileRequest request = new UpdateOwnProfileRequest("  ", 0L);
+        assertThatThrownBy(() -> service.updateProfile(request))
                 .isInstanceOf(ValidationException.class);
         verifyNoInteractions(persons);
     }
@@ -81,11 +82,14 @@ class AccountSettingsServiceTest {
         when(currentAccountService.require()).thenReturn(account);
         when(passwords.matches("wrong", "old-hash")).thenReturn(false);
 
-        assertThatThrownBy(() -> service.changePassword(new ChangeOwnPasswordRequest("wrong", "new-password")))
+        ChangeOwnPasswordRequest invalidCurrentPassword = new ChangeOwnPasswordRequest("wrong", "new-password");
+        ChangeOwnPasswordRequest shortNewPassword = new ChangeOwnPasswordRequest("old", "short");
+        ChangeOwnPasswordRequest oversizedNewPassword = new ChangeOwnPasswordRequest("old", "x".repeat(129));
+        assertThatThrownBy(() -> service.changePassword(invalidCurrentPassword))
                 .isInstanceOf(ValidationException.class);
-        assertThatThrownBy(() -> service.changePassword(new ChangeOwnPasswordRequest("old", "short")))
+        assertThatThrownBy(() -> service.changePassword(shortNewPassword))
                 .isInstanceOf(ValidationException.class);
-        assertThatThrownBy(() -> service.changePassword(new ChangeOwnPasswordRequest("old", "x".repeat(129))))
+        assertThatThrownBy(() -> service.changePassword(oversizedNewPassword))
                 .isInstanceOf(ValidationException.class);
         verify(accounts, never()).saveAndFlush(any());
         verify(passwords, never()).encode(any());
@@ -113,14 +117,15 @@ class AccountSettingsServiceTest {
         when(currentAccountService.require()).thenReturn(account);
 
         for (String language : new String[] {null, "", "pt", "pt-BR", "en-US", "nl-BE"}) {
-            assertThatThrownBy(() -> service.updatePreferredLanguage(new UpdateOwnPreferredLanguageRequest(language)))
+            UpdateOwnPreferredLanguageRequest request = new UpdateOwnPreferredLanguageRequest(language);
+            assertThatThrownBy(() -> service.updatePreferredLanguage(request))
                     .isInstanceOf(ValidationException.class);
         }
         verify(accounts, never()).saveAndFlush(any());
     }
 
     @Test
-    void storesOnlyAProcessedAvatarForTheAuthenticatedAccountAndRemovesThePreviousOne() throws Exception {
+    void storesOnlyAProcessedAvatarForTheAuthenticatedAccountAndRemovesThePreviousOne() throws java.io.IOException {
         Account account = new Account(new Person("Ana"), "ana@example.com", "stored", false);
         account.replaceAvatar("account_old.png", "image/png", java.time.Instant.now());
         when(currentAccountService.require()).thenReturn(account);
@@ -128,19 +133,20 @@ class AccountSettingsServiceTest {
 
         var response = service.uploadAvatar(image("image/png", "photo.png"));
 
-        assertThat(response.avatarUrl()).contains("/api/account/settings/avatar?v=");
+        assertThat(response.avatarUrl()).contains("graphql-avatar?v=");
         assertThat(account.getAvatarKey()).matches("account_[a-f0-9]{32}_[a-f0-9]{32}\\.png");
         verify(avatarStorage).save(matches("account_[a-f0-9]{32}_[a-f0-9]{32}\\.png"), argThat(bytes -> bytes.length > 0));
         verify(accounts).saveAndFlush(account);
     }
 
     @Test
-    void deletesNewAvatarWhenPersistenceFailsAndRemovalIsIdempotent() throws Exception {
+    void deletesNewAvatarWhenPersistenceFailsAndRemovalIsIdempotent() throws java.io.IOException {
         Account account = new Account(new Person("Ana"), "ana@example.com", "stored", false);
         when(currentAccountService.require()).thenReturn(account);
         doThrow(new RuntimeException("database unavailable")).when(accounts).saveAndFlush(account);
 
-        assertThatThrownBy(() -> service.uploadAvatar(image("image/png", "photo.png"))).isInstanceOf(RuntimeException.class);
+        MockMultipartFile avatar = image("image/png", "photo.png");
+        assertThatThrownBy(() -> service.uploadAvatar(avatar)).isInstanceOf(RuntimeException.class);
         verify(avatarStorage).delete(matches("account_[a-f0-9]{32}_[a-f0-9]{32}\\.png"));
 
         reset(accounts, avatarStorage);
@@ -151,40 +157,45 @@ class AccountSettingsServiceTest {
     @Test
     void rejectsEmptyAndDisguisedAvatarContent() {
         when(currentAccountService.require()).thenReturn(new Account(new Person("Ana"), "ana@example.com", "stored", false));
-        assertThatThrownBy(() -> service.uploadAvatar(new MockMultipartFile("file", "photo.png", "image/png", new byte[0])))
+        MockMultipartFile emptyAvatar = new MockMultipartFile("file", "photo.png", "image/png", new byte[0]);
+        MockMultipartFile disguisedAvatar = new MockMultipartFile("file", "photo.png", "image/png", "not image".getBytes());
+        assertThatThrownBy(() -> service.uploadAvatar(emptyAvatar))
                 .isInstanceOf(ValidationException.class);
-        assertThatThrownBy(() -> service.uploadAvatar(new MockMultipartFile("file", "photo.png", "image/png", "not image".getBytes())))
+        assertThatThrownBy(() -> service.uploadAvatar(disguisedAvatar))
                 .isInstanceOf(ValidationException.class);
         verifyNoInteractions(avatarStorage, accounts);
     }
 
     @Test
-    void acceptsRealPngAndJpegButRejectsUnsupportedWebpAndExcessiveDimensions() throws Exception {
+    void acceptsRealPngAndJpegButRejectsUnsupportedWebpAndExcessiveDimensions() throws java.io.IOException {
         when(currentAccountService.require()).thenReturn(new Account(new Person("Ana"), "ana@example.com", "stored", false));
         when(accounts.saveAndFlush(any(Account.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         service.uploadAvatar(image("image/png", "photo.png"));
         service.uploadAvatar(image("image/jpeg", "photo.jpeg"));
+        MockMultipartFile webpAvatar = new MockMultipartFile("file", "photo.webp", "image/webp", webpHeader());
         ValidationException webp = org.junit.jupiter.api.Assertions.assertThrows(ValidationException.class,
-                () -> service.uploadAvatar(new MockMultipartFile("file", "photo.webp", "image/webp", webpHeader())));
+                () -> service.uploadAvatar(webpAvatar));
         assertThat(webp.errorCode()).isEqualTo(ErrorCode.ACCOUNT_AVATAR_INVALID_TYPE);
 
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         ImageIO.write(new BufferedImage(4097, 1, BufferedImage.TYPE_INT_RGB), "png", bytes);
-        assertThatThrownBy(() -> service.uploadAvatar(new MockMultipartFile("file", "wide.png", "image/png", bytes.toByteArray())))
+        MockMultipartFile wideAvatar = new MockMultipartFile("file", "wide.png", "image/png", bytes.toByteArray());
+        assertThatThrownBy(() -> service.uploadAvatar(wideAvatar))
                 .isInstanceOf(ValidationException.class);
     }
 
     @Test
     void rejectsFilesOverFiveMiBBeforeStorage() {
         when(currentAccountService.require()).thenReturn(new Account(new Person("Ana"), "ana@example.com", "stored", false));
-        assertThatThrownBy(() -> service.uploadAvatar(new MockMultipartFile("file", "large.png", "image/png",
-                new byte[(int) ProfileAvatarProcessor.MAX_UPLOAD_BYTES + 1])))
+        MockMultipartFile oversizedAvatar = new MockMultipartFile("file", "large.png", "image/png",
+                new byte[(int) ProfileAvatarProcessor.MAX_UPLOAD_BYTES + 1]);
+        assertThatThrownBy(() -> service.uploadAvatar(oversizedAvatar))
                 .isInstanceOf(ValidationException.class);
         verifyNoInteractions(avatarStorage, accounts);
     }
 
-    private static MockMultipartFile image(String contentType, String name) throws Exception {
+    private static MockMultipartFile image(String contentType, String name) throws java.io.IOException {
         BufferedImage image = new BufferedImage(800, 400, BufferedImage.TYPE_INT_RGB);
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         ImageIO.write(image, contentType.equals("image/jpeg") ? "jpeg" : "png", bytes);

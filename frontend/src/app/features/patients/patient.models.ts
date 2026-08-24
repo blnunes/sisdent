@@ -10,7 +10,6 @@ export type PatientField = {
   fullWidth?: boolean;
 };
 export type SpecialityOption = { id: number; name: string; displayName?: string };
-export type CountryOption = { code: string; name: string; displayName?: string };
 export type AdministrativeDivisionOption = {
   id: number;
   name: string;
@@ -140,7 +139,7 @@ export function patientToForm(record: PatientRecord): PatientFormValues {
   };
 }
 
-export function patientRequest(value: PatientFormValues): unknown {
+export function patientRequest(value: PatientFormValues): Record<string, unknown> {
   const address = {
     street: value['street'],
     district: value['district'],

@@ -37,8 +37,9 @@ public class OrganizationPatientService {
     private final ScopeAuthorizationService authorization;
     private final PatientService patientService;
     private final PageableFactory pageableFactory;
-    private static final SortDefinition SORT_DEFINITION = new SortDefinition("patient.name",
-            java.util.Set.of("patient.name", "patient.birthDate", "patient.active", "patient.gender"));
+    public static final String PATIENT_NAME = "patient.name";
+    private static final SortDefinition SORT_DEFINITION = new SortDefinition(PATIENT_NAME,
+            java.util.Set.of(PATIENT_NAME, "patient.birthDate", "patient.active", "patient.gender"));
 
     public OrganizationPatientService(PatientRepository patientRepository,
             PatientOrganizationLinkRepository linkRepository, OrganizationRepository organizationRepository,
@@ -55,7 +56,7 @@ public class OrganizationPatientService {
         if (!"name".equals(field)) {
             return List.of();
         }
-        return search(organizationId, clinicUnitId, new PageQuery(0, 10, "patient.name", "asc"),
+        return searchScoped(organizationId, clinicUnitId, new PageQuery(0, 10, PATIENT_NAME, "asc"),
                 new PatientFilter(null, query, null, null, null, null, null, null, null, null, null)).content().stream()
                 .limit(10).map(patient -> new FilterOptionResponse(patient.name(), patient.name())).toList();
     }
@@ -102,6 +103,11 @@ public class OrganizationPatientService {
 
     @Transactional(readOnly = true)
     public PageResponse<PatientResponse> search(UUID organizationId, UUID clinicUnitId, PageQuery query,
+            PatientFilter filter) {
+        return searchScoped(organizationId, clinicUnitId, query, filter);
+    }
+
+    private PageResponse<PatientResponse> searchScoped(UUID organizationId, UUID clinicUnitId, PageQuery query,
             PatientFilter filter) {
         authorization.requireRead(organizationId, clinicUnitId);
         if (clinicUnitId != null) {
@@ -173,7 +179,7 @@ public class OrganizationPatientService {
 
     private PageQuery scopedQuery(PageQuery query) {
         String sort = switch (query.sort() == null ? "id" : query.sort()) {
-            case "id", "name" -> "patient.name";
+            case "id", "name" -> PATIENT_NAME;
             case "birthDate" -> "patient.birthDate";
             case "active" -> "patient.active";
             case "gender" -> "patient.gender";

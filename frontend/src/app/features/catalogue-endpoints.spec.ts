@@ -13,12 +13,22 @@ import { LanguageService } from '../core/language.service';
 import { provideTranslateService } from '@ngx-translate/core';
 
 describe('catalogue feature endpoints', () => {
-  const cases: [Type<unknown>, string][] = [
-    [AddressesComponent, '/api/addresses'],
-    [AdministrativeDivisionsComponent, '/api/administrative-divisions'],
-  ];
+  const featureSources = import.meta.glob('./**/*.ts', {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+  }) as Record<string, string>;
 
-  it.each(cases)('%s loads only its own endpoint', (componentType, endpoint) => {
+  it('contains no retired REST consumer or direct HTTP orchestration', () => {
+    const productionSources = Object.entries(featureSources).filter(
+      ([path]) => !path.endsWith('.spec.ts'),
+    );
+    const violations = productionSources.filter(([, source]) => /\/api\/|HttpClient/.test(source));
+
+    expect(violations.map(([path]) => path)).toEqual([]);
+  });
+
+  it('loads administrative divisions through GraphQL', () => {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -31,11 +41,43 @@ describe('catalogue feature endpoints', () => {
         },
       ],
     });
-    TestBed.runInInjectionContext(() => new (componentType as Type<{ load(): void }>)());
+    TestBed.runInInjectionContext(() => new AdministrativeDivisionsComponent());
+    const request = TestBed.inject(HttpTestingController).expectOne('/graphql');
+    expect(request.request.body.query).toContain('query AdministrativeDivisions');
+    request.flush({
+      data: {
+        administrativeDivisions: {
+          content: [],
+          page: 0,
+          size: 10,
+          totalElements: 0,
+          totalPages: 0,
+        },
+      },
+    });
+    TestBed.inject(HttpTestingController).verify();
+  });
+
+  it('loads addresses through GraphQL', () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTranslateService(),
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+        {
+          provide: AuthService,
+          useValue: { activeMembership: signal(null), hasPermission: () => true },
+        },
+      ],
+    });
+    TestBed.runInInjectionContext(() => new AddressesComponent());
     const http = TestBed.inject(HttpTestingController);
-    const request = http.expectOne((candidate) => candidate.url === endpoint);
-    expect(request.request.method).toBe('GET');
-    request.flush({ content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 });
+    const request = http.expectOne('/graphql');
+    expect(request.request.body.query).toContain('query Addresses');
+    request.flush({
+      data: { addresses: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } },
+    });
     http.verify();
     TestBed.resetTestingModule();
   });
@@ -119,7 +161,9 @@ describe('catalogue feature endpoints', () => {
     });
     component.create();
     http
-      .expectOne('/api/countries/continents')
+      .expectOne(
+        (request) => request.url === '/graphql' && request.body.query.includes('query Continents'),
+      )
       .flush('failure', { status: 500, statusText: 'Server error' });
     expect(component.error()).toBe(true);
     expect(dialog.open).not.toHaveBeenCalled();
@@ -144,13 +188,17 @@ describe('catalogue feature endpoints', () => {
     const http = TestBed.inject(HttpTestingController);
     http
       .expectOne('/graphql')
-      .flush({ data: { specialities: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } } });
+      .flush({
+        data: { specialities: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } },
+      });
 
     window.dispatchEvent(new Event(LANGUAGE_CHANGED_EVENT));
 
     http
       .expectOne('/graphql')
-      .flush({ data: { specialities: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } } });
+      .flush({
+        data: { specialities: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } },
+      });
     http.verify();
   });
 
@@ -170,19 +218,19 @@ describe('catalogue feature endpoints', () => {
     });
     const component = TestBed.runInInjectionContext(() => new SpecialitiesComponent());
     const http = TestBed.inject(HttpTestingController);
-    http
-      .expectOne('/graphql')
-      .flush({
-        data: { specialities: {
-        content: [
-          { id: 1, name: 'Pediatric Dentistry', displayName: 'Odontopediatria', procedures: [] },
-        ],
-        page: 0,
-        size: 10,
-        totalElements: 1,
-        totalPages: 1,
-        } },
-      });
+    http.expectOne('/graphql').flush({
+      data: {
+        specialities: {
+          content: [
+            { id: 1, name: 'Pediatric Dentistry', displayName: 'Odontopediatria', procedures: [] },
+          ],
+          page: 0,
+          size: 10,
+          totalElements: 1,
+          totalPages: 1,
+        },
+      },
+    });
 
     expect(component.rows()[0].cells['name']).toBe('Odontopediatria');
     expect(component.records()[0]['name']).toBe('Pediatric Dentistry');

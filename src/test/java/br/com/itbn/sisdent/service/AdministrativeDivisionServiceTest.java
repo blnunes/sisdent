@@ -6,12 +6,12 @@ import br.com.itbn.sisdent.model.AdministrativeDivision;
 import br.com.itbn.sisdent.model.Continent;
 import br.com.itbn.sisdent.model.Country;
 import br.com.itbn.sisdent.repository.AdministrativeDivisionRepository;
+import br.com.itbn.sisdent.error.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -30,6 +30,9 @@ class AdministrativeDivisionServiceTest {
 
     @Mock
     private CountryService countryService;
+
+    @Mock
+    private ScopeAuthorizationService authorization;
 
     @InjectMocks
     private AdministrativeDivisionService service;
@@ -89,10 +92,10 @@ class AdministrativeDivisionServiceTest {
         when(repository.findById(1L)).thenReturn(Optional.empty());
         when(repository.existsById(2L)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.update(1L,
-                new AdministrativeDivisionRequest("Lisbon", "LX", "DISTRICT", "PT")))
-                .isInstanceOf(ResponseStatusException.class);
-        assertThatThrownBy(() -> service.delete(2L)).isInstanceOf(ResponseStatusException.class);
+        AdministrativeDivisionRequest request = new AdministrativeDivisionRequest("Lisbon", "LX", "DISTRICT", "PT");
+        assertThatThrownBy(() -> service.update(1L, request))
+                .isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> service.delete(2L)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     private Country country() {

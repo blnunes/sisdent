@@ -29,7 +29,7 @@ public class OrganizationReadQueryController {
     }
 
     @QueryMapping
-    public List<PractitionerResponse> practitioners(@Argument UUID organizationId) {
-        return practitionerService.list(organizationId);
+    public List<PractitionerResponse> practitioners(@Argument UUID organizationId, @Argument UUID clinicUnitId) {
+        return practitionerService.list(organizationId, clinicUnitId);
     }
 }

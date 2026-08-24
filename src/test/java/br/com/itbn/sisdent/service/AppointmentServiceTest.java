@@ -28,6 +28,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -57,10 +58,10 @@ class AppointmentServiceTest {
     @BeforeEach
     void setUp() {
         request = new AppointmentRequest(clinicId, patientId, practitionerId, start, end, "Europe/Lisbon");
-        practitioner = org.mockito.Mockito.mock(Practitioner.class);
-        link = org.mockito.Mockito.mock(PatientOrganizationLink.class);
-        clinic = org.mockito.Mockito.mock(ClinicUnit.class);
-        Patient patient = org.mockito.Mockito.mock(Patient.class);
+        practitioner = mock(Practitioner.class);
+        link = mock(PatientOrganizationLink.class);
+        clinic = mock(ClinicUnit.class);
+        Patient patient = mock(Patient.class);
         lenient().when(practitioner.isActive()).thenReturn(true);
         lenient().when(practitioner.getId()).thenReturn(1L);
         lenient().when(practitioner.getGlobalId()).thenReturn(practitionerId);
@@ -103,12 +104,13 @@ class AppointmentServiceTest {
     @Test
     void getsAndTransitionsAppointmentsWithinTheRequestedClinic() {
         Appointment appointment = new Appointment(new Organization("Alpha"), clinic, link, practitioner, start, end, "Europe/Lisbon");
-        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointment.getGlobalId(), organizationId)).thenReturn(Optional.of(appointment));
+        var appointmentId = appointment.getGlobalId();
+        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointmentId, organizationId)).thenReturn(Optional.of(appointment));
 
-        assertThat(service.get(organizationId, clinicId, appointment.getGlobalId()).status()).isEqualTo(AppointmentStatus.SCHEDULED);
-        assertThat(service.transition(organizationId, clinicId, appointment.getGlobalId(), AppointmentStatus.COMPLETED).status())
+        assertThat(service.get(organizationId, clinicId, appointmentId).status()).isEqualTo(AppointmentStatus.SCHEDULED);
+        assertThat(service.transition(organizationId, clinicId, appointmentId, AppointmentStatus.COMPLETED).status())
                 .isEqualTo(AppointmentStatus.COMPLETED);
-        assertThatThrownBy(() -> service.transition(organizationId, clinicId, appointment.getGlobalId(), AppointmentStatus.CANCELLED))
+        assertThatThrownBy(() -> service.transition(organizationId, clinicId, appointmentId, AppointmentStatus.CANCELLED))
                 .isInstanceOf(ResponseStatusException.class);
     }
 
@@ -137,6 +139,17 @@ class AppointmentServiceTest {
     }
 
     @Test
+    void reportsAvailabilityOnlyForAnAuthorizedClinicAndActivePractitioner() {
+        when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
+        when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId))
+                .thenReturn(Optional.of(practitioner));
+        when(appointments.hasOverlap(1L, start, end, null)).thenReturn(false);
+
+        assertThat(service.availability(organizationId, clinicId, practitionerId, start, end).available()).isTrue();
+        verify(authorization).requireAppointmentRead(organizationId, clinicId);
+    }
+
+    @Test
     void rejectsInactivePractitionersAndAppointmentsOutsideTheClinicScope() {
         when(practitioner.isActive()).thenReturn(false);
         when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
@@ -147,8 +160,10 @@ class AppointmentServiceTest {
                 .hasMessageContaining("inactive");
 
         Appointment appointment = new Appointment(new Organization("Alpha"), clinic, link, practitioner, start, end, "Europe/Lisbon");
-        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointment.getGlobalId(), organizationId)).thenReturn(Optional.of(appointment));
-        assertThatThrownBy(() -> service.get(organizationId, UUID.randomUUID(), appointment.getGlobalId()))
+        var appointmentId = appointment.getGlobalId();
+        var unrelatedClinicId = UUID.randomUUID();
+        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointmentId, organizationId)).thenReturn(Optional.of(appointment));
+        assertThatThrownBy(() -> service.get(organizationId, unrelatedClinicId, appointmentId))
                 .isInstanceOf(ResponseStatusException.class);
     }
 }
