@@ -40,14 +40,17 @@ in [`docs/REST_RETIREMENT_INVENTORY.md`](docs/REST_RETIREMENT_INVENTORY.md).
 The following are examples of retained REST paths, not a complete REST API list:
 
 ```text
-GET /api/addresses
-GET /api/addresses/postal-code/{postalCode}?countryCode=PT
 GET /api/organizations/{organizationId}/patients
 POST /api/organizations/{organizationId}/patients
 DELETE /api/organizations/{organizationId}/patients/{patientId}
 GET /api/organizations/{organizationId}/appointments
 GET /api/organizations/{organizationId}/clinical/encounters
 ```
+
+Addresses are GraphQL-only through `addresses`, `addressesByPostalCode`,
+`addressPostalCodeSuggestions`, `createAddress`, `updateAddress`, and `deleteAddress`.
+Catalogue translations are GraphQL-only through `catalogTranslations` and
+`replaceCatalogTranslations`.
 
 Country list, create, and update are GraphQL-only through `countries(page, locale)`,
 `createCountry(input, locale)`, and `updateCountry(id, input, locale)`. The retained

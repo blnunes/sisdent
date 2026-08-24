@@ -60,9 +60,7 @@ public class SecurityConfiguration {
                                 "/i18n/**").permitAll()
                         // Foundational catalogues are platform-wide, not organization-scoped.
                         // They require platform-administrator authority.
-                        .requestMatchers("/api/specialities/**", "/api/addresses/**", "/api/countries/**",
-                                "/api/administrative-divisions/**", "/api/states/**",
-                                "/api/platform/catalog-translations/**")
+                        .requestMatchers("/api/specialities/**", "/api/countries/**")
                         .hasAuthority("ROLE_PLATFORM_ADMIN")
                         // GraphQL contains both platform and organization-scoped reads. Individual
                         // resolvers delegate to services, which remain the authorization authority.

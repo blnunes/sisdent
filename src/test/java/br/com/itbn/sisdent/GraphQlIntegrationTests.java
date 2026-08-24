@@ -169,6 +169,32 @@ class GraphQlIntegrationTests {
     }
 
     @Test
+    void addressAndAdministrativeDivisionOperationsUseGraphQlWithValidationAndAuthorization() throws Exception {
+        String admin = bearer(emailLogin("admin@sisdent.local", "admin"));
+        String divisionMutation = "mutation { createAdministrativeDivision(input: { name: \\\"GraphQL Division\\\", code: \\\"GQL\\\", type: \\\"DISTRICT\\\", countryCode: \\\"PT\\\" }) { id name country { code } } }";
+        mockMvc.perform(post("/graphql").header("Authorization", admin).contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"%s\" }".formatted(divisionMutation)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.createAdministrativeDivision.country.code").value("PT"));
+
+        String addressMutation = "mutation { createAddress(input: { street: \\\"GraphQL Street\\\", city: \\\"Lisbon\\\", postalCode: \\\"1000-001\\\", countryCode: \\\"PT\\\" }) { id street postalCode } }";
+        mockMvc.perform(post("/graphql").header("Authorization", admin).contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"%s\" }".formatted(addressMutation)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.createAddress.street").value("GraphQL Street"));
+
+        mockMvc.perform(post("/graphql").header("Authorization", admin).contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"mutation { createAddress(input: { street: \\\"\\\", city: \\\"Lisbon\\\", postalCode: \\\"1000\\\", countryCode: \\\"PT\\\" }) { id } }\" }"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.createAddress").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("VALIDATION.FAILED"));
+
+        mockMvc.perform(post("/graphql").header("Authorization", bearer(emailLogin("group.admin@sisdent.demo", "odonto2026@O"))).contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ addresses { page } }\" }"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.addresses").doesNotExist())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
+    }
+
+    @Test
     void organizationMutationPreservesAuthorizationAndTenantIsolation() throws Exception {
         String northstarId = organizationId("Northstar Dental Group");
         String outsideScopeId = "00000000-0000-0000-0000-000000000001";

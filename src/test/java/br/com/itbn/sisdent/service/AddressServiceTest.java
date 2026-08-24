@@ -7,6 +7,8 @@ import br.com.itbn.sisdent.model.AdministrativeDivision;
 import br.com.itbn.sisdent.model.Continent;
 import br.com.itbn.sisdent.model.Country;
 import br.com.itbn.sisdent.repository.AddressRepository;
+import br.com.itbn.sisdent.error.ResourceNotFoundException;
+import br.com.itbn.sisdent.error.ValidationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,6 +37,9 @@ class AddressServiceTest {
 
     @Mock
     private CountryService countryService;
+
+    @Mock
+    private ScopeAuthorizationService authorization;
 
     @InjectMocks
     private AddressService addressService;
@@ -120,9 +125,9 @@ class AddressServiceTest {
         assertThat(addressService.suggestByPostalCode("PT", "1")).isEmpty();
         AddressRequest addressRequest = request();
         assertThatThrownBy(() -> addressService.resolvePatientAddress(1L, addressRequest))
-                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("either addressId");
+                .isInstanceOf(ValidationException.class);
         assertThatThrownBy(() -> addressService.resolvePatientAddress(null, null))
-                .isInstanceOf(ResponseStatusException.class).hasMessageContaining("required");
+                .isInstanceOf(ValidationException.class);
     }
 
     @Test
@@ -131,9 +136,9 @@ class AddressServiceTest {
         when(addressRepository.existsById(2L)).thenReturn(false);
 
         AddressRequest addressRequest = request();
-        assertThatThrownBy(() -> addressService.update(1L, addressRequest)).isInstanceOf(ResponseStatusException.class);
-        assertThatThrownBy(() -> addressService.delete(2L)).isInstanceOf(ResponseStatusException.class);
-        assertThatThrownBy(() -> addressService.resolvePatientAddress(1L, null)).isInstanceOf(ResponseStatusException.class);
+        assertThatThrownBy(() -> addressService.update(1L, addressRequest)).isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> addressService.delete(2L)).isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> addressService.resolvePatientAddress(1L, null)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     private AddressRequest request() {

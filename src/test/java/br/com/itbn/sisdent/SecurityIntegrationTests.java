@@ -82,19 +82,25 @@ class SecurityIntegrationTests {
     }
 
     @Test
-    void platformAdministratorCanUsePlatformCatalogues() throws Exception {
+    void platformAdministratorCanUsePlatformTranslationCatalogueThroughGraphQl() throws Exception {
         String token = emailLogin("admin@sisdent.local", "admin");
 
-        mockMvc.perform(get("/api/platform/catalog-translations").header("Authorization", bearer(token)))
-                .andExpect(status().isOk());
+        mockMvc.perform(post("/graphql").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ catalogTranslations { canonicalName } }\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist());
     }
 
     @Test
-    void organizationAdministratorCannotManagePlatformTranslations() throws Exception {
+    void organizationAdministratorCannotManagePlatformTranslationsThroughGraphQl() throws Exception {
         String token = emailLogin("group.admin@sisdent.demo", "odonto2026@O");
 
-        mockMvc.perform(get("/api/platform/catalog-translations").header("Authorization", bearer(token)))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/graphql").header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ catalogTranslations { canonicalName } }\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors[0].extensions.code").value("AUTHORIZATION.DENIED"));
     }
 
     @Test

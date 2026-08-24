@@ -33,15 +33,18 @@ public class CatalogTranslationService {
     private final SpecialityRepository specialities;
     private final DentalProcedureRepository procedures;
     private final MessageSource messages;
+    private final ScopeAuthorizationService authorization;
 
     public CatalogTranslationService(CatalogTranslationRepository translations,
                                      SpecialityRepository specialities,
                                      DentalProcedureRepository procedures,
-                                     MessageSource messages) {
+                                     MessageSource messages,
+                                     ScopeAuthorizationService authorization) {
         this.translations = translations;
         this.specialities = specialities;
         this.procedures = procedures;
         this.messages = messages;
+        this.authorization = authorization;
     }
 
     @Transactional(readOnly = true)
@@ -94,6 +97,7 @@ public class CatalogTranslationService {
             CatalogResourceType type,
             Long resourceId,
             Map<String, String> values) {
+        authorization.requirePlatformAdministrator();
         rejectUnsupportedLocales(values.keySet());
         Resource resource = requireResource(type, resourceId);
         List<CatalogTranslation> existing = translations.findByResourceTypeAndResourceId(
@@ -137,6 +141,7 @@ public class CatalogTranslationService {
 
     @Transactional(readOnly = true)
     public List<CatalogTranslationEntryResponse> findAll(CatalogResourceType type, String query) {
+        authorization.requirePlatformAdministrator();
         String term = query == null ? "" : query.strip().toLowerCase(Locale.ROOT);
         List<CatalogTranslation> allTranslations = translations.findAll();
         List<CatalogTranslationEntryResponse> result = new ArrayList<>();

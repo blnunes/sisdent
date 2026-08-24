@@ -8,6 +8,10 @@ type Mutation {
     createAdministrativeDivision(input: AdministrativeDivisionMutationInput!): AdministrativeDivision!
     updateAdministrativeDivision(id: ID!, input: AdministrativeDivisionMutationInput!): AdministrativeDivision!
     deleteAdministrativeDivision(id: ID!): Boolean!
+    createAddress(input: AddressMutationInput!): Address!
+    updateAddress(id: ID!, input: AddressMutationInput!): Address!
+    deleteAddress(id: ID!): Boolean!
+    replaceCatalogTranslations(type: CatalogResourceType!, id: ID!, translations: [CatalogTranslationMutationInput!]!): CatalogTranslationEntry!
     createClinicUnit(organizationId: ID!, input: ClinicUnitMutationInput!): ClinicUnit!
     createPractitioner(organizationId: ID!, input: PractitionerMutationInput!): Practitioner!
     updatePractitioner(organizationId: ID!, practitionerId: ID!, input: PractitionerMutationInput!): Practitioner!
@@ -24,6 +28,8 @@ input SpecialityMutationInput {
 }
 input ClinicUnitMutationInput { name: String! }
 input AdministrativeDivisionMutationInput { name: String!, code: String!, type: String!, countryCode: String! }
+input AddressMutationInput { street: String!, district: String, city: String!, additionalInfo: String, block: String, postalCode: String!, administrativeDivision: AdministrativeDivisionReferenceInput, countryCode: String! }
+input AdministrativeDivisionReferenceInput { name: String!, code: String!, type: String! }
 type AdministrativeDivision { id: ID!, name: String!, code: String!, type: String!, country: Country! }
 input PractitionerMutationInput {
     displayName: String!

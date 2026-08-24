@@ -32,10 +32,11 @@ class CatalogTranslationServiceTest {
     private final SpecialityRepository specialities = mock(SpecialityRepository.class);
     private final DentalProcedureRepository procedures = mock(DentalProcedureRepository.class);
     private final MessageSource messages = mock(MessageSource.class);
+    private final ScopeAuthorizationService authorization = mock(ScopeAuthorizationService.class);
     private CatalogTranslationService service;
 
     @BeforeEach
-    void setUp() { service = new CatalogTranslationService(repository, specialities, procedures, messages); }
+    void setUp() { service = new CatalogTranslationService(repository, specialities, procedures, messages, authorization); }
 
     @Test
     void customTranslationTakesPrecedenceOverBuiltInAndCanonicalFallbacks() {

@@ -10,9 +10,18 @@ type Query {
     """The authoritative continent values for country maintenance."""
     continents: [Continent!]!
     administrativeDivisions(page: CataloguePageInput): AdministrativeDivisionPage!
+    addresses(page: CataloguePageInput): AddressPage!
+    addressesByPostalCode(countryCode: String!, postalCode: String!): [Address!]!
+    addressPostalCodeSuggestions(countryCode: String!, query: String!): [Address!]!
+    catalogTranslations(type: CatalogResourceType, query: String): [CatalogTranslationEntry!]!
 }
 
 type AdministrativeDivisionPage { content: [AdministrativeDivision!]!, page: Int!, size: Int!, totalElements: Int!, totalPages: Int! }
+type AddressPage { content: [Address!]!, page: Int!, size: Int!, totalElements: Int!, totalPages: Int! }
+type Address { id: ID!, street: String!, district: String, city: String!, additionalInfo: String, block: String, postalCode: String!, administrativeDivision: AdministrativeDivision, country: Country! }
+type CatalogTranslationEntry { resourceType: CatalogResourceType!, resourceId: ID!, parentId: ID, canonicalName: String!, translations: [CatalogTranslationValue!]!, customizedLocales: [String!]!, missingLocales: [String!]! }
+type CatalogTranslationValue { locale: String!, value: String! }
+enum CatalogResourceType { SPECIALITY PROCEDURE }
 
 """The transport-neutral pagination and ordering contract for catalogue queries."""
 input CataloguePageInput {

@@ -4,6 +4,7 @@ import { map, Observable } from 'rxjs';
 import { Membership, PageResponse } from '../../core/models';
 import { SpecialityCatalogGraphqlService } from '../../core/speciality-catalog-graphql.service';
 import { AdministrativeDivisionGraphqlService } from '../../core/administrative-division-graphql.service';
+import { AddressGraphqlService } from '../../core/address-graphql.service';
 import { AddressOption, AdministrativeDivisionOption, PatientRecord, SpecialityOption } from './patient.models';
 import { FilterOption } from '../../shared/filters/filter.models';
 
@@ -12,6 +13,7 @@ export class PatientApiService {
   private readonly http = inject(HttpClient);
   private readonly specialitiesGraphql = inject(SpecialityCatalogGraphqlService);
   private readonly divisionsGraphql = inject(AdministrativeDivisionGraphqlService);
+  private readonly addressesGraphql = inject(AddressGraphqlService);
   endpoint(membership: Membership | null): string {
     if (!membership) return '';
     const base = `/api/organizations/${encodeURIComponent(membership.organizationId)}/patients`;
@@ -24,7 +26,7 @@ export class PatientApiService {
       return this.specialities().pipe(map((response) => response.content.filter(({ name }) => name.toLowerCase().includes(normalizedQuery)).slice(0, 10).map(({ id, name }) => ({ value: String(id), label: name }))));
     }
     if (field === 'addressId') {
-      return this.http.get<PageResponse<AddressOption>>('/api/addresses', { params: { page: '0', size: '100', sort: 'street', direction: 'asc' } }).pipe(map((response) => response.content.filter((address) => [address.street, address.city, address.postalCode].some((value) => value?.toLowerCase().includes(normalizedQuery))).slice(0, 10).map((address) => ({ value: String(address.id), label: `${address.street} · ${address.postalCode ?? ''} · ${address.city}` }))));
+      return this.addressesGraphql.list(0, 100, 'street', 'asc').pipe(map((response) => response.content.filter((address) => [address.street, address.city, address.postalCode].some((value) => value?.toLowerCase().includes(normalizedQuery))).slice(0, 10).map((address) => ({ value: String(address.id), label: `${address.street} · ${address.postalCode ?? ''} · ${address.city}` }))));
     }
     if (field === 'taxId') {
       const params = new HttpParams().set('page', 0).set('size', 10).set('sort', 'name').set('direction', 'asc').set('taxId', query);
@@ -55,5 +57,5 @@ export class PatientApiService {
       })),
     })));
   }
-  postalCodeSuggestions(countryCode: string, query: string): Observable<AddressOption[]> { return this.http.get<AddressOption[]>('/api/addresses/postal-code-suggestions', { params: { countryCode, query } }); }
+  postalCodeSuggestions(countryCode: string, query: string): Observable<AddressOption[]> { return this.addressesGraphql.postalCodeSuggestions(countryCode, query).pipe(map((addresses) => addresses.map((address) => ({ ...address, id: Number(address.id) })))); }
 }

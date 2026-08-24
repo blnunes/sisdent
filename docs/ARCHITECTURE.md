@@ -147,7 +147,7 @@ credentials are rejected before execution; service authorization failures use th
 error envelope.
 
 Schemas are organized by domain under `src/main/resources/graphql` (`countries.graphqls`,
-`specialities.graphqls`, `organization-reads.graphqls`). Queries use plural collection names and singular item lookups;
+`specialities.graphqls`, `organization-reads.graphqls`, `administrative-mutations.graphqls`). Queries use plural collection names and singular item lookups;
 mutations follow the same service-delegation rules as queries. Collection queries take the reusable
 `CataloguePageInput` (page, size, sort, `SortDirection`) and domain-specific typed filters,
 not REST query-string conventions. All catalogue queries accept an optional `locale` BCP 47

@@ -1,6 +1,5 @@
 package br.com.itbn.sisdent.controller;
 
-import br.com.itbn.sisdent.service.AddressService;
 import br.com.itbn.sisdent.service.OrganizationPatientService;
 import br.com.itbn.sisdent.service.OrganizationService;
 import br.com.itbn.sisdent.service.AccountManagementService;
@@ -16,21 +15,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 class ControllerDelegationTest {
-    @Test
-    void delegatesReferenceDataEndpointsToTheirServices() {
-        AddressService addresses = mock(AddressService.class);
-
-        new AddressController(addresses).findAll(0, 10, "street", "asc");
-        new AddressController(addresses).findByPostalCode("1250", "PT");
-        new AddressController(addresses).suggestByPostalCode("PT", "12");
-        new AddressController(addresses).create(null);
-        new AddressController(addresses).update(1L, null);
-        new AddressController(addresses).delete(1L);
-
-        verify(addresses).findByPostalCode("PT", "1250");
-        verify(addresses).suggestByPostalCode("PT", "12");
-    }
-
     @Test
     void delegatesOrganizationPatientEndpointsAndCreatesExpectedHttpResponses() {
         OrganizationPatientService patients = mock(OrganizationPatientService.class);

@@ -48,7 +48,9 @@ describe('PatientApiService', () => {
     specialitiesRequest.flush({ data: { specialities: { content: [{ id: '1', name: 'Surgery', displayName: 'Surgery' }, { id: '2', name: 'Pediatric Dentistry', displayName: 'Pediatric Dentistry' }], page: 0, size: 100, totalElements: 2, totalPages: 1 } } });
 
     api.filterOptions(membership, 'addressId', 'maple').subscribe((options) => expect(options).toEqual([{ value: '7', label: 'Maple Grove · 1000 · Lisbon' }]));
-    http.expectOne((request) => request.url === '/api/addresses').flush({ content: [{ id: 7, street: 'Maple Grove', postalCode: '1000', city: 'Lisbon', country: { code: 'PT' } }, { id: 8, street: 'Oak Road', city: 'Porto', country: { code: 'PT' } }], page: 0, size: 100, totalElements: 2, totalPages: 1 });
+    const addressesRequest = http.expectOne('/graphql');
+    expect(addressesRequest.request.body.query).toContain('query Addresses');
+    addressesRequest.flush({ data: { addresses: { content: [{ id: '7', street: 'Maple Grove', postalCode: '1000', city: 'Lisbon', country: { code: 'PT' } }, { id: '8', street: 'Oak Road', city: 'Porto', country: { code: 'PT' } }], page: 0, size: 100, totalElements: 2, totalPages: 1 } } });
 
     api.filterOptions(membership, 'taxId', '123').subscribe((options) => expect(options).toEqual([{ value: '123', label: '123' }]));
     http.expectOne((request) => request.url.startsWith('/api/organizations/') && request.params.get('taxId') === '123').flush({ content: [{ taxId: '123' }], page: 0, size: 10, totalElements: 1, totalPages: 1 });

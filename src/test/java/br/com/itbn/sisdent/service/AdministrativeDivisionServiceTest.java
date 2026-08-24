@@ -6,6 +6,7 @@ import br.com.itbn.sisdent.model.AdministrativeDivision;
 import br.com.itbn.sisdent.model.Continent;
 import br.com.itbn.sisdent.model.Country;
 import br.com.itbn.sisdent.repository.AdministrativeDivisionRepository;
+import br.com.itbn.sisdent.error.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,6 +31,9 @@ class AdministrativeDivisionServiceTest {
 
     @Mock
     private CountryService countryService;
+
+    @Mock
+    private ScopeAuthorizationService authorization;
 
     @InjectMocks
     private AdministrativeDivisionService service;
@@ -91,8 +95,8 @@ class AdministrativeDivisionServiceTest {
 
         AdministrativeDivisionRequest request = new AdministrativeDivisionRequest("Lisbon", "LX", "DISTRICT", "PT");
         assertThatThrownBy(() -> service.update(1L, request))
-                .isInstanceOf(ResponseStatusException.class);
-        assertThatThrownBy(() -> service.delete(2L)).isInstanceOf(ResponseStatusException.class);
+                .isInstanceOf(ResourceNotFoundException.class);
+        assertThatThrownBy(() -> service.delete(2L)).isInstanceOf(ResourceNotFoundException.class);
     }
 
     private Country country() {

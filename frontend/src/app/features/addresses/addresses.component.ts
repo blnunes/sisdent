@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { AddressGraphqlItem, AddressGraphqlService, AddressWrite } from '../../core/address-graphql.service';
 import { DataTableColumn } from '../../shared/data-table/data-table.models';
 import { FormDialogValues } from '../../shared/dialogs/form-dialog-shell/form-dialog-shell.models';
 import { CatalogueListController } from '../resource-support/catalogue-list.controller';
@@ -9,8 +10,12 @@ const COLUMNS: readonly DataTableColumn[] = [{ key: 'street', label: 'Street', s
 const FIELDS = [{ key: 'street', label: 'Street', required: true }, { key: 'district', label: 'District' }, { key: 'city', label: 'City', required: true }, { key: 'additionalInfo', label: 'Additional information' }, { key: 'block', label: 'Block' }, { key: 'postalCode', label: 'Postal code', required: true }, { key: 'administrativeDivisionName', label: 'Administrative division name' }, { key: 'administrativeDivisionCode', label: 'Administrative division code' }, { key: 'administrativeDivisionType', label: 'Administrative division type' }, { key: 'countryCode', label: 'Country code', required: true }] as const;
 @Component({ selector: 'app-addresses', imports: [...RESOURCE_PAGE_IMPORTS], templateUrl: '../resource-support/resource-page.component.html', styleUrl: '../resource-support/resource-page.component.scss' })
 export class AddressesComponent extends CatalogueListController {
+  private readonly addresses = inject(AddressGraphqlService);
   readonly activeKey = 'addresses'; readonly title = 'MODULES.ADDRESSES'; readonly description = 'MODULES.ADDRESSES_DESCRIPTION'; readonly translationPrefix = 'RESOURCE'; readonly columns = COLUMNS;
-  constructor() { super({ endpoint: () => '/api/addresses', maintainPermission: 'MAINTAIN_ADDRESSES', columns: COLUMNS, identifier: (record) => Number(record['id']), primary: (record) => String(record['street'] ?? '—'), cells: addressCells }, { fields: FIELDS, fromRecord: addressValues, toRequest: addressRequest, title: (editing) => editing ? 'Edit address' : 'New address' }); this.load(); }
+  constructor() { super({ endpoint: () => '', maintainPermission: 'MAINTAIN_ADDRESSES', columns: COLUMNS, identifier: (record) => Number(record['id']), primary: (record) => String(record['street'] ?? '—'), cells: addressCells }, { fields: FIELDS, fromRecord: addressValues, toRequest: addressRequest, title: (editing) => editing ? 'Edit address' : 'New address' }); this.load(); }
+  override load(): void { this.loading.set(true); this.error.set(false); this.addresses.list(this.page(), this.pageSize(), this.sort(), this.sortDirection()).subscribe({ next: (response) => { this.records.set(response.content); this.totalElements.set(response.totalElements); this.loading.set(false); }, error: () => { this.error.set(true); this.loading.set(false); } }); }
+  protected override save(record: ResourceRecord | undefined, body: unknown): void { this.addresses.save(record as AddressGraphqlItem | undefined, body as AddressWrite).subscribe({ next: () => this.load(), error: () => this.error.set(true) }); }
+  protected override remove(record: ResourceRecord): void { if (!confirm(this.translate.instant('RESOURCE.DELETE_CONFIRM', { name: String(record['street'] ?? '—') }))) return; this.addresses.delete(String(record['id'])).subscribe({ next: () => this.load(), error: () => this.error.set(true) }); }
 }
 function nested(record: ResourceRecord, key: string): ResourceRecord { const value = record[key]; return value && typeof value === 'object' && !Array.isArray(value) ? value as ResourceRecord : {}; }
 function addressCells(record: ResourceRecord): Readonly<Record<string, string>> { return { street: String(record['street'] ?? '—'), district: String(record['district'] ?? '—'), postalCode: String(record['postalCode'] ?? '—'), administrativeDivision: String(nested(record, 'administrativeDivision')['name'] ?? '—'), country: String(nested(record, 'country')['name'] ?? '—') }; }

@@ -13,10 +13,6 @@ import { LanguageService } from '../core/language.service';
 import { provideTranslateService } from '@ngx-translate/core';
 
 describe('catalogue feature endpoints', () => {
-  const cases: [Type<unknown>, string][] = [
-    [AddressesComponent, '/api/addresses'],
-  ];
-
   it('loads administrative divisions through GraphQL', () => {
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), provideTranslateService(), { provide: MatDialog, useValue: { open: vi.fn() } }, { provide: AuthService, useValue: { activeMembership: signal(null), hasPermission: () => true } }] });
     TestBed.runInInjectionContext(() => new AdministrativeDivisionsComponent());
@@ -26,7 +22,7 @@ describe('catalogue feature endpoints', () => {
     TestBed.inject(HttpTestingController).verify();
   });
 
-  it.each(cases)('%s loads only its own endpoint', (componentType, endpoint) => {
+  it('loads addresses through GraphQL', () => {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -39,11 +35,11 @@ describe('catalogue feature endpoints', () => {
         },
       ],
     });
-    TestBed.runInInjectionContext(() => new (componentType as Type<{ load(): void }>)());
+    TestBed.runInInjectionContext(() => new AddressesComponent());
     const http = TestBed.inject(HttpTestingController);
-    const request = http.expectOne((candidate) => candidate.url === endpoint);
-    expect(request.request.method).toBe('GET');
-    request.flush({ content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 });
+    const request = http.expectOne('/graphql');
+    expect(request.request.body.query).toContain('query Addresses');
+    request.flush({ data: { addresses: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } } });
     http.verify();
     TestBed.resetTestingModule();
   });
