@@ -34,6 +34,12 @@ type Mutation {
     transitionAppointment(organizationId: ID!, clinicUnitId: ID!, appointmentId: ID!, status: AppointmentStatus!): Appointment!
     createPerformedProcedure(organizationId: ID!, clinicUnitId: ID!, appointmentId: ID!, input: PerformedProcedureMutationInput!): PerformedProcedure!
     voidPerformedProcedure(organizationId: ID!, clinicUnitId: ID!, performedProcedureId: ID!, input: VoidPerformedProcedureMutationInput!): PerformedProcedure!
+    createClinicalEncounter(organizationId: ID!, input: ClinicalEncounterMutationInput!): ClinicalEncounter!
+    updateClinicalEncounter(organizationId: ID!, encounterId: ID!, input: ClinicalEncounterMutationInput!): ClinicalEncounter!
+    finalizeClinicalEncounter(organizationId: ID!, clinicUnitId: ID!, encounterId: ID!): ClinicalEncounter!
+    amendClinicalEncounter(organizationId: ID!, encounterId: ID!, input: AmendEncounterMutationInput!): ClinicalEncounter!
+    createOdontogramFinding(organizationId: ID!, input: OdontogramFindingMutationInput!): OdontogramFinding!
+    voidOdontogramFinding(organizationId: ID!, clinicUnitId: ID!, findingId: ID!, input: VoidOdontogramFindingMutationInput!): OdontogramFinding!
 }
 
 input CountryMutationInput { name: String!, code: String!, continent: Continent! }
@@ -77,6 +83,10 @@ type PatientMutationResult { globalId: ID!, name: String!, active: Boolean! }
 input AppointmentMutationInput { clinicUnitId: ID!, patientId: ID!, practitionerId: ID!, startAt: String!, endAt: String!, schedulingTimezone: String! }
 input PerformedProcedureMutationInput { dentalProcedureId: ID!, performedAt: String!, administrativeNote: String }
 input VoidPerformedProcedureMutationInput { reason: String! }
+input ClinicalEncounterMutationInput { clinicUnitId: ID!, patientId: ID!, appointmentId: ID, practitionerId: ID, careAt: String!, careTimezone: String!, narrative: String!, administrativeNote: String, version: Int }
+input AmendEncounterMutationInput { clinicUnitId: ID!, appointmentId: ID, practitionerId: ID, careAt: String!, careTimezone: String!, narrative: String!, administrativeNote: String, reason: String! }
+input OdontogramFindingMutationInput { clinicUnitId: ID!, patientId: ID!, practitionerId: ID, replacementForId: ID, toothCode: String!, surface: OdontogramSurface!, condition: OdontogramCondition!, observedAt: String!, observationTimezone: String!, clinicalNote: String }
+input VoidOdontogramFindingMutationInput { reason: String!, version: Int! }
 input ExactPatientMatchInput { documentType: DocumentType!, issuerCountryCode: String!, documentNumber: String!, birthDate: String! }
 input PatientLinkMutationInput { documentType: DocumentType!, issuerCountryCode: String!, documentNumber: String!, birthDate: String!, clinicUnitId: ID, operationalBasis: PatientLinkBasis! }
 type ExactPatientMatch { possibleMatchExists: Boolean! }

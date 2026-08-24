@@ -37,11 +37,7 @@ serve explicitly documented operational and not-yet-migrated workflows. The
 complete endpoint inventory, GraphQL replacements, and deprecation window are
 in [`docs/REST_RETIREMENT_INVENTORY.md`](docs/REST_RETIREMENT_INVENTORY.md).
 
-The following is an example of a retained REST path; scheduling is GraphQL-only:
-
-```text
-GET /api/organizations/{organizationId}/clinical/encounters
-```
+Scheduling and clinical workflows are GraphQL-only.
 
 Addresses are GraphQL-only through `addresses`, `addressesByPostalCode`,
 `addressPostalCodeSuggestions`, `createAddress`, `updateAddress`, and `deleteAddress`.
@@ -74,8 +70,8 @@ there is no standalone `/api/procedures` endpoint.
 
 ## Clinical workspace
 
-Clinical records are always addressed below the active organization and clinic
-scope: `/api/organizations/{organizationId}/clinical`. A clinical reader can
+Clinical records use the active organization and clinic scope supplied to the
+typed GraphQL operations. A clinical reader can
 read encounters and odontogram history; a clinical author can create and edit
 only their draft encounters; a clinical manager (and an organization
 administrator) can finalize encounters and create amendments. Final encounters

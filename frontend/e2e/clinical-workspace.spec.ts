@@ -58,8 +58,8 @@ test.describe('Clinical workspace', () => {
     await page.getByRole('button', { name: 'Record finding', exact: true }).click();
     await expect(page.getByText('RESTORATION', { exact: true })).toBeVisible();
 
-    const history = await apiJson(request, `/api/organizations/${organizationId}/clinical/odontogram/history?clinicUnitId=${clinicUnitId}&patientId=${patient.globalId}`, managerToken);
-    expect(history.content.some((finding: { voidReason?: string }) => finding.voidReason === 'E2E correction')).toBeTruthy();
+    const history = await graphQl(request, managerToken, `query { odontogramHistory(organizationId: "${organizationId}", clinicUnitId: "${clinicUnitId}", patientId: "${patient.globalId}") { content { voidReason } } }`);
+    expect(history.odontogramHistory.content.some((finding: { voidReason?: string }) => finding.voidReason === 'E2E correction')).toBeTruthy();
   });
 });
 
@@ -73,6 +73,14 @@ async function apiJson(request: APIRequestContext, path: string, token: string):
   const response = await request.get(`${backendUrl}${path}`, { headers: bearer(token) });
   expect(response.ok(), path).toBeTruthy();
   return response.json();
+}
+
+async function graphQl(request: APIRequestContext, token: string, query: string): Promise<any> {
+  const response = await request.post(`${backendUrl}/graphql`, { headers: bearer(token), data: { query } });
+  expect(response.ok(), query).toBeTruthy();
+  const payload = await response.json();
+  expect(payload.errors, query).toBeUndefined();
+  return payload.data;
 }
 
 async function clinicWithPatients(request: APIRequestContext, organizationId: string, clinics: any[], token: string): Promise<string> {

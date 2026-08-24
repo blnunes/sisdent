@@ -16,7 +16,7 @@ consumers are removed; **In progress** means implementation has started;
 | 2 — identity and organization | **Planned** | Account settings, account management, organizations, memberships, clinic units and practitioners. |
 | 3 — patients | **Planned** | Patient reads, creation, deactivation, intake, linking and autocomplete. |
 | 4 — scheduling | **Planned** | Appointment reads, availability, transitions and performed procedures. |
-| 5 — clinical | **Planned** | Encounters, amendments, finalization and odontogram. |
+| 5 — clinical | **In progress** | GraphQL-only implementation is complete; the release gate remains blocked by unrelated full-suite failures. |
 
 Update this table in the same change that moves an operation to GraphQL or
 removes a REST mapping; it is the single progress view for this programme.
@@ -37,6 +37,7 @@ repositories: GraphQL adapters delegate to those boundaries.
 | Country catalogue | `countries`, `continents`, `createCountry`, `updateCountry`, `deleteCountry` | `CountryController` removed |
 | Speciality list/create/update | `specialities`, `createSpeciality`, `updateSpeciality` | Removed 2026-08-21 |
 | Patient update | `updatePatient` | Removed |
+| Clinical workflow | clinical encounter and odontogram queries/mutations | `ClinicalRecordController` removed |
 
 ## Execution waves
 
@@ -46,7 +47,7 @@ repositories: GraphQL adapters delegate to those boundaries.
 | 2 — identity and organization | `AccountSettingsController`, `AccountManagementController`, `OrganizationController`, `PractitionerController` | Current-account/settings, account lifecycle, organizations, clinic units, memberships and practitioners | Membership/platform scope, self-service restriction, lifecycle and optimistic-lock coverage |
 | 3 — patient workflow | `OrganizationPatientController` remaining list/create/deactivate/intake/link/filter operations | Scoped patient query and create/deactivate/intake/link mutations | Tenant isolation, duplicate identity, clinic scope and rollback coverage |
 | 4 — scheduling | `AppointmentController` including performed procedures | Paginated appointment queries and state-transition mutations | Role matrix, time/conflict boundaries, idempotency and transaction rollback coverage |
-| 5 — clinical | `ClinicalRecordController` including encounters, finalization, amendments and odontogram | Clinical queries and explicit versioned mutations | Clinical immutability/amendment, tenant isolation, audit and failure-recovery approval |
+| 5 — clinical | `ClinicalRecordController` including encounters, finalization, amendments and odontogram | Clinical queries and explicit versioned mutations | Complete: controller removed with GraphQL lifecycle, conflict and scope tests |
 
 ## Frontend migration worklist
 
@@ -59,7 +60,7 @@ repositories: GraphQL adapters delegate to those boundaries.
 | **Planned** | `core/account-api.service.ts`, `core/account-settings-api.service.ts` | Replace account, settings, organization and membership HTTP methods with typed GraphQL services | Account and organization controllers |
 | 3 | `features/patients/patient-api.service.ts`, `features/patients/patients.component.ts` | Complete scoped patient queries and create/deactivate/intake/link mutations | `OrganizationPatientController` |
 | 4 | `features/home/home.component.ts`, `features/appointments/appointments.component.ts` | Add appointment query, availability and transition mutations; consume only typed GraphQL service | `AppointmentController` |
-| 5 | `features/clinical/clinical-workspace.component.ts` | Extract every direct `HttpClient` call into typed clinical GraphQL query/mutation services | `ClinicalRecordController` |
+| **Done** | `features/clinical/clinical-workspace.component.ts` | Typed clinical GraphQL query/mutation service | `ClinicalRecordController` removed |
 
 ### Wave 2: account settings checkpoint
 

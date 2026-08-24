@@ -14,6 +14,11 @@ extend type Query {
     appointments(organizationId: ID!, clinicUnitId: ID, from: String!, to: String, page: Int, size: Int): AppointmentPage!
     appointment(organizationId: ID!, clinicUnitId: ID, appointmentId: ID!): Appointment!
     performedProcedures(organizationId: ID!, clinicUnitId: ID, appointmentId: ID!): [PerformedProcedure!]!
+    clinicalEncounters(organizationId: ID!, clinicUnitId: ID!, patientId: ID!, page: Int, size: Int): ClinicalEncounterPage!
+    clinicalEncounter(organizationId: ID!, clinicUnitId: ID!, encounterId: ID!): ClinicalEncounter!
+    encounterAmendments(organizationId: ID!, clinicUnitId: ID!, encounterId: ID!): [ClinicalEncounter!]!
+    currentOdontogram(organizationId: ID!, clinicUnitId: ID!, patientId: ID!): [OdontogramFinding!]!
+    odontogramHistory(organizationId: ID!, clinicUnitId: ID!, patientId: ID!, page: Int, size: Int): OdontogramFindingPage!
 }
 
 type ClinicUnit {
@@ -42,3 +47,10 @@ enum AppointmentStatus { SCHEDULED CANCELLED COMPLETED NO_SHOW }
 type AppointmentPage { content: [Appointment!]!, page: Int!, size: Int!, totalElements: Int!, totalPages: Int! }
 type Appointment { globalId: ID!, clinicUnitId: ID!, patientId: ID!, patientName: String!, practitionerId: ID!, practitionerName: String!, startAt: String!, endAt: String!, schedulingTimezone: String!, status: AppointmentStatus! }
 type PerformedProcedure { globalId: ID!, dentalProcedureId: ID!, procedureNameSnapshot: String!, performedAt: String!, administrativeNote: String, voidedAt: String, voidedBy: String, voidReason: String }
+enum EncounterStatus { DRAFT FINAL }
+enum OdontogramSurface { WHOLE_TOOTH MESIAL DISTAL BUCCAL LINGUAL_PALATAL OCCLUSAL_INCISAL }
+enum OdontogramCondition { SOUND CARIES RESTORATION CROWN MISSING IMPLANT EXTRACTED }
+type ClinicalEncounterPage { content: [ClinicalEncounter!]!, page: Int!, size: Int!, totalElements: Int!, totalPages: Int! }
+type ClinicalEncounter { globalId: ID!, clinicUnitId: ID!, patientId: ID!, appointmentId: ID, practitionerId: ID, careAt: String!, careTimezone: String!, narrative: String!, administrativeNote: String, status: EncounterStatus!, finalizedAt: String, finalizedBy: String, originalEncounterId: ID, amendmentReason: String, version: Int! }
+type OdontogramFindingPage { content: [OdontogramFinding!]!, page: Int!, size: Int!, totalElements: Int!, totalPages: Int! }
+type OdontogramFinding { globalId: ID!, clinicUnitId: ID!, patientId: ID!, practitionerId: ID, replacementForId: ID, toothCode: String!, surface: OdontogramSurface!, condition: OdontogramCondition!, observedAt: String!, observationTimezone: String!, clinicalNote: String, voidedAt: String, voidedBy: String, voidReason: String, version: Int! }

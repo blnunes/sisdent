@@ -1,4 +1,3 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -13,7 +12,9 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
-import { ClinicalEncounter, ClinicUnit, OdontogramFinding, PageResponse } from '../../core/models';
+import { ClinicalEncounter, ClinicUnit, OdontogramFinding } from '../../core/models';
+import { ClinicalGraphqlService } from '../../core/clinical-graphql.service';
+import { GraphQlUserError } from '../../core/graphql-client.service';
 import { AppHeaderComponent } from '../../core/layout/app-header/app-header.component';
 import { ModuleNavigationComponent } from '../../core/layout/module-navigation/module-navigation.component';
 import { OrganizationReadGraphqlService } from '../../core/organization-read-graphql.service';
@@ -44,7 +45,7 @@ type Choice = { value: string; labelKey: string };
 })
 export class ClinicalWorkspaceComponent {
   readonly auth = inject(AuthService);
-  private readonly http = inject(HttpClient);
+  private readonly clinical = inject(ClinicalGraphqlService);
   private readonly organizationReads = inject(OrganizationReadGraphqlService);
   private readonly patientApi = inject(PatientApiService);
   private readonly destroyRef = inject(DestroyRef);
@@ -182,26 +183,14 @@ export class ClinicalWorkspaceComponent {
     this.error.set('');
     const membership = this.membership();
     if (!membership || !this.patientId || !this.clinicUnitId) return;
-    const params = { clinicUnitId: this.clinicUnitId, patientId: this.patientId };
-    const base = `/api/organizations/${membership.organizationId}/clinical`;
-    this.http
-      .get<PageResponse<ClinicalEncounter>>(`${base}/encounters`, { params })
-      .subscribe({
-        next: (page) => this.encounters.set(page.content),
-        error: (error) => this.fail(error, 'LOAD'),
-      });
-    this.http
-      .get<OdontogramFinding[]>(`${base}/odontogram/current`, { params })
-      .subscribe({
-        next: (findings) => this.chart.set(findings),
-        error: (error) => this.fail(error, 'LOAD'),
-      });
-    this.http
-      .get<PageResponse<OdontogramFinding>>(`${base}/odontogram/history`, { params })
-      .subscribe({
-        next: (page) => this.history.set(page.content),
-        error: (error) => this.fail(error, 'LOAD'),
-      });
+    this.clinical.load(membership.organizationId, this.clinicUnitId, this.patientId).subscribe({
+      next: (data) => {
+        this.encounters.set(data.encounters);
+        this.chart.set(data.chart);
+        this.history.set(data.history);
+      },
+      error: (error) => this.fail(error, 'LOAD'),
+    });
   }
 
   editDraft(encounter: ClinicalEncounter): void {
@@ -230,14 +219,8 @@ export class ClinicalWorkspaceComponent {
       administrativeNote: this.administrativeNote.trim() || null,
     };
     const request = selected
-      ? this.http.put<ClinicalEncounter>(
-          `/api/organizations/${membership.organizationId}/clinical/encounters/${selected.globalId}`,
-          { ...payload, version: selected.version },
-        )
-      : this.http.post<ClinicalEncounter>(
-          `/api/organizations/${membership.organizationId}/clinical/encounters`,
-          payload,
-        );
+      ? this.clinical.updateEncounter(membership.organizationId, selected.globalId, { ...payload, version: selected.version })
+      : this.clinical.createEncounter(membership.organizationId, payload);
     request.subscribe({
       next: () => {
         this.cancelEdit();
@@ -250,23 +233,16 @@ export class ClinicalWorkspaceComponent {
   finalize(encounter: ClinicalEncounter): void {
     const membership = this.membership();
     if (!membership) return;
-    this.http
-      .post(
-        `/api/organizations/${membership.organizationId}/clinical/encounters/${encounter.globalId}/finalize`,
-        {},
-        { params: { clinicUnitId: this.clinicUnitId } },
-      )
+    this.clinical
+      .finalizeEncounter(membership.organizationId, this.clinicUnitId, encounter.globalId)
       .subscribe({ next: () => this.selectPatient(), error: (error) => this.fail(error, 'SAVE') });
   }
   loadAmendments(encounter: ClinicalEncounter): void {
     const membership = this.membership();
     if (!membership) return;
     this.selectedEncounter.set(encounter);
-    this.http
-      .get<ClinicalEncounter[]>(
-        `/api/organizations/${membership.organizationId}/clinical/encounters/${encounter.globalId}/amendments`,
-        { params: { clinicUnitId: this.clinicUnitId } },
-      )
+    this.clinical
+      .amendments(membership.organizationId, this.clinicUnitId, encounter.globalId)
       .subscribe({
         next: (records) => this.amendments.set(records),
         error: (error) => this.fail(error, 'LOAD'),
@@ -283,18 +259,15 @@ export class ClinicalWorkspaceComponent {
       !this.amendmentReason.trim()
     )
       return;
-    this.http
-      .post(
-        `/api/organizations/${membership.organizationId}/clinical/encounters/${original.globalId}/amendments`,
-        {
+    this.clinical
+      .amendEncounter(membership.organizationId, original.globalId, {
           clinicUnitId: this.clinicUnitId,
           careAt: new Date().toISOString(),
           careTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           narrative: this.narrative.trim(),
           administrativeNote: this.administrativeNote.trim() || null,
           reason: this.amendmentReason.trim(),
-        },
-      )
+      })
       .subscribe({
         next: () => {
           this.cancelEdit();
@@ -307,8 +280,8 @@ export class ClinicalWorkspaceComponent {
   recordFinding(): void {
     const membership = this.membership();
     if (!membership || !this.patientId || !this.toothCode) return;
-    this.http
-      .post(`/api/organizations/${membership.organizationId}/clinical/odontogram/findings`, {
+    this.clinical
+      .createFinding(membership.organizationId, {
         clinicUnitId: this.clinicUnitId,
         patientId: this.patientId,
         toothCode: this.toothCode,
@@ -333,12 +306,8 @@ export class ClinicalWorkspaceComponent {
     const membership = this.membership();
     const reason = this.voidReason.trim();
     if (!membership || !reason) return;
-    this.http
-      .post(
-        `/api/organizations/${membership.organizationId}/clinical/odontogram/findings/${finding.globalId}/void`,
-        { reason, version: finding.version },
-        { params: { clinicUnitId: this.clinicUnitId } },
-      )
+    this.clinical
+      .voidFinding(membership.organizationId, this.clinicUnitId, finding.globalId, reason, finding.version)
       .subscribe({
         next: () => {
           this.voidReason = '';
@@ -362,13 +331,13 @@ export class ClinicalWorkspaceComponent {
     this.selectedEncounter.set(null);
   }
   private fail(error: unknown, fallback: 'LOAD' | 'SAVE'): void {
-    const status = error instanceof HttpErrorResponse ? error.status : 0;
+    const code = error instanceof GraphQlUserError ? error.code : '';
     const key =
-      status === 403
+      code.startsWith('AUTHORIZATION.')
         ? 'FORBIDDEN'
-        : status === 409
+        : code === 'CONFLICT'
           ? 'STALE_OR_FINAL'
-          : status === 404
+          : code === 'RESOURCE.NOT_FOUND'
             ? 'SCOPE'
             : fallback;
     this.error.set(this.t(`ERROR.${key}`));

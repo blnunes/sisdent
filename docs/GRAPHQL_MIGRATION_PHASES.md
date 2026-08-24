@@ -97,12 +97,12 @@ Status: **In progress**
 
 ## Phase 6 — clinical workflow
 
-Status: **Planned**
+Status: **In progress**
 
-- [ ] Add encounter, amendment, finalization and odontogram GraphQL contracts;
+- [x] Add encounter, amendment, finalization and odontogram GraphQL contracts;
   migrate `clinical-workspace.component.ts` away from direct `HttpClient` calls.
-- [ ] Cover clinical immutability, version conflicts, audit and tenant isolation.
-- [ ] Remove `ClinicalRecordController`.
+- [x] Cover clinical immutability, version conflicts, audit and tenant isolation.
+- [x] Remove `ClinicalRecordController`.
 
 ## Phase 7 — final REST retirement
 
