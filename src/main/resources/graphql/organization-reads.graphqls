@@ -11,6 +11,9 @@ extend type Query {
     clinicUnits(organizationId: ID!, clinicUnitId: ID): [ClinicUnit!]!
     """Active and inactive practitioners visible to authorized practitioner managers."""
     practitioners(organizationId: ID!): [Practitioner!]!
+    appointments(organizationId: ID!, clinicUnitId: ID, from: String!, to: String, page: Int, size: Int): AppointmentPage!
+    appointment(organizationId: ID!, clinicUnitId: ID, appointmentId: ID!): Appointment!
+    performedProcedures(organizationId: ID!, clinicUnitId: ID, appointmentId: ID!): [PerformedProcedure!]!
 }
 
 type ClinicUnit {
@@ -35,3 +38,7 @@ type Membership { id: ID!, organizationId: ID!, organizationName: String!, clini
 type Organization { id: ID!, name: String!, active: Boolean! }
 input AccountPageInput { page: Int, size: Int, sort: String, direction: SortDirection }
 enum MembershipRole { ORGANIZATION_ADMIN MANAGER READ_ONLY PRACTITIONER_MANAGER APPOINTMENT_MANAGER APPOINTMENT_READER CLINICAL_READER CLINICAL_AUTHOR CLINICAL_MANAGER }
+enum AppointmentStatus { SCHEDULED CANCELLED COMPLETED NO_SHOW }
+type AppointmentPage { content: [Appointment!]!, page: Int!, size: Int!, totalElements: Int!, totalPages: Int! }
+type Appointment { globalId: ID!, clinicUnitId: ID!, patientId: ID!, patientName: String!, practitionerId: ID!, practitionerName: String!, startAt: String!, endAt: String!, schedulingTimezone: String!, status: AppointmentStatus! }
+type PerformedProcedure { globalId: ID!, dentalProcedureId: ID!, procedureNameSnapshot: String!, performedAt: String!, administrativeNote: String, voidedAt: String, voidedBy: String, voidReason: String }

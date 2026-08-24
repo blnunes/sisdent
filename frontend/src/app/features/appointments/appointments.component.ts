@@ -1,5 +1,4 @@
 import { DatePipe } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +15,8 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { distinctUntilChanged } from 'rxjs';
-import { Appointment, PageResponse, Practitioner } from '../../core/models';
+import { Appointment, Practitioner } from '../../core/models';
+import { AppointmentGraphqlService } from '../../core/appointment-graphql.service';
 import { AuthService } from '../../core/auth.service';
 import { OrganizationReadGraphqlService } from '../../core/organization-read-graphql.service';
 import { PatientApiService } from '../patients/patient-api.service';
@@ -51,7 +51,7 @@ type ClinicUnit = { id: string; organizationId: string; name: string; active: bo
 })
 export class AppointmentsComponent {
   readonly auth = inject(AuthService);
-  private readonly http = inject(HttpClient);
+  private readonly appointmentApi = inject(AppointmentGraphqlService);
   private readonly organizationReads = inject(OrganizationReadGraphqlService);
   private readonly patientApi = inject(PatientApiService);
   private readonly destroyRef = inject(DestroyRef);
@@ -148,15 +148,8 @@ export class AppointmentsComponent {
     this.error.set('');
     const from = new Date();
     from.setHours(0, 0, 0, 0);
-    const query =
-      `from=${encodeURIComponent(from.toISOString())}&page=${page}&size=10` +
-      (membership.clinicUnitId
-        ? `&clinicUnitId=${encodeURIComponent(membership.clinicUnitId)}`
-        : '');
-    this.http
-      .get<PageResponse<Appointment>>(
-        `/api/organizations/${membership.organizationId}/appointments?${query}`,
-      )
+    this.appointmentApi
+      .list(membership.organizationId, membership.clinicUnitId, from.toISOString(), undefined, page, 10)
       .subscribe({
         next: (page) => {
           this.appointments.set(page.content);
@@ -207,14 +200,8 @@ export class AppointmentsComponent {
       schedulingTimezone: timezone,
     };
     const response = this.editingAppointment
-      ? this.http.put<Appointment>(
-          `/api/organizations/${membership.organizationId}/appointments/${this.editingAppointment.globalId}/reschedule`,
-          request,
-        )
-      : this.http.post<Appointment>(
-          `/api/organizations/${membership.organizationId}/appointments`,
-          request,
-        );
+      ? this.appointmentApi.reschedule(membership.organizationId, this.editingAppointment.globalId, request)
+      : this.appointmentApi.create(membership.organizationId, request);
     response.subscribe({
       next: () => {
         this.patientId = '';
@@ -256,14 +243,13 @@ export class AppointmentsComponent {
   transition(appointment: Appointment, action: 'cancel' | 'complete' | 'no-show'): void {
     const membership = this.membership();
     if (!membership || appointment.status !== 'SCHEDULED') return;
-    this.http
-      .post<Appointment>(
-        `/api/organizations/${membership.organizationId}/appointments/${appointment.globalId}/${action}`,
-        {},
-        {
-          params: { clinicUnitId: appointment.clinicUnitId },
-        },
-      )
+    const statuses: Record<'cancel' | 'complete' | 'no-show', Appointment['status']> = {
+      cancel: 'CANCELLED',
+      complete: 'COMPLETED',
+      'no-show': 'NO_SHOW',
+    };
+    this.appointmentApi
+      .transition(membership.organizationId, appointment.clinicUnitId, appointment.globalId, statuses[action])
       .subscribe({
         next: () => this.load(),
         error: (response) =>

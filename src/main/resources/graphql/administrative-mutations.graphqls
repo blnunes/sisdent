@@ -29,6 +29,11 @@ type Mutation {
     deactivatePatient(organizationId: ID!, clinicUnitId: ID, patientId: ID!): Boolean!
     exactPatientMatch(organizationId: ID!, clinicUnitId: ID, input: ExactPatientMatchInput!): ExactPatientMatch!
     linkPatient(organizationId: ID!, input: PatientLinkMutationInput!): PatientLink!
+    createAppointment(organizationId: ID!, input: AppointmentMutationInput!): Appointment!
+    rescheduleAppointment(organizationId: ID!, appointmentId: ID!, input: AppointmentMutationInput!): Appointment!
+    transitionAppointment(organizationId: ID!, clinicUnitId: ID!, appointmentId: ID!, status: AppointmentStatus!): Appointment!
+    createPerformedProcedure(organizationId: ID!, clinicUnitId: ID!, appointmentId: ID!, input: PerformedProcedureMutationInput!): PerformedProcedure!
+    voidPerformedProcedure(organizationId: ID!, clinicUnitId: ID!, performedProcedureId: ID!, input: VoidPerformedProcedureMutationInput!): PerformedProcedure!
 }
 
 input CountryMutationInput { name: String!, code: String!, continent: Continent! }
@@ -69,6 +74,9 @@ input PatientMutationInput {
     nationalityCode: String!, addressId: ID, address: PatientAddressMutationInput, specialityIds: [ID!]!
 }
 type PatientMutationResult { globalId: ID!, name: String!, active: Boolean! }
+input AppointmentMutationInput { clinicUnitId: ID!, patientId: ID!, practitionerId: ID!, startAt: String!, endAt: String!, schedulingTimezone: String! }
+input PerformedProcedureMutationInput { dentalProcedureId: ID!, performedAt: String!, administrativeNote: String }
+input VoidPerformedProcedureMutationInput { reason: String! }
 input ExactPatientMatchInput { documentType: DocumentType!, issuerCountryCode: String!, documentNumber: String!, birthDate: String! }
 input PatientLinkMutationInput { documentType: DocumentType!, issuerCountryCode: String!, documentNumber: String!, birthDate: String!, clinicUnitId: ID, operationalBasis: PatientLinkBasis! }
 type ExactPatientMatch { possibleMatchExists: Boolean! }

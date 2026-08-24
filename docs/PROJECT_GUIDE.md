@@ -9,7 +9,7 @@ is `admin@sisdent.local` / `admin`; production must supply
 `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD`.
 
 Patient operations use scoped GraphQL `patients` queries and patient mutations.
-Appointments use `/api/organizations/{organizationId}/appointments` and
+Appointments use the authenticated GraphQL scheduling operations and
 clinical operations use `/api/organizations/{organizationId}/clinical`.
 Organization scope always comes from an active membership.
 

@@ -37,10 +37,9 @@ serve explicitly documented operational and not-yet-migrated workflows. The
 complete endpoint inventory, GraphQL replacements, and deprecation window are
 in [`docs/REST_RETIREMENT_INVENTORY.md`](docs/REST_RETIREMENT_INVENTORY.md).
 
-The following are examples of retained REST paths, not a complete REST API list:
+The following is an example of a retained REST path; scheduling is GraphQL-only:
 
 ```text
-GET /api/organizations/{organizationId}/appointments
 GET /api/organizations/{organizationId}/clinical/encounters
 ```
 

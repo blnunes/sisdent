@@ -88,7 +88,7 @@ Status: **Complete**
 
 ## Phase 5 — scheduling
 
-Status: **Planned**
+Status: **In progress**
 
 - [ ] Add appointment queries, availability, lifecycle and performed-procedure
   GraphQL operations; migrate home and appointments components.
@@ -113,3 +113,16 @@ Status: **Planned**
   retirement documentation.
 - [ ] Preserve only the permanent HTTP exceptions listed above and run complete
   backend, frontend, E2E and quality-gate verification.
+
+## Phase 8 — obsolete REST consumer cleanup
+
+Status: **Planned**
+
+- [ ] Identify tests, Angular components, services, mocks, fixtures and helper
+  methods that still reference retired business `/api/**` routes.
+- [ ] Remove obsolete consumers only after replacing their intent with focused
+  GraphQL success, validation/error, authorization and relevant boundary tests.
+- [ ] Remove unused imports, providers, test data and component code revealed by
+  the migration; do not retain compatibility shims for retired REST workflows.
+- [ ] Run the complete backend, frontend, E2E and quality-gate verification and
+  confirm no retired REST reference remains with repository-wide searches.

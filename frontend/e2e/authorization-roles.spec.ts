@@ -46,11 +46,19 @@ test.describe('Authorization role matrix', () => {
       expect(membership.status(), `${role} membership creation`).toBe(201);
 
       const token = await loginApi(request, email, password);
-      const response = await request.get(
-        `${backendUrl}/api/organizations/${organization.id}/appointments?clinicUnitId=${clinicUnitId}&from=2030-01-01T00:00:00Z&to=2030-01-02T00:00:00Z`,
-        { headers: bearer(token) },
-      );
-      expect(response.status(), `${role} appointment read`).toBe(appointmentReaders.includes(role) ? 200 : 403);
+      const response = await request.post(`${backendUrl}/graphql`, {
+        headers: bearer(token),
+        data: {
+          query: `query { appointments(organizationId: "${organization.id}", clinicUnitId: "${clinicUnitId}", from: "2030-01-01T00:00:00Z", to: "2030-01-02T00:00:00Z") { totalElements } }`,
+        },
+      });
+      expect(response.status(), `${role} appointment read transport`).toBe(200);
+      const payload = await response.json();
+      if (appointmentReaders.includes(role)) {
+        expect(payload.errors, `${role} appointment read`).toBeUndefined();
+      } else {
+        expect(payload.errors?.[0]?.extensions?.code, `${role} appointment read`).toBe('AUTHORIZATION.DENIED');
+      }
     }
   });
 
