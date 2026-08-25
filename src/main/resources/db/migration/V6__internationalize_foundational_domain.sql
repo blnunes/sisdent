@@ -1,3 +1,5 @@
+CREATE DOMAIN migration_v6_actor AS VARCHAR(255) DEFAULT 'system';
+
 ALTER TABLE states ADD COLUMN country_id BIGINT;
 UPDATE states
 SET country_id = (SELECT id FROM countries WHERE code = 'US')
@@ -41,7 +43,8 @@ UPDATE patients
 SET document_type = CASE
     WHEN identification_type = 'NATIONAL_ID' THEN 'NATIONAL_ID_CARD'
     ELSE 'PASSPORT'
-END;
+END
+WHERE document_type IS NULL;
 ALTER TABLE patients ALTER COLUMN document_type SET NOT NULL;
 ALTER TABLE patients DROP COLUMN identification_type;
 ALTER TABLE patients ALTER COLUMN document_type RENAME TO identification_type;
@@ -53,45 +56,45 @@ ALTER TABLE specialities ADD COLUMN status VARCHAR(16) NOT NULL DEFAULT 'ACTIVE'
 ALTER TABLE dental_procedures ADD COLUMN status VARCHAR(16) NOT NULL DEFAULT 'ACTIVE';
 
 ALTER TABLE countries ADD COLUMN created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE countries ADD COLUMN created_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE countries ADD COLUMN created_by migration_v6_actor NOT NULL;
 ALTER TABLE countries ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE countries ADD COLUMN updated_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE countries ADD COLUMN updated_by migration_v6_actor NOT NULL;
 ALTER TABLE countries ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
 
 ALTER TABLE administrative_divisions ADD COLUMN created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE administrative_divisions ADD COLUMN created_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE administrative_divisions ADD COLUMN created_by migration_v6_actor NOT NULL;
 ALTER TABLE administrative_divisions ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE administrative_divisions ADD COLUMN updated_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE administrative_divisions ADD COLUMN updated_by migration_v6_actor NOT NULL;
 ALTER TABLE administrative_divisions ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
 
 ALTER TABLE addresses ADD COLUMN created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE addresses ADD COLUMN created_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE addresses ADD COLUMN created_by migration_v6_actor NOT NULL;
 ALTER TABLE addresses ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE addresses ADD COLUMN updated_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE addresses ADD COLUMN updated_by migration_v6_actor NOT NULL;
 ALTER TABLE addresses ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
 
 ALTER TABLE patients ADD COLUMN created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE patients ADD COLUMN created_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE patients ADD COLUMN created_by migration_v6_actor NOT NULL;
 ALTER TABLE patients ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE patients ADD COLUMN updated_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE patients ADD COLUMN updated_by migration_v6_actor NOT NULL;
 ALTER TABLE patients ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
 
 ALTER TABLE specialities ADD COLUMN created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE specialities ADD COLUMN created_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE specialities ADD COLUMN created_by migration_v6_actor NOT NULL;
 ALTER TABLE specialities ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE specialities ADD COLUMN updated_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE specialities ADD COLUMN updated_by migration_v6_actor NOT NULL;
 ALTER TABLE specialities ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
 
 ALTER TABLE dental_procedures ADD COLUMN created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE dental_procedures ADD COLUMN created_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE dental_procedures ADD COLUMN created_by migration_v6_actor NOT NULL;
 ALTER TABLE dental_procedures ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE dental_procedures ADD COLUMN updated_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE dental_procedures ADD COLUMN updated_by migration_v6_actor NOT NULL;
 ALTER TABLE dental_procedures ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
 
 ALTER TABLE app_users ADD COLUMN created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE app_users ADD COLUMN created_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE app_users ADD COLUMN created_by migration_v6_actor NOT NULL;
 ALTER TABLE app_users ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE app_users ADD COLUMN updated_by VARCHAR(255) NOT NULL DEFAULT 'system';
+ALTER TABLE app_users ADD COLUMN updated_by migration_v6_actor NOT NULL;
 ALTER TABLE app_users ADD COLUMN version BIGINT NOT NULL DEFAULT 0;
 
 CREATE INDEX idx_administrative_divisions_country

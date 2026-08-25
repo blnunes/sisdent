@@ -1,29 +1,22 @@
 # Sisdent architecture
 
-## Phase 10
+## API boundary
 
 GraphQL at `POST /graphql` is the sole target API for application business
 workflows. All business routes have been retired. Authentication, session
 bootstrap, CSRF, health checks, and development-only H2 support deliberately
-remain HTTP endpoints. The authoritative route decision, consumers,
-GraphQL replacements, and retirement evidence are in the
-[REST retirement inventory](REST_RETIREMENT_INVENTORY.md).
+remain HTTP endpoints.
 `POST /api/auth/login`, `GET /api/session`, `GET /api/csrf`,
 `GET /actuator/health`, and development-only H2 support deliberately remain
 HTTP endpoints. JWT issuance and GraphQL authentication continue to use the
 existing Bearer-token security path.
 
-### Total migration decision
-
-Phase 8's incremental coexistence is superseded. Every business operation now
-needs a GraphQL query or mutation and no Angular production code may call its
-`/api/**` route once that replacement is released. The only permitted permanent
+Every business operation needs a GraphQL query or mutation and no Angular
+production code may call a business `/api/**` route. The only permitted permanent
 HTTP surface is authentication/bootstrap (`/api/auth/login`, `/api/session`,
 `/api/csrf`) and operational infrastructure (`/actuator/health`, development
-H2). Temporary OpenAPI and Swagger material was removed with the final business
-REST route. The final cleanup also removed the obsolete Angular REST list helper
-and endpoint placeholder shims; the retirement inventory records its GraphQL
-replacement and verification evidence.
+H2). OpenAPI and Swagger material were removed with the final business REST
+route. New HTTP business routes require an explicit architectural decision.
 
 Sisdent is a Spring Boot GraphQL API with an Angular single-page application.
 Authentication uses email/password and stateless JWT Bearer tokens. `Account`
@@ -88,11 +81,18 @@ the rejected catalogue locale never selects the error language.
 ## Account avatar
 
 Account avatars use authenticated GraphQL. `uploadOwnAvatar` implements the GraphQL
-multipart-request specification and `ownAvatar` returns a normalized image payload for
-the typed Angular service to create a Blob. The accepted input and processing/security
-guarantees are documented in [Avatar upload and storage decision](AVATAR_STORAGE_DECISION.md).
-Phone-camera JPEG EXIF orientation is applied before the 256×256 centre crop; file bytes
-and GraphQL variables are never logged.
+input `{ fileName, contentType, contentBase64 }`; `ownAvatar` returns the
+normalized `{ contentType, contentBase64 }` payload and `removeOwnAvatar` deletes it.
+The application accepts JPEG and PNG files up to 5 MiB and dimensions up to
+4096×4096. Phone-camera JPEG EXIF orientation is applied before a 256×256 centre
+crop. The stored derivative is a metadata-free PNG; originals are not retained.
+
+H2 stores avatar metadata only. `ProfileAvatarStorage` keeps binary storage
+replaceable: the local implementation requires a persistent writable
+`SISDENT_AVATAR_STORAGE_DIRECTORY` and is suitable for a single runtime. A
+multi-instance or ephemeral deployment must use object storage while retaining
+metadata in the relational database. File bytes, base64 content, GraphQL
+variables, credentials, and physical storage paths are never logged.
 
 ## Operational observability
 
@@ -183,6 +183,12 @@ resolver that delegates to an existing service, protect the endpoint in
 `SecurityConfiguration`, migrate the typed Angular service, and add unit plus
 authenticated integration tests. Mutations are introduced only after their
 REST/service validations and transactional behaviour are understood.
+
+Resolvers do not access repositories, open transactions, or duplicate business
+rules. Services remain responsible for authorization, tenant isolation,
+validation, rollback, audit behaviour, and optimistic-lock conflict handling.
+After a successful typed mutation, Angular domain services refresh the affected
+GraphQL read state.
 
 Angular components never make GraphQL requests directly. `GraphQlClientService` owns transport
 and safe error mapping; typed domain services own exact operations and variables.

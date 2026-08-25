@@ -13,7 +13,7 @@ import { LanguageService } from '../core/language.service';
 import { provideTranslateService } from '@ngx-translate/core';
 
 describe('catalogue feature endpoints', () => {
-  const featureSources = import.meta.glob('./**/*.ts', {
+  const featureSources = import.meta.glob('./features/**/*.ts', {
     query: '?raw',
     import: 'default',
     eager: true,

@@ -1,0 +1,101 @@
+<h2 mat-dialog-title>{{ titleKey() | translate }}</h2>
+<mat-dialog-content>
+  <p>{{ 'APPOINTMENTS.FORM.DESCRIPTION' | translate }} {{ data.timezone }}</p>
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+  @if (availabilityLoaded()) {
+    <p class="availability" aria-live="polite">
+      {{ 'APPOINTMENTS.FORM.AVAILABILITY_LOADED' | translate }}
+    </p>
+  }
+  <form [formGroup]="form" (ngSubmit)="save()" id="appointment-form">
+    <mat-form-field appearance="outline"
+      ><mat-label>{{ 'APPOINTMENTS.PATIENT' | translate }}</mat-label
+      ><mat-select formControlName="patientId" required>
+        @for (patient of data.patients; track patient.id) {
+          <mat-option [value]="patient.id">{{ patient.name }}</mat-option>
+        }
+      </mat-select></mat-form-field
+    >
+    <mat-form-field appearance="outline"
+      ><mat-label>{{ 'APPOINTMENTS.PRACTITIONER' | translate }}</mat-label
+      ><mat-select formControlName="practitionerId" required>
+        @for (practitioner of data.practitioners; track practitioner.id) {
+          <mat-option [value]="practitioner.id">{{ practitioner.name }}</mat-option>
+        }
+      </mat-select></mat-form-field
+    >
+    <div class="date-time-fields">
+      <mat-form-field appearance="outline"
+        ><mat-label>{{ 'APPOINTMENTS.FORM.START' | translate }}</mat-label
+        ><label class="visually-hidden" for="appointment-start-date">{{
+          'APPOINTMENTS.FORM.START' | translate
+        }}</label
+        ><input
+          id="appointment-start-date"
+          matInput
+          [matDatepicker]="startPicker"
+          [min]="minimumDate"
+          formControlName="startDate"
+          required /><mat-datepicker-toggle matSuffix [for]="startPicker" /><mat-datepicker
+          #startPicker
+      /></mat-form-field>
+      <mat-form-field appearance="outline"
+        ><mat-label>{{ 'APPOINTMENTS.FORM.START_TIME' | translate }}</mat-label
+        ><label class="visually-hidden" for="appointment-start-time">{{
+          'APPOINTMENTS.FORM.START_TIME' | translate
+        }}</label
+        ><input
+          id="appointment-start-time"
+          matInput
+          type="time"
+          formControlName="startTime"
+          required
+      /></mat-form-field>
+      <mat-form-field appearance="outline"
+        ><mat-label>{{ 'APPOINTMENTS.FORM.END' | translate }}</mat-label
+        ><label class="visually-hidden" for="appointment-end-date">{{
+          'APPOINTMENTS.FORM.END' | translate
+        }}</label
+        ><input
+          id="appointment-end-date"
+          matInput
+          [matDatepicker]="endPicker"
+          [min]="minimumDate"
+          formControlName="endDate"
+          required /><mat-datepicker-toggle matSuffix [for]="endPicker" /><mat-datepicker
+          #endPicker
+      /></mat-form-field>
+      <mat-form-field appearance="outline"
+        ><mat-label>{{ 'APPOINTMENTS.FORM.END_TIME' | translate }}</mat-label
+        ><label class="visually-hidden" for="appointment-end-time">{{
+          'APPOINTMENTS.FORM.END_TIME' | translate
+        }}</label
+        ><input id="appointment-end-time" matInput type="time" formControlName="endTime" required
+      /></mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end"
+  ><button mat-button type="button" (click)="close()">
+    {{ 'APPOINTMENTS.DETAILS.CLOSE' | translate }}</button
+  ><button mat-flat-button type="submit" form="appointment-form" [disabled]="submitting()">
+    {{ saveKey() | translate }}
+  </button></mat-dialog-actions
+>
+@if (confirmDiscard()) {
+  <section
+    class="discard-confirmation"
+    role="alertdialog"
+    [attr.aria-label]="'APPOINTMENTS.FORM.DISCARD_TITLE' | translate"
+  >
+    <p>{{ 'APPOINTMENTS.FORM.DISCARD_TEXT' | translate }}</p>
+    <button mat-button type="button" (click)="confirmDiscard.set(false)">
+      {{ 'APPOINTMENTS.FORM.KEEP_EDITING' | translate }}
+    </button>
+    <button mat-flat-button type="button" (click)="discard()">
+      {{ 'APPOINTMENTS.FORM.DISCARD' | translate }}
+    </button>
+  </section>
+}

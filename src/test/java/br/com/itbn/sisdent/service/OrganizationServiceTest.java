@@ -9,6 +9,7 @@ import br.com.itbn.sisdent.model.Organization;
 import br.com.itbn.sisdent.model.Person;
 import br.com.itbn.sisdent.repository.AccountRepository;
 import br.com.itbn.sisdent.repository.ClinicUnitRepository;
+import br.com.itbn.sisdent.repository.ClinicUnitWorkingHoursRepository;
 import br.com.itbn.sisdent.repository.MembershipRepository;
 import br.com.itbn.sisdent.repository.OrganizationRepository;
 import br.com.itbn.sisdent.repository.PersonRepository;
@@ -36,6 +37,7 @@ import static org.mockito.Mockito.when;
 class OrganizationServiceTest {
     @Mock OrganizationRepository organizations;
     @Mock ClinicUnitRepository clinics;
+    @Mock ClinicUnitWorkingHoursRepository workingHours;
     @Mock MembershipRepository memberships;
     @Mock AccountRepository accounts;
     @Mock PersonRepository persons;

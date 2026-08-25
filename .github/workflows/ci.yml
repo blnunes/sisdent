@@ -64,21 +64,8 @@ jobs:
         if: steps.change.outputs.version_bump == 'true'
         run: mvn --batch-mode --no-transfer-progress validate
 
-      - name: SonarCloud
-        if: >-
-          github.ref == 'refs/heads/master' &&
-          steps.change.outputs.version_bump != 'true'
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: >-
-          mvn --batch-mode --no-transfer-progress
-          org.sonarsource.scanner.maven:sonar-maven-plugin:5.7.0.6970:sonar
-          -Dsonar.organization=blnunes
-          -Dsonar.projectKey=blnunes_sisdent
-          -Dsonar.qualitygate.wait=true
-
   frontend-quality:
-    name: Frontend quality
+    name: Frontend quality and SonarCloud
     needs: quality-check
     if: needs.quality-check.outputs.version_bump == 'false'
     runs-on: ubuntu-latest
@@ -87,6 +74,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -97,13 +86,30 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Test frontend
+      - name: Run frontend quality checks
         working-directory: frontend
-        run: npm test -- --watch=false
+        run: npm run quality
 
-      - name: Build production frontend
+      - name: Generate frontend coverage
         working-directory: frontend
-        run: npm run build -- --configuration production
+        run: npm run test:coverage
+
+      - name: Set up Java
+        uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Verify backend and run SonarCloud
+        if: github.ref == 'refs/heads/master'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >-
+          mvn --batch-mode --no-transfer-progress verify
+          org.sonarsource.scanner.maven:sonar-maven-plugin:5.7.0.6970:sonar
+          -Dsonar.organization=blnunes
+          -Dsonar.projectKey=blnunes_sisdent
+          -Dsonar.qualitygate.wait=true
 
   deploy-render:
     name: Deploy to Render

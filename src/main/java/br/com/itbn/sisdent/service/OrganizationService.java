@@ -11,12 +11,14 @@ import br.com.itbn.sisdent.dto.MembershipRevokeRequest;
 import br.com.itbn.sisdent.dto.MembershipRoleUpdateRequest;
 import br.com.itbn.sisdent.model.Account;
 import br.com.itbn.sisdent.model.ClinicUnit;
+import br.com.itbn.sisdent.model.ClinicUnitWorkingHours;
 import br.com.itbn.sisdent.model.Membership;
 import br.com.itbn.sisdent.model.MembershipRole;
 import br.com.itbn.sisdent.model.Organization;
 import br.com.itbn.sisdent.model.Person;
 import br.com.itbn.sisdent.repository.AccountRepository;
 import br.com.itbn.sisdent.repository.ClinicUnitRepository;
+import br.com.itbn.sisdent.repository.ClinicUnitWorkingHoursRepository;
 import br.com.itbn.sisdent.repository.MembershipRepository;
 import br.com.itbn.sisdent.repository.OrganizationRepository;
 import br.com.itbn.sisdent.repository.PersonRepository;
@@ -38,14 +40,15 @@ public class OrganizationService {
     private final PersonRepository personRepository;
     private final PasswordEncoder passwordEncoder;
     private final ScopeAuthorizationService authorization;
+    private final ClinicUnitWorkingHoursRepository workingHours;
 
     public OrganizationService(OrganizationRepository organizationRepository,
             ClinicUnitRepository clinicUnitRepository, MembershipRepository membershipRepository,
             AccountRepository accountRepository, PersonRepository personRepository,
-            PasswordEncoder passwordEncoder, ScopeAuthorizationService authorization) {
+            PasswordEncoder passwordEncoder, ScopeAuthorizationService authorization, ClinicUnitWorkingHoursRepository workingHours) {
         this.organizationRepository = organizationRepository; this.clinicUnitRepository = clinicUnitRepository;
         this.membershipRepository = membershipRepository; this.accountRepository = accountRepository;
-        this.personRepository = personRepository; this.passwordEncoder = passwordEncoder; this.authorization = authorization;
+        this.personRepository = personRepository; this.passwordEncoder = passwordEncoder; this.authorization = authorization; this.workingHours = workingHours;
     }
 
     @Transactional
@@ -70,7 +73,8 @@ public class OrganizationService {
         authorization.requireOrganizationAdministration(organizationId);
         Organization organization = requireOrganization(organizationId);
         ClinicUnit unit = clinicUnitRepository.saveAndFlush(new ClinicUnit(organization, request.name()));
-        return new ClinicUnitResponse(unit.getGlobalId(), organizationId, unit.getName(), unit.isActive());
+        for (int day = 1; day <= 7; day++) workingHours.save(new ClinicUnitWorkingHours(unit, day, 0, 1440));
+        return new ClinicUnitResponse(unit.getGlobalId(), organizationId, unit.getName(), unit.isActive(), unit.getTimezone());
     }
 
     @Transactional(readOnly = true)
@@ -83,7 +87,7 @@ public class OrganizationService {
             units = units.stream().filter(unit -> unit.getGlobalId().equals(clinicUnitId)).toList();
         }
         return units.stream()
-                .map(unit -> new ClinicUnitResponse(unit.getGlobalId(), organizationId, unit.getName(), unit.isActive()))
+                .map(unit -> new ClinicUnitResponse(unit.getGlobalId(), organizationId, unit.getName(), unit.isActive(), unit.getTimezone()))
                 .toList();
     }
 

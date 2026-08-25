@@ -28,6 +28,22 @@ describe('AccountSettingsComponent', () => {
     expect(component.passwordForm.hasError('passwordMismatch')).toBe(true);
   });
 
+  it('associates labels with every account settings input and uses output for messages', () => {
+    const element = fixture.nativeElement as HTMLElement;
+    for (const inputId of [
+      'account-avatar-input',
+      'account-email',
+      'account-display-name',
+      'account-current-password',
+      'account-new-password',
+      'account-password-confirmation',
+    ]) {
+      expect(element.querySelector(`input#${inputId}`)).not.toBeNull();
+      expect(element.querySelector(`label[for="${inputId}"]`)).not.toBeNull();
+    }
+    expect(element.querySelectorAll('p[role="status"]')).toHaveLength(0);
+  });
+
   it('updates the session after a successful profile update', () => {
     api.updateProfile.mockReturnValue(of({ id: 'me', email: 'me@example.com', displayName: 'Updated', version: 2 }));
     component.profileForm.setValue({ displayName: 'Updated', version: 1 });

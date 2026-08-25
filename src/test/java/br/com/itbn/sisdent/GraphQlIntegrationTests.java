@@ -388,11 +388,12 @@ class GraphQlIntegrationTests {
         mockMvc.perform(post("/graphql")
                         .header("Authorization", bearer(emailLogin("northstar.scheduler@sisdent.demo", "odonto2026@O")))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{ \"query\": \"{ clinicUnits(organizationId: \\\"%s\\\", clinicUnitId: \\\"%s\\\") { id organizationId name active } }\" }".formatted(northstarId, clinicUnitId)))
+                        .content("{ \"query\": \"{ clinicUnits(organizationId: \\\"%s\\\", clinicUnitId: \\\"%s\\\") { id organizationId name active timezone } }\" }".formatted(northstarId, clinicUnitId)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.errors").doesNotExist())
                 .andExpect(jsonPath("$.data.clinicUnits[0].organizationId").value(northstarId))
-                .andExpect(jsonPath("$.data.clinicUnits[0].id").value(clinicUnitId));
+                .andExpect(jsonPath("$.data.clinicUnits[0].id").value(clinicUnitId))
+                .andExpect(jsonPath("$.data.clinicUnits[0].timezone").isNotEmpty());
 
         mockMvc.perform(post("/graphql")
                         .header("Authorization", bearer(emailLogin("northstar.scheduler@sisdent.demo", "odonto2026@O")))
@@ -401,6 +402,23 @@ class GraphQlIntegrationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.errors").doesNotExist())
                 .andExpect(jsonPath("$.data.practitioners[0].displayName").isNotEmpty());
+    }
+
+    @Test
+    void appointmentAvailabilityIntervalsUseTheGraphQlRangeContract() throws Exception {
+        String organizationId = organizationId("Northstar Dental Group");
+        String clinicUnitId = clinicUnitRepository
+                .findAllByOrganization_GlobalIdAndActiveTrueOrderByName(java.util.UUID.fromString(organizationId))
+                .getFirst().getGlobalId().toString();
+
+        mockMvc.perform(post("/graphql")
+                        .header("Authorization", bearer(emailLogin("northstar.scheduler@sisdent.demo", "odonto2026@O")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ \"query\": \"{ appointmentAvailabilityIntervals(organizationId: \\\"%s\\\", clinicUnitId: \\\"%s\\\", from: \\\"2030-01-01T00:00:00Z\\\", to: \\\"2030-01-02T00:00:00Z\\\") { practitionerId startAt endAt availability category } }\" }"
+                                .formatted(organizationId, clinicUnitId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.errors").doesNotExist())
+                .andExpect(jsonPath("$.data.appointmentAvailabilityIntervals").isArray());
     }
 
     @Test

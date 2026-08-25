@@ -5,7 +5,7 @@ import { GraphQlClientService } from './graphql-client.service';
 
 const CLINIC_UNITS_QUERY = `query ClinicUnits($organizationId: ID!, $clinicUnitId: ID) {
   clinicUnits(organizationId: $organizationId, clinicUnitId: $clinicUnitId) {
-    id organizationId name active
+    id organizationId name active timezone
   }
 }`;
 

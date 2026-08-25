@@ -417,6 +417,11 @@
     }
   },
   "APPOINTMENTS": {
+    "WEEK": "Week",
+    "DAY": "Day",
+    "FILTERS": "Calendar filters",
+    "UNAVAILABLE": "Unavailable",
+    "SELECT_SLOT": "Select this appointment time",
     "FROM_TODAY": "From today",
     "PREVIOUS_PAGE": "Previous",
     "NEXT_PAGE": "Next",
@@ -431,7 +436,16 @@
     "COMPLETE": "Complete",
     "NO_SHOW": "Mark no show",
     "CANCEL": "Cancel appointment",
+    "MORE_ACTIONS": "More actions",
+    "BLOCKED": { "OPEN": "Manage unavailable periods", "TITLE": "Unavailable periods", "PRACTITIONER": "Practitioner", "CLINIC": "Whole clinic", "SAVE": "Save period", "EDIT": "Edit", "DELETE": "Delete", "DELETE_TITLE": "Delete unavailable period", "DELETE_TEXT": "Delete this unavailable period?", "DISCARD_TITLE": "Discard unavailable-period changes", "DISCARD_TEXT": "You have unsaved unavailable-period changes.", "ERROR": "Unable to save this unavailable period." },
+    "PROCEDURES": { "TITLE": "Performed procedures", "ADD": "Add procedure", "SELECT": "Procedure", "VOID": "Void", "VOID_TITLE": "Void performed procedure", "REASON": "Reason", "ERROR": "Unable to update performed procedures." },
     "ACTIONS": "Appointment actions",
+    "CONFIRM": {
+      "TITLE": "Confirm appointment action",
+      "TEXT": "This appointment status change cannot be undone.",
+      "KEEP": "Keep appointment",
+      "PROCEED": "Confirm action"
+    },
     "SUMMARY": "Appointment summary",
     "UPCOMING": "Upcoming appointments",
     "AVAILABLE_PRACTITIONERS": "Available practitioners",
@@ -442,6 +456,16 @@
     "PATIENT": "Patient",
     "PRACTITIONER": "Practitioner",
     "CLINIC_UNIT": "Clinic unit",
+    "DETAILS": {
+      "OVERTITLE": "Schedule detail",
+      "TITLE": "Appointment details",
+      "OPEN_EVENT": "Open appointment details: {{title}}",
+      "CLOSE": "Close details",
+      "LOADING": "Loading appointment details…",
+      "UNAVAILABLE": "This appointment's details are unavailable.",
+      "TIME": "Date and time",
+      "STATUS": "Status"
+    },
     "EMPTY_MEMBERSHIP": {
       "TITLE": "Select an organization",
       "DESCRIPTION": "Select an active organization membership to view its appointments."
@@ -463,6 +487,19 @@
       "END_TIME": "End time",
       "SELECT_TIME": "Select a time",
       "TIME_INCREMENT": "30-minute intervals"
+      ,"START": "Start date and time"
+      ,"END": "End date and time"
+      ,"REQUIRED_ERROR": "Complete all required appointment fields."
+      ,"INVALID_LOCAL_TIME": "Choose a valid local time for this clinic."
+      ,"INVALID_DATE": "Enter a valid appointment date."
+      ,"PAST_DATE": "Choose today or a future date for this appointment."
+      ,"PAST_DATE_TIME": "The start time must be in the future."
+      ,"END_AFTER_START": "The end time must be after the start time."
+      ,"AVAILABILITY_LOADED": "Availability has been refreshed for the selected time."
+      ,"DISCARD_TITLE": "Discard appointment changes"
+      ,"DISCARD_TEXT": "You have unsaved appointment changes."
+      ,"KEEP_EDITING": "Keep editing"
+      ,"DISCARD": "Discard changes"
     },
     "STATUS": {
       "SCHEDULED": "Scheduled",

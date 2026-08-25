@@ -15,13 +15,14 @@ import br.com.itbn.sisdent.repository.PractitionerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.data.domain.Page;
 
 import java.time.Instant;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,6 +33,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.doThrow;
 
 @ExtendWith(MockitoExtension.class)
 class AppointmentServiceTest {
@@ -40,7 +42,8 @@ class AppointmentServiceTest {
     @Mock PatientOrganizationLinkRepository links;
     @Mock OrganizationRepository organizations;
     @Mock ScopeAuthorizationService authorization;
-    @InjectMocks AppointmentService service;
+    @Mock AppointmentAvailabilityService availability;
+    private AppointmentService service;
 
     private final UUID organizationId = UUID.randomUUID();
     private final UUID clinicId = UUID.randomUUID();
@@ -48,6 +51,7 @@ class AppointmentServiceTest {
     private final UUID practitionerId = UUID.randomUUID();
     private final Instant start = Instant.parse("2026-08-04T09:00:00Z");
     private final Instant end = Instant.parse("2026-08-04T10:00:00Z");
+    private final Clock clock = Clock.fixed(Instant.parse("2026-08-04T08:00:00Z"), java.time.ZoneOffset.UTC);
     private AppointmentRequest request;
     private Practitioner practitioner;
     private PatientOrganizationLink link;
@@ -55,6 +59,7 @@ class AppointmentServiceTest {
 
     @BeforeEach
     void setUp() {
+        service = new AppointmentService(appointments, practitioners, links, organizations, authorization, availability, clock);
         request = new AppointmentRequest(clinicId, patientId, practitionerId, start, end, "Europe/Lisbon");
         practitioner = mock(Practitioner.class);
         link = mock(PatientOrganizationLink.class);
@@ -68,6 +73,7 @@ class AppointmentServiceTest {
         lenient().when(patient.getGlobalId()).thenReturn(patientId);
         lenient().when(patient.getName()).thenReturn("Patient");
         lenient().when(clinic.getGlobalId()).thenReturn(clinicId);
+        lenient().when(clinic.getTimezone()).thenReturn("Europe/Lisbon");
     }
 
     @Test
@@ -77,10 +83,40 @@ class AppointmentServiceTest {
         when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
         when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
         when(links.findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(patientId, organizationId, clinicId)).thenReturn(Optional.of(link));
-        when(appointments.hasOverlap(1L, start, end, null)).thenReturn(false);
         when(appointments.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         assertThat(service.create(organizationId, request).schedulingTimezone()).isEqualTo("Europe/Lisbon");
+    }
+
+    @Test
+    void acceptsAnAppointmentStartingAtTheCurrentInstant() {
+        AppointmentRequest currentRequest = new AppointmentRequest(clinicId, patientId, practitionerId,
+                clock.instant(), clock.instant().plus(Duration.ofMinutes(30)), "Europe/Lisbon");
+        when(organizations.findByGlobalId(organizationId)).thenReturn(Optional.of(new Organization("Alpha")));
+        when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
+        when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
+        when(links.findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(patientId, organizationId, clinicId))
+                .thenReturn(Optional.of(link));
+        when(appointments.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertThat(service.create(organizationId, currentRequest).startAt()).isEqualTo(clock.instant());
+
+        Appointment appointment = new Appointment(new Organization("Alpha"), clinic, link, practitioner, start, end, "Europe/Lisbon");
+        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointment.getGlobalId(), organizationId)).thenReturn(Optional.of(appointment));
+        assertThat(service.reschedule(organizationId, appointment.getGlobalId(), currentRequest).startAt()).isEqualTo(clock.instant());
+    }
+
+    @Test
+    void rejectsPastStartsForCreationAndRescheduling() {
+        AppointmentRequest pastRequest = new AppointmentRequest(clinicId, patientId, practitionerId,
+                clock.instant().minusSeconds(1), clock.instant().plus(Duration.ofMinutes(30)), "Europe/Lisbon");
+
+        assertThatThrownBy(() -> service.create(organizationId, pastRequest))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("must not be in the past");
+        assertThatThrownBy(() -> service.reschedule(organizationId, UUID.randomUUID(), pastRequest))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("must not be in the past");
     }
 
     @Test
@@ -95,7 +131,7 @@ class AppointmentServiceTest {
         when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
         when(links.findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(patientId, organizationId, clinicId))
                 .thenReturn(Optional.of(link));
-        when(appointments.hasOverlap(1L, start, end, null)).thenReturn(true);
+        doThrow(new SchedulingConflictException()).when(availability).requireAvailable(any(), any(), any(), any(), any(), any());
         assertThatThrownBy(() -> service.create(organizationId, request)).isInstanceOf(SchedulingConflictException.class);
     }
 
@@ -115,37 +151,25 @@ class AppointmentServiceTest {
     @Test
     void listsAndReschedulesAppointmentsWithinTheAuthorizedClinic() {
         Appointment appointment = new Appointment(new Organization("Alpha"), clinic, link, practitioner, start, end, "Europe/Lisbon");
-        when(appointments.findScoped(any(), any(), any(), any(), any())).thenReturn(Page.empty());
+        when(appointments.findScoped(any(), any(), any(), any(), any(), any())).thenReturn(Page.empty());
         when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
         when(appointments.findByGlobalIdAndOrganization_GlobalId(appointment.getGlobalId(), organizationId)).thenReturn(Optional.of(appointment));
         when(links.findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(patientId, organizationId, clinicId))
                 .thenReturn(Optional.of(link));
         when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
-        when(appointments.hasOverlap(1L, start, end, null)).thenReturn(false);
 
-        assertThat(service.list(organizationId, clinicId, start, end, 0, 200).content()).isEmpty();
+        assertThat(service.list(organizationId, clinicId, start, end, null, 0, 200).content()).isEmpty();
         assertThat(service.reschedule(organizationId, appointment.getGlobalId(), request).status()).isEqualTo(AppointmentStatus.SCHEDULED);
     }
 
     @Test
     void listsAppointmentsFromTheRequestedDayWithoutAnUpperDateLimit() {
-        when(appointments.findFrom(any(), any(), any(), any())).thenReturn(Page.empty());
+        when(appointments.findFrom(any(), any(), any(), any(), any())).thenReturn(Page.empty());
         when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
 
-        assertThat(service.list(organizationId, clinicId, start, null, 1, 10).content()).isEmpty();
+        assertThat(service.list(organizationId, clinicId, start, null, null, 1, 10).content()).isEmpty();
 
-        verify(appointments).findFrom(any(), any(), any(), any());
-    }
-
-    @Test
-    void reportsAvailabilityOnlyForAnAuthorizedClinicAndActivePractitioner() {
-        when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
-        when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId))
-                .thenReturn(Optional.of(practitioner));
-        when(appointments.hasOverlap(1L, start, end, null)).thenReturn(false);
-
-        assertThat(service.availability(organizationId, clinicId, practitionerId, start, end).available()).isTrue();
-        verify(authorization).requireAppointmentRead(organizationId, clinicId);
+        verify(appointments).findFrom(any(), any(), any(), any(), any());
     }
 
     @Test

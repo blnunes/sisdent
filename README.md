@@ -34,8 +34,8 @@ Open `http://localhost:4200` and use `NATIONAL_ID / ADMIN / admin`. See
 
 GraphQL (`POST /graphql`) is the sole business API. HTTP is limited to
 `POST /api/auth/login`, `GET /api/session`, `GET /api/csrf`, health checks, and
-development-only H2 support. The final inventory is in
-[`docs/REST_RETIREMENT_INVENTORY.md`](docs/REST_RETIREMENT_INVENTORY.md).
+development-only H2 support. The API boundary, authorization model, and error
+contract are documented in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 Scheduling and clinical workflows are GraphQL-only.
 
@@ -108,6 +108,6 @@ present translated, user-safe error messages rather than server error details.
 
 ## Deployment
 
-The Render and local pre-production deployment flows are documented in
-[`docs/PIPELINE.md`](docs/PIPELINE.md). The Ubuntu host bootstrap and operating
-instructions are in [`docs/PREPROD.md`](docs/PREPROD.md).
+Use [`render.yaml`](render.yaml) for Render and
+[`compose.preprod.yml`](compose.preprod.yml) with [`run-dev.sh`](run-dev.sh) for
+the local pre-production flow.

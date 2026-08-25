@@ -27,6 +27,8 @@ public class ClinicUnit extends AuditableEntity {
     private String name;
     @Column(nullable = false)
     private boolean active = true;
+    @Column(nullable = false)
+    private String timezone = "Europe/Lisbon";
 
     protected ClinicUnit() {}
     public ClinicUnit(Organization organization, String name) {
@@ -38,4 +40,5 @@ public class ClinicUnit extends AuditableEntity {
     public Organization getOrganization() { return organization; }
     public String getName() { return name; }
     public boolean isActive() { return active; }
+    public String getTimezone() { return timezone; }
 }

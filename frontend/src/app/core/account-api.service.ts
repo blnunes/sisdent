@@ -1,12 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import {
-  AccountSummary,
-  ClinicUnit,
-  OrganizationOption,
-  PageResponse,
-  Practitioner,
-} from './models';
+import { AccountSummary, OrganizationOption, PageResponse } from './models';
 import { GraphQlClientService } from './graphql-client.service';
 import {
   OrganizationMutationGraphqlService,

@@ -1,7 +1,6 @@
 package br.com.itbn.sisdent.service;
 
 import br.com.itbn.sisdent.dto.AppointmentRequest;
-import br.com.itbn.sisdent.dto.AppointmentAvailabilityResponse;
 import br.com.itbn.sisdent.dto.AppointmentResponse;
 import br.com.itbn.sisdent.dto.PageResponse;
 import br.com.itbn.sisdent.model.Appointment;
@@ -22,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.Clock;
 import java.time.ZoneId;
 import java.util.UUID;
 
@@ -32,29 +32,36 @@ public class AppointmentService {
     private final PatientOrganizationLinkRepository links;
     private final OrganizationRepository organizations;
     private final ScopeAuthorizationService authorization;
+    private final AppointmentAvailabilityService availability;
+    private final Clock clock;
 
     public AppointmentService(AppointmentRepository appointments, PractitionerRepository practitioners,
             PatientOrganizationLinkRepository links, OrganizationRepository organizations,
-            ScopeAuthorizationService authorization) {
+            ScopeAuthorizationService authorization, AppointmentAvailabilityService availability, Clock clock) {
         this.appointments = appointments;
         this.practitioners = practitioners;
         this.links = links;
         this.organizations = organizations;
         this.authorization = authorization;
+        this.availability = availability;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<AppointmentResponse> list(UUID organizationId, UUID clinicUnitId, Instant from, Instant to,
+    public PageResponse<AppointmentResponse> list(UUID organizationId, UUID clinicUnitId, Instant from, Instant to, java.util.List<UUID> practitionerIds,
             int page, int size) {
         authorization.requireAppointmentRead(organizationId, clinicUnitId);
         validListRange(from, to);
         if (clinicUnitId != null) {
             authorization.requireClinicInOrganization(organizationId, clinicUnitId);
         }
+        if (practitionerIds != null) practitionerIds.stream().distinct().forEach(id -> practitioners
+                .findByGlobalIdAndOrganization_GlobalId(id, organizationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
         PageRequest pageable = PageRequest.of(page, Math.min(size, 100), Sort.by("startAt"));
         return PageResponse.from(to == null
-                ? appointments.findFrom(organizationId, clinicUnitId, from, pageable)
-                : appointments.findScoped(organizationId, clinicUnitId, from, to, pageable), this::response);
+                ? appointments.findFrom(organizationId, clinicUnitId, practitionerIds == null || practitionerIds.isEmpty() ? null : practitionerIds, from, pageable)
+                : appointments.findScoped(organizationId, clinicUnitId, practitionerIds == null || practitionerIds.isEmpty() ? null : practitionerIds, from, to, pageable), this::response);
     }
 
     @Transactional
@@ -64,9 +71,10 @@ public class AppointmentService {
         Organization organization = organizations.findByGlobalId(organizationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         ClinicUnit clinic = authorization.requireClinicInOrganization(organizationId, request.clinicUnitId());
+        requireClinicTimezone(clinic, request.schedulingTimezone());
         Practitioner practitioner = lockActive(organizationId, request.practitionerId());
         PatientOrganizationLink link = activeLink(organizationId, request.patientId(), request.clinicUnitId());
-        conflict(practitioner, request.startAt(), request.endAt(), null);
+        availability.requireAvailable(organizationId, clinic, practitioner, request.startAt(), request.endAt(), null);
         return response(appointments.save(new Appointment(organization, clinic, link, practitioner,
                 request.startAt(), request.endAt(), zone(request.schedulingTimezone()))));
     }
@@ -79,22 +87,13 @@ public class AppointmentService {
         return response(appointment);
     }
 
-    @Transactional(readOnly = true)
-    public AppointmentAvailabilityResponse availability(UUID organizationId, UUID clinicUnitId, UUID practitionerId,
-            Instant startAt, Instant endAt) {
-        authorization.requireAppointmentRead(organizationId, clinicUnitId);
-        authorization.requireClinicInOrganization(organizationId, clinicUnitId);
-        validRange(startAt, endAt);
-        Practitioner practitioner = lockActive(organizationId, practitionerId);
-        return new AppointmentAvailabilityResponse(!appointments.hasOverlap(practitioner.getId(), startAt, endAt, null));
-    }
-
     @Transactional
     public AppointmentResponse reschedule(UUID organizationId, UUID appointmentId, AppointmentRequest request) {
         authorization.requireAppointmentManagement(organizationId, request.clinicUnitId());
         valid(request);
         Appointment appointment = require(organizationId, appointmentId);
         checkClinic(appointment, request.clinicUnitId());
+        requireClinicTimezone(appointment.getClinicUnit(), request.schedulingTimezone());
         PatientOrganizationLink link = activeLink(organizationId, request.patientId(), request.clinicUnitId());
         if (!appointment.getPatientLink().getId().equals(link.getId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -103,7 +102,7 @@ public class AppointmentService {
         if (!practitioner.getId().equals(appointment.getPractitioner().getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Practitioner cannot be changed when rescheduling");
         }
-        conflict(practitioner, request.startAt(), request.endAt(), appointment.getId());
+        availability.requireAvailable(organizationId, appointment.getClinicUnit(), practitioner, request.startAt(), request.endAt(), appointment.getId());
         appointment.reschedule(request.startAt(), request.endAt(), zone(request.schedulingTimezone()));
         return response(appointment);
     }
@@ -143,7 +142,13 @@ public class AppointmentService {
             throw new SchedulingConflictException();
         }
     }
-    private void valid(AppointmentRequest request) { validRange(request.startAt(), request.endAt()); zone(request.schedulingTimezone()); }
+    private void valid(AppointmentRequest request) {
+        validRange(request.startAt(), request.endAt());
+        if (request.startAt().isBefore(clock.instant())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment start must not be in the past");
+        }
+        zone(request.schedulingTimezone());
+    }
     private void validRange(Instant start, Instant end) {
         if (start == null || end == null || !end.isAfter(start)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment end must be after start");
@@ -157,6 +162,11 @@ public class AppointmentService {
     private String zone(String value) {
         try { return ZoneId.of(value.strip()).getId(); }
         catch (Exception _) { throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A valid IANA timezone is required"); }
+    }
+    private void requireClinicTimezone(ClinicUnit clinic, String value) {
+        if (!clinic.getTimezone().equals(zone(value))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Scheduling timezone must match the clinic unit timezone");
+        }
     }
     private void checkClinic(Appointment appointment, UUID clinicUnitId) {
         if (clinicUnitId != null && !appointment.getClinicUnit().getGlobalId().equals(clinicUnitId)) {

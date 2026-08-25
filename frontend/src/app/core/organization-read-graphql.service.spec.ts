@@ -17,8 +17,8 @@ describe('OrganizationReadGraphqlService', () => {
     const request = http.expectOne('/graphql');
     expect(request.request.body.query).toContain('query ClinicUnits($organizationId: ID!, $clinicUnitId: ID)');
     expect(request.request.body.variables).toEqual({ organizationId: 'organization-1', clinicUnitId: 'clinic-2' });
-    request.flush({ data: { clinicUnits: [{ id: 'clinic-2', organizationId: 'organization-1', name: 'Central', active: true }] } });
-    expect(result).toHaveBeenCalledWith([{ id: 'clinic-2', organizationId: 'organization-1', name: 'Central', active: true }]);
+    request.flush({ data: { clinicUnits: [{ id: 'clinic-2', organizationId: 'organization-1', name: 'Central', active: true, timezone: 'Europe/Lisbon' }] } });
+    expect(result).toHaveBeenCalledWith([{ id: 'clinic-2', organizationId: 'organization-1', name: 'Central', active: true, timezone: 'Europe/Lisbon' }]);
   });
 
   it('sends the practitioner operation without internal fields and maps safe errors', () => {

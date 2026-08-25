@@ -11,10 +11,13 @@ extend type Query {
     clinicUnits(organizationId: ID!, clinicUnitId: ID): [ClinicUnit!]!
     """Active and inactive practitioners visible to authorized practitioner managers."""
     practitioners(organizationId: ID!, clinicUnitId: ID): [Practitioner!]!
-    appointments(organizationId: ID!, clinicUnitId: ID, from: String!, to: String, page: Int, size: Int): AppointmentPage!
+    appointments(organizationId: ID!, clinicUnitId: ID, from: String!, to: String, practitionerIds: [ID!], page: Int, size: Int): AppointmentPage!
     appointment(organizationId: ID!, clinicUnitId: ID, appointmentId: ID!): Appointment!
-    appointmentAvailability(organizationId: ID!, clinicUnitId: ID!, practitionerId: ID!, startAt: String!, endAt: String!): AppointmentAvailability!
+    appointmentAvailabilityIntervals(organizationId: ID!, clinicUnitId: ID!, from: String!, to: String!, practitionerIds: [ID!]): [AppointmentAvailabilityInterval!]!
+    appointmentBlockedPeriods(organizationId: ID!, clinicUnitId: ID!, from: String!, to: String!): [AppointmentBlockedPeriod!]!
     performedProcedures(organizationId: ID!, clinicUnitId: ID, appointmentId: ID!): [PerformedProcedure!]!
+    """Minimal, appointment-management scoped dental procedure selection."""
+    eligiblePerformedProcedureOptions(organizationId: ID!, clinicUnitId: ID!, appointmentId: ID!): [PerformedProcedureOption!]!
     clinicalEncounters(organizationId: ID!, clinicUnitId: ID!, patientId: ID!, page: Int, size: Int): ClinicalEncounterPage!
     clinicalEncounter(organizationId: ID!, clinicUnitId: ID!, encounterId: ID!): ClinicalEncounter!
     encounterAmendments(organizationId: ID!, clinicUnitId: ID!, encounterId: ID!): [ClinicalEncounter!]!
@@ -27,6 +30,7 @@ type ClinicUnit {
     organizationId: ID!
     name: String!
     active: Boolean!
+    timezone: String!
 }
 
 type Practitioner {
@@ -47,8 +51,13 @@ enum MembershipRole { ORGANIZATION_ADMIN MANAGER READ_ONLY PRACTITIONER_MANAGER 
 enum AppointmentStatus { SCHEDULED CANCELLED COMPLETED NO_SHOW }
 type AppointmentPage { content: [Appointment!]!, page: Int!, size: Int!, totalElements: Int!, totalPages: Int! }
 type Appointment { globalId: ID!, clinicUnitId: ID!, patientId: ID!, patientName: String!, practitionerId: ID!, practitionerName: String!, startAt: String!, endAt: String!, schedulingTimezone: String!, status: AppointmentStatus! }
-type AppointmentAvailability { available: Boolean! }
+enum Availability { AVAILABLE UNAVAILABLE }
+enum AvailabilityCategory { WORKING_HOURS BREAK BLOCKED OCCUPIED }
+type AppointmentAvailabilityInterval { practitionerId: ID!, startAt: String!, endAt: String!, availability: Availability!, category: AvailabilityCategory! }
+"""Opaque management data. The calendar itself uses AppointmentAvailabilityInterval only."""
+type AppointmentBlockedPeriod { globalId: ID!, clinicUnitId: ID!, practitionerId: ID, startAt: String!, endAt: String!, version: Int! }
 type PerformedProcedure { globalId: ID!, dentalProcedureId: ID!, procedureNameSnapshot: String!, performedAt: String!, administrativeNote: String, voidedAt: String, voidedBy: String, voidReason: String }
+type PerformedProcedureOption { id: ID!, displayName: String! }
 enum EncounterStatus { DRAFT FINAL }
 enum OdontogramSurface { WHOLE_TOOTH MESIAL DISTAL BUCCAL LINGUAL_PALATAL OCCLUSAL_INCISAL }
 enum OdontogramCondition { SOUND CARIES RESTORATION CROWN MISSING IMPLANT EXTRACTED }
