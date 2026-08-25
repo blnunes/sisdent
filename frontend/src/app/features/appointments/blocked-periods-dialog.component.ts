@@ -10,7 +10,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { AppointmentGraphqlService, BlockedPeriod } from '../../core/appointment-graphql.service';
 
 export interface BlockedPeriodsDialogData { organizationId: string; clinicUnitId: string; timezone: string; practitioners: readonly { globalId: string; displayName: string }[]; from: string; to: string; onFinished: () => void; }
-@Component({ selector: 'app-blocked-periods-dialog', imports: [FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, TranslatePipe], templateUrl: './blocked-periods-dialog.component.html' })
+@Component({ selector: 'app-blocked-periods-dialog', imports: [FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, TranslatePipe], templateUrl: './blocked-periods-dialog.component.html', styles: ['.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }'] })
 export class BlockedPeriodsDialogComponent {
   readonly data = inject<BlockedPeriodsDialogData>(MAT_DIALOG_DATA); private readonly ref = inject(MatDialogRef<BlockedPeriodsDialogComponent>);
   private readonly api = inject(AppointmentGraphqlService); private readonly dialog = inject(MatDialog);
