@@ -1,3 +1,5 @@
+CREATE DOMAIN migration_v11_actor AS VARCHAR(255) DEFAULT 'migration-v11';
+
 ALTER TABLE memberships DROP CONSTRAINT ck_memberships_role;
 ALTER TABLE memberships ADD CONSTRAINT ck_memberships_role CHECK (role IN (
  'ORGANIZATION_ADMIN','MANAGER','READ_ONLY','PRACTITIONER_MANAGER','APPOINTMENT_MANAGER','APPOINTMENT_READER',
@@ -10,8 +12,8 @@ CREATE TABLE clinical_encounters (
  care_at TIMESTAMP WITH TIME ZONE NOT NULL, care_timezone VARCHAR(64) NOT NULL,
  narrative VARCHAR(4000) NOT NULL, administrative_note VARCHAR(500), status VARCHAR(16) NOT NULL,
  finalized_at TIMESTAMP WITH TIME ZONE, finalized_by VARCHAR(255), amendment_reason VARCHAR(500),
- created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, created_by VARCHAR(255) NOT NULL DEFAULT 'migration-v11',
- updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_by VARCHAR(255) NOT NULL DEFAULT 'migration-v11', version BIGINT NOT NULL DEFAULT 0,
+ created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, created_by migration_v11_actor NOT NULL,
+ updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_by migration_v11_actor NOT NULL, version BIGINT NOT NULL DEFAULT 0,
  CONSTRAINT uk_clinical_encounters_global_id UNIQUE(global_id),
  CONSTRAINT ck_clinical_encounter_status CHECK (status IN ('DRAFT','FINAL')),
  CONSTRAINT ck_clinical_encounter_final CHECK ((status='DRAFT' AND finalized_at IS NULL AND finalized_by IS NULL) OR (status='FINAL' AND finalized_at IS NOT NULL AND finalized_by IS NOT NULL)),
@@ -31,8 +33,8 @@ CREATE TABLE odontogram_findings (
  replacement_for_id BIGINT, tooth_code VARCHAR(2) NOT NULL, surface VARCHAR(32) NOT NULL, condition_code VARCHAR(32) NOT NULL,
  observed_at TIMESTAMP WITH TIME ZONE NOT NULL, observation_timezone VARCHAR(64) NOT NULL, clinical_note VARCHAR(500),
  voided_at TIMESTAMP WITH TIME ZONE, voided_by VARCHAR(255), void_reason VARCHAR(500),
- created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, created_by VARCHAR(255) NOT NULL DEFAULT 'migration-v11',
- updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_by VARCHAR(255) NOT NULL DEFAULT 'migration-v11', version BIGINT NOT NULL DEFAULT 0,
+ created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, created_by migration_v11_actor NOT NULL,
+ updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_by migration_v11_actor NOT NULL, version BIGINT NOT NULL DEFAULT 0,
  CONSTRAINT uk_odontogram_findings_global_id UNIQUE(global_id),
  CONSTRAINT ck_odontogram_tooth CHECK (tooth_code IN ('11','12','13','14','15','16','17','18','21','22','23','24','25','26','27','28','31','32','33','34','35','36','37','38','41','42','43','44','45','46','47','48','51','52','53','54','55','61','62','63','64','65','71','72','73','74','75','81','82','83','84','85')),
  CONSTRAINT ck_odontogram_surface CHECK (surface IN ('WHOLE_TOOTH','MESIAL','DISTAL','OCCLUSAL_INCISAL','BUCCAL','LINGUAL_PALATAL')),

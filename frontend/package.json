@@ -5,9 +5,13 @@
     "ng": "ng",
     "start": "ng serve --proxy-config proxy.conf.json",
     "build": "ng build",
+    "build:production": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:ci": "ng test --watch=false",
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss}\" angular.json package.json",
     "check:i18n": "node ./scripts/check-i18n.mjs",
+    "quality": "npm run check:i18n && npm run test:ci && npm run build:production",
     "test:e2e": "node ./scripts/run-e2e.mjs",
     "test:e2e:ui": "node ./scripts/run-e2e.mjs --ui"
   },

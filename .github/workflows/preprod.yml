@@ -130,13 +130,9 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Test frontend
+      - name: Run frontend quality checks
         working-directory: frontend
-        run: npm test -- --watch=false
-
-      - name: Build production frontend
-        working-directory: frontend
-        run: npm run build -- --configuration production
+        run: npm run quality
 
   deploy:
     name: Deploy selected revision
