@@ -32,6 +32,9 @@ type Mutation {
     createAppointment(organizationId: ID!, input: AppointmentMutationInput!): Appointment!
     rescheduleAppointment(organizationId: ID!, appointmentId: ID!, input: AppointmentMutationInput!): Appointment!
     transitionAppointment(organizationId: ID!, clinicUnitId: ID!, appointmentId: ID!, status: AppointmentStatus!): Appointment!
+    createAppointmentBlockedPeriod(organizationId: ID!, input: AppointmentBlockedPeriodMutationInput!): AppointmentBlockedPeriod!
+    updateAppointmentBlockedPeriod(organizationId: ID!, blockedPeriodId: ID!, version: Int!, input: AppointmentBlockedPeriodMutationInput!): AppointmentBlockedPeriod!
+    deleteAppointmentBlockedPeriod(organizationId: ID!, clinicUnitId: ID!, blockedPeriodId: ID!, version: Int!): Boolean!
     createPerformedProcedure(organizationId: ID!, clinicUnitId: ID!, appointmentId: ID!, input: PerformedProcedureMutationInput!): PerformedProcedure!
     voidPerformedProcedure(organizationId: ID!, clinicUnitId: ID!, performedProcedureId: ID!, input: VoidPerformedProcedureMutationInput!): PerformedProcedure!
     createClinicalEncounter(organizationId: ID!, input: ClinicalEncounterMutationInput!): ClinicalEncounter!
@@ -81,6 +84,7 @@ input PatientMutationInput {
 }
 type PatientMutationResult { globalId: ID!, name: String!, active: Boolean! }
 input AppointmentMutationInput { clinicUnitId: ID!, patientId: ID!, practitionerId: ID!, startAt: String!, endAt: String!, schedulingTimezone: String! }
+input AppointmentBlockedPeriodMutationInput { clinicUnitId: ID!, practitionerId: ID, startAt: String!, endAt: String! }
 input PerformedProcedureMutationInput { dentalProcedureId: ID!, performedAt: String!, administrativeNote: String }
 input VoidPerformedProcedureMutationInput { reason: String! }
 input ClinicalEncounterMutationInput { clinicUnitId: ID!, patientId: ID!, appointmentId: ID, practitionerId: ID, careAt: String!, careTimezone: String!, narrative: String!, administrativeNote: String, version: Int }

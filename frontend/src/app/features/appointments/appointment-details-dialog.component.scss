@@ -1,0 +1,12 @@
+.dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 24px 24px 0; }
+.dialog-header p { margin: 0; color: var(--app-primary); font-size: .78rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+h2 { margin: 6px 0 0; }
+mat-dialog-content { min-width: min(420px, calc(100vw - 64px)); padding-top: 24px; }
+dl { display: grid; gap: 18px; margin: 0; }
+dt { color: var(--app-text-muted); font-size: .85rem; }
+dd { margin: 4px 0 0; font-weight: 650; }
+.state { color: var(--app-text-muted); }
+.error { color: var(--app-danger); }
+.confirmation { margin: 0 24px 20px; padding: 14px; border: 1px solid var(--app-border); border-radius: 10px; }
+.confirmation button + button { margin-left: 8px; }
+@media (max-width: 500px) { mat-dialog-content { min-width: 0; } }

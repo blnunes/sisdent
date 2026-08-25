@@ -25,4 +25,5 @@ class RestRetirementIntegrationTests {
         mockMvc.perform(get("/swagger-ui/index.html"))
                 .andExpect(status().isNotFound());
     }
+
 }

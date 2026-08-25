@@ -64,6 +64,7 @@ export interface ClinicUnit {
   organizationId: string;
   name: string;
   active: boolean;
+  timezone: string;
 }
 
 export interface Session {

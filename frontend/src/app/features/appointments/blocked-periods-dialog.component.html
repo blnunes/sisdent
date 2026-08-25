@@ -1,0 +1,9 @@
+<h2 mat-dialog-title>{{ 'APPOINTMENTS.BLOCKED.TITLE' | translate }}</h2>
+<mat-dialog-content>
+  @if (error()) { <p role="alert">{{ 'APPOINTMENTS.BLOCKED.ERROR' | translate }}</p> }
+  <mat-form-field><mat-label>{{ 'APPOINTMENTS.BLOCKED.PRACTITIONER' | translate }}</mat-label><mat-select [(ngModel)]="practitionerId"><mat-option [value]="null">{{ 'APPOINTMENTS.BLOCKED.CLINIC' | translate }}</mat-option>@for (p of data.practitioners; track p.globalId) { <mat-option [value]="p.globalId">{{ p.displayName }}</mat-option> }</mat-select></mat-form-field>
+  <mat-form-field><mat-label>{{ 'APPOINTMENTS.FORM.START' | translate }}</mat-label><input matInput type="datetime-local" [(ngModel)]="start"></mat-form-field>
+  <mat-form-field><mat-label>{{ 'APPOINTMENTS.FORM.END' | translate }}</mat-label><input matInput type="datetime-local" [(ngModel)]="end"></mat-form-field>
+  <button mat-stroked-button type="button" (click)="save()" [disabled]="saving()">{{ 'APPOINTMENTS.BLOCKED.SAVE' | translate }}</button>
+  <div class="period-list">@for (period of periods(); track period.globalId) { <div><span>{{ periodTime(period) }}</span><button mat-button (click)="edit(period)">{{ 'APPOINTMENTS.BLOCKED.EDIT' | translate }}</button><button mat-button (click)="remove(period)">{{ 'APPOINTMENTS.BLOCKED.DELETE' | translate }}</button></div> }</div>
+</mat-dialog-content><mat-dialog-actions align="end"><button mat-button (click)="close()">{{ 'APPOINTMENTS.DETAILS.CLOSE' | translate }}</button></mat-dialog-actions>

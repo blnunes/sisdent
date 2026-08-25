@@ -74,7 +74,7 @@ public class OrganizationService {
         Organization organization = requireOrganization(organizationId);
         ClinicUnit unit = clinicUnitRepository.saveAndFlush(new ClinicUnit(organization, request.name()));
         for (int day = 1; day <= 7; day++) workingHours.save(new ClinicUnitWorkingHours(unit, day, 0, 1440));
-        return new ClinicUnitResponse(unit.getGlobalId(), organizationId, unit.getName(), unit.isActive());
+        return new ClinicUnitResponse(unit.getGlobalId(), organizationId, unit.getName(), unit.isActive(), unit.getTimezone());
     }
 
     @Transactional(readOnly = true)
@@ -87,7 +87,7 @@ public class OrganizationService {
             units = units.stream().filter(unit -> unit.getGlobalId().equals(clinicUnitId)).toList();
         }
         return units.stream()
-                .map(unit -> new ClinicUnitResponse(unit.getGlobalId(), organizationId, unit.getName(), unit.isActive()))
+                .map(unit -> new ClinicUnitResponse(unit.getGlobalId(), organizationId, unit.getName(), unit.isActive(), unit.getTimezone()))
                 .toList();
     }
 

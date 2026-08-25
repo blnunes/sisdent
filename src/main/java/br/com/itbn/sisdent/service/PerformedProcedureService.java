@@ -27,6 +27,21 @@ public class PerformedProcedureService {
     }
 
     @Transactional(readOnly = true)
+    public List<ProcedureOption> eligibleOptions(UUID org, UUID clinic, UUID appointment) {
+        authorization.requireAppointmentManagement(org, clinic);
+        authorization.requireClinicInOrganization(org, clinic);
+        Appointment scopedAppointment = requireAppointment(org, appointment);
+        check(scopedAppointment, clinic);
+        return scopedAppointment.getPractitioner().getSpecialities().stream()
+                .filter(speciality -> speciality.getStatus() == CatalogStatus.ACTIVE)
+                .flatMap(speciality -> speciality.getProcedures().stream())
+                .filter(procedure -> procedure.getStatus() == CatalogStatus.ACTIVE)
+                .sorted(java.util.Comparator.comparing(DentalProcedure::getName))
+                .map(procedure -> new ProcedureOption(procedure.getId(), procedure.getName()))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<PerformedProcedureResponse> list(UUID org, UUID clinic, UUID appointment) {
         authorization.requireAppointmentRead(org, clinic);
         Appointment a = requireAppointment(org, appointment);
@@ -42,7 +57,7 @@ public class PerformedProcedureService {
         if (a.getStatus() != AppointmentStatus.COMPLETED)
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Performed procedures require a completed appointment");
         DentalProcedure d = catalog.findById(r.dentalProcedureId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if (d.getStatus() != CatalogStatus.ACTIVE)
+        if (d.getStatus() != CatalogStatus.ACTIVE || !isEligible(a, d))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Dental procedure is inactive");
         return response(records.save(new PerformedProcedure(a, d, r.performedAt(), r.administrativeNote())));
     }
@@ -69,7 +84,17 @@ public class PerformedProcedureService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
+    private boolean isEligible(Appointment appointment, DentalProcedure procedure) {
+        return appointment.getPractitioner().getSpecialities().stream()
+                .filter(speciality -> speciality.getStatus() == CatalogStatus.ACTIVE)
+                .flatMap(speciality -> speciality.getProcedures().stream())
+                .anyMatch(candidate -> candidate.getId().equals(procedure.getId())
+                        && candidate.getStatus() == CatalogStatus.ACTIVE);
+    }
+
     private PerformedProcedureResponse response(PerformedProcedure p) {
         return new PerformedProcedureResponse(p.getGlobalId(), p.getDentalProcedure().getId(), p.getProcedureNameSnapshot(), p.getPerformedAt(), p.getAdministrativeNote(), p.getVoidedAt(), p.getVoidedBy(), p.getVoidReason());
     }
+
+    public record ProcedureOption(Long id, String displayName) { }
 }

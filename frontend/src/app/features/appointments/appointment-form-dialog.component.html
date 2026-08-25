@@ -1,0 +1,20 @@
+<h2 mat-dialog-title>{{ titleKey() | translate }}</h2>
+<mat-dialog-content>
+  <p>{{ 'APPOINTMENTS.FORM.DESCRIPTION' | translate }} {{ data.timezone }}</p>
+  @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+  @if (availabilityLoaded()) { <p class="availability" aria-live="polite">{{ 'APPOINTMENTS.FORM.AVAILABILITY_LOADED' | translate }}</p> }
+  <form [formGroup]="form" (ngSubmit)="save()" id="appointment-form">
+    <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.PATIENT' | translate }}</mat-label><mat-select formControlName="patientId" required>@for (patient of data.patients; track patient.id) { <mat-option [value]="patient.id">{{ patient.name }}</mat-option> }</mat-select></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.PRACTITIONER' | translate }}</mat-label><mat-select formControlName="practitionerId" required>@for (practitioner of data.practitioners; track practitioner.id) { <mat-option [value]="practitioner.id">{{ practitioner.name }}</mat-option> }</mat-select></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.FORM.START' | translate }}</mat-label><input matInput type="datetime-local" formControlName="startLocal" required /></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.FORM.END' | translate }}</mat-label><input matInput type="datetime-local" formControlName="endLocal" required /></mat-form-field>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end"><button mat-button type="button" (click)="close()">{{ 'APPOINTMENTS.DETAILS.CLOSE' | translate }}</button><button mat-flat-button type="submit" form="appointment-form" [disabled]="submitting()">{{ saveKey() | translate }}</button></mat-dialog-actions>
+@if (confirmDiscard()) {
+  <section class="discard-confirmation" role="alertdialog" [attr.aria-label]="'APPOINTMENTS.FORM.DISCARD_TITLE' | translate">
+    <p>{{ 'APPOINTMENTS.FORM.DISCARD_TEXT' | translate }}</p>
+    <button mat-button type="button" (click)="confirmDiscard.set(false)">{{ 'APPOINTMENTS.FORM.KEEP_EDITING' | translate }}</button>
+    <button mat-flat-button type="button" (click)="discard()">{{ 'APPOINTMENTS.FORM.DISCARD' | translate }}</button>
+  </section>
+}

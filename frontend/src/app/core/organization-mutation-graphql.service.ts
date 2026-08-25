@@ -10,7 +10,7 @@ export type PractitionerWrite = {
   accountId?: string | null;
 };
 
-const CLINIC_UNIT_FIELDS = 'id organizationId name active';
+const CLINIC_UNIT_FIELDS = 'id organizationId name active timezone';
 const PRACTITIONER_FIELDS =
   'globalId displayName registrationNumber accountId active specialityIds';
 

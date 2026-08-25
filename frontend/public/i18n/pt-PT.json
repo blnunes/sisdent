@@ -417,6 +417,11 @@
     }
   },
   "APPOINTMENTS": {
+    "WEEK": "Semana",
+    "DAY": "Dia",
+    "FILTERS": "Filtros do calendário",
+    "UNAVAILABLE": "Indisponível",
+    "SELECT_SLOT": "Selecionar esta hora de consulta",
     "FROM_TODAY": "A partir de hoje",
     "PREVIOUS_PAGE": "Anterior",
     "NEXT_PAGE": "Seguinte",
@@ -431,7 +436,15 @@
     "COMPLETE": "Concluir",
     "NO_SHOW": "Marcar falta",
     "CANCEL": "Cancelar consulta",
+    "BLOCKED": { "OPEN": "Gerir períodos indisponíveis", "TITLE": "Períodos indisponíveis", "PRACTITIONER": "Profissional", "CLINIC": "Toda a clínica", "SAVE": "Guardar período", "EDIT": "Editar", "DELETE": "Eliminar", "DELETE_TITLE": "Eliminar período indisponível", "DELETE_TEXT": "Eliminar este período indisponível?", "DISCARD_TITLE": "Descartar alterações do período indisponível", "DISCARD_TEXT": "Existem alterações do período indisponível por guardar.", "ERROR": "Não foi possível guardar este período indisponível." },
+    "PROCEDURES": { "TITLE": "Procedimentos realizados", "ADD": "Adicionar procedimento", "SELECT": "Procedimento", "VOID": "Anular", "VOID_TITLE": "Anular procedimento realizado", "REASON": "Motivo", "ERROR": "Não foi possível atualizar os procedimentos realizados." },
     "ACTIONS": "Ações da consulta",
+    "CONFIRM": {
+      "TITLE": "Confirmar ação da consulta",
+      "TEXT": "Esta alteração de estado da consulta não pode ser anulada.",
+      "KEEP": "Manter consulta",
+      "PROCEED": "Confirmar ação"
+    },
     "SUMMARY": "Resumo de consultas",
     "UPCOMING": "Consultas futuras",
     "AVAILABLE_PRACTITIONERS": "Profissionais disponíveis",
@@ -442,6 +455,16 @@
     "PATIENT": "Paciente",
     "PRACTITIONER": "Profissional",
     "CLINIC_UNIT": "Clínica",
+    "DETAILS": {
+      "OVERTITLE": "Detalhe da agenda",
+      "TITLE": "Detalhes da consulta",
+      "OPEN_EVENT": "Abrir detalhes da consulta: {{title}}",
+      "CLOSE": "Fechar detalhes",
+      "LOADING": "A carregar detalhes da consulta…",
+      "UNAVAILABLE": "Os detalhes desta consulta não estão disponíveis.",
+      "TIME": "Data e hora",
+      "STATUS": "Estado"
+    },
     "EMPTY_MEMBERSHIP": {
       "TITLE": "Selecione uma organização",
       "DESCRIPTION": "Selecione uma associação de organização ativa para consultar as marcações."
@@ -463,6 +486,16 @@
       "END_TIME": "Hora de fim",
       "SELECT_TIME": "Selecione uma hora",
       "TIME_INCREMENT": "Intervalos de 30 minutos"
+      ,"START": "Data e hora de início"
+      ,"END": "Data e hora de fim"
+      ,"REQUIRED_ERROR": "Preencha todos os campos obrigatórios da consulta."
+      ,"INVALID_LOCAL_TIME": "Escolha uma hora local válida para esta clínica."
+      ,"END_AFTER_START": "A hora de fim tem de ser posterior à hora de início."
+      ,"AVAILABILITY_LOADED": "A disponibilidade foi atualizada para o horário selecionado."
+      ,"DISCARD_TITLE": "Descartar alterações da consulta"
+      ,"DISCARD_TEXT": "Existem alterações da consulta por guardar."
+      ,"KEEP_EDITING": "Continuar a editar"
+      ,"DISCARD": "Descartar alterações"
     },
     "STATUS": {
       "SCHEDULED": "Agendada",
