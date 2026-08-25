@@ -56,8 +56,8 @@ the common request/error envelope and maps `errors[].extensions.code` and
 interceptor attaches the JWT Bearer token.
 
 All business workflows use GraphQL. Authentication, session bootstrap, CSRF,
-health checks, and development-only H2 support remain HTTP. The final route inventory is in
-[`docs/REST_RETIREMENT_INVENTORY.md`](../docs/REST_RETIREMENT_INVENTORY.md).
+health checks, and development-only H2 support remain HTTP. The complete API
+boundary is documented in [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md).
 
 ## Validation
 
