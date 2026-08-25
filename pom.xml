@@ -21,7 +21,11 @@
         <java.version>25</java.version>
         <!-- Build outputs and dependency caches are generated/external code, not project sources. -->
         <sonar.exclusions>.github/workflows/**,**/.angular/**,**/node_modules/**,**/dist/**,**/coverage/**</sonar.exclusions>
+        <sonar.sources>src/main/java,frontend/src</sonar.sources>
+        <sonar.tests>src/test/java,frontend/src</sonar.tests>
+        <sonar.test.inclusions>frontend/src/**/*.spec.ts</sonar.test.inclusions>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.javascript.lcov.reportPaths>frontend/coverage/frontend/lcov.info</sonar.javascript.lcov.reportPaths>
     </properties>
 
     <dependencies>
