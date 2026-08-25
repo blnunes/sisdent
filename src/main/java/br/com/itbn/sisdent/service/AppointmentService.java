@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.Clock;
 import java.time.ZoneId;
 import java.util.UUID;
 
@@ -32,16 +33,18 @@ public class AppointmentService {
     private final OrganizationRepository organizations;
     private final ScopeAuthorizationService authorization;
     private final AppointmentAvailabilityService availability;
+    private final Clock clock;
 
     public AppointmentService(AppointmentRepository appointments, PractitionerRepository practitioners,
             PatientOrganizationLinkRepository links, OrganizationRepository organizations,
-            ScopeAuthorizationService authorization, AppointmentAvailabilityService availability) {
+            ScopeAuthorizationService authorization, AppointmentAvailabilityService availability, Clock clock) {
         this.appointments = appointments;
         this.practitioners = practitioners;
         this.links = links;
         this.organizations = organizations;
         this.authorization = authorization;
         this.availability = availability;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -139,7 +142,13 @@ public class AppointmentService {
             throw new SchedulingConflictException();
         }
     }
-    private void valid(AppointmentRequest request) { validRange(request.startAt(), request.endAt()); zone(request.schedulingTimezone()); }
+    private void valid(AppointmentRequest request) {
+        validRange(request.startAt(), request.endAt());
+        if (request.startAt().isBefore(clock.instant())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment start must not be in the past");
+        }
+        zone(request.schedulingTimezone());
+    }
     private void validRange(Instant start, Instant end) {
         if (start == null || end == null || !end.isAfter(start)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment end must be after start");

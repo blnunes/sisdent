@@ -51,9 +51,11 @@ test.describe('Appointments calendar', () => {
     await expect(dialog).toBeVisible();
     await expect(dialog.locator('dd').first()).toContainText(/2:30/);
     await expect(dialog.getByRole('button', { name: 'Reschedule appointment', exact: true })).toBeVisible();
-    await expect(dialog.getByRole('button', { name: 'Complete', exact: true })).toBeVisible();
-    await expect(dialog.getByRole('button', { name: 'Mark no show', exact: true })).toBeVisible();
-    await expect(dialog.getByRole('button', { name: 'Cancel appointment', exact: true })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'More actions', exact: true })).toBeVisible();
+    await dialog.getByRole('button', { name: 'More actions', exact: true }).click();
+    await expect(page.getByRole('menuitem', { name: 'Complete', exact: true })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Mark no show', exact: true })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Cancel appointment', exact: true })).toBeVisible();
   });
 
   test('opens a selected clinic-local slot without creating an appointment until explicit save', async ({ page }) => {
@@ -91,7 +93,8 @@ test.describe('Appointments calendar', () => {
     await page.goto('/appointments');
     const event = page.locator('.fc-event:not(.fc-bg-event)').first();
     await event.click();
-    await page.getByRole('button', { name: 'Complete', exact: true }).click();
+    await page.getByRole('button', { name: 'More actions', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Complete', exact: true }).click();
     const confirmation = page.getByRole('dialog').last();
     await expect(confirmation).toContainText('cannot be undone');
     const mutation = page.waitForRequest((request) => String(request.postData()).includes('mutation TransitionAppointment'));
@@ -114,8 +117,10 @@ test.describe('Appointments calendar', () => {
     await page.getByRole('option', { name: 'Patient', exact: true }).click();
     await dialog.getByLabel('Practitioner', { exact: true }).click();
     await page.getByRole('option').first().click();
-    await dialog.getByLabel('Start date and time', { exact: true }).fill('2026-10-25T01:30');
-    await dialog.getByLabel('End date and time', { exact: true }).fill('2026-10-25T02:00');
+    await dialog.getByLabel('Start date and time', { exact: true }).fill('10/25/2026');
+    await dialog.getByLabel('Start time', { exact: true }).fill('01:30');
+    await dialog.getByLabel('End date and time', { exact: true }).fill('10/25/2026');
+    await dialog.getByLabel('End time', { exact: true }).fill('02:00');
     const mutation = page.waitForRequest((request) => String(request.postData()).includes('mutation CreateAppointment'));
     await dialog.getByRole('button', { name: 'Schedule appointment', exact: true }).click();
     const body = JSON.parse((await mutation).postData() ?? '{}');
@@ -131,7 +136,7 @@ test.describe('Appointments calendar', () => {
     await page.locator('.fc-event:not(.fc-bg-event)').first().click();
     await page.getByRole('button', { name: 'Reschedule appointment', exact: true }).click();
     const dialog = page.getByRole('dialog').last();
-    await dialog.getByLabel('End date and time', { exact: true }).fill('2026-03-29T03:30');
+    await dialog.getByLabel('End time', { exact: true }).fill('03:30');
     await dialog.getByRole('button', { name: 'Save new time', exact: true }).click();
     await expect(dialog.getByRole('alert')).toHaveText('The practitioner is unavailable for this interval.');
     await expect(page.getByText('secret conflict detail')).toHaveCount(0);
@@ -219,8 +224,7 @@ test.describe('Appointments calendar', () => {
     });
     await page.goto('/appointments');
     const opener = page.getByRole('button', { name: 'Manage unavailable periods', exact: true });
-    await opener.focus();
-    await opener.press('Enter');
+    await opener.click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toContainText('Unavailable periods');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
@@ -229,7 +233,7 @@ test.describe('Appointments calendar', () => {
     await dialog.getByRole('button', { name: 'Save period', exact: true }).click();
     await expect(dialog).not.toContainText(/11111111|version|raw stale|reason/i);
     await dialog.getByLabel('Start date and time', { exact: true }).fill('2026-10-25T01:30');
-    await page.keyboard.press('Escape');
+    await dialog.getByRole('button', { name: 'Close details', exact: true }).click();
     const discard = page.getByRole('dialog').last();
     await expect(discard).toContainText('unsaved unavailable-period changes');
     await discard.getByRole('button', { name: 'Discard changes', exact: true }).click();
@@ -262,7 +266,7 @@ async function mockAppointmentDetail(page: Page): Promise<void> {
         await route.fulfill({ json: { errors: [{ message: 'Not permitted for this appointment', extensions: { code: 'AUTHORIZATION.DENIED' } }] } });
         return;
       }
-      await route.fulfill({ json: { data: { appointment: { patientId: 'patient-1', practitionerId: 'practitioner-1', patientName: 'Patient', practitionerName: 'Practitioner', startAt: '2026-03-29T00:30:00Z', endAt: '2026-03-29T01:30:00Z', status: 'SCHEDULED' } } } });
+      await route.fulfill({ json: { data: { appointment: { patientId: 'patient-1', practitionerId: 'practitioner-1', patientName: 'Patient', practitionerName: 'Practitioner', startAt: '2026-10-29T00:30:00Z', endAt: '2026-10-29T01:30:00Z', status: 'SCHEDULED' } } } });
       return;
     }
     await route.continue();
@@ -285,7 +289,7 @@ async function mockScheduling(page: Page, conflict = false): Promise<void> {
       return;
     }
     if (query.includes('query Appointment(')) {
-      await route.fulfill({ json: { data: { appointment: { patientId: 'patient-1', practitionerId: 'practitioner-1', patientName: 'Patient', practitionerName: 'Practitioner', startAt: '2026-03-29T00:30:00Z', endAt: '2026-03-29T01:30:00Z', status: 'SCHEDULED' } } } });
+      await route.fulfill({ json: { data: { appointment: { patientId: 'patient-1', practitionerId: 'practitioner-1', patientName: 'Patient', practitionerName: 'Practitioner', startAt: '2026-10-29T00:30:00Z', endAt: '2026-10-29T01:30:00Z', status: 'SCHEDULED' } } } });
       return;
     }
     if (query.includes('mutation CreateAppointment')) {

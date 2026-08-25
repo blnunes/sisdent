@@ -9,4 +9,11 @@ dd { margin: 4px 0 0; font-weight: 650; }
 .error { color: var(--app-danger); }
 .confirmation { margin: 0 24px 20px; padding: 14px; border: 1px solid var(--app-border); border-radius: 10px; }
 .confirmation button + button { margin-left: 8px; }
-@media (max-width: 500px) { mat-dialog-content { min-width: 0; } }
+mat-dialog-actions { gap: 8px; padding: 16px 24px 24px; }
+mat-dialog-actions button { margin: 0; }
+mat-dialog-actions mat-icon { margin-left: 4px; }
+@media (max-width: 500px) {
+  mat-dialog-content { min-width: 0; }
+  mat-dialog-actions { align-items: stretch; flex-direction: column; }
+  mat-dialog-actions button { width: 100%; }
+}

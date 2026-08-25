@@ -436,6 +436,7 @@
     "COMPLETE": "Concluir",
     "NO_SHOW": "Marcar falta",
     "CANCEL": "Cancelar consulta",
+    "MORE_ACTIONS": "Mais ações",
     "BLOCKED": { "OPEN": "Gerir períodos indisponíveis", "TITLE": "Períodos indisponíveis", "PRACTITIONER": "Profissional", "CLINIC": "Toda a clínica", "SAVE": "Guardar período", "EDIT": "Editar", "DELETE": "Eliminar", "DELETE_TITLE": "Eliminar período indisponível", "DELETE_TEXT": "Eliminar este período indisponível?", "DISCARD_TITLE": "Descartar alterações do período indisponível", "DISCARD_TEXT": "Existem alterações do período indisponível por guardar.", "ERROR": "Não foi possível guardar este período indisponível." },
     "PROCEDURES": { "TITLE": "Procedimentos realizados", "ADD": "Adicionar procedimento", "SELECT": "Procedimento", "VOID": "Anular", "VOID_TITLE": "Anular procedimento realizado", "REASON": "Motivo", "ERROR": "Não foi possível atualizar os procedimentos realizados." },
     "ACTIONS": "Ações da consulta",
@@ -490,6 +491,9 @@
       ,"END": "Data e hora de fim"
       ,"REQUIRED_ERROR": "Preencha todos os campos obrigatórios da consulta."
       ,"INVALID_LOCAL_TIME": "Escolha uma hora local válida para esta clínica."
+      ,"INVALID_DATE": "Introduza uma data válida para a consulta."
+      ,"PAST_DATE": "Escolha hoje ou uma data futura para esta consulta."
+      ,"PAST_DATE_TIME": "A hora de início tem de ser futura."
       ,"END_AFTER_START": "A hora de fim tem de ser posterior à hora de início."
       ,"AVAILABILITY_LOADED": "A disponibilidade foi atualizada para o horário selecionado."
       ,"DISCARD_TITLE": "Descartar alterações da consulta"

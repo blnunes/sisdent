@@ -439,6 +439,7 @@
     "COMPLETE": "Voltooien",
     "NO_SHOW": "Niet verschenen markeren",
     "CANCEL": "Afspraak annuleren",
+    "MORE_ACTIONS": "Meer acties",
     "BLOCKED": { "OPEN": "Niet-beschikbare periodes beheren", "TITLE": "Niet-beschikbare periodes", "PRACTITIONER": "Behandelaar", "CLINIC": "Hele kliniek", "SAVE": "Periode opslaan", "EDIT": "Bewerken", "DELETE": "Verwijderen", "DELETE_TITLE": "Niet-beschikbare periode verwijderen", "DELETE_TEXT": "Deze niet-beschikbare periode verwijderen?", "DISCARD_TITLE": "Wijzigingen aan niet-beschikbare periode verwerpen", "DISCARD_TEXT": "U hebt niet-opgeslagen wijzigingen aan de niet-beschikbare periode.", "ERROR": "Deze niet-beschikbare periode kan niet worden opgeslagen." },
     "PROCEDURES": { "TITLE": "Uitgevoerde procedures", "ADD": "Procedure toevoegen", "SELECT": "Procedure", "VOID": "Ongeldig maken", "VOID_TITLE": "Uitgevoerde procedure ongeldig maken", "REASON": "Reden", "ERROR": "Uitgevoerde procedures kunnen niet worden bijgewerkt." },
     "ACTIONS": "Afspraakacties",
@@ -493,6 +494,9 @@
       ,"END": "Einddatum en -tijd"
       ,"REQUIRED_ERROR": "Vul alle verplichte afspraakvelden in."
       ,"INVALID_LOCAL_TIME": "Kies een geldige lokale tijd voor deze kliniek."
+      ,"INVALID_DATE": "Voer een geldige afspraakdatum in."
+      ,"PAST_DATE": "Kies vandaag of een toekomstige datum voor deze afspraak."
+      ,"PAST_DATE_TIME": "De begintijd moet in de toekomst liggen."
       ,"END_AFTER_START": "De eindtijd moet na de starttijd liggen."
       ,"AVAILABILITY_LOADED": "Beschikbaarheid is vernieuwd voor de gekozen tijd."
       ,"DISCARD_TITLE": "Afspraakwijzigingen verwerpen"

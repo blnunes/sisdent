@@ -6,6 +6,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AppointmentGraphqlService } from '../../core/appointment-graphql.service';
 import { AppointmentDetail, AppointmentStatus, PerformedProcedure, PerformedProcedureOption } from '../../core/appointment-graphql.service';
@@ -25,7 +26,7 @@ export interface AppointmentDetailsDialogData {
 
 @Component({
   selector: 'app-appointment-details-dialog',
-  imports: [FormsModule, MatButtonModule, MatDialogModule, MatIconModule, MatFormFieldModule, MatSelectModule, TranslatePipe],
+  imports: [FormsModule, MatButtonModule, MatDialogModule, MatIconModule, MatFormFieldModule, MatMenuModule, MatSelectModule, TranslatePipe],
   templateUrl: './appointment-details-dialog.component.html',
   styleUrl: './appointment-details-dialog.component.scss',
 })

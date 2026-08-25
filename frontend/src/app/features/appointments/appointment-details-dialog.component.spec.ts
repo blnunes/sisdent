@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatDialog } from '@angular/material/dialog';
 import { EMPTY, of, throwError } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { AppointmentGraphqlService } from '../../core/appointment-graphql.service';
 import { AppointmentDetailsDialogComponent } from './appointment-details-dialog.component';
 
@@ -29,7 +29,7 @@ describe('AppointmentDetailsDialogComponent', () => {
         { provide: MatDialogRef, useValue: ref },
         { provide: MatDialog, useValue: dialog },
         { provide: MAT_DIALOG_DATA, useValue: data },
-        { provide: TranslateService, useValue: { getCurrentLang: () => 'en' } },
+        provideTranslateService(),
       ],
     }).overrideProvider(MatDialog, { useValue: dialog });
   });
@@ -59,6 +59,24 @@ describe('AppointmentDetailsDialogComponent', () => {
     expect(api.transition).toHaveBeenCalledWith('organization-1', 'clinic-1', data.appointmentId, 'COMPLETED');
     expect(component.detail()?.status).toBe('COMPLETED');
     expect(data.onLifecycleFinished).toHaveBeenCalled();
+  });
+
+  it('keeps rescheduling prominent and groups scheduled lifecycle commands in the actions menu', () => {
+    const fixture = TestBed.createComponent(AppointmentDetailsDialogComponent);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const dialogActions = element.querySelector('mat-dialog-actions');
+    expect(dialogActions?.querySelectorAll(':scope > button')).toHaveLength(3);
+    expect(dialogActions?.querySelector('button[mat-flat-button]')?.textContent).toContain('APPOINTMENTS.RESCHEDULE');
+    const moreActions = dialogActions?.querySelector('button[aria-haspopup="menu"]') as HTMLButtonElement;
+    expect(moreActions.textContent).toContain('APPOINTMENTS.MORE_ACTIONS');
+    moreActions.click();
+    fixture.detectChanges();
+    const menuItems = document.querySelectorAll<HTMLButtonElement>('button[role="menuitem"]');
+    expect(menuItems).toHaveLength(3);
+    expect(menuItems[2].textContent).toContain('APPOINTMENTS.CANCEL');
+    expect(dialogActions?.lastElementChild?.textContent).toContain('APPOINTMENTS.DETAILS.CLOSE');
   });
 
   it('loads performed procedures only with the selected clinic scope', () => {

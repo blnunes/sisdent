@@ -3,7 +3,8 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { EMPTY, of, throwError } from 'rxjs';
 import { AppointmentGraphqlService } from '../../core/appointment-graphql.service';
 import { AppointmentFormDialogComponent, AppointmentFormDialogData } from './appointment-form-dialog.component';
-import { TranslateService } from '@ngx-translate/core';
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { GraphQlUserError } from '../../core/graphql-client.service';
 
 describe('AppointmentFormDialogComponent', () => {
@@ -16,18 +17,21 @@ describe('AppointmentFormDialogComponent', () => {
   };
 
   beforeEach(() => {
+    Object.values(api).forEach((mock) => mock.mockReset());
     api.create.mockReturnValue(of({ patientId: 'patient-1', practitionerId: 'practitioner-1', patientName: 'Patient', practitionerName: 'Practitioner', startAt: '2026-03-29T01:30:00.000Z', endAt: '2026-03-29T02:00:00.000Z', status: 'SCHEDULED' }));
     api.reschedule.mockReturnValue(api.create());
     api.availabilityIntervals.mockReturnValue(of([]));
     TestBed.configureTestingModule({ imports: [AppointmentFormDialogComponent], providers: [
       { provide: AppointmentGraphqlService, useValue: api }, { provide: MatDialogRef, useValue: ref },
-      { provide: MAT_DIALOG_DATA, useValue: data }, { provide: TranslateService, useValue: { instant: (key: string) => key } },
+      { provide: MAT_DIALOG_DATA, useValue: data }, provideNativeDateAdapter(), provideTranslateService(),
     ] });
   });
 
+  afterEach(() => vi.useRealTimers());
+
   it('creates with selected organization, clinic timezone, and UTC instants', () => {
     const component = TestBed.createComponent(AppointmentFormDialogComponent).componentInstance;
-    component.form.setValue({ patientId: 'patient-1', practitionerId: 'practitioner-1', startLocal: '2026-10-25T01:30', endLocal: '2026-10-25T02:00' });
+    component.form.setValue({ patientId: 'patient-1', practitionerId: 'practitioner-1', startDate: new Date(2026, 9, 25), startTime: '01:30', endDate: new Date(2026, 9, 25), endTime: '02:00' });
     component.save();
     expect(api.create).toHaveBeenCalledWith('organization-1', expect.objectContaining({ clinicUnitId: 'clinic-1', schedulingTimezone: 'Europe/Lisbon', startAt: expect.stringMatching(/Z$/), endAt: expect.stringMatching(/Z$/) }));
     expect(data.onMutationFinished).toHaveBeenCalled();
@@ -36,11 +40,11 @@ describe('AppointmentFormDialogComponent', () => {
 
   it('reschedules and safely reports conflicts while refreshing datasets', () => {
     TestBed.resetTestingModule();
-    const rescheduleData = { ...data, appointmentId: 'appointment-1', detail: { patientId: 'patient-1', practitionerId: 'practitioner-1', patientName: 'Patient', practitionerName: 'Practitioner', startAt: '2026-03-29T00:30:00Z', endAt: '2026-03-29T01:00:00Z', status: 'SCHEDULED' } };
+    const rescheduleData = { ...data, appointmentId: 'appointment-1', detail: { patientId: 'patient-1', practitionerId: 'practitioner-1', patientName: 'Patient', practitionerName: 'Practitioner', startAt: '2026-10-29T00:30:00Z', endAt: '2026-10-29T01:00:00Z', status: 'SCHEDULED' } };
     api.reschedule.mockReturnValue(throwError(() => new GraphQlUserError('SCHEDULING.PRACTITIONER_UNAVAILABLE', 'secret')));
     TestBed.configureTestingModule({ imports: [AppointmentFormDialogComponent], providers: [
       { provide: AppointmentGraphqlService, useValue: api }, { provide: MatDialogRef, useValue: ref }, { provide: MAT_DIALOG_DATA, useValue: rescheduleData },
-      { provide: TranslateService, useValue: { instant: (key: string) => key } },
+      provideNativeDateAdapter(), provideTranslateService(),
     ] });
     const component = TestBed.createComponent(AppointmentFormDialogComponent).componentInstance;
     component.save();
@@ -53,12 +57,49 @@ describe('AppointmentFormDialogComponent', () => {
     const component = TestBed.createComponent(AppointmentFormDialogComponent).componentInstance;
     component.save();
     expect(component.error()).toBe('APPOINTMENTS.FORM.REQUIRED_ERROR');
-    component.form.setValue({ patientId: 'patient-1', practitionerId: 'practitioner-1', startLocal: '2026-10-25T02:00', endLocal: '2026-10-25T01:30' });
+    component.form.setValue({ patientId: 'patient-1', practitionerId: 'practitioner-1', startDate: new Date(2026, 9, 25), startTime: '02:00', endDate: new Date(2026, 9, 25), endTime: '01:30' });
     component.save();
     expect(component.error()).toBe('APPOINTMENTS.FORM.END_AFTER_START');
-    component.form.patchValue({ startLocal: 'invalid', endLocal: '2026-03-29T03:30' }); component.save();
+    component.form.patchValue({ startDate: new Date(2027, 2, 28), startTime: 'invalid', endDate: new Date(2027, 2, 28), endTime: '03:30' }); component.save();
     expect(component.error()).toBe('APPOINTMENTS.FORM.INVALID_LOCAL_TIME');
-    component.form.patchValue({ startLocal: '2026-03-29T01:30', endLocal: '2026-03-29T03:30' }); component.save();
+    component.form.patchValue({ startDate: new Date(2027, 2, 28), startTime: '01:30', endDate: new Date(2027, 2, 28), endTime: '03:30' }); component.save();
     expect(component.error()).toBe('APPOINTMENTS.FORM.INVALID_LOCAL_TIME');
+  });
+
+  it('rejects typed invalid dates, calendar dates before today, and past times today in the clinic timezone', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-25T10:00:00Z'));
+    const component = TestBed.createComponent(AppointmentFormDialogComponent).componentInstance;
+
+    component.form.setValue({ patientId: 'patient-1', practitionerId: 'practitioner-1', startDate: new Date(2026, 7, 25), startTime: '10:30', endDate: new Date(2026, 7, 25), endTime: '11:30' });
+    component.save();
+    expect(component.error()).toBe('APPOINTMENTS.FORM.PAST_DATE_TIME');
+    expect(api.create).not.toHaveBeenCalledWith('organization-1', expect.anything());
+
+    component.form.patchValue({ startDate: new Date(2026, 7, 24), startTime: '12:00', endDate: new Date(2026, 7, 24), endTime: '13:00' });
+    component.save();
+    expect(component.error()).toBe('APPOINTMENTS.FORM.PAST_DATE');
+
+    component.form.controls.startDate.setErrors({ matDatepickerParse: true });
+    component.save();
+    expect(component.error()).toBe('APPOINTMENTS.FORM.INVALID_DATE');
+  });
+
+  it('defaults new appointments to today and renders editable Material date pickers bounded to today', () => {
+    const fixture = TestBed.createComponent(AppointmentFormDialogComponent);
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+    expect(component.form.controls.startDate.value).toEqual(component.minimumDate);
+    expect(component.form.controls.endDate.value).toEqual(component.minimumDate);
+    const element = fixture.nativeElement as HTMLElement;
+    const dateInputs = element.querySelectorAll<HTMLInputElement>('input[aria-haspopup="dialog"]');
+    expect(dateInputs).toHaveLength(2);
+    expect(dateInputs[0].readOnly).toBe(false);
+    const yesterday = new Date(component.minimumDate);
+    yesterday.setDate(yesterday.getDate() - 1);
+    component.form.controls.startDate.setValue(yesterday);
+    fixture.detectChanges();
+    expect(component.form.controls.startDate.hasError('matDatepickerMin')).toBe(true);
   });
 });

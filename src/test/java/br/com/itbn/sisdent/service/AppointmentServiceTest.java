@@ -15,13 +15,14 @@ import br.com.itbn.sisdent.repository.PractitionerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.data.domain.Page;
 
 import java.time.Instant;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,7 +43,7 @@ class AppointmentServiceTest {
     @Mock OrganizationRepository organizations;
     @Mock ScopeAuthorizationService authorization;
     @Mock AppointmentAvailabilityService availability;
-    @InjectMocks AppointmentService service;
+    private AppointmentService service;
 
     private final UUID organizationId = UUID.randomUUID();
     private final UUID clinicId = UUID.randomUUID();
@@ -50,6 +51,7 @@ class AppointmentServiceTest {
     private final UUID practitionerId = UUID.randomUUID();
     private final Instant start = Instant.parse("2026-08-04T09:00:00Z");
     private final Instant end = Instant.parse("2026-08-04T10:00:00Z");
+    private final Clock clock = Clock.fixed(Instant.parse("2026-08-04T08:00:00Z"), java.time.ZoneOffset.UTC);
     private AppointmentRequest request;
     private Practitioner practitioner;
     private PatientOrganizationLink link;
@@ -57,6 +59,7 @@ class AppointmentServiceTest {
 
     @BeforeEach
     void setUp() {
+        service = new AppointmentService(appointments, practitioners, links, organizations, authorization, availability, clock);
         request = new AppointmentRequest(clinicId, patientId, practitionerId, start, end, "Europe/Lisbon");
         practitioner = mock(Practitioner.class);
         link = mock(PatientOrganizationLink.class);
@@ -83,6 +86,37 @@ class AppointmentServiceTest {
         when(appointments.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         assertThat(service.create(organizationId, request).schedulingTimezone()).isEqualTo("Europe/Lisbon");
+    }
+
+    @Test
+    void acceptsAnAppointmentStartingAtTheCurrentInstant() {
+        AppointmentRequest currentRequest = new AppointmentRequest(clinicId, patientId, practitionerId,
+                clock.instant(), clock.instant().plus(Duration.ofMinutes(30)), "Europe/Lisbon");
+        when(organizations.findByGlobalId(organizationId)).thenReturn(Optional.of(new Organization("Alpha")));
+        when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
+        when(practitioners.lockByGlobalIdAndOrganization_GlobalId(practitionerId, organizationId)).thenReturn(Optional.of(practitioner));
+        when(links.findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(patientId, organizationId, clinicId))
+                .thenReturn(Optional.of(link));
+        when(appointments.save(any(Appointment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertThat(service.create(organizationId, currentRequest).startAt()).isEqualTo(clock.instant());
+
+        Appointment appointment = new Appointment(new Organization("Alpha"), clinic, link, practitioner, start, end, "Europe/Lisbon");
+        when(appointments.findByGlobalIdAndOrganization_GlobalId(appointment.getGlobalId(), organizationId)).thenReturn(Optional.of(appointment));
+        assertThat(service.reschedule(organizationId, appointment.getGlobalId(), currentRequest).startAt()).isEqualTo(clock.instant());
+    }
+
+    @Test
+    void rejectsPastStartsForCreationAndRescheduling() {
+        AppointmentRequest pastRequest = new AppointmentRequest(clinicId, patientId, practitionerId,
+                clock.instant().minusSeconds(1), clock.instant().plus(Duration.ofMinutes(30)), "Europe/Lisbon");
+
+        assertThatThrownBy(() -> service.create(organizationId, pastRequest))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("must not be in the past");
+        assertThatThrownBy(() -> service.reschedule(organizationId, UUID.randomUUID(), pastRequest))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("must not be in the past");
     }
 
     @Test

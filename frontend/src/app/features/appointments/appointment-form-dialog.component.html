@@ -6,8 +6,12 @@
   <form [formGroup]="form" (ngSubmit)="save()" id="appointment-form">
     <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.PATIENT' | translate }}</mat-label><mat-select formControlName="patientId" required>@for (patient of data.patients; track patient.id) { <mat-option [value]="patient.id">{{ patient.name }}</mat-option> }</mat-select></mat-form-field>
     <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.PRACTITIONER' | translate }}</mat-label><mat-select formControlName="practitionerId" required>@for (practitioner of data.practitioners; track practitioner.id) { <mat-option [value]="practitioner.id">{{ practitioner.name }}</mat-option> }</mat-select></mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.FORM.START' | translate }}</mat-label><input matInput type="datetime-local" formControlName="startLocal" required /></mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.FORM.END' | translate }}</mat-label><input matInput type="datetime-local" formControlName="endLocal" required /></mat-form-field>
+    <div class="date-time-fields">
+      <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.FORM.START' | translate }}</mat-label><input matInput [matDatepicker]="startPicker" [min]="minimumDate" formControlName="startDate" required /><mat-datepicker-toggle matSuffix [for]="startPicker" /><mat-datepicker #startPicker /></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.FORM.START_TIME' | translate }}</mat-label><input matInput type="time" formControlName="startTime" required /></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.FORM.END' | translate }}</mat-label><input matInput [matDatepicker]="endPicker" [min]="minimumDate" formControlName="endDate" required /><mat-datepicker-toggle matSuffix [for]="endPicker" /><mat-datepicker #endPicker /></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>{{ 'APPOINTMENTS.FORM.END_TIME' | translate }}</mat-label><input matInput type="time" formControlName="endTime" required /></mat-form-field>
+    </div>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end"><button mat-button type="button" (click)="close()">{{ 'APPOINTMENTS.DETAILS.CLOSE' | translate }}</button><button mat-flat-button type="submit" form="appointment-form" [disabled]="submitting()">{{ saveKey() | translate }}</button></mat-dialog-actions>

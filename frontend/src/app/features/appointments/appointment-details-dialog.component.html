@@ -31,13 +31,28 @@
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   @if (detail() && !error()) {
-    <button mat-stroked-button type="button" (click)="reschedule()">{{ 'APPOINTMENTS.RESCHEDULE' | translate }}</button>
+    <button mat-flat-button type="button" (click)="reschedule()">{{ 'APPOINTMENTS.RESCHEDULE' | translate }}</button>
     @if (detail()?.status === 'SCHEDULED') {
-      <button mat-stroked-button type="button" [disabled]="transitioning()" (click)="requestTransition('COMPLETED')">{{ 'APPOINTMENTS.COMPLETE' | translate }}</button>
-      <button mat-stroked-button type="button" [disabled]="transitioning()" (click)="requestTransition('NO_SHOW')">{{ 'APPOINTMENTS.NO_SHOW' | translate }}</button>
-      <button mat-stroked-button type="button" [disabled]="transitioning()" (click)="requestTransition('CANCELLED')">{{ 'APPOINTMENTS.CANCEL' | translate }}</button>
+      <button mat-stroked-button type="button" [matMenuTriggerFor]="appointmentActions" [disabled]="transitioning()">
+        {{ 'APPOINTMENTS.MORE_ACTIONS' | translate }}
+        <mat-icon iconPositionEnd>arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #appointmentActions="matMenu" [attr.aria-label]="'APPOINTMENTS.ACTIONS' | translate">
+        <button mat-menu-item type="button" (click)="requestTransition('COMPLETED')">
+          <mat-icon>task_alt</mat-icon>
+          <span>{{ 'APPOINTMENTS.COMPLETE' | translate }}</span>
+        </button>
+        <button mat-menu-item type="button" (click)="requestTransition('NO_SHOW')">
+          <mat-icon>person_off</mat-icon>
+          <span>{{ 'APPOINTMENTS.NO_SHOW' | translate }}</span>
+        </button>
+        <button mat-menu-item type="button" (click)="requestTransition('CANCELLED')">
+          <mat-icon>cancel</mat-icon>
+          <span>{{ 'APPOINTMENTS.CANCEL' | translate }}</span>
+        </button>
+      </mat-menu>
     }
   }
-  <button mat-flat-button type="button" (click)="close()">{{ 'APPOINTMENTS.DETAILS.CLOSE' | translate }}</button>
+  <button mat-button type="button" (click)="close()">{{ 'APPOINTMENTS.DETAILS.CLOSE' | translate }}</button>
 </mat-dialog-actions>
 @if (lifecycleError()) { <p class="state error" role="alert">{{ 'APPOINTMENTS.ERROR.TRANSITION' | translate }}</p> }

@@ -5,6 +5,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
 import { AppointmentDetail, AppointmentGraphqlService, AppointmentInput } from '../../core/appointment-graphql.service';
@@ -26,7 +28,7 @@ export interface AppointmentFormDialogData {
 
 @Component({
   selector: 'app-appointment-form-dialog',
-  imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, TranslatePipe],
+  imports: [ReactiveFormsModule, MatButtonModule, MatDatepickerModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatNativeDateModule, MatSelectModule, TranslatePipe],
   templateUrl: './appointment-form-dialog.component.html',
   styleUrl: './appointment-form-dialog.component.scss',
 })
@@ -40,11 +42,14 @@ export class AppointmentFormDialogComponent {
   readonly error = signal('');
   readonly availabilityLoaded = signal(false);
   readonly confirmDiscard = signal(false);
-  readonly form = this.fb.nonNullable.group({
-    patientId: ['', Validators.required],
-    practitionerId: ['', Validators.required],
-    startLocal: ['', Validators.required],
-    endLocal: ['', Validators.required],
+  readonly minimumDate = this.calendarDate(DateTime.now().setZone(this.data.timezone));
+  readonly form = this.fb.group({
+    patientId: this.fb.nonNullable.control('', Validators.required),
+    practitionerId: this.fb.nonNullable.control('', Validators.required),
+    startDate: this.fb.control<Date | null>(null, Validators.required),
+    startTime: this.fb.nonNullable.control('', Validators.required),
+    endDate: this.fb.control<Date | null>(null, Validators.required),
+    endTime: this.fb.nonNullable.control('', Validators.required),
   });
 
   constructor() {
@@ -59,11 +64,22 @@ export class AppointmentFormDialogComponent {
       this.form.setValue({
         patientId: this.data.detail.patientId,
         practitionerId: this.data.detail.practitionerId,
-        startLocal: start.toFormat("yyyy-LL-dd'T'HH:mm"),
-        endLocal: end.toFormat("yyyy-LL-dd'T'HH:mm"),
+        startDate: this.calendarDate(start),
+        startTime: start.toFormat('HH:mm'),
+        endDate: this.calendarDate(end),
+        endTime: end.toFormat('HH:mm'),
       });
     } else if (this.data.prefill) {
-      this.form.patchValue(this.data.prefill);
+      const start = this.localDateTime(this.data.prefill.startLocal);
+      const end = this.localDateTime(this.data.prefill.endLocal);
+      this.form.patchValue({
+        startDate: start && this.calendarDate(start),
+        startTime: start?.toFormat('HH:mm') ?? '',
+        endDate: end && this.calendarDate(end),
+        endTime: end?.toFormat('HH:mm') ?? '',
+      });
+    } else {
+      this.form.patchValue({ startDate: this.minimumDate, endDate: this.minimumDate });
     }
     this.form.valueChanges.subscribe(() => this.refreshAvailability());
   }
@@ -78,6 +94,12 @@ export class AppointmentFormDialogComponent {
 
   save(): void {
     this.error.set('');
+    const temporalError = this.temporalError();
+    if (temporalError) {
+      this.form.markAllAsTouched();
+      this.error.set(this.translate.instant(temporalError));
+      return;
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.error.set(this.translate.instant('APPOINTMENTS.FORM.REQUIRED_ERROR'));
@@ -115,8 +137,8 @@ export class AppointmentFormDialogComponent {
   }
 
   private input(): AppointmentInput | null {
-    const start = this.localInstant(this.form.controls.startLocal.value);
-    const end = this.localInstant(this.form.controls.endLocal.value);
+    const start = this.localInstant(this.form.controls.startDate.value, this.form.controls.startTime.value);
+    const end = this.localInstant(this.form.controls.endDate.value, this.form.controls.endTime.value);
     if (!start || !end) {
       this.error.set(this.translate.instant('APPOINTMENTS.FORM.INVALID_LOCAL_TIME'));
       return null;
@@ -137,9 +159,9 @@ export class AppointmentFormDialogComponent {
 
   private refreshAvailability(): void {
     const practitionerId = this.form.controls.practitionerId.value;
-    const start = this.localInstant(this.form.controls.startLocal.value);
-    const end = this.localInstant(this.form.controls.endLocal.value);
-    if (!practitionerId || !start || !end || end <= start) {
+    const start = this.localInstant(this.form.controls.startDate.value, this.form.controls.startTime.value);
+    const end = this.localInstant(this.form.controls.endDate.value, this.form.controls.endTime.value);
+    if (!practitionerId || !start || !end || end <= start || this.temporalError()) {
       this.availabilityLoaded.set(false);
       return;
     }
@@ -147,10 +169,44 @@ export class AppointmentFormDialogComponent {
       .subscribe({ next: () => this.availabilityLoaded.set(true), error: () => this.availabilityLoaded.set(false) });
   }
 
-  private localInstant(value: string): string | null {
-    const local = DateTime.fromFormat(value, "yyyy-LL-dd'T'HH:mm", { zone: this.data.timezone, setZone: true });
-    if (!local.isValid || local.toFormat("yyyy-LL-dd'T'HH:mm") !== value) return null;
+  private localInstant(date: Date | null, time: string): string | null {
+    const local = this.localDateTimeFor(date, time);
+    if (!local) return null;
     // Luxon resolves repeated local times using its zone rules; the resulting instant is deterministic.
     return local.toUTC().toISO({ suppressMilliseconds: false });
+  }
+
+  private temporalError(): string | null {
+    const dateControls = [this.form.controls.startDate, this.form.controls.endDate];
+    if (dateControls.some((control) => control.hasError('matDatepickerParse'))) return 'APPOINTMENTS.FORM.INVALID_DATE';
+    if (dateControls.some((control) => control.hasError('matDatepickerMin') || this.isBeforeMinimumDate(control.value))) {
+      return 'APPOINTMENTS.FORM.PAST_DATE';
+    }
+    const start = this.localDateTimeFor(this.form.controls.startDate.value, this.form.controls.startTime.value);
+    if (start && Date.parse(start.toUTC().toISO() ?? '') < Date.now()) {
+      return 'APPOINTMENTS.FORM.PAST_DATE_TIME';
+    }
+    return null;
+  }
+
+  private isBeforeMinimumDate(value: Date | null): boolean {
+    if (!value) return false;
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime() < this.minimumDate.getTime();
+  }
+
+  private localDateTimeFor(date: Date | null, time: string): DateTime | null {
+    if (!date || !/^\d{2}:\d{2}$/.test(time)) return null;
+    const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T${time}`;
+    return this.localDateTime(value);
+  }
+
+  private localDateTime(value: string): DateTime | null {
+    const local = DateTime.fromFormat(value, "yyyy-LL-dd'T'HH:mm", { zone: this.data.timezone, setZone: true });
+    return local.isValid && local.toFormat("yyyy-LL-dd'T'HH:mm") === value ? local : null;
+  }
+
+  private calendarDate(value: DateTime): Date {
+    const [year, month, day] = value.toFormat('yyyy-LL-dd').split('-').map(Number);
+    return new Date(year, month - 1, day);
   }
 }

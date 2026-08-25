@@ -436,6 +436,7 @@
     "COMPLETE": "Complete",
     "NO_SHOW": "Mark no show",
     "CANCEL": "Cancel appointment",
+    "MORE_ACTIONS": "More actions",
     "BLOCKED": { "OPEN": "Manage unavailable periods", "TITLE": "Unavailable periods", "PRACTITIONER": "Practitioner", "CLINIC": "Whole clinic", "SAVE": "Save period", "EDIT": "Edit", "DELETE": "Delete", "DELETE_TITLE": "Delete unavailable period", "DELETE_TEXT": "Delete this unavailable period?", "DISCARD_TITLE": "Discard unavailable-period changes", "DISCARD_TEXT": "You have unsaved unavailable-period changes.", "ERROR": "Unable to save this unavailable period." },
     "PROCEDURES": { "TITLE": "Performed procedures", "ADD": "Add procedure", "SELECT": "Procedure", "VOID": "Void", "VOID_TITLE": "Void performed procedure", "REASON": "Reason", "ERROR": "Unable to update performed procedures." },
     "ACTIONS": "Appointment actions",
@@ -490,6 +491,9 @@
       ,"END": "End date and time"
       ,"REQUIRED_ERROR": "Complete all required appointment fields."
       ,"INVALID_LOCAL_TIME": "Choose a valid local time for this clinic."
+      ,"INVALID_DATE": "Enter a valid appointment date."
+      ,"PAST_DATE": "Choose today or a future date for this appointment."
+      ,"PAST_DATE_TIME": "The start time must be in the future."
       ,"END_AFTER_START": "The end time must be after the start time."
       ,"AVAILABILITY_LOADED": "Availability has been refreshed for the selected time."
       ,"DISCARD_TITLE": "Discard appointment changes"
