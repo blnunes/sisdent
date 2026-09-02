@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { DataTableColumn } from '../../shared/data-table/data-table.models';
 import { FormDialogField } from '../../shared/dialogs/form-dialog-shell/form-dialog-shell.models';
 import { CatalogueListController } from '../resource-support/catalogue-list.controller';
@@ -7,7 +7,6 @@ import { ResourceRecord } from '../resource-support/resource-list.controller';
 import { CountryCatalogGraphqlService } from '../../core/country-catalog-graphql.service';
 import { GraphQlUserError } from '../../core/graphql-client.service';
 import { CatalogueMutationGraphqlService } from '../../core/catalogue-mutation-graphql.service';
-import { inject } from '@angular/core';
 import { textValue } from '../../shared/text-value';
 
 const COLUMNS: readonly DataTableColumn[] = [

@@ -123,17 +123,23 @@ export class AccountApiService {
     variables: Record<string, unknown>,
   ): Observable<AccountSummary> {
     const isCreate = operation === 'createPlatformAccount';
-    const declaration = isCreate
-      ? '$input: AccountCreateInput!'
-      : '$accountId: ID!, $input: ' +
-        (operation === 'changeAccountLifecycle'
-          ? 'AccountLifecycleInput!'
-          : 'AccountPlatformAdministratorInput!');
+    const declaration = this.accountMutationDeclaration(operation, isCreate);
     const argumentsList = isCreate ? 'input: $input' : 'accountId: $accountId, input: $input';
     const query = `mutation ${operation}(${declaration}) { ${operation}(${argumentsList}) { id displayName email active platformAdministrator version memberships { id organizationId organizationName clinicUnitId clinicUnitName role version } } }`;
     return this.graphql
       .query<Record<typeof operation, AccountSummary>>(query, variables)
       .pipe(map((response) => response[operation]));
+  }
+
+  private accountMutationDeclaration(operation: string, isCreate: boolean): string {
+    if (isCreate) {
+      return '$input: AccountCreateInput!';
+    }
+    const inputType =
+      operation === 'changeAccountLifecycle'
+        ? 'AccountLifecycleInput!'
+        : 'AccountPlatformAdministratorInput!';
+    return `$accountId: ID!, $input: ${inputType}`;
   }
 
   private graphqlPage(query: TableQuery): Record<string, string | number> {

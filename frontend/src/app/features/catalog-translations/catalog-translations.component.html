@@ -8,9 +8,7 @@
         <strong>Sisdent</strong>
       </div>
 
-      <app-module-navigation
-        active="catalogTranslations"
-        (navigate)="drawer.close()" />
+      <app-module-navigation active="catalogTranslations" (navigate)="drawer.close()" />
     </mat-sidenav>
 
     <mat-sidenav-content>
@@ -34,10 +32,13 @@
           <mat-form-field appearance="outline">
             <mat-label>{{ 'CATALOG_TRANSLATIONS.SEARCH' | translate }}</mat-label>
             <input
+              id="catalog-translation-search"
               matInput
+              [attr.aria-label]="'CATALOG_TRANSLATIONS.SEARCH' | translate"
               [value]="query()"
               (input)="query.set($any($event.target).value)"
-              (keydown.enter)="load()" />
+              (keydown.enter)="load()"
+            />
           </mat-form-field>
 
           <mat-form-field appearance="outline">
@@ -58,7 +59,8 @@
           <button
             mat-stroked-button
             [class.selected]="missingOnly()"
-            (click)="missingOnly.set(!missingOnly())">
+            (click)="missingOnly.set(!missingOnly())"
+          >
             <mat-icon>warning_amber</mat-icon>
             {{ 'CATALOG_TRANSLATIONS.MISSING_ONLY' | translate }}
           </button>

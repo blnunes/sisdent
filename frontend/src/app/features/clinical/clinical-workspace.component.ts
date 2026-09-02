@@ -145,16 +145,21 @@ export class ClinicalWorkspaceComponent {
       return;
     }
     this.patientApi
-      .list({ ...membership, clinicUnitId: this.clinicUnitId }, {
-        page: { page: 0, size: 20, sort: 'name', direction: 'ASC' },
-        filter: name ? { name } : {},
-      })
+      .list(
+        { ...membership, clinicUnitId: this.clinicUnitId },
+        {
+          page: { page: 0, size: 20, sort: 'name', direction: 'ASC' },
+          filter: name ? { name } : {},
+        },
+      )
       .subscribe({
         next: (response) => {
-          this.patients.set(response.content.map((patient) => ({
-            globalId: String(patient['globalId']),
-            name: String(patient['name']),
-          })));
+          this.patients.set(
+            response.content.map((patient) => ({
+              globalId: String(patient['globalId']),
+              name: String(patient['name']),
+            })),
+          );
           if (!response.content.length && !name) this.error.set(this.t('NO_PATIENT'));
         },
         error: (error) => this.fail(error, 'LOAD'),
@@ -219,7 +224,10 @@ export class ClinicalWorkspaceComponent {
       administrativeNote: this.administrativeNote.trim() || null,
     };
     const request = selected
-      ? this.clinical.updateEncounter(membership.organizationId, selected.globalId, { ...payload, version: selected.version })
+      ? this.clinical.updateEncounter(membership.organizationId, selected.globalId, {
+          ...payload,
+          version: selected.version,
+        })
       : this.clinical.createEncounter(membership.organizationId, payload);
     request.subscribe({
       next: () => {
@@ -261,12 +269,12 @@ export class ClinicalWorkspaceComponent {
       return;
     this.clinical
       .amendEncounter(membership.organizationId, original.globalId, {
-          clinicUnitId: this.clinicUnitId,
-          careAt: new Date().toISOString(),
-          careTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          narrative: this.narrative.trim(),
-          administrativeNote: this.administrativeNote.trim() || null,
-          reason: this.amendmentReason.trim(),
+        clinicUnitId: this.clinicUnitId,
+        careAt: new Date().toISOString(),
+        careTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        narrative: this.narrative.trim(),
+        administrativeNote: this.administrativeNote.trim() || null,
+        reason: this.amendmentReason.trim(),
       })
       .subscribe({
         next: () => {
@@ -307,7 +315,13 @@ export class ClinicalWorkspaceComponent {
     const reason = this.voidReason.trim();
     if (!membership || !reason) return;
     this.clinical
-      .voidFinding(membership.organizationId, this.clinicUnitId, finding.globalId, reason, finding.version)
+      .voidFinding(
+        membership.organizationId,
+        this.clinicUnitId,
+        finding.globalId,
+        reason,
+        finding.version,
+      )
       .subscribe({
         next: () => {
           this.voidReason = '';
@@ -332,15 +346,20 @@ export class ClinicalWorkspaceComponent {
   }
   private fail(error: unknown, fallback: 'LOAD' | 'SAVE'): void {
     const code = error instanceof GraphQlUserError ? error.code : '';
-    const key =
-      code.startsWith('AUTHORIZATION.')
-        ? 'FORBIDDEN'
-        : code === 'CONFLICT'
-          ? 'STALE_OR_FINAL'
-          : code === 'RESOURCE.NOT_FOUND'
-            ? 'SCOPE'
-            : fallback;
+    const key = this.errorKey(code, fallback);
     this.error.set(this.t(`ERROR.${key}`));
+  }
+  private errorKey(code: string, fallback: 'LOAD' | 'SAVE'): string {
+    if (code.startsWith('AUTHORIZATION.')) {
+      return 'FORBIDDEN';
+    }
+    if (code === 'CONFLICT') {
+      return 'STALE_OR_FINAL';
+    }
+    if (code === 'RESOURCE.NOT_FOUND') {
+      return 'SCOPE';
+    }
+    return fallback;
   }
   private t(key: string): string {
     return this.translate.instant(`CLINICAL.${key}`);

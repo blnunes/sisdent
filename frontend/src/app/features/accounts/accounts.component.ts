@@ -19,12 +19,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { AccountSummary } from '../../core/models';
+import { AccountSummary, ClinicUnit, Membership, OrganizationOption } from '../../core/models';
 import { AccountApiService } from '../../core/account-api.service';
 import { AppHeaderComponent } from '../../core/layout/app-header/app-header.component';
 import { ModuleNavigationComponent } from '../../core/layout/module-navigation/module-navigation.component';
 import { AuthService } from '../../core/auth.service';
-import { ClinicUnit, OrganizationOption } from '../../core/models';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -142,20 +141,16 @@ export class AccountsComponent {
     this.load();
   }
   lifecycle(account: AccountSummary): void {
-    this.api
-      .changeLifecycle(account, !account.active)
-      .subscribe({
-        next: () => this.load(),
-        error: () => this.error.set(this.translate.instant('ACCOUNTS.CHANGE_ERROR')),
-      });
+    this.api.changeLifecycle(account, !account.active).subscribe({
+      next: () => this.load(),
+      error: () => this.error.set(this.translate.instant('ACCOUNTS.CHANGE_ERROR')),
+    });
   }
   platformAdministration(account: AccountSummary): void {
-    this.api
-      .changePlatformAdministrator(account, !account.platformAdministrator)
-      .subscribe({
-        next: () => this.load(),
-        error: () => this.error.set(this.translate.instant('ACCOUNTS.PLATFORM_ADMIN_ERROR')),
-      });
+    this.api.changePlatformAdministrator(account, !account.platformAdministrator).subscribe({
+      next: () => this.load(),
+      error: () => this.error.set(this.translate.instant('ACCOUNTS.PLATFORM_ADMIN_ERROR')),
+    });
   }
   create(): void {
     if (this.createForm.invalid) return;
@@ -306,7 +301,7 @@ export class AccessDialog {
       },
     });
   }
-  revoke(membership: import('../../core/models').Membership): void {
+  revoke(membership: Membership): void {
     if (
       !this.canManageTarget() ||
       !window.confirm(

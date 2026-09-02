@@ -9,7 +9,11 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
-import { AppointmentDetail, AppointmentGraphqlService, AppointmentInput } from '../../core/appointment-graphql.service';
+import {
+  AppointmentDetail,
+  AppointmentGraphqlService,
+  AppointmentInput,
+} from '../../core/appointment-graphql.service';
 import { GraphQlUserError } from '../../core/graphql-client.service';
 
 export type AppointmentCandidate = { id: string; name: string };
@@ -28,7 +32,17 @@ export interface AppointmentFormDialogData {
 
 @Component({
   selector: 'app-appointment-form-dialog',
-  imports: [ReactiveFormsModule, MatButtonModule, MatDatepickerModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatNativeDateModule, MatSelectModule, TranslatePipe],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatDatepickerModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatNativeDateModule,
+    MatSelectModule,
+    TranslatePipe,
+  ],
   templateUrl: './appointment-form-dialog.component.html',
   styleUrl: './appointment-form-dialog.component.scss',
 })
@@ -56,11 +70,16 @@ export class AppointmentFormDialogComponent {
     this.ref.keydownEvents().subscribe((event) => {
       if (event.key !== 'Escape') return;
       event.preventDefault();
-      if (this.confirmDiscard()) this.confirmDiscard.set(false); else this.close();
+      if (this.confirmDiscard()) this.confirmDiscard.set(false);
+      else this.close();
     });
     if (this.data.detail) {
-      const start = DateTime.fromISO(this.data.detail.startAt, { zone: 'utc' }).setZone(this.data.timezone);
-      const end = DateTime.fromISO(this.data.detail.endAt, { zone: 'utc' }).setZone(this.data.timezone);
+      const start = DateTime.fromISO(this.data.detail.startAt, { zone: 'utc' }).setZone(
+        this.data.timezone,
+      );
+      const end = DateTime.fromISO(this.data.detail.endAt, { zone: 'utc' }).setZone(
+        this.data.timezone,
+      );
       this.form.setValue({
         patientId: this.data.detail.patientId,
         practitionerId: this.data.detail.practitionerId,
@@ -84,13 +103,19 @@ export class AppointmentFormDialogComponent {
     this.form.valueChanges.subscribe(() => this.refreshAvailability());
   }
 
-  titleKey(): string { return this.data.appointmentId ? 'APPOINTMENTS.RESCHEDULE' : 'APPOINTMENTS.SCHEDULE'; }
-  saveKey(): string { return this.data.appointmentId ? 'APPOINTMENTS.SAVE_RESCHEDULE' : 'APPOINTMENTS.SCHEDULE'; }
+  titleKey(): string {
+    return this.data.appointmentId ? 'APPOINTMENTS.RESCHEDULE' : 'APPOINTMENTS.SCHEDULE';
+  }
+  saveKey(): string {
+    return this.data.appointmentId ? 'APPOINTMENTS.SAVE_RESCHEDULE' : 'APPOINTMENTS.SCHEDULE';
+  }
   close(): void {
     if (this.form.dirty && !this.submitting()) this.confirmDiscard.set(true);
     else this.ref.close();
   }
-  discard(): void { this.ref.close(); }
+  discard(): void {
+    this.ref.close();
+  }
 
   save(): void {
     this.error.set('');
@@ -128,17 +153,28 @@ export class AppointmentFormDialogComponent {
       error: (error: unknown) => {
         this.data.onMutationFinished();
         const code = error instanceof GraphQlUserError ? error.code : '';
-        this.error.set(this.translate.instant(code === 'SCHEDULING.PRACTITIONER_UNAVAILABLE'
-          ? 'APPOINTMENTS.ERROR.PRACTITIONER_UNAVAILABLE'
-          : this.data.appointmentId ? 'APPOINTMENTS.ERROR.RESCHEDULE' : 'APPOINTMENTS.ERROR.CREATE'));
+        this.error.set(this.translate.instant(this.mutationErrorKey(code)));
         this.submitting.set(false);
       },
     });
   }
 
+  private mutationErrorKey(code: string): string {
+    if (code === 'SCHEDULING.PRACTITIONER_UNAVAILABLE') {
+      return 'APPOINTMENTS.ERROR.PRACTITIONER_UNAVAILABLE';
+    }
+    return this.data.appointmentId ? 'APPOINTMENTS.ERROR.RESCHEDULE' : 'APPOINTMENTS.ERROR.CREATE';
+  }
+
   private input(): AppointmentInput | null {
-    const start = this.localInstant(this.form.controls.startDate.value, this.form.controls.startTime.value);
-    const end = this.localInstant(this.form.controls.endDate.value, this.form.controls.endTime.value);
+    const start = this.localInstant(
+      this.form.controls.startDate.value,
+      this.form.controls.startTime.value,
+    );
+    const end = this.localInstant(
+      this.form.controls.endDate.value,
+      this.form.controls.endTime.value,
+    );
     if (!start || !end) {
       this.error.set(this.translate.instant('APPOINTMENTS.FORM.INVALID_LOCAL_TIME'));
       return null;
@@ -159,14 +195,26 @@ export class AppointmentFormDialogComponent {
 
   private refreshAvailability(): void {
     const practitionerId = this.form.controls.practitionerId.value;
-    const start = this.localInstant(this.form.controls.startDate.value, this.form.controls.startTime.value);
-    const end = this.localInstant(this.form.controls.endDate.value, this.form.controls.endTime.value);
+    const start = this.localInstant(
+      this.form.controls.startDate.value,
+      this.form.controls.startTime.value,
+    );
+    const end = this.localInstant(
+      this.form.controls.endDate.value,
+      this.form.controls.endTime.value,
+    );
     if (!practitionerId || !start || !end || end <= start || this.temporalError()) {
       this.availabilityLoaded.set(false);
       return;
     }
-    this.api.availabilityIntervals(this.data.organizationId, this.data.clinicUnitId, start, end, [practitionerId])
-      .subscribe({ next: () => this.availabilityLoaded.set(true), error: () => this.availabilityLoaded.set(false) });
+    this.api
+      .availabilityIntervals(this.data.organizationId, this.data.clinicUnitId, start, end, [
+        practitionerId,
+      ])
+      .subscribe({
+        next: () => this.availabilityLoaded.set(true),
+        error: () => this.availabilityLoaded.set(false),
+      });
   }
 
   private localInstant(date: Date | null, time: string): string | null {
@@ -178,11 +226,20 @@ export class AppointmentFormDialogComponent {
 
   private temporalError(): string | null {
     const dateControls = [this.form.controls.startDate, this.form.controls.endDate];
-    if (dateControls.some((control) => control.hasError('matDatepickerParse'))) return 'APPOINTMENTS.FORM.INVALID_DATE';
-    if (dateControls.some((control) => control.hasError('matDatepickerMin') || this.isBeforeMinimumDate(control.value))) {
+    if (dateControls.some((control) => control.hasError('matDatepickerParse')))
+      return 'APPOINTMENTS.FORM.INVALID_DATE';
+    if (
+      dateControls.some(
+        (control) =>
+          control.hasError('matDatepickerMin') || this.isBeforeMinimumDate(control.value),
+      )
+    ) {
       return 'APPOINTMENTS.FORM.PAST_DATE';
     }
-    const start = this.localDateTimeFor(this.form.controls.startDate.value, this.form.controls.startTime.value);
+    const start = this.localDateTimeFor(
+      this.form.controls.startDate.value,
+      this.form.controls.startTime.value,
+    );
     if (start && Date.parse(start.toUTC().toISO() ?? '') < Date.now()) {
       return 'APPOINTMENTS.FORM.PAST_DATE_TIME';
     }
@@ -191,7 +248,10 @@ export class AppointmentFormDialogComponent {
 
   private isBeforeMinimumDate(value: Date | null): boolean {
     if (!value) return false;
-    return new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime() < this.minimumDate.getTime();
+    return (
+      new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime() <
+      this.minimumDate.getTime()
+    );
   }
 
   private localDateTimeFor(date: Date | null, time: string): DateTime | null {
@@ -201,7 +261,10 @@ export class AppointmentFormDialogComponent {
   }
 
   private localDateTime(value: string): DateTime | null {
-    const local = DateTime.fromFormat(value, "yyyy-LL-dd'T'HH:mm", { zone: this.data.timezone, setZone: true });
+    const local = DateTime.fromFormat(value, "yyyy-LL-dd'T'HH:mm", {
+      zone: this.data.timezone,
+      setZone: true,
+    });
     return local.isValid && local.toFormat("yyyy-LL-dd'T'HH:mm") === value ? local : null;
   }
 

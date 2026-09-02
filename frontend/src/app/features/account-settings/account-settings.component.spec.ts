@@ -12,18 +12,65 @@ import { HttpErrorResponse } from '@angular/common/http';
 describe('AccountSettingsComponent', () => {
   let fixture: ComponentFixture<AccountSettingsComponent>;
   let component: AccountSettingsComponent;
-  const api = { current: vi.fn(), updateProfile: vi.fn(), updatePreferredLanguage: vi.fn(), changePassword: vi.fn(), uploadAvatar: vi.fn(), removeAvatar: vi.fn(), avatar: vi.fn() };
-  const auth = { updateDisplayName: vi.fn(), updatePreferredLanguage: vi.fn(), updateAvatar: vi.fn(), session: vi.fn(() => null), activeMembership: vi.fn(() => null), isAdmin: vi.fn(() => false), isPlatformAdministrator: vi.fn(() => false), hasAnyPermission: vi.fn(() => false), canReadAppointments: vi.fn(() => false), canReadClinical: vi.fn(() => false), canAdministerOrganization: vi.fn(() => false), canManagePractitioners: vi.fn(() => false), canManageOrganizationAccess: vi.fn(() => false), logout: vi.fn() };
+  const api = {
+    current: vi.fn(),
+    updateProfile: vi.fn(),
+    updatePreferredLanguage: vi.fn(),
+    changePassword: vi.fn(),
+    uploadAvatar: vi.fn(),
+    removeAvatar: vi.fn(),
+    avatar: vi.fn(),
+  };
+  const auth = {
+    updateDisplayName: vi.fn(),
+    updatePreferredLanguage: vi.fn(),
+    updateAvatar: vi.fn(),
+    session: vi.fn(() => null),
+    activeMembership: vi.fn(() => null),
+    isAdmin: vi.fn(() => false),
+    isPlatformAdministrator: vi.fn(() => false),
+    hasAnyPermission: vi.fn(() => false),
+    canReadAppointments: vi.fn(() => false),
+    canReadClinical: vi.fn(() => false),
+    canAdministerOrganization: vi.fn(() => false),
+    canManagePractitioners: vi.fn(() => false),
+    canManageOrganizationAccess: vi.fn(() => false),
+    logout: vi.fn(),
+  };
   const language = { current: vi.fn(() => 'en'), set: vi.fn(), isSupported: vi.fn(() => true) };
   beforeEach(async () => {
-    api.current.mockReturnValue(of({ id: 'me', email: 'me@example.com', displayName: 'Me', preferredLanguage: 'en', version: 1 }));
-    await TestBed.configureTestingModule({ imports: [AccountSettingsComponent], providers: [provideHttpClient(), provideRouter([]), provideTranslateService(), { provide: AccountSettingsApiService, useValue: api }, { provide: AuthService, useValue: auth }, { provide: LanguageService, useValue: language }] }).compileComponents();
-    fixture = TestBed.createComponent(AccountSettingsComponent); component = fixture.componentInstance; fixture.detectChanges();
+    api.current.mockReturnValue(
+      of({
+        id: 'me',
+        email: 'me@example.com',
+        displayName: 'Me',
+        preferredLanguage: 'en',
+        version: 1,
+      }),
+    );
+    await TestBed.configureTestingModule({
+      imports: [AccountSettingsComponent],
+      providers: [
+        provideHttpClient(),
+        provideRouter([]),
+        provideTranslateService(),
+        { provide: AccountSettingsApiService, useValue: api },
+        { provide: AuthService, useValue: auth },
+        { provide: LanguageService, useValue: language },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(AccountSettingsComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
   });
 
   it('validates profile and mismatched passwords', () => {
     component.profileForm.controls.displayName.setValue(' ');
-    component.passwordForm.setValue({ currentPassword: 'current', newPassword: 'new-password', confirmation: 'different' });
+    component.passwordForm.setValue({
+      currentPassword: 'current',
+      newPassword: 'new-password',
+      confirmation: 'different',
+    });
     expect(component.profileForm.invalid).toBe(true);
     expect(component.passwordForm.hasError('passwordMismatch')).toBe(true);
   });
@@ -45,7 +92,9 @@ describe('AccountSettingsComponent', () => {
   });
 
   it('updates the session after a successful profile update', () => {
-    api.updateProfile.mockReturnValue(of({ id: 'me', email: 'me@example.com', displayName: 'Updated', version: 2 }));
+    api.updateProfile.mockReturnValue(
+      of({ id: 'me', email: 'me@example.com', displayName: 'Updated', version: 2 }),
+    );
     component.profileForm.setValue({ displayName: 'Updated', version: 1 });
     component.saveProfile();
     expect(auth.updateDisplayName).toHaveBeenCalledWith('Updated');
@@ -53,13 +102,25 @@ describe('AccountSettingsComponent', () => {
 
   it('shows an error when a password update fails', () => {
     api.changePassword.mockReturnValue(throwError(() => new Error('failed')));
-    component.passwordForm.setValue({ currentPassword: 'current', newPassword: 'new-password', confirmation: 'new-password' });
+    component.passwordForm.setValue({
+      currentPassword: 'current',
+      newPassword: 'new-password',
+      confirmation: 'new-password',
+    });
     component.savePassword();
     expect(component.passwordError()).toBe(true);
   });
 
   it('persists a selected language and updates the local session and language cache on success', () => {
-    api.updatePreferredLanguage.mockReturnValue(of({ id: 'me', email: 'me@example.com', displayName: 'Me', preferredLanguage: 'nl', version: 1 }));
+    api.updatePreferredLanguage.mockReturnValue(
+      of({
+        id: 'me',
+        email: 'me@example.com',
+        displayName: 'Me',
+        preferredLanguage: 'nl',
+        version: 1,
+      }),
+    );
     component.languageForm.setValue({ preferredLanguage: 'nl' });
 
     component.savePreferredLanguage();
@@ -83,7 +144,11 @@ describe('AccountSettingsComponent', () => {
     const file = new File(['image'], 'avatar.png', { type: 'image/png' });
     component.selectedAvatar.set(file);
     component.avatarPreview.set('blob:preview');
-    api.uploadAvatar.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400, error: { code: 'ACCOUNT.AVATAR_TOO_LARGE' } })));
+    api.uploadAvatar.mockReturnValue(
+      throwError(
+        () => new HttpErrorResponse({ status: 400, error: { code: 'ACCOUNT.AVATAR_TOO_LARGE' } }),
+      ),
+    );
 
     component.uploadAvatar();
 
@@ -101,5 +166,41 @@ describe('AccountSettingsComponent', () => {
 
     expect(component.avatarMessage()).toBe('ACCOUNT_SETTINGS.AVATAR_ERROR');
     expect(component.avatarSubmitting()).toBe(false);
+  });
+
+  it('removes an avatar, resets its local state, and returns focus after the drawer closes', () => {
+    component.selectedAvatar.set(new File(['image'], 'avatar.png', { type: 'image/png' }));
+    api.removeAvatar.mockReturnValue(
+      of({ id: 'me', email: 'me@example.com', displayName: 'Me', version: 2 }),
+    );
+    const drawerScroll = { scrollTop: 42 } as HTMLElement;
+
+    component.removeAvatar();
+    component.onDrawerChange(true, drawerScroll);
+
+    expect(auth.updateAvatar).toHaveBeenCalledWith();
+    expect(component.selectedAvatar()).toBeNull();
+    expect(drawerScroll.scrollTop).toBe(0);
+  });
+
+  it('maps known GraphQL avatar failures without rendering unsafe error values', () => {
+    expect(
+      (component as unknown as { avatarErrorCode: (error: unknown) => unknown }).avatarErrorCode({
+        code: 'raw',
+      }),
+    ).toBeUndefined();
+    expect(
+      (component as unknown as { avatarUploadError: (error: unknown) => string }).avatarUploadError(
+        { code: 'raw' },
+      ),
+    ).toBe('ACCOUNT_SETTINGS.AVATAR_ERROR');
+  });
+
+  it('extracts only the typed code from HTTP avatar failures', () => {
+    const helper = component as unknown as { avatarErrorCode: (error: unknown) => unknown };
+    expect(
+      helper.avatarErrorCode(new HttpErrorResponse({ error: { code: 'ACCOUNT.AVATAR_EMPTY' } })),
+    ).toBe('ACCOUNT.AVATAR_EMPTY');
+    expect(helper.avatarErrorCode(new HttpErrorResponse({ error: 'invalid' }))).toBeUndefined();
   });
 });

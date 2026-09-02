@@ -120,22 +120,26 @@ export class PatientFormDialog {
     const values = Object.fromEntries(
       this.data.fields.map((field) => {
         const value = this.form.get(field.key)?.value;
-        return [
-          field.key,
-          field.key === 'specialityIds'
-            ? this.selectedSpecialities()
-                .map((speciality) => speciality.id)
-                .join(',')
-            : field.key === 'procedures'
-              ? JSON.stringify(this.selectedProcedures())
-              : value instanceof Date
-                ? this.toIsoDate(value)
-                : String(value ?? ''),
-        ];
+        return [field.key, this.serializedValue(field.key, value)];
       }),
     );
     if (this.isPatientForm()) values['addressId'] = this.selectedAddressId();
     this.ref.close(values);
+  }
+
+  private serializedValue(key: string, value: unknown): string {
+    if (key === 'specialityIds') {
+      return this.selectedSpecialities()
+        .map((speciality) => speciality.id)
+        .join(',');
+    }
+    if (key === 'procedures') {
+      return JSON.stringify(this.selectedProcedures());
+    }
+    if (value instanceof Date) {
+      return this.toIsoDate(value);
+    }
+    return typeof value === 'string' ? value : '';
   }
 
   isPatientForm(): boolean {

@@ -1,4 +1,14 @@
-import { Component, ElementRef, EventEmitter, OnDestroy, Output, ViewChild, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  OnDestroy,
+  Output,
+  ViewChild,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { AccountSettingsApiService } from '../../account-settings-api.service';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,7 +23,17 @@ import { ThemeToggleComponent } from '../../../shared/preferences/theme-toggle/t
 
 @Component({
   selector: 'app-header',
-  imports: [RouterLink, MatButtonModule, MatIconModule, MatToolbarModule, MatSelectModule, MatMenuModule, TranslatePipe, LanguageSelectorComponent, ThemeToggleComponent],
+  imports: [
+    RouterLink,
+    MatButtonModule,
+    MatIconModule,
+    MatToolbarModule,
+    MatSelectModule,
+    MatMenuModule,
+    TranslatePipe,
+    LanguageSelectorComponent,
+    ThemeToggleComponent,
+  ],
   templateUrl: './app-header.component.html',
   styleUrl: './app-header.component.scss',
 })
@@ -27,15 +47,36 @@ export class AppHeaderComponent implements OnDestroy {
   private readonly avatarLoader = effect(() => {
     const avatarUrl = this.auth.session()?.avatarUrl;
     this.clearAvatar();
-    if (avatarUrl) this.accountSettings.avatar().subscribe({
-      next: (blob) => { this.avatarObjectUrl = URL.createObjectURL(blob); this.avatarSource.set(this.avatarObjectUrl); },
-    });
+    if (avatarUrl)
+      this.accountSettings.avatar().subscribe({
+        next: (blob) => {
+          this.avatarObjectUrl = URL.createObjectURL(blob);
+          this.avatarSource.set(this.avatarObjectUrl);
+        },
+      });
   });
 
   focusMenuButton(): void {
     this.menuButton?.nativeElement.focus();
   }
-  initials(name: string | undefined): string { return (name ?? '').trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase(); }
-  ngOnDestroy(): void { this.avatarLoader.destroy(); this.clearAvatar(); }
-  private clearAvatar(): void { if (this.avatarObjectUrl) URL.revokeObjectURL(this.avatarObjectUrl); this.avatarObjectUrl = null; this.avatarSource.set(null); }
+  initials(name: string | undefined): string {
+    return (name ?? '')
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase();
+  }
+  ngOnDestroy(): void {
+    this.avatarLoader.destroy();
+    this.clearAvatar();
+  }
+  private clearAvatar(): void {
+    if (this.avatarObjectUrl) {
+      URL.revokeObjectURL(this.avatarObjectUrl);
+    }
+    this.avatarObjectUrl = null;
+    this.avatarSource.set(null);
+  }
 }

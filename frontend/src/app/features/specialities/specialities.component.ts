@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { DataTableColumn } from '../../shared/data-table/data-table.models';
 import { FilterDefinition } from '../../shared/filters/filter.models';
 import { RESOURCE_PAGE_IMPORTS } from '../resource-support/resource-page.imports';
@@ -18,7 +18,6 @@ import {
   CatalogueMutationGraphqlService,
   SpecialityWrite,
 } from '../../core/catalogue-mutation-graphql.service';
-import { inject } from '@angular/core';
 import { textValue } from '../../shared/text-value';
 
 const COLUMNS: readonly DataTableColumn[] = [

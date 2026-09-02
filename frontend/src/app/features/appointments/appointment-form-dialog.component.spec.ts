@@ -120,6 +120,20 @@ describe('AppointmentFormDialogComponent', () => {
     expect(rescheduleData.onMutationFinished).toHaveBeenCalled();
   });
 
+  it('uses distinct named mutation errors for create and reschedule failures', () => {
+    const component = TestBed.createComponent(AppointmentFormDialogComponent).componentInstance;
+    expect(
+      (component as unknown as { mutationErrorKey: (code: string) => string }).mutationErrorKey(
+        'OTHER',
+      ),
+    ).toBe('APPOINTMENTS.ERROR.CREATE');
+    expect(
+      (component as unknown as { mutationErrorKey: (code: string) => string }).mutationErrorKey(
+        'SCHEDULING.PRACTITIONER_UNAVAILABLE',
+      ),
+    ).toBe('APPOINTMENTS.ERROR.PRACTITIONER_UNAVAILABLE');
+  });
+
   it('rejects required, non-increasing, malformed, and DST-gap local times', () => {
     const component = TestBed.createComponent(AppointmentFormDialogComponent).componentInstance;
     component.save();

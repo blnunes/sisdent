@@ -7,19 +7,45 @@ import { AppointmentGraphqlService } from '../../core/appointment-graphql.servic
 import { AppointmentDetailsDialogComponent } from './appointment-details-dialog.component';
 
 describe('AppointmentDetailsDialogComponent', () => {
-  const api = { detail: vi.fn(), transition: vi.fn(), performedProcedures: vi.fn(), eligiblePerformedProcedureOptions: vi.fn(), createPerformedProcedure: vi.fn(), voidPerformedProcedure: vi.fn() };
+  const api = {
+    detail: vi.fn(),
+    transition: vi.fn(),
+    performedProcedures: vi.fn(),
+    eligiblePerformedProcedureOptions: vi.fn(),
+    createPerformedProcedure: vi.fn(),
+    voidPerformedProcedure: vi.fn(),
+  };
   const ref = { close: vi.fn(), keydownEvents: () => EMPTY };
   const dialog = { open: vi.fn(() => ({ afterClosed: () => of<unknown>(true) })) };
-  const data = { organizationId: 'organization-1', clinicUnitId: 'clinic-1', appointmentId: '11111111-1111-4111-8111-111111111111', clinicName: 'Central', timezone: 'Europe/Lisbon', canManageAppointments: true, onUnavailable: vi.fn(), onLifecycleFinished: vi.fn() };
+  const data = {
+    organizationId: 'organization-1',
+    clinicUnitId: 'clinic-1',
+    appointmentId: '11111111-1111-4111-8111-111111111111',
+    clinicName: 'Central',
+    timezone: 'Europe/Lisbon',
+    canManageAppointments: true,
+    onUnavailable: vi.fn(),
+    onLifecycleFinished: vi.fn(),
+  };
 
   beforeEach(() => {
     Object.values(api).forEach((mock) => mock.mockReset());
     dialog.open.mockReset();
     dialog.open.mockReturnValue({ afterClosed: () => of(true) });
-    api.detail.mockReturnValue(of({ patientName: 'Patient', practitionerName: 'Practitioner', startAt: '2026-03-29T00:30:00Z', endAt: '2026-03-29T01:30:00Z', status: 'SCHEDULED' }));
+    api.detail.mockReturnValue(
+      of({
+        patientName: 'Patient',
+        practitionerName: 'Practitioner',
+        startAt: '2026-03-29T00:30:00Z',
+        endAt: '2026-03-29T01:30:00Z',
+        status: 'SCHEDULED',
+      }),
+    );
     api.transition.mockReturnValue(of({ status: 'COMPLETED' }));
     api.performedProcedures.mockReturnValue(of([]));
-    api.eligiblePerformedProcedureOptions.mockReturnValue(of([{ id: '7', displayName: 'Cleaning' }]));
+    api.eligiblePerformedProcedureOptions.mockReturnValue(
+      of([{ id: '7', displayName: 'Cleaning' }]),
+    );
     api.createPerformedProcedure.mockReturnValue(of({}));
     api.voidPerformedProcedure.mockReturnValue(of({}));
     TestBed.configureTestingModule({
@@ -38,12 +64,22 @@ describe('AppointmentDetailsDialogComponent', () => {
     const component = TestBed.createComponent(AppointmentDetailsDialogComponent).componentInstance;
     expect(api.detail).toHaveBeenCalledWith('organization-1', 'clinic-1', data.appointmentId);
     expect(component.appointmentTime()).toContain('2:30');
-    component.detail.set({ patientId: 'patient-1', practitionerId: 'practitioner-1', patientName: 'Patient', practitionerName: 'Practitioner', startAt: '2026-10-25T00:30:00Z', endAt: '2026-10-25T01:30:00Z', status: 'SCHEDULED' });
+    component.detail.set({
+      patientId: 'patient-1',
+      practitionerId: 'practitioner-1',
+      patientName: 'Patient',
+      practitionerName: 'Practitioner',
+      startAt: '2026-10-25T00:30:00Z',
+      endAt: '2026-10-25T01:30:00Z',
+      status: 'SCHEDULED',
+    });
     expect(component.appointmentTime()).toContain('1:30');
   });
 
   it('keeps GraphQL failures generic and can close without lifecycle actions', () => {
-    api.detail.mockReturnValue(throwError(() => ({ code: 'AUTHORIZATION.DENIED', message: 'secret' })));
+    api.detail.mockReturnValue(
+      throwError(() => ({ code: 'AUTHORIZATION.DENIED', message: 'secret' })),
+    );
     const component = TestBed.createComponent(AppointmentDetailsDialogComponent).componentInstance;
     expect(component.error()).toBe(true);
     expect(component.detail()).toBeNull();
@@ -56,7 +92,12 @@ describe('AppointmentDetailsDialogComponent', () => {
     const component = TestBed.createComponent(AppointmentDetailsDialogComponent).componentInstance;
     component.requestTransition('COMPLETED');
     expect(dialog.open).toHaveBeenCalled();
-    expect(api.transition).toHaveBeenCalledWith('organization-1', 'clinic-1', data.appointmentId, 'COMPLETED');
+    expect(api.transition).toHaveBeenCalledWith(
+      'organization-1',
+      'clinic-1',
+      data.appointmentId,
+      'COMPLETED',
+    );
     expect(component.detail()?.status).toBe('COMPLETED');
     expect(data.onLifecycleFinished).toHaveBeenCalled();
   });
@@ -68,8 +109,12 @@ describe('AppointmentDetailsDialogComponent', () => {
     const element = fixture.nativeElement as HTMLElement;
     const dialogActions = element.querySelector('mat-dialog-actions');
     expect(dialogActions?.querySelectorAll(':scope > button')).toHaveLength(3);
-    expect(dialogActions?.querySelector('button[mat-flat-button]')?.textContent).toContain('APPOINTMENTS.RESCHEDULE');
-    const moreActions = dialogActions?.querySelector('button[aria-haspopup="menu"]') as HTMLButtonElement;
+    expect(dialogActions?.querySelector('button[mat-flat-button]')?.textContent).toContain(
+      'APPOINTMENTS.RESCHEDULE',
+    );
+    const moreActions = dialogActions?.querySelector(
+      'button[aria-haspopup="menu"]',
+    ) as HTMLButtonElement;
     expect(moreActions.textContent).toContain('APPOINTMENTS.MORE_ACTIONS');
     moreActions.click();
     fixture.detectChanges();
@@ -81,20 +126,53 @@ describe('AppointmentDetailsDialogComponent', () => {
 
   it('loads performed procedures only with the selected clinic scope', () => {
     TestBed.createComponent(AppointmentDetailsDialogComponent);
-    expect(api.performedProcedures).toHaveBeenCalledWith('organization-1', 'clinic-1', data.appointmentId);
+    expect(api.performedProcedures).toHaveBeenCalledWith(
+      'organization-1',
+      'clinic-1',
+      data.appointmentId,
+    );
   });
 
   it('creates and voids a completed appointment procedure through scoped, confirmed mutations', () => {
-    api.detail.mockReturnValue(of({ patientName: 'Patient', practitionerName: 'Practitioner', startAt: '2026-10-25T00:30:00Z', endAt: '2026-10-25T01:30:00Z', status: 'COMPLETED' }));
+    api.detail.mockReturnValue(
+      of({
+        patientName: 'Patient',
+        practitionerName: 'Practitioner',
+        startAt: '2026-10-25T00:30:00Z',
+        endAt: '2026-10-25T01:30:00Z',
+        status: 'COMPLETED',
+      }),
+    );
     const component = TestBed.createComponent(AppointmentDetailsDialogComponent).componentInstance;
     component.loadProcedureOptions();
     component.selectedProcedureId = '7';
     component.addProcedure();
-    expect(api.eligiblePerformedProcedureOptions).toHaveBeenCalledWith(data.organizationId, data.clinicUnitId, data.appointmentId);
-    expect(api.createPerformedProcedure).toHaveBeenCalledWith(data.organizationId, data.clinicUnitId, data.appointmentId, '7', expect.stringMatching(/Z$/));
+    expect(api.eligiblePerformedProcedureOptions).toHaveBeenCalledWith(
+      data.organizationId,
+      data.clinicUnitId,
+      data.appointmentId,
+    );
+    expect(api.createPerformedProcedure).toHaveBeenCalledWith(
+      data.organizationId,
+      data.clinicUnitId,
+      data.appointmentId,
+      '7',
+      expect.stringMatching(/Z$/),
+    );
     dialog.open.mockReturnValue({ afterClosed: () => of('Duplicate') });
-    component.requestVoid({ globalId: 'procedure-1', dentalProcedureId: '7', procedureNameSnapshot: 'Cleaning', performedAt: '2026-10-25T00:30:00Z', voidedAt: null });
-    expect(api.voidPerformedProcedure).toHaveBeenCalledWith(data.organizationId, data.clinicUnitId, 'procedure-1', expect.any(String));
+    component.requestVoid({
+      globalId: 'procedure-1',
+      dentalProcedureId: '7',
+      procedureNameSnapshot: 'Cleaning',
+      performedAt: '2026-10-25T00:30:00Z',
+      voidedAt: null,
+    });
+    expect(api.voidPerformedProcedure).toHaveBeenCalledWith(
+      data.organizationId,
+      data.clinicUnitId,
+      'procedure-1',
+      expect.any(String),
+    );
   });
 
   it('does not create without a selected procedure and keeps failures generic', () => {
@@ -102,5 +180,48 @@ describe('AppointmentDetailsDialogComponent', () => {
     component.addProcedure();
     expect(component.procedureError()).toBe(true);
     expect(api.createPerformedProcedure).not.toHaveBeenCalled();
+  });
+
+  it('does not reload options or void a procedure when its guard branch rejects the action', () => {
+    const component = TestBed.createComponent(AppointmentDetailsDialogComponent).componentInstance;
+    component.procedureOptions.set([{ id: '7', displayName: 'Cleaning' }]);
+    component.loadProcedureOptions();
+    expect(api.eligiblePerformedProcedureOptions).not.toHaveBeenCalled();
+
+    dialog.open.mockReturnValue({ afterClosed: () => of('') });
+    component.requestVoid({
+      globalId: 'procedure-1',
+      dentalProcedureId: '7',
+      procedureNameSnapshot: 'Cleaning',
+      performedAt: '2026-10-25T00:30:00Z',
+      voidedAt: null,
+    });
+    expect(api.voidPerformedProcedure).not.toHaveBeenCalled();
+  });
+
+  it('keeps procedure and transition state consistent when mutations fail or are declined', () => {
+    api.createPerformedProcedure.mockReturnValue(throwError(() => new Error('offline')));
+    api.voidPerformedProcedure.mockReturnValue(throwError(() => new Error('offline')));
+    api.transition.mockReturnValue(throwError(() => new Error('offline')));
+    const component = TestBed.createComponent(AppointmentDetailsDialogComponent).componentInstance;
+    component.selectedProcedureId = '7';
+    component.addProcedure();
+    expect(component.procedureError()).toBe(true);
+    dialog.open.mockReturnValue({ afterClosed: () => of('Duplicate') });
+    component.requestVoid({
+      globalId: 'procedure-1',
+      dentalProcedureId: '7',
+      procedureNameSnapshot: 'Cleaning',
+      performedAt: '2026-10-25T00:30:00Z',
+      voidedAt: null,
+    });
+    expect(component.procedureError()).toBe(true);
+    dialog.open.mockReturnValue({ afterClosed: () => of(false) });
+    component.requestTransition('COMPLETED');
+    expect(api.transition).not.toHaveBeenCalled();
+    dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+    component.requestTransition('COMPLETED');
+    expect(component.lifecycleError()).toBe(true);
+    expect(component.transitioning()).toBe(false);
   });
 });

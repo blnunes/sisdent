@@ -1,6 +1,79 @@
-<div class="workspace-shell"><app-header (menuClick)="drawer.toggle()" /><mat-sidenav-container class="workspace-container"><mat-sidenav #drawer mode="over" class="side-drawer"><div class="drawer-brand"><mat-icon>dentistry</mat-icon><strong>Sisdent</strong></div><app-module-navigation active="clinic-units" (navigate)="drawer.close()" /></mat-sidenav><mat-sidenav-content><main class="workspace-main">
-  @if (auth.activeMembership(); as membership) {<header class="page-header"><div><span class="eyebrow">{{ 'ORGANIZATION.OVERTITLE' | translate }}</span><h1>{{ 'ORGANIZATION.CLINIC_UNITS.TITLE' | translate }}</h1><p>{{ 'ORGANIZATION.CLINIC_UNITS.DESCRIPTION' | translate:{ organization: membership.organizationName } }}</p></div><button mat-stroked-button (click)="load()" [disabled]="loading()"><mat-icon>refresh</mat-icon>{{ 'ORGANIZATION.REFRESH' | translate }}</button></header>
-  @if (error()) {<div class="error-banner" role="alert"><mat-icon>error_outline</mat-icon>{{ error() }}</div>}
-  <section class="workspace-grid"><mat-card appearance="outlined" class="list-card"><div class="card-heading"><h2>{{ 'ORGANIZATION.CLINIC_UNITS.LIST_TITLE' | translate }}</h2><span>{{ units().length }}</span></div>@if (loading()) {<div class="state"><mat-spinner diameter="36" /></div>} @else if (!units().length) {<div class="state"><mat-icon>domain_disabled</mat-icon><p>{{ 'ORGANIZATION.CLINIC_UNITS.EMPTY' | translate }}</p></div>} @else {<div class="unit-list">@for (unit of units(); track unit.id) {<div><mat-icon>location_city</mat-icon><span>{{ unit.name }}</span></div>}</div>}</mat-card>
-  <mat-card appearance="outlined" class="form-card"><div class="card-heading"><h2>{{ 'ORGANIZATION.CLINIC_UNITS.CREATE' | translate }}</h2><mat-icon>domain_add</mat-icon></div><form [formGroup]="form" (ngSubmit)="create()"><mat-form-field appearance="outline"><mat-label>{{ 'ORGANIZATION.CLINIC_UNITS.NAME' | translate }}</mat-label><input matInput formControlName="name" maxlength="255" /><mat-error>{{ 'ORGANIZATION.VALIDATION.REQUIRED' | translate }}</mat-error></mat-form-field><button mat-flat-button type="submit" [disabled]="form.invalid || saving()"><mat-icon>add</mat-icon>{{ 'ORGANIZATION.CLINIC_UNITS.CREATE' | translate }}</button></form></mat-card></section>}
-</main></mat-sidenav-content></mat-sidenav-container></div>
+<div class="workspace-shell">
+  <app-header (menuClick)="drawer.toggle()" /><mat-sidenav-container class="workspace-container"
+    ><mat-sidenav #drawer mode="over" class="side-drawer"
+      ><div class="drawer-brand"><mat-icon>dentistry</mat-icon><strong>Sisdent</strong></div>
+      <app-module-navigation active="clinic-units" (navigate)="drawer.close()" /></mat-sidenav
+    ><mat-sidenav-content
+      ><main class="workspace-main">
+        @if (auth.activeMembership(); as membership) {
+          <header class="page-header">
+            <div>
+              <span class="eyebrow">{{ 'ORGANIZATION.OVERTITLE' | translate }}</span>
+              <h1>{{ 'ORGANIZATION.CLINIC_UNITS.TITLE' | translate }}</h1>
+              <p>
+                {{
+                  'ORGANIZATION.CLINIC_UNITS.DESCRIPTION'
+                    | translate: { organization: membership.organizationName }
+                }}
+              </p>
+            </div>
+            <button mat-stroked-button (click)="load()" [disabled]="loading()">
+              <mat-icon>refresh</mat-icon>{{ 'ORGANIZATION.REFRESH' | translate }}
+            </button>
+          </header>
+          @if (error()) {
+            <div class="error-banner" role="alert">
+              <mat-icon>error_outline</mat-icon>{{ error() }}
+            </div>
+          }
+          <section class="workspace-grid">
+            <mat-card appearance="outlined" class="list-card"
+              ><div class="card-heading">
+                <h2>{{ 'ORGANIZATION.CLINIC_UNITS.LIST_TITLE' | translate }}</h2>
+                <span>{{ units().length }}</span>
+              </div>
+              @if (loading()) {
+                <div class="state"><mat-spinner diameter="36" /></div>
+              } @else if (!units().length) {
+                <div class="state">
+                  <mat-icon>domain_disabled</mat-icon>
+                  <p>{{ 'ORGANIZATION.CLINIC_UNITS.EMPTY' | translate }}</p>
+                </div>
+              } @else {
+                <div class="unit-list">
+                  @for (unit of units(); track unit.id) {
+                    <div>
+                      <mat-icon>location_city</mat-icon><span>{{ unit.name }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </mat-card>
+            <mat-card appearance="outlined" class="form-card"
+              ><div class="card-heading">
+                <h2>{{ 'ORGANIZATION.CLINIC_UNITS.CREATE' | translate }}</h2>
+                <mat-icon>domain_add</mat-icon>
+              </div>
+              <form [formGroup]="form" (ngSubmit)="create()">
+                <mat-form-field appearance="outline"
+                  ><mat-label>{{ 'ORGANIZATION.CLINIC_UNITS.NAME' | translate }}</mat-label
+                  ><input
+                    id="clinic-unit-name"
+                    matInput
+                    [attr.aria-label]="'ORGANIZATION.CLINIC_UNITS.NAME' | translate"
+                    formControlName="name"
+                    maxlength="255"
+                  /><mat-error>{{
+                    'ORGANIZATION.VALIDATION.REQUIRED' | translate
+                  }}</mat-error></mat-form-field
+                ><button mat-flat-button type="submit" [disabled]="form.invalid || saving()">
+                  <mat-icon>add</mat-icon>{{ 'ORGANIZATION.CLINIC_UNITS.CREATE' | translate }}
+                </button>
+              </form></mat-card
+            >
+          </section>
+        }
+      </main></mat-sidenav-content
+    ></mat-sidenav-container
+  >
+</div>

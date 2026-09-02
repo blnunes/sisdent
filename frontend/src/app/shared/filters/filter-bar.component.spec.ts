@@ -4,18 +4,44 @@ import { provideTranslateService } from '@ngx-translate/core';
 import { FilterBarComponent } from './filter-bar.component';
 
 describe('FilterBarComponent', () => {
-  beforeEach(() => TestBed.configureTestingModule({ imports: [FilterBarComponent], providers: [provideNativeDateAdapter(), provideTranslateService()] }));
+  beforeEach(() =>
+    TestBed.configureTestingModule({
+      imports: [FilterBarComponent],
+      providers: [provideNativeDateAdapter(), provideTranslateService()],
+    }),
+  );
   it('separates primary and advanced optional filters', () => {
     const fixture = TestBed.createComponent(FilterBarComponent);
-    fixture.componentRef.setInput('filters', [{ key: 'name', label: 'Name', type: 'text' }, { key: 'date', label: 'Date', type: 'date', placement: 'advanced' }]);
+    fixture.componentRef.setInput('filters', [
+      { key: 'name', label: 'Name', type: 'text' },
+      { key: 'date', label: 'Date', type: 'date', placement: 'advanced' },
+    ]);
     expect(fixture.componentInstance.primary().map(({ key }) => key)).toEqual(['name']);
     expect(fixture.componentInstance.advanced().map(({ key }) => key)).toEqual(['date']);
   });
   it('emits an ISO local date and safely clears a missing date', () => {
     const component = TestBed.createComponent(FilterBarComponent).componentInstance;
-    const changed = vi.fn(); component.valueChange.subscribe(changed);
-    component.onDate('birthDate', new Date(2020, 1, 3)); component.onDate('birthDate', null);
+    const changed = vi.fn();
+    component.valueChange.subscribe(changed);
+    component.onDate('birthDate', new Date(2020, 1, 3));
+    component.onDate('birthDate', null);
     expect(changed).toHaveBeenNthCalledWith(1, { key: 'birthDate', value: '2020-02-03' });
     expect(changed).toHaveBeenNthCalledWith(2, { key: 'birthDate', value: '' });
+  });
+
+  it('gives every rendered input one stable accessible name', () => {
+    const fixture = TestBed.createComponent(FilterBarComponent);
+    fixture.componentRef.setInput('filters', [
+      { key: 'name', label: 'Name', type: 'text' },
+      { key: 'bornOn', label: 'Birth date', type: 'date' },
+    ]);
+    fixture.detectChanges();
+
+    const inputs = fixture.nativeElement.querySelectorAll('input') as NodeListOf<HTMLInputElement>;
+    expect(inputs).toHaveLength(2);
+    expect([...inputs].map((input) => [input.id, input.getAttribute('aria-label')])).toEqual([
+      ['filter-name', 'Name'],
+      ['filter-bornOn', 'Birth date'],
+    ]);
   });
 });

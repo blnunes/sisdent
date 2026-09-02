@@ -59,7 +59,9 @@
       </mat-select>
     } @else if (filter.type === 'autocomplete') {
       <input
+        [id]="'filter-' + filter.key"
         matInput
+        [attr.aria-label]="filter.label | translate"
         [value]="displayValues()[filter.key] ?? ''"
         [matAutocomplete]="autocomplete"
         (input)="autocompleteChange.emit({ filter, query: $any($event.target).value })"
@@ -80,7 +82,9 @@
     } @else if (filter.type === 'date') {
       <div class="date-control">
         <input
+          [id]="'filter-' + filter.key"
           matInput
+          [attr.aria-label]="filter.label | translate"
           readonly
           [matDatepicker]="picker"
           [value]="dateValue(values()[filter.key])"
@@ -92,7 +96,9 @@
       </div>
     } @else {
       <input
+        [id]="'filter-' + filter.key"
         matInput
+        [attr.aria-label]="filter.label | translate"
         [type]="filter.type"
         [value]="values()[filter.key] ?? ''"
         (input)="valueChange.emit({ key: filter.key, value: $any($event.target).value })"
