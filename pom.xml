@@ -13,7 +13,7 @@
 
     <groupId>br.com.itbn.sisdent</groupId>
     <artifactId>sisdent</artifactId>
-    <version>0.0.15-SNAPSHOT</version>
+    <version>0.0.16-SNAPSHOT</version>
     <name>sisdent</name>
     <description>Sisdent GraphQL API</description>
 
