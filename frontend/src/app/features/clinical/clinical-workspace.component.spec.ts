@@ -113,6 +113,7 @@ describe('ClinicalWorkspaceComponent', () => {
     component.saveDraft();
 
     http.expectNone('/graphql');
+    expect(component.narrative).toBe('   ');
   });
 
   it('finalizes a draft and reloads the clinical workspace', () => {
@@ -188,12 +189,14 @@ describe('ClinicalWorkspaceComponent', () => {
   });
 
   it('does not amend a draft without a final encounter and a reason', () => {
-    component.editDraft({ globalId: 'draft-1', status: 'DRAFT' } as never);
+    const draft = { globalId: 'draft-1', status: 'DRAFT' } as never;
+    component.editDraft(draft);
     component.narrative = 'Note';
 
     component.createAmendment();
 
     http.expectNone('/graphql');
+    expect(component.selectedEncounter()).toBe(draft);
   });
 
   it('voids a finding, prepares its replacement, and reloads the workspace', () => {
@@ -218,9 +221,12 @@ describe('ClinicalWorkspaceComponent', () => {
   });
 
   it('does not void a finding without a reason', () => {
+    component.voidReason = '   ';
+
     component.voidFinding({ globalId: 'finding-1' } as never);
 
     http.expectNone('/graphql');
+    expect(component.voidReason).toBe('   ');
   });
 
   it('resets clinical state and reloads patients for the active clinic', () => {

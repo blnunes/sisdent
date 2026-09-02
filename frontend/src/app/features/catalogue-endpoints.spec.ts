@@ -184,7 +184,7 @@ describe('catalogue feature endpoints', () => {
         },
       ],
     });
-    TestBed.runInInjectionContext(() => new SpecialitiesComponent());
+    const component = TestBed.runInInjectionContext(() => new SpecialitiesComponent());
     const http = TestBed.inject(HttpTestingController);
     http
       .expectOne('/graphql')
@@ -199,6 +199,7 @@ describe('catalogue feature endpoints', () => {
       .flush({
         data: { specialities: { content: [], page: 0, size: 10, totalElements: 0, totalPages: 0 } },
       });
+    expect(component.records()).toEqual([]);
     http.verify();
   });
 
