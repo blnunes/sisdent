@@ -34,4 +34,24 @@ describe('AccountSettingsApiService', () => {
     expect(request.body.query).toContain('mutation UploadOwnAvatar');
     expect(request.body.variables.input).toMatchObject({ fileName: 'avatar.png', contentType: 'image/png' });
   });
+
+  it('updates language and maps avatar lifecycle operations', () => {
+    service.updatePreferredLanguage({ preferredLanguage: 'pt-PT' }).subscribe();
+    const language = http.expectOne('/graphql');
+    expect(language.request.body.query).toContain('UpdateOwnPreferredLanguage');
+    expect(language.request.body.variables).toEqual({ input: { preferredLanguage: 'pt-PT' } });
+    language.flush({ data: { updateOwnPreferredLanguage: {} } });
+
+    service.removeAvatar().subscribe();
+    const remove = http.expectOne('/graphql');
+    expect(remove.request.body.query).toContain('RemoveOwnAvatar');
+    remove.flush({ data: { removeOwnAvatar: true } });
+
+    let avatar: Blob | undefined;
+    service.avatar().subscribe((value) => (avatar = value));
+    const ownAvatar = http.expectOne('/graphql');
+    expect(ownAvatar.request.body.query).toContain('query OwnAvatar');
+    ownAvatar.flush({ data: { ownAvatar: { contentType: 'text/plain', contentBase64: 'aGk=' } } });
+    expect(avatar?.type).toBe('text/plain');
+  });
 });
