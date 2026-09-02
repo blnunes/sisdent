@@ -64,4 +64,30 @@ describe('ClinicalWorkspaceComponent', () => {
     expect(request.request.body.query).toContain('ClinicalWorkspace');
     request.flush({ data: { clinicalEncounters: { content: [] }, currentOdontogram: [], odontogramHistory: { content: [] } } });
   });
+
+  it('clears stale data while a short patient query is entered', () => {
+    component.patientId = 'patient-1';
+    component.encounters.set([{ globalId: 'encounter-1' } as never]);
+
+    component.onPatientInput('a');
+
+    expect(component.patientId).toBe('');
+    expect(component.patients()).toEqual([]);
+    expect(component.encounters()).toEqual([]);
+  });
+
+  it('prepares and cancels an odontogram correction without retaining draft state', () => {
+    const finding = { globalId: 'finding-1', toothCode: '11', surface: 'MESIAL' } as never;
+    component.narrative = 'Draft';
+    component.administrativeNote = 'Note';
+
+    component.replacementFor(finding);
+    component.cancelEdit();
+
+    expect(component.replacementForId).toBe('finding-1');
+    expect(component.toothCode).toBe('11');
+    expect(component.surface).toBe('MESIAL');
+    expect(component.narrative).toBe('');
+    expect(component.administrativeNote).toBe('');
+  });
 });

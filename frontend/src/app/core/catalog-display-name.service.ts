@@ -17,7 +17,7 @@ export class CatalogDisplayNameService {
 
   country(record: CatalogRecord): string {
     const fallback = this.fallback(record);
-    const code = String(record['code'] ?? '').toUpperCase();
+    const code = text(record['code']).toUpperCase();
     if (!/^[A-Z]{2}$/.test(code)) return fallback;
     try {
       return (
@@ -35,7 +35,7 @@ export class CatalogDisplayNameService {
     record: CatalogRecord,
   ): string {
     const fallback = this.fallback(record);
-    const canonical = String(record['name'] ?? '');
+    const canonical = text(record['name']);
     if (record['displayName'] && fallback !== canonical) return fallback;
     const key = `CATALOG.${group}.${this.slug(canonical)}`;
     const translated = this.translate.instant(key);
@@ -43,7 +43,7 @@ export class CatalogDisplayNameService {
   }
 
   private fallback(record: CatalogRecord): string {
-    return String(record['displayName'] ?? record['name'] ?? '—');
+    return text(record['displayName'] ?? record['name'], '—');
   }
 
   private slug(value: string): string {
@@ -54,4 +54,10 @@ export class CatalogDisplayNameService {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
   }
+}
+
+function text(value: unknown, fallback = ''): string {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+    ? String(value)
+    : fallback;
 }

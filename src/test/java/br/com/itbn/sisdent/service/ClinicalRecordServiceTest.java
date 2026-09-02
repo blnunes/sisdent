@@ -29,13 +29,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -151,6 +155,48 @@ class ClinicalRecordServiceTest {
         assertBadRequest(() -> service.list(organizationId, clinicId, patientId, 0, 0), "Invalid page");
         verify(encounters, never()).findAllByOrganization_GlobalIdAndPatientLink_Patient_GlobalIdAndClinicUnit_GlobalId(
                 any(), any(), any(), any());
+    }
+
+    @Test
+    void listsRecordsWithABoundedDescendingPageRequest() {
+        when(encounters.findAllByOrganization_GlobalIdAndPatientLink_Patient_GlobalIdAndClinicUnit_GlobalId(
+                eq(organizationId), eq(patientId), eq(clinicId), any(Pageable.class))).thenReturn(Page.empty());
+
+        assertThat(service.list(organizationId, clinicId, patientId, 2, 200).content()).isEmpty();
+
+        ArgumentCaptor<Pageable> page = ArgumentCaptor.forClass(Pageable.class);
+        verify(encounters).findAllByOrganization_GlobalIdAndPatientLink_Patient_GlobalIdAndClinicUnit_GlobalId(
+                eq(organizationId), eq(patientId), eq(clinicId), page.capture());
+        assertThat(page.getValue().getPageNumber()).isEqualTo(2);
+        assertThat(page.getValue().getPageSize()).isEqualTo(100);
+        assertThat(page.getValue().getSort().getOrderFor("careAt").isDescending()).isTrue();
+    }
+
+    @Test
+    void returnsAClinicalRecordOnlyWhenItsClinicAndPatientRemainInScope() {
+        UUID encounterId = UUID.randomUUID();
+        ClinicalEncounter encounter = org.mockito.Mockito.mock(ClinicalEncounter.class);
+        when(encounters.findByGlobalIdAndOrganization_GlobalId(encounterId, organizationId)).thenReturn(Optional.of(encounter));
+        when(encounter.getGlobalId()).thenReturn(encounterId);
+        when(encounter.getClinicUnit()).thenReturn(clinic);
+        when(clinic.getGlobalId()).thenReturn(clinicId);
+        when(encounter.getPatientLink()).thenReturn(link);
+        when(link.isActive()).thenReturn(true);
+        when(link.getPatient()).thenReturn(patient);
+        when(patient.getGlobalId()).thenReturn(patientId);
+        when(encounter.getCareAt()).thenReturn(CARE_AT);
+        when(encounter.getCareTimezone()).thenReturn("UTC");
+        when(encounter.getNarrative()).thenReturn("Clinical note");
+        when(encounter.getStatus()).thenReturn(EncounterStatus.DRAFT);
+        when(encounter.getVersion()).thenReturn(2L);
+
+        ClinicalEncounterResponse response = service.get(organizationId, clinicId, encounterId);
+
+        assertThat(response.globalId()).isEqualTo(encounterId);
+        assertThat(response.patientId()).isEqualTo(patientId);
+        assertThat(response.appointmentId()).isNull();
+        assertThat(response.practitionerId()).isNull();
+        verify(authorization).requireClinicalRead(organizationId, clinicId);
     }
 
     @Test

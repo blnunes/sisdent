@@ -111,32 +111,38 @@ export function patientToForm(record: PatientRecord): PatientFormValues {
   const address = (record['address'] as PatientRecord | undefined) ?? {};
   const division = (address['administrativeDivision'] as PatientRecord | undefined) ?? {};
   return {
-    addressId: String(address['id'] ?? ''),
-    street: String(address['street'] ?? ''),
-    district: String(address['district'] ?? ''),
-    city: String(address['city'] ?? ''),
-    additionalInfo: String(address['additionalInfo'] ?? ''),
-    block: String(address['block'] ?? ''),
-    postalCode: String(address['postalCode'] ?? ''),
-    administrativeDivisionName: String(division['name'] ?? ''),
-    administrativeDivisionCode: String(division['code'] ?? ''),
-    administrativeDivisionType: String(division['type'] ?? ''),
-    countryCode: String((address['country'] as PatientRecord | undefined)?.['code'] ?? ''),
-    name: String(record['name'] ?? ''),
-    birthDate: String(record['birthDate'] ?? ''),
-    active: String(record['active'] ?? true),
-    gender: String(record['gender'] ?? ''),
-    taxId: String(record['taxId'] ?? ''),
-    identificationType: String(record['identificationType'] ?? ''),
-    identificationNumber: String(record['identificationNumber'] ?? ''),
-    documentIssuerCountryCode: String(
+    addressId: text(address['id']),
+    street: text(address['street']),
+    district: text(address['district']),
+    city: text(address['city']),
+    additionalInfo: text(address['additionalInfo']),
+    block: text(address['block']),
+    postalCode: text(address['postalCode']),
+    administrativeDivisionName: text(division['name']),
+    administrativeDivisionCode: text(division['code']),
+    administrativeDivisionType: text(division['type']),
+    countryCode: text((address['country'] as PatientRecord | undefined)?.['code']),
+    name: text(record['name']),
+    birthDate: text(record['birthDate']),
+    active: text(record['active'] ?? true),
+    gender: text(record['gender']),
+    taxId: text(record['taxId']),
+    identificationType: text(record['identificationType']),
+    identificationNumber: text(record['identificationNumber']),
+    documentIssuerCountryCode: text(
       (record['documentIssuerCountry'] as PatientRecord | undefined)?.['code'] ?? '',
     ),
-    nationalityCode: String((record['nationality'] as PatientRecord | undefined)?.['code'] ?? ''),
+    nationalityCode: text((record['nationality'] as PatientRecord | undefined)?.['code']),
     specialityIds: ((record['specialities'] as PatientRecord[] | undefined) ?? [])
-      .map((speciality) => String(speciality['id']))
+      .map((speciality) => text(speciality['id']))
       .join(', '),
   };
+}
+
+function text(value: unknown, fallback = ''): string {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+    ? String(value)
+    : fallback;
 }
 
 export function patientRequest(value: PatientFormValues): Record<string, unknown> {

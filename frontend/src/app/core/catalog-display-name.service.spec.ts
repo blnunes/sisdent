@@ -39,6 +39,12 @@ describe('CatalogDisplayNameService', () => {
     ).toBe('Especialidade personalizada');
   });
 
+  it('uses a safe fallback when catalogue values are malformed objects', () => {
+    const service = TestBed.inject(CatalogDisplayNameService);
+
+    expect(service.speciality({ name: { malformed: true } })).toBe('—');
+  });
+
   it('localizes valid country codes and safely falls back for invalid ones', () => {
     const service = TestBed.inject(CatalogDisplayNameService);
 
