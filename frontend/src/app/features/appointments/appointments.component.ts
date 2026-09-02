@@ -11,12 +11,18 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { CalendarOptions, DateSelectArg, DatesSetArg, EventClickArg, EventInput } from '@fullcalendar/core';
+import {
+  CalendarOptions,
+  DateSelectArg,
+  DatesSetArg,
+  EventClickArg,
+  EventInput,
+} from '@fullcalendar/core';
 import interactionPlugin from '@fullcalendar/interaction';
 import { FullCalendarComponent, FullCalendarModule } from '@fullcalendar/angular';
 import luxonPlugin, { toLuxonDateTime } from '@fullcalendar/luxon3';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import { EMPTY, Subscription, expand, forkJoin, map, reduce, distinctUntilChanged } from 'rxjs';
+import { EMPTY, Subscription, distinctUntilChanged, expand, forkJoin, map, reduce } from 'rxjs';
 import {
   AppointmentAvailabilityInterval,
   AppointmentGraphqlService,
@@ -28,8 +34,10 @@ import { AppHeaderComponent } from '../../core/layout/app-header/app-header.comp
 import { ModuleNavigationComponent } from '../../core/layout/module-navigation/module-navigation.component';
 import { AppointmentDetailsDialogComponent } from './appointment-details-dialog.component';
 import type { AppointmentDetail } from '../../core/appointment-graphql.service';
-import { AppointmentFormDialogComponent, AppointmentCandidate } from './appointment-form-dialog.component';
-import { forkJoin as rxForkJoin } from 'rxjs';
+import {
+  AppointmentFormDialogComponent,
+  AppointmentCandidate,
+} from './appointment-form-dialog.component';
 import { BlockedPeriodsDialogComponent } from './blocked-periods-dialog.component';
 
 @Component({
@@ -53,7 +61,7 @@ import { BlockedPeriodsDialogComponent } from './blocked-periods-dialog.componen
   styleUrl: './appointments.component.scss',
 })
 export class AppointmentsComponent {
-  @ViewChild('calendar') private calendar?: FullCalendarComponent;
+  @ViewChild('calendar') private readonly calendar?: FullCalendarComponent;
   readonly auth = inject(AuthService);
   private readonly appointmentApi = inject(AppointmentGraphqlService);
   private readonly organizationReads = inject(OrganizationReadGraphqlService);
@@ -131,10 +139,10 @@ export class AppointmentsComponent {
   onSlotSelect(selection: Pick<DateSelectArg, 'start' | 'end' | 'view' | 'jsEvent'>): void {
     const clinic = this.selectedClinic();
     if (!clinic) return;
-    this.slotOrigin = selection.jsEvent?.target instanceof HTMLElement
-      ? selection.jsEvent.target
-      : document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
-    const start = toLuxonDateTime(selection.start, selection.view.calendar).setZone(clinic.timezone);
+    this.slotOrigin = this.selectionOrigin(selection);
+    const start = toLuxonDateTime(selection.start, selection.view.calendar).setZone(
+      clinic.timezone,
+    );
     const end = toLuxonDateTime(selection.end, selection.view.calendar).setZone(clinic.timezone);
     this.calendar?.getApi().unselect();
     this.openForm(undefined, undefined, undefined, {
@@ -142,12 +150,33 @@ export class AppointmentsComponent {
       endLocal: end.toFormat("yyyy-LL-dd'T'HH:mm"),
     });
   }
-  openCreate(): void { this.openForm(); }
-  canManageAppointments(): boolean { return ['ORGANIZATION_ADMIN', 'MANAGER', 'APPOINTMENT_MANAGER'].includes(this.membership()?.role ?? ''); }
+  openCreate(): void {
+    this.openForm();
+  }
+  canManageAppointments(): boolean {
+    return ['ORGANIZATION_ADMIN', 'MANAGER', 'APPOINTMENT_MANAGER'].includes(
+      this.membership()?.role ?? '',
+    );
+  }
   openBlockedPeriods(): void {
-    const membership = this.membership(), clinic = this.selectedClinic();
+    const membership = this.membership(),
+      clinic = this.selectedClinic();
     if (!membership || !clinic || !this.visibleRange || !this.canManageAppointments()) return;
-    this.dialog.open(BlockedPeriodsDialogComponent, { data: { organizationId: membership.organizationId, clinicUnitId: clinic.id, timezone: clinic.timezone, practitioners: this.practitioners(), from: this.asUtcIso(this.visibleRange.start, this.visibleRange), to: this.asUtcIso(this.visibleRange.end, this.visibleRange), onFinished: () => this.refresh() }, autoFocus: 'dialog', restoreFocus: true, disableClose: true, width: 'min(620px, calc(100vw - 32px))' });
+    this.dialog.open(BlockedPeriodsDialogComponent, {
+      data: {
+        organizationId: membership.organizationId,
+        clinicUnitId: clinic.id,
+        timezone: clinic.timezone,
+        practitioners: this.practitioners(),
+        from: this.asUtcIso(this.visibleRange.start, this.visibleRange),
+        to: this.asUtcIso(this.visibleRange.end, this.visibleRange),
+        onFinished: () => this.refresh(),
+      },
+      autoFocus: 'dialog',
+      restoreFocus: true,
+      disableClose: true,
+      width: 'min(620px, calc(100vw - 32px))',
+    });
   }
 
   private loadContext(): void {
@@ -287,7 +316,9 @@ export class AppointmentsComponent {
           if (event.key !== 'Enter' && event.key !== ' ') return;
           event.preventDefault();
           if (!slot.date) return;
-          const end = toLuxonDateTime(slot.date, slot.view.calendar).plus({ minutes: 30 }).toJSDate();
+          const end = toLuxonDateTime(slot.date, slot.view.calendar)
+            .plus({ minutes: 30 })
+            .toJSDate();
           this.onSlotSelect({ start: slot.date, end, view: slot.view, jsEvent: null });
         });
       },
@@ -353,7 +384,8 @@ export class AppointmentsComponent {
         timezone: clinic.timezone,
         canManageAppointments: this.auth.canManageAppointments(),
         onUnavailable: () => this.clearAppointmentSelection(),
-        onReschedule: (detail: AppointmentDetail, onSaved: (updated: AppointmentDetail) => void) => this.openForm(appointmentId, detail, onSaved),
+        onReschedule: (detail: AppointmentDetail, onSaved: (updated: AppointmentDetail) => void) =>
+          this.openForm(appointmentId, detail, onSaved),
         onLifecycleFinished: () => this.refresh(),
       },
       autoFocus: 'dialog',
@@ -369,12 +401,17 @@ export class AppointmentsComponent {
     });
   }
 
-  private openForm(appointmentId?: string, detail?: AppointmentDetail, onSaved?: (updated: AppointmentDetail) => void, prefill?: { startLocal: string; endLocal: string }): void {
+  private openForm(
+    appointmentId?: string,
+    detail?: AppointmentDetail,
+    onSaved?: (updated: AppointmentDetail) => void,
+    prefill?: { startLocal: string; endLocal: string },
+  ): void {
     const membership = this.membership();
     const clinic = this.selectedClinic();
     if (!membership || !clinic) return;
     // Both lists are existing authorized, clinic-scoped GraphQL reads; IDs remain form-internal.
-    rxForkJoin({
+    forkJoin({
       patients: this.appointmentApi.patients(membership.organizationId, clinic.id),
       practitioners: this.organizationReads.listPractitioners(membership.organizationId, clinic.id),
     }).subscribe({
@@ -384,9 +421,18 @@ export class AppointmentsComponent {
             organizationId: membership.organizationId,
             clinicUnitId: clinic.id,
             timezone: clinic.timezone,
-            patients: patients.map((patient) => ({ id: patient.globalId, name: patient.name })) as AppointmentCandidate[],
-            practitioners: practitioners.filter((practitioner) => practitioner.active).map((practitioner) => ({ id: practitioner.globalId, name: practitioner.displayName })),
-            appointmentId, detail,
+            patients: patients.map((patient) => ({
+              id: patient.globalId,
+              name: patient.name,
+            })) as AppointmentCandidate[],
+            practitioners: practitioners
+              .filter((practitioner) => practitioner.active)
+              .map((practitioner) => ({
+                id: practitioner.globalId,
+                name: practitioner.displayName,
+              })),
+            appointmentId,
+            detail,
             prefill,
             onMutationFinished: () => this.refresh(),
             onSaved,
@@ -417,5 +463,12 @@ export class AppointmentsComponent {
 
   private isUuid(value: string): boolean {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+  }
+
+  private selectionOrigin(selection: Pick<DateSelectArg, 'jsEvent'>): HTMLElement | undefined {
+    if (selection.jsEvent?.target instanceof HTMLElement) {
+      return selection.jsEvent.target;
+    }
+    return document.activeElement instanceof HTMLElement ? document.activeElement : undefined;
   }
 }
