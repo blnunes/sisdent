@@ -19,14 +19,28 @@
               <p>{{ 'APPOINTMENTS.SCOPE_DESCRIPTION' | translate }}</p>
             </div>
             <div class="header-actions">
-              <button mat-flat-button type="button" (click)="openCreate()" [disabled]="!selectedClinic()">
+              <button
+                mat-flat-button
+                type="button"
+                (click)="openCreate()"
+                [disabled]="!selectedClinic()"
+              >
                 <mat-icon>add</mat-icon>{{ 'APPOINTMENTS.SCHEDULE' | translate }}
               </button>
-              @if (canManageAppointments()) { <button mat-stroked-button type="button" (click)="openBlockedPeriods()" [disabled]="!selectedClinic()"><mat-icon>block</mat-icon>{{ 'APPOINTMENTS.BLOCKED.OPEN' | translate }}</button> }
+              @if (canManageAppointments()) {
+                <button
+                  mat-stroked-button
+                  type="button"
+                  (click)="openBlockedPeriods()"
+                  [disabled]="!selectedClinic()"
+                >
+                  <mat-icon>block</mat-icon>{{ 'APPOINTMENTS.BLOCKED.OPEN' | translate }}
+                </button>
+              }
               <button mat-stroked-button type="button" (click)="refresh()" [disabled]="loading()">
                 <mat-icon>refresh</mat-icon>{{ 'APPOINTMENTS.REFRESH' | translate }}
               </button>
-              <div class="view-switch" role="group">
+              <fieldset class="view-switch">
                 <button
                   mat-button
                   type="button"
@@ -42,7 +56,7 @@
                 >
                   {{ 'APPOINTMENTS.DAY' | translate }}
                 </button>
-              </div>
+              </fieldset>
             </div>
           </header>
           <mat-card appearance="outlined" class="calendar-card"

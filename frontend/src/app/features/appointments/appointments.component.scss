@@ -43,7 +43,9 @@ h1 {
   gap: 8px;
 }
 .view-switch {
+  min-inline-size: 0;
   padding: 3px;
+  border: 0;
   border-radius: 10px;
   background: var(--app-surface-subtle);
 }
