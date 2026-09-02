@@ -175,8 +175,9 @@ export class AuthService {
   private decode(token: string | null): JwtPayload | null {
     if (!token) return null;
     try {
-      const part = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-      return JSON.parse(decodeURIComponent(escape(atob(part)))) as JwtPayload;
+      const part = token.split('.')[1].replaceAll('-', '+').replaceAll('_', '/');
+      const bytes = Uint8Array.from(atob(part), (character) => character.codePointAt(0)!);
+      return JSON.parse(new TextDecoder().decode(bytes)) as JwtPayload;
     } catch {
       return null;
     }

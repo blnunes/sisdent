@@ -176,7 +176,7 @@ describe('AccountSettingsComponent', () => {
     const drawerScroll = { scrollTop: 42 } as HTMLElement;
 
     component.removeAvatar();
-    component.onDrawerChange(true, drawerScroll);
+    component.onDrawerOpened(drawerScroll);
 
     expect(auth.updateAvatar).toHaveBeenCalledWith();
     expect(component.selectedAvatar()).toBeNull();

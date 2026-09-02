@@ -65,7 +65,7 @@ describe('AdministrativeDivisionsComponent', () => {
     component.create();
 
     expect(divisions.save).toHaveBeenCalledWith(undefined, { name: 'Lisbon', code: 'LX', type: 'DISTRICT', countryCode: 'PT' });
-    expect(divisions.list.mock.calls.length).toBe(callsBefore + 1);
+    expect(divisions.list.mock.calls).toHaveLength(callsBefore + 1);
   });
 
   it('does not delete when the confirmation is cancelled', () => {

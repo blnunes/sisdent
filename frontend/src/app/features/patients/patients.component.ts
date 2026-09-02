@@ -18,7 +18,6 @@ import { PatientMutationGraphqlService } from './patient-mutation-graphql.servic
 import {
   PATIENT_FIELDS,
   PatientFormValues,
-  PatientRecord,
   patientRequest,
   patientToForm,
 } from './patient.models';

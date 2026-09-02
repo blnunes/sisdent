@@ -26,11 +26,11 @@ export class AccountSettingsApiService {
   avatar() { return this.graphql.query<{ ownAvatar: { contentType: string; contentBase64: string } }>('query OwnAvatar { ownAvatar { contentType contentBase64 } }', {}).pipe(map(({ ownAvatar }) => this.base64Blob(ownAvatar.contentBase64, ownAvatar.contentType))); }
 
   private base64Blob(content: string, contentType: string): Blob {
-    const bytes = Uint8Array.from(atob(content), (character) => character.charCodeAt(0));
+    const bytes = Uint8Array.from(atob(content), (character) => character.codePointAt(0)!);
     return new Blob([bytes], { type: contentType });
   }
 
   private base64(buffer: ArrayBuffer): string {
-    return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    return btoa(String.fromCodePoint(...new Uint8Array(buffer)));
   }
 }

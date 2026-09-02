@@ -1,7 +1,7 @@
 <div class="settings-shell">
   <mat-sidenav-container class="settings-container">
     <mat-sidenav #drawer mode="over" class="settings-drawer" [autoFocus]="true"
-                 (openedChange)="onDrawerChange($event, drawerScroll)">
+                 (openedStart)="onDrawerOpened(drawerScroll)" (closedStart)="onDrawerClosed()">
       <div #drawerScroll class="settings-drawer-scroll">
         <div class="drawer-brand">
           <mat-icon>dentistry</mat-icon>

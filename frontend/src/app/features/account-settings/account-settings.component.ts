@@ -84,7 +84,7 @@ export class AccountSettingsComponent implements OnInit, OnDestroy {
   readonly avatarMessage = signal('');
   readonly avatarError = signal(false);
   readonly profileForm = this.fb.nonNullable.group({
-    displayName: ['', [Validators.required, Validators.pattern(/.*\S.*/)]],
+    displayName: ['', [Validators.required, Validators.pattern(/\S/)]],
     version: [0],
   });
   readonly passwordForm = this.fb.nonNullable.group(
@@ -273,9 +273,11 @@ export class AccountSettingsComponent implements OnInit, OnDestroy {
       .join('')
       .toUpperCase();
   }
-  onDrawerChange(opened: boolean, drawerScroll: HTMLElement): void {
-    if (opened) drawerScroll.scrollTop = 0;
-    else queueMicrotask(() => this.header?.focusMenuButton());
+  onDrawerOpened(drawerScroll: HTMLElement): void {
+    drawerScroll.scrollTop = 0;
+  }
+  onDrawerClosed(): void {
+    queueMicrotask(() => this.header?.focusMenuButton());
   }
   closeMenu(drawer: MatSidenav): void {
     void drawer.close();

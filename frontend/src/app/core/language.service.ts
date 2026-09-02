@@ -29,7 +29,7 @@ export class LanguageService {
     this.set(this.current());
   }
 
-  set(language: Language | string): void {
+  set(language: string): void {
     const selected = this.isSupported(language) ? language : 'en';
     const changed = this.current() !== selected;
     this.current.set(selected);

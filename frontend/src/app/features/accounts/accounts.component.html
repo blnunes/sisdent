@@ -26,7 +26,7 @@
           }
         </header>
         @if (!auth.isPlatformAdministrator() && auth.activeMembership(); as membership) {
-          <section class="scope-notice" role="status">
+          <output class="scope-notice">
             <mat-icon>business</mat-icon>
             <div>
               <strong>{{
@@ -34,7 +34,7 @@
               }}</strong
               ><span>{{ 'ACCOUNTS.SCOPE_NOTICE' | translate }}</span>
             </div>
-          </section>
+          </output>
         }
         @if (creating()) {
           <mat-card appearance="outlined" class="form-card"

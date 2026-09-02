@@ -16,10 +16,10 @@ export class AccountApiService {
   private readonly reads = inject(OrganizationReadGraphqlService);
   private readonly tables = inject(TableQueryService);
   listPlatform(
-    query: TableQuery = { ...this.tables.defaultQuery, sort: 'person.displayName' },
+    query?: TableQuery,
     filter = '',
   ) {
-    return this.accounts('platformAccounts', { page: this.graphqlPage(query), filter });
+    return this.accounts('platformAccounts', { page: this.graphqlPage(query ?? this.accountQuery()), filter });
   }
   changeLifecycle(account: AccountSummary, active: boolean) {
     return this.accountMutation('changeAccountLifecycle', {
@@ -38,11 +38,11 @@ export class AccountApiService {
   }
   listOrganization(
     organizationId: string,
-    query: TableQuery = { ...this.tables.defaultQuery, sort: 'person.displayName' },
+    query?: TableQuery,
   ) {
     return this.accounts('organizationAccounts', {
       organizationId,
-      page: this.graphqlPage(query),
+      page: this.graphqlPage(query ?? this.accountQuery()),
       filter: null,
     });
   }
@@ -53,6 +53,9 @@ export class AccountApiService {
         {},
       )
       .pipe(map(({ platformOrganizations }) => platformOrganizations));
+  }
+  private accountQuery(): TableQuery {
+    return { ...this.tables.defaultQuery, sort: 'person.displayName' };
   }
   listClinicUnits(organizationId: string) {
     return this.reads.listClinicUnits(organizationId);

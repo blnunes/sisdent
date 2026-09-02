@@ -43,15 +43,16 @@ export class AppHeaderComponent implements OnDestroy {
   readonly avatarSource = signal<string | null>(null);
   @Output() readonly menuClick = new EventEmitter<void>();
   @ViewChild('menuButton') private menuButton?: ElementRef<HTMLButtonElement>;
-  private avatarObjectUrl: string | null = null;
+  private readonly avatarObjectUrl = signal<string | null>(null);
   private readonly avatarLoader = effect(() => {
     const avatarUrl = this.auth.session()?.avatarUrl;
     this.clearAvatar();
     if (avatarUrl)
       this.accountSettings.avatar().subscribe({
         next: (blob) => {
-          this.avatarObjectUrl = URL.createObjectURL(blob);
-          this.avatarSource.set(this.avatarObjectUrl);
+          const avatarObjectUrl = URL.createObjectURL(blob);
+          this.avatarObjectUrl.set(avatarObjectUrl);
+          this.avatarSource.set(avatarObjectUrl);
         },
       });
   });
@@ -73,10 +74,11 @@ export class AppHeaderComponent implements OnDestroy {
     this.clearAvatar();
   }
   private clearAvatar(): void {
-    if (this.avatarObjectUrl) {
-      URL.revokeObjectURL(this.avatarObjectUrl);
+    const avatarObjectUrl = this.avatarObjectUrl();
+    if (avatarObjectUrl) {
+      URL.revokeObjectURL(avatarObjectUrl);
     }
-    this.avatarObjectUrl = null;
+    this.avatarObjectUrl.set(null);
     this.avatarSource.set(null);
   }
 }

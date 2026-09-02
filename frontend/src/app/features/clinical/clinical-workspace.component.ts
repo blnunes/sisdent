@@ -261,8 +261,7 @@ export class ClinicalWorkspaceComponent {
     const original = this.selectedEncounter();
     if (
       !membership ||
-      !original ||
-      original.status !== 'FINAL' ||
+      original?.status !== 'FINAL' ||
       !this.narrative.trim() ||
       !this.amendmentReason.trim()
     )

@@ -347,10 +347,13 @@ export class AppointmentsComponent {
         id: appointment.globalId,
         start: appointment.startAt,
         end: appointment.endAt,
-        title: `${appointment.practitionerName} · ${this.translate.instant(`APPOINTMENTS.STATUS.${appointment.status}`)}`,
+        title: `${appointment.practitionerName} · ${this.appointmentStatusLabel(appointment.status)}`,
         classNames: [`appointment-${appointment.status.toLowerCase()}`],
       })),
     ];
+  }
+  private appointmentStatusLabel(status: Appointment['status']): string {
+    return this.translate.instant(`APPOINTMENTS.STATUS.${status}`);
   }
   private asUtcIso(date: Date, range: DatesSetArg): string {
     return toLuxonDateTime(date, range.view.calendar)

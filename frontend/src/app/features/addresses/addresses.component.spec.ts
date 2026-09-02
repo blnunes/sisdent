@@ -78,7 +78,7 @@ describe('AddressesComponent', () => {
       additionalInfo: null, block: null, countryCode: 'PT',
       administrativeDivision: { name: 'Lisbon', code: 'LX', type: 'DISTRICT' },
     }));
-    expect(addresses.list.mock.calls.length).toBe(loadCount + 1);
+    expect(addresses.list.mock.calls).toHaveLength(loadCount + 1);
   });
 
   it('cancels deletion when it is not confirmed', () => {
