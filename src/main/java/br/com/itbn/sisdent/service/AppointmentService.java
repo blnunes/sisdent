@@ -63,10 +63,9 @@ public class AppointmentService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
         }
         PageRequest pageable = PageRequest.of(page, Math.min(size, 100), Sort.by("startAt"));
-        List<UUID> practitionerFilter = practitionerFilter(practitionerIds);
-        Page<Appointment> appointmentPage = to == null
-                ? appointments.findFrom(organizationId, clinicUnitId, practitionerFilter, from, pageable)
-                : appointments.findScoped(organizationId, clinicUnitId, practitionerFilter, from, to, pageable);
+        List<UUID> practitionerFilter = practitionerIds == null ? List.of() : practitionerIds;
+        Page<Appointment> appointmentPage = listAppointments(
+                organizationId, clinicUnitId, from, to, practitionerFilter, pageable);
         return PageResponse.from(appointmentPage, this::response);
     }
 
@@ -143,11 +142,18 @@ public class AppointmentService {
         }
         return practitioner;
     }
-    private List<UUID> practitionerFilter(List<UUID> practitionerIds) {
-        if (practitionerIds == null || practitionerIds.isEmpty()) {
-            return null;
+    private Page<Appointment> listAppointments(UUID organizationId, UUID clinicUnitId, Instant from, Instant to,
+            List<UUID> practitionerIds, PageRequest pageable) {
+        if (practitionerIds.isEmpty()) {
+            if (to == null) {
+                return appointments.findFromWithoutPractitionerFilter(organizationId, clinicUnitId, from, pageable);
+            }
+            return appointments.findScopedWithoutPractitionerFilter(organizationId, clinicUnitId, from, to, pageable);
         }
-        return practitionerIds;
+        if (to == null) {
+            return appointments.findFrom(organizationId, clinicUnitId, practitionerIds, from, pageable);
+        }
+        return appointments.findScoped(organizationId, clinicUnitId, practitionerIds, from, to, pageable);
     }
     private void valid(AppointmentRequest request) {
         validRange(request.startAt(), request.endAt());

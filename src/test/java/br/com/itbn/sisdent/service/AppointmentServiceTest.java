@@ -151,7 +151,7 @@ class AppointmentServiceTest {
     @Test
     void listsAndReschedulesAppointmentsWithinTheAuthorizedClinic() {
         Appointment appointment = new Appointment(new Organization("Alpha"), clinic, link, practitioner, start, end, "Europe/Lisbon");
-        when(appointments.findScoped(any(), any(), any(), any(), any(), any())).thenReturn(Page.empty());
+        when(appointments.findScopedWithoutPractitionerFilter(any(), any(), any(), any(), any())).thenReturn(Page.empty());
         when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
         when(appointments.findByGlobalIdAndOrganization_GlobalId(appointment.getGlobalId(), organizationId)).thenReturn(Optional.of(appointment));
         when(links.findFirstByPatient_GlobalIdAndOrganization_GlobalIdAndClinicUnit_GlobalIdAndActiveTrue(patientId, organizationId, clinicId))
@@ -164,12 +164,12 @@ class AppointmentServiceTest {
 
     @Test
     void listsAppointmentsFromTheRequestedDayWithoutAnUpperDateLimit() {
-        when(appointments.findFrom(any(), any(), any(), any(), any())).thenReturn(Page.empty());
+        when(appointments.findFromWithoutPractitionerFilter(any(), any(), any(), any())).thenReturn(Page.empty());
         when(authorization.requireClinicInOrganization(organizationId, clinicId)).thenReturn(clinic);
 
         assertThat(service.list(organizationId, clinicId, start, null, null, 1, 10).content()).isEmpty();
 
-        verify(appointments).findFrom(any(), any(), any(), any(), any());
+        verify(appointments).findFromWithoutPractitionerFilter(any(), any(), any(), any());
     }
 
     @Test
