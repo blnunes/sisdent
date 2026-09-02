@@ -9,6 +9,7 @@ import { FormDialogValues } from '../../shared/dialogs/form-dialog-shell/form-di
 import { CatalogueListController } from '../resource-support/catalogue-list.controller';
 import { RESOURCE_PAGE_IMPORTS } from '../resource-support/resource-page.imports';
 import { ResourceRecord } from '../resource-support/resource-list.controller';
+import { textValue } from '../../shared/text-value';
 
 const COLUMNS: readonly DataTableColumn[] = [
   { key: 'street', label: 'Street', sortable: true },
@@ -49,7 +50,7 @@ export class AddressesComponent extends CatalogueListController {
         maintainPermission: 'MAINTAIN_ADDRESSES',
         columns: COLUMNS,
         identifier: (record) => Number(record['id']),
-        primary: (record) => String(record['street'] ?? '—'),
+        primary: (record) => textValue(record['street'], '—'),
         cells: addressCells,
       },
       {
@@ -85,7 +86,7 @@ export class AddressesComponent extends CatalogueListController {
     if (
       !confirm(
         this.translate.instant('RESOURCE.DELETE_CONFIRM', {
-          name: String(record['street'] ?? '—'),
+          name: textValue(record['street'], '—'),
         }),
       )
     )
@@ -103,27 +104,27 @@ function nested(record: ResourceRecord, key: string): ResourceRecord {
 }
 function addressCells(record: ResourceRecord): Readonly<Record<string, string>> {
   return {
-    street: String(record['street'] ?? '—'),
-    district: String(record['district'] ?? '—'),
-    postalCode: String(record['postalCode'] ?? '—'),
-    administrativeDivision: String(nested(record, 'administrativeDivision')['name'] ?? '—'),
-    country: String(nested(record, 'country')['name'] ?? '—'),
+    street: textValue(record['street'], '—'),
+    district: textValue(record['district'], '—'),
+    postalCode: textValue(record['postalCode'], '—'),
+    administrativeDivision: textValue(nested(record, 'administrativeDivision')['name'], '—'),
+    country: textValue(nested(record, 'country')['name'], '—'),
   };
 }
 function addressValues(record: ResourceRecord): FormDialogValues {
   const division = nested(record, 'administrativeDivision');
   const country = nested(record, 'country');
   return {
-    street: String(record['street'] ?? ''),
-    district: String(record['district'] ?? ''),
-    city: String(record['city'] ?? ''),
-    additionalInfo: String(record['additionalInfo'] ?? ''),
-    block: String(record['block'] ?? ''),
-    postalCode: String(record['postalCode'] ?? ''),
-    administrativeDivisionName: String(division['name'] ?? ''),
-    administrativeDivisionCode: String(division['code'] ?? ''),
-    administrativeDivisionType: String(division['type'] ?? ''),
-    countryCode: String(country['code'] ?? ''),
+    street: textValue(record['street']),
+    district: textValue(record['district']),
+    city: textValue(record['city']),
+    additionalInfo: textValue(record['additionalInfo']),
+    block: textValue(record['block']),
+    postalCode: textValue(record['postalCode']),
+    administrativeDivisionName: textValue(division['name']),
+    administrativeDivisionCode: textValue(division['code']),
+    administrativeDivisionType: textValue(division['type']),
+    countryCode: textValue(country['code']),
   };
 }
 function addressRequest(value: FormDialogValues): unknown {

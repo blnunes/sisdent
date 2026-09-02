@@ -19,6 +19,7 @@ import {
   SpecialityWrite,
 } from '../../core/catalogue-mutation-graphql.service';
 import { inject } from '@angular/core';
+import { textValue } from '../../shared/text-value';
 
 const COLUMNS: readonly DataTableColumn[] = [
   { key: 'name', label: 'SPECIALITIES.TABLE.NAME', sortable: true },
@@ -49,7 +50,7 @@ export class SpecialitiesComponent extends ResourceListController {
       columns: COLUMNS,
       filters: FILTERS,
       identifier: (record) => Number(record['id']),
-      primary: (record) => String(record['displayName'] ?? record['name'] ?? '—'),
+      primary: (record) => textValue(record['displayName'] ?? record['name'], '—'),
       cells: specialityCells,
     });
     this.load();
@@ -101,7 +102,7 @@ export class SpecialitiesComponent extends ResourceListController {
     });
   }
   protected override remove(record: ResourceRecord): void {
-    const name = String(record['displayName'] ?? record['name'] ?? '—');
+    const name = textValue(record['displayName'] ?? record['name'], '—');
     if (!confirm(this.translate.instant('RESOURCE.DELETE_CONFIRM', { name }))) {
       return;
     }
@@ -126,7 +127,7 @@ export class SpecialitiesComponent extends ResourceListController {
         autoFocus: 'first-tabbable',
         data: {
           title: record ? 'SPECIALITIES.FORM.EDIT_TITLE' : 'SPECIALITIES.FORM.NEW_TITLE',
-          name: record ? String(record['name'] ?? '') : undefined,
+          name: record ? textValue(record['name']) : undefined,
           translations: record?.['translations'] as Record<string, string> | undefined,
           procedures: record ? parseProcedures(JSON.stringify(record['procedures'] ?? [])) : [],
         },

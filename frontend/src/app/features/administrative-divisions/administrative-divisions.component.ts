@@ -7,6 +7,7 @@ import { DataTableColumn } from '../../shared/data-table/data-table.models';
 import { CatalogueListController } from '../resource-support/catalogue-list.controller';
 import { RESOURCE_PAGE_IMPORTS } from '../resource-support/resource-page.imports';
 import { ResourceRecord } from '../resource-support/resource-list.controller';
+import { textValue } from '../../shared/text-value';
 
 const COLUMNS: readonly DataTableColumn[] = [
   { key: 'name', label: 'Name', sortable: true },
@@ -34,7 +35,7 @@ export class AdministrativeDivisionsComponent extends CatalogueListController {
         maintainPermission: 'MAINTAIN_ADMINISTRATIVE_DIVISIONS',
         columns: COLUMNS,
         identifier: (record) => Number(record['id']),
-        primary: (record) => String(record['name'] ?? '—'),
+        primary: (record) => textValue(record['name'], '—'),
         cells: divisionCells,
       },
       {
@@ -45,10 +46,10 @@ export class AdministrativeDivisionsComponent extends CatalogueListController {
           { key: 'countryCode', label: 'Country code', required: true },
         ],
         fromRecord: (record) => ({
-          name: String(record['name'] ?? ''),
-          code: String(record['code'] ?? ''),
-          type: String(record['type'] ?? ''),
-          countryCode: String(nested(record, 'country')['code'] ?? ''),
+          name: textValue(record['name']),
+          code: textValue(record['code']),
+          type: textValue(record['type']),
+          countryCode: textValue(nested(record, 'country')['code']),
         }),
         toRequest: (values) => values,
         title: (editing) =>
@@ -79,7 +80,7 @@ export class AdministrativeDivisionsComponent extends CatalogueListController {
   protected override remove(record: ResourceRecord): void {
     if (
       !confirm(
-        this.translate.instant('RESOURCE.DELETE_CONFIRM', { name: String(record['name'] ?? '—') }),
+        this.translate.instant('RESOURCE.DELETE_CONFIRM', { name: textValue(record['name'], '—') }),
       )
     )
       return;
@@ -96,9 +97,9 @@ function nested(record: ResourceRecord, key: string): ResourceRecord {
 }
 function divisionCells(record: ResourceRecord): Readonly<Record<string, string>> {
   return {
-    name: String(record['name'] ?? '—'),
-    code: String(record['code'] ?? '—'),
-    type: String(record['type'] ?? '—'),
-    country: String(nested(record, 'country')['name'] ?? '—'),
+    name: textValue(record['name'], '—'),
+    code: textValue(record['code'], '—'),
+    type: textValue(record['type'], '—'),
+    country: textValue(nested(record, 'country')['name'], '—'),
   };
 }

@@ -8,6 +8,7 @@ import { CountryCatalogGraphqlService } from '../../core/country-catalog-graphql
 import { GraphQlUserError } from '../../core/graphql-client.service';
 import { CatalogueMutationGraphqlService } from '../../core/catalogue-mutation-graphql.service';
 import { inject } from '@angular/core';
+import { textValue } from '../../shared/text-value';
 
 const COLUMNS: readonly DataTableColumn[] = [
   { key: 'name', label: 'Name', sortable: true },
@@ -39,19 +40,19 @@ export class CountriesComponent extends CatalogueListController {
         maintainPermission: 'MAINTAIN_COUNTRIES',
         columns: COLUMNS,
         identifier: (record) => Number(record['id']),
-        primary: (record) => String(record['displayName'] ?? record['name'] ?? '—'),
+        primary: (record) => textValue(record['displayName'] ?? record['name'], '—'),
         cells: (record) => ({
-          name: String(record['displayName'] ?? record['name'] ?? '—'),
-          code: String(record['code'] ?? '—'),
-          continent: String(record['continent'] ?? '—'),
+          name: textValue(record['displayName'] ?? record['name'], '—'),
+          code: textValue(record['code'], '—'),
+          continent: textValue(record['continent'], '—'),
         }),
       },
       {
         fields: BASE_FIELDS,
         fromRecord: (record) => ({
-          name: String(record['name'] ?? ''),
-          code: String(record['code'] ?? ''),
-          continent: String(record['continent'] ?? ''),
+          name: textValue(record['name']),
+          code: textValue(record['code']),
+          continent: textValue(record['continent']),
         }),
         toRequest: (values) => values,
         title: (editing) => (editing ? 'Edit country' : 'New country'),
@@ -107,7 +108,7 @@ export class CountriesComponent extends CatalogueListController {
     this.openWithContinents(record);
   }
   protected override remove(record: ResourceRecord): void {
-    const name = String(record['displayName'] ?? record['name'] ?? '—');
+    const name = textValue(record['displayName'] ?? record['name'], '—');
     if (!confirm(`Delete ${name}?`)) {
       return;
     }

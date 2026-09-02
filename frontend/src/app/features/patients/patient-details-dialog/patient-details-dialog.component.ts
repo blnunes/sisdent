@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CatalogDisplayNameService } from '../../../core/catalog-display-name.service';
+import { textValue } from '../../../shared/text-value';
 
 type PatientRecord = Record<string, unknown>;
 
@@ -21,7 +22,7 @@ export class PatientDetailsDialog {
   readonly catalogNames = inject(CatalogDisplayNameService);
 
   value(key: string): string {
-    return String(this.patient[key] ?? '—');
+    return textValue(this.patient[key], '—');
   }
   object(key: string): PatientRecord {
     const value = this.patient[key];
@@ -32,7 +33,7 @@ export class PatientDetailsDialog {
   administrativeDivisionName(): string {
     const division = this.object('address')['administrativeDivision'];
     return division && typeof division === 'object'
-      ? String((division as PatientRecord)['name'] ?? '—')
+      ? textValue((division as PatientRecord)['name'], '—')
       : '—';
   }
   specialities(): PatientRecord[] {

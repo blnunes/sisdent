@@ -1,3 +1,5 @@
+import { textValue } from '../../shared/text-value';
+
 export type ProcedureOption = {
   id?: number;
   name: string;
@@ -11,7 +13,7 @@ export function parseProcedures(value: string): ProcedureOption[] {
     return procedures.flatMap((procedure) => {
       if (!procedure || typeof procedure !== 'object') return [];
       const { id, name, displayName, translations } = procedure as Record<string, unknown>;
-      const normalizedName = String(name ?? '').trim();
+      const normalizedName = textValue(name).trim();
       if (!normalizedName) return [];
       return [
         {

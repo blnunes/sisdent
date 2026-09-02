@@ -25,6 +25,7 @@ import {
 import { PatientDetailsDialog } from './patient-details-dialog/patient-details-dialog.component';
 import { PatientFormDialog } from './patient-form-dialog/patient-form-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
+import { textValue } from '../../shared/text-value';
 
 const COLUMNS: readonly DataTableColumn[] = [
   { key: 'name', label: 'PATIENTS.TABLE.NAME', sortable: true },
@@ -117,7 +118,7 @@ export class PatientsComponent extends ResourceListController {
       columns: COLUMNS,
       filters: PATIENT_FILTERS,
       identifier: (record) => String(record['globalId']),
-      primary: (record) => String(record['name'] ?? '—'),
+      primary: (record) => textValue(record['name'], '—'),
       canView: () => true,
       canDelete: (record) => record['active'] === true,
       actionLabels: { view: 'PATIENTS.VIEW', edit: 'PATIENTS.EDIT', delete: 'PATIENTS.DELETE' },
@@ -218,7 +219,7 @@ export class PatientsComponent extends ResourceListController {
     if (
       !membership ||
       !confirm(
-        this.translate.instant('RESOURCE.DELETE_CONFIRM', { name: String(record['name'] ?? '—') }),
+        this.translate.instant('RESOURCE.DELETE_CONFIRM', { name: textValue(record['name'], '—') }),
       )
     )
       return;
@@ -308,10 +309,10 @@ function patientCells(
   _catalogNames: unknown,
   translate: TranslateService,
 ): Readonly<Record<string, string>> {
-  const gender = String(record['gender'] ?? 'OTHER');
+  const gender = textValue(record['gender'], 'OTHER');
   return {
-    name: String(record['name'] ?? '—'),
-    identificationNumber: String(record['identificationNumber'] ?? '—'),
+    name: textValue(record['name'], '—'),
+    identificationNumber: textValue(record['identificationNumber'], '—'),
     gender: translate.instant(`PATIENTS.FILTER.${gender}`),
     active: translate.instant(
       record['active'] ? 'PATIENTS.FILTER.ACTIVE' : 'PATIENTS.FILTER.INACTIVE',

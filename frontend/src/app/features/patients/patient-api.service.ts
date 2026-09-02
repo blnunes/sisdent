@@ -7,6 +7,7 @@ import { AdministrativeDivisionGraphqlService } from '../../core/administrative-
 import { AddressGraphqlService } from '../../core/address-graphql.service';
 import { AddressOption, AdministrativeDivisionOption, PatientRecord, SpecialityOption } from './patient.models';
 import { FilterOption } from '../../shared/filters/filter.models';
+import { textValue } from '../../shared/text-value';
 
 @Injectable({ providedIn: 'root' })
 export class PatientApiService {
@@ -35,7 +36,10 @@ export class PatientApiService {
     }
     if (field === 'taxId') {
       return this.list(membership, { page: patientNamePage(), filter: { taxId: query } }).pipe(
-        map((response) => response.content.flatMap((patient) => patient['taxId'] ? [{ value: String(patient['taxId']), label: String(patient['taxId']) }] : [])),
+        map((response) => response.content.flatMap((patient) => {
+          const taxId = textValue(patient['taxId']);
+          return taxId ? [{ value: taxId, label: taxId }] : [];
+        })),
       );
     }
     return this.graphql.query<{ patientFilterOptions: FilterOption[] }>(
