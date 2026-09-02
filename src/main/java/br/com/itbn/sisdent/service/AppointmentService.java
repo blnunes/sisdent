@@ -13,6 +13,7 @@ import br.com.itbn.sisdent.repository.AppointmentRepository;
 import br.com.itbn.sisdent.repository.OrganizationRepository;
 import br.com.itbn.sisdent.repository.PatientOrganizationLinkRepository;
 import br.com.itbn.sisdent.repository.PractitionerRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -20,9 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Instant;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -48,20 +50,24 @@ public class AppointmentService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<AppointmentResponse> list(UUID organizationId, UUID clinicUnitId, Instant from, Instant to, java.util.List<UUID> practitionerIds,
+    public PageResponse<AppointmentResponse> list(UUID organizationId, UUID clinicUnitId, Instant from, Instant to, List<UUID> practitionerIds,
             int page, int size) {
         authorization.requireAppointmentRead(organizationId, clinicUnitId);
         validListRange(from, to);
         if (clinicUnitId != null) {
             authorization.requireClinicInOrganization(organizationId, clinicUnitId);
         }
-        if (practitionerIds != null) practitionerIds.stream().distinct().forEach(id -> practitioners
-                .findByGlobalIdAndOrganization_GlobalId(id, organizationId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
+        if (practitionerIds != null) {
+            practitionerIds.stream().distinct().forEach(id -> practitioners
+                    .findByGlobalIdAndOrganization_GlobalId(id, organizationId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
+        }
         PageRequest pageable = PageRequest.of(page, Math.min(size, 100), Sort.by("startAt"));
-        return PageResponse.from(to == null
-                ? appointments.findFrom(organizationId, clinicUnitId, practitionerIds == null || practitionerIds.isEmpty() ? null : practitionerIds, from, pageable)
-                : appointments.findScoped(organizationId, clinicUnitId, practitionerIds == null || practitionerIds.isEmpty() ? null : practitionerIds, from, to, pageable), this::response);
+        List<UUID> practitionerFilter = practitionerFilter(practitionerIds);
+        Page<Appointment> appointmentPage = to == null
+                ? appointments.findFrom(organizationId, clinicUnitId, practitionerFilter, from, pageable)
+                : appointments.findScoped(organizationId, clinicUnitId, practitionerFilter, from, to, pageable);
+        return PageResponse.from(appointmentPage, this::response);
     }
 
     @Transactional
@@ -137,10 +143,11 @@ public class AppointmentService {
         }
         return practitioner;
     }
-    private void conflict(Practitioner practitioner, Instant start, Instant end, Long excludedId) {
-        if (appointments.hasOverlap(practitioner.getId(), start, end, excludedId)) {
-            throw new SchedulingConflictException();
+    private List<UUID> practitionerFilter(List<UUID> practitionerIds) {
+        if (practitionerIds == null || practitionerIds.isEmpty()) {
+            return null;
         }
+        return practitionerIds;
     }
     private void valid(AppointmentRequest request) {
         validRange(request.startAt(), request.endAt());

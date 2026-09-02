@@ -69,6 +69,17 @@ class GraphQlMutationInputTest {
     }
 
     @Test
+    void convertsBlockedPeriodInputAndRejectsInvalidInstants() {
+        AppointmentBlockedPeriodMutationInput blockedPeriod = new AppointmentBlockedPeriodMutationInput(
+                CLINIC_ID, PRACTITIONER_ID, INSTANT, "2026-08-24T11:15:30Z");
+        AppointmentBlockedPeriodMutationInput invalidBlockedPeriod = new AppointmentBlockedPeriodMutationInput(
+                CLINIC_ID, PRACTITIONER_ID, "invalid", "2026-08-24T11:15:30Z");
+
+        assertThat(blockedPeriod.toRequest().startAt()).isEqualTo(Instant.parse(INSTANT));
+        assertThatThrownBy(invalidBlockedPeriod::toRequest).isInstanceOf(ValidationException.class);
+    }
+
+    @Test
     void convertsPatientOdontogramAndPerformedProcedureInputsAndRejectsInvalidValues() {
         PatientMutationInput patient = new PatientMutationInput("Ana", "1990-01-02", true, Gender.FEMALE, null,
                 DocumentType.PASSPORT, "AB123", "PT", "PT", null, null, Set.of(1L));

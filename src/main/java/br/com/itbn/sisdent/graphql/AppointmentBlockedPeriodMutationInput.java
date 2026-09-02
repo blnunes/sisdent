@@ -23,7 +23,7 @@ public record AppointmentBlockedPeriodMutationInput(
                     practitionerId,
                     Instant.parse(startAt),
                     Instant.parse(endAt));
-        } catch (DateTimeParseException exception) {
+        } catch (DateTimeParseException _) {
             throw new ValidationException(ErrorCode.VALIDATION_FAILED);
         }
     }
