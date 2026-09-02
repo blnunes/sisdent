@@ -42,7 +42,7 @@ export class AppHeaderComponent implements OnDestroy {
   private readonly accountSettings = inject(AccountSettingsApiService);
   readonly avatarSource = signal<string | null>(null);
   @Output() readonly menuClick = new EventEmitter<void>();
-  @ViewChild('menuButton') private menuButton?: ElementRef<HTMLButtonElement>;
+  @ViewChild('menuButton') private readonly menuButton?: ElementRef<HTMLButtonElement>;
   private readonly avatarObjectUrl = signal<string | null>(null);
   private readonly avatarLoader = effect(() => {
     const avatarUrl = this.auth.session()?.avatarUrl;
